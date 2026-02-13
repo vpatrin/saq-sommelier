@@ -7,59 +7,48 @@ on:
 jobs:
   lint-backend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install poetry && poetry install --no-interaction
-      - run: poetry run ruff check .
-      - run: poetry run ruff format --check .
+      - run: pip install poetry
+      - run: cd backend && poetry install --only dev --no-interaction
+      - run: make lint-backend
 
   lint-scraper:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: scraper
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install poetry && poetry install --no-interaction
-      - run: poetry run ruff check .
-      - run: poetry run ruff format --check .
+      - run: pip install poetry
+      - run: cd backend && poetry install --only dev --no-interaction
+      - run: make lint-scraper
 
   test-backend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install poetry && poetry install --no-interaction
-      - run: poetry run pytest -v
+      - run: pip install poetry
+      - run: cd backend && poetry install --no-interaction
+      - run: make test-backend
 
   test-scraper:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: scraper
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install poetry && poetry install --no-interaction
-      - run: poetry run pytest -v
+      - run: pip install poetry
+      - run: cd scraper && poetry install --no-interaction
+      - run: make test-scraper
 
-# Defining summary jobs for status check
   lint:
     needs: [lint-backend, lint-scraper]
     runs-on: ubuntu-latest
@@ -78,5 +67,6 @@ jobs:
     steps:
       - run: |
           if [ "${{ needs.test-backend.result }}" != "success" ] || \
-            [ "${{ needs.test-scraper.result }}" != "success" ]; then
+             [ "${{ needs.test-scraper.result }}" != "success" ]; then
             exit 1
+          fi
