@@ -5,6 +5,13 @@ Imports shared infrastructure settings from shared.config.
 """
 
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load scraper's .env file before importing shared settings
+env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 from shared.config import settings as shared_settings
 
