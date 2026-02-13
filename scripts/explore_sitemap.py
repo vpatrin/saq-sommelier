@@ -8,7 +8,7 @@ import httpx
 
 SITEMAP_INDEX = "https://www.saq.com/media/sitemaps/fr/sitemap_product.xml"
 NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+UA = "SAQSommelier/0.1.0 (personal project; https://github.com/vpatrin/saq-sommelier)"
 
 
 def main():
@@ -51,10 +51,10 @@ def main():
     print(f"\nTotal products: {total}")
 
     # Show sample URLs from first sub-sitemap
-    print("\n=== Sample URLs (first 10) ===\n")
+    print("\n=== Sample URLs (first 100) ===\n")
     resp = client.get(sitemaps[0]["url"])
     sub_root = ElementTree.fromstring(resp.content)
-    for url_el in sub_root.findall("sm:url", NS)[:10]:
+    for url_el in sub_root.findall("sm:url", NS)[:100]:
         loc = url_el.find("sm:loc", NS)
         lastmod = url_el.find("sm:lastmod", NS)
         if loc is not None:
