@@ -71,5 +71,4 @@ def fetch_sub_sitemap(client: httpx.Client, url: str) -> list[SitemapEntry]:
 
         entries.append(SitemapEntry(url=loc.text.strip(), lastmod=lastmod))
 
-    # [SitemapEntry(url="https://.../12345", lastmod="2025-01-15"), SitemapEntry(url="https://.../67890", lastmod=None), ...]
     return entries

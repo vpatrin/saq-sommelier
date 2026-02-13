@@ -16,8 +16,9 @@ class ProductData:
     - JSON-LD script blocks (price, availability, rating, etc.)
     - HTML attribute list (region, grape, alcohol, etc.)
     """
+
     # Every field defaults to None — because out-of-stock or minimal products won't have all fields
-    
+
     # JSON-LD fields
     name: str | None = None
     sku: str | None = None
