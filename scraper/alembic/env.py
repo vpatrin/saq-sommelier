@@ -2,6 +2,17 @@
 # SECTION 1: BOILERPLATE - Standard Alembic Setup (100% untouched)
 # ============================================================================
 
+import sys
+from pathlib import Path
+
+# Add project root to Python path so shared/ can be imported
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+# Load scraper's .env file before importing anything that reads from environment
+from dotenv import load_dotenv
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 from logging.config import fileConfig
 
@@ -25,11 +36,12 @@ if config.config_file_name is not None:
 # This is the ONLY section we customized for our project.
 # Everything below is what we added to make Alembic work with our setup.
 
-# --- Custom Import 1: Base (for autogenerate) ---
+# --- Custom Import 1: Base + Models (for autogenerate) ---
 # Why: Alembic needs to see your SQLAlchemy models to detect schema changes
 # Without this: `alembic revision --autogenerate` won't work
 # Standard practice: Required for any project using autogenerate
 from shared.db.base import Base
+from shared.db import models  # noqa: F401 - Import models to register with Base.metadata
 
 # --- Custom Import 2: Settings (for DATABASE_URL) ---
 # Why: Don't hardcode credentials in alembic.ini, read from environment instead
