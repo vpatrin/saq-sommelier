@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install poetry
-      - run: cd backend && poetry install --only dev --no-interaction
+      - run: cd scraper && poetry install --only dev --no-interaction
       - run: make lint-scraper
 
   test-backend:
