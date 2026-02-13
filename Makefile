@@ -1,4 +1,4 @@
-.PHONY: install dev scrape lint-backend lint-scraper lint format-backend format-scraper format test-backend test-scraper test clean
+.PHONY: install dev scrape lint-backend lint-scraper lint format-backend format-scraper format test-backend test-scraper test build-scraper build clean
 
 install:
 	cd backend && poetry install
@@ -8,7 +8,7 @@ dev:
 	cd backend && poetry run uvicorn backend.main:app --reload --port 8000
 
 scrape:
-	cd scraper && poetry run python main.py
+	cd scraper && poetry run python -m src
 
 # Lint
 lint-backend:
@@ -36,6 +36,12 @@ test-scraper:
 	cd scraper && poetry run pytest -v
 
 test: test-backend test-scraper
+
+# Build
+build-scraper:
+	docker build -t saq-scraper scraper/
+
+build: build-scraper
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +

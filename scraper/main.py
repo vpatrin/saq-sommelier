@@ -1,1 +1,0 @@
-"""SAQ product catalog scraper."""

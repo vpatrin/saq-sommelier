@@ -8,13 +8,13 @@ WORKDIR /build
 
 COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-dev --no-interaction
+    && poetry install --only main --no-interaction
 
 FROM python:3.12-slim
 
 WORKDIR /app
 
 COPY --from=builder /usr/local /usr/local
-COPY . .
+COPY src src
 
-CMD ["python", "-m", "main"]
+CMD ["python", "-m", "src"]
