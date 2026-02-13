@@ -19,6 +19,8 @@ class ProductData:
 
     # Every field defaults to None — because out-of-stock or minimal products won't have all fields
 
+    # Source metadata
+    url: str | None = None  # Product page URL (passed from scraper)
     # JSON-LD fields
     name: str | None = None
     sku: str | None = None
@@ -48,7 +50,7 @@ class ProductData:
     cup_code: str | None = None
 
 
-def parse_product(html: str) -> ProductData:
+def parse_product(html: str, url: str) -> ProductData:
     """Parse a SAQ product page and return structured product data.
 
     Combines data from two sources in the HTML:
@@ -57,6 +59,7 @@ def parse_product(html: str) -> ProductData:
 
     Args:
         html: Raw HTML string of a SAQ product page.
+        url: Product page URL (for database record).
 
     Returns:
         ProductData with all available fields populated.
@@ -71,7 +74,7 @@ def parse_product(html: str) -> ProductData:
     html_fields = _parse_html_attrs(soup)
 
     # The two dicts have disjoint keys so ** unpacking is safe
-    return ProductData(**jsonld_fields, **html_fields)
+    return ProductData(url=url, **jsonld_fields, **html_fields)
 
 
 # -------------- HELPERS -------------- #
