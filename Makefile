@@ -1,24 +1,72 @@
-install:
-	cd backend && poetry install
-	cd scraper && poetry install
+name: CI
 
-dev:
-	cd backend && poetry run uvicorn backend.main:app --reload --port 8000
+on:
+  pull_request:
+    branches: [main]
 
-scrape:
-	cd scraper && poetry run python main.py
+jobs:
+  lint-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install poetry
+      - run: cd backend && poetry install --no-interaction
+      - run: make lint-backend
 
-lint:
-	cd backend && poetry run ruff check .
-	cd scraper && poetry run ruff check .
+  lint-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install poetry
+      - run: cd scraper && poetry install --no-interaction
+      - run: make lint-scraper
 
-format:
-	cd backend && poetry run ruff format .
-	cd scraper && poetry run ruff format .
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install poetry
+      - run: cd backend && poetry install --no-interaction
+      - run: make test-backend
 
-test:
-	cd backend && poetry run pytest -v
-	cd scraper && poetry run pytest -v
+  test-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install poetry
+      - run: cd scraper && poetry install --no-interaction
+      - run: make test-scraper
 
-clean:
-	find . -type d -name __pycache__ -exec rm -rf {} + && rm -rf .pytest_cache backend/.pytest_cache scraper/.pytest_cache .ruff_cache backend/.ruff_cache scraper/.ruff_cache *.egg-info
+  lint:
+    needs: [lint-backend, lint-scraper]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: |
+          if [ "${{ needs.lint-backend.result }}" != "success" ] || \
+             [ "${{ needs.lint-scraper.result }}" != "success" ]; then
+            exit 1
+          fi
+
+  test:
+    needs: [test-backend, test-scraper]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: |
+          if [ "${{ needs.test-backend.result }}" != "success" ] || \
+             [ "${{ needs.test-scraper.result }}" != "success" ]; then
+            exit 1
+          fi

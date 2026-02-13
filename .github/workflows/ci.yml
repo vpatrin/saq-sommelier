@@ -1,7 +1,6 @@
 name: CI
 
 on:
-  push:
   pull_request:
     branches: [main]
 
@@ -59,3 +58,25 @@ jobs:
           python-version: "3.12"
       - run: pip install poetry && poetry install --no-interaction
       - run: poetry run pytest -v
+
+# Defining summary jobs for status check
+  lint:
+    needs: [lint-backend, lint-scraper]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: |
+          if [ "${{ needs.lint-backend.result }}" != "success" ] || \
+             [ "${{ needs.lint-scraper.result }}" != "success" ]; then
+            exit 1
+          fi
+
+  test:
+    needs: [test-backend, test-scraper]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: |
+          if [ "${{ needs.test-backend.result }}" != "success" ] || \
+            [ "${{ needs.test-scraper.result }}" != "success" ]; then
+            exit 1
