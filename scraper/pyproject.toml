@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "saq-scraper"
+version = "0.1.0"
+description = "SAQ product catalog scraper — sitemap-based, ethical"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+httpx = ">=0.28"
+beautifulsoup4 = ">=4.12"
+lxml = ">=5.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.0"
+ruff = "^0.15.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

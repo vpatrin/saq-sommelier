@@ -1,34 +1,75 @@
 name: CI
 
 on:
-  push:
   pull_request:
     branches: [main]
 
+env:
+  PYTHON_VERSION: "3.12"
+
 jobs:
-  lint:
+  lint-backend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - run: pip install poetry && poetry install --no-interaction
-      - run: poetry run ruff check .
-      - run: poetry run ruff format --check .
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry
+      - run: cd backend && poetry install --only dev --no-interaction
+      - run: make lint-backend
+
+  lint-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry
+      - run: cd scraper && poetry install --only dev --no-interaction
+      - run: make lint-scraper
+
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry
+      - run: cd backend && poetry install --no-interaction
+      - run: make test-backend
+
+  test-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry
+      - run: cd scraper && poetry install --no-interaction
+      - run: make test-scraper
+
+  lint:
+    needs: [lint-backend, lint-scraper]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: |
+          if [ "${{ needs.lint-backend.result }}" != "success" ] || \
+             [ "${{ needs.lint-scraper.result }}" != "success" ]; then
+            exit 1
+          fi
 
   test:
+    needs: [test-backend, test-scraper]
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
+    if: always()
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install poetry && poetry install --no-interaction
-      - run: poetry run pytest -v
+      - run: |
+          if [ "${{ needs.test-backend.result }}" != "success" ] || \
+             [ "${{ needs.test-scraper.result }}" != "success" ]; then
+            exit 1
+          fi

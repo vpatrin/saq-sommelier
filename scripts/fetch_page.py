@@ -7,7 +7,7 @@ import sys
 import httpx
 from bs4 import BeautifulSoup
 
-UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+UA = "SAQSommelier/0.1.0 (personal project; https://github.com/vpatrin/saq-sommelier)"
 
 
 def parse_jsonld(soup: BeautifulSoup) -> dict:
