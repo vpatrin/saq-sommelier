@@ -208,3 +208,9 @@ __marimo__/
 
 # Claude
 CLAUDE.md
+
+# Avoids committing SAQ data
+
+scripts/sitemap_urls.txt
+scripts/samples/
+*.html
