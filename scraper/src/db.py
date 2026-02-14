@@ -1,10 +1,13 @@
 from datetime import UTC, datetime
 
-from shared.db.base import AsyncSessionLocal
+from shared.db.base import create_session_factory
 from shared.db.models import Product
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from .config import settings
 from .parser import ProductData
+
+_SessionLocal = create_session_factory(settings.database_url, settings.database_echo)
 
 
 async def upsert_product(product_data: ProductData) -> None:
@@ -23,7 +26,7 @@ async def upsert_product(product_data: ProductData) -> None:
         ON CONFLICT (sku) DO UPDATE
         SET name = EXCLUDED.name, price = EXCLUDED.price, updated_at = NOW()
     """
-    async with AsyncSessionLocal() as session:
+    async with _SessionLocal() as session:
         product_dict = product_data.to_dict()
         product_dict["created_at"] = datetime.now(UTC)
         product_dict["updated_at"] = datetime.now(UTC)
