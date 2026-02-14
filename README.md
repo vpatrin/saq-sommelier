@@ -48,7 +48,7 @@ Each service has its own `pyproject.toml`, `Dockerfile`, and Poetry environment.
 
 - Python 3.12+
 - [Poetry](https://python-poetry.org/docs/#installation)
-- PostgreSQL running locally (we use a shared instance via Docker)
+- PostgreSQL (see [Database](#database) below)
 
 ### Setup
 
@@ -57,7 +57,7 @@ Each service has its own `pyproject.toml`, `Dockerfile`, and Poetry environment.
 make install
 
 # Copy env file and configure DB credentials
-cp scraper/.env.example scraper/.env
+cp .env.example .env
 
 # Run database migrations
 cd scraper && poetry run alembic upgrade head && cd ..
@@ -75,6 +75,42 @@ make scrape
 make dev
 ```
 
+## Database
+
+Two options for running PostgreSQL locally:
+
+### Option A: Standalone (Docker Compose)
+
+Spins up a dedicated postgres container — no external dependencies.
+
+```bash
+make up      # starts postgres + backend (docker compose --profile dev)
+make down    # stops everything (data persists in pgdata volume)
+```
+
+The compose `dev` profile starts a postgres:17-alpine instance on the internal Docker network. Backend and scraper connect to it automatically via `DB_HOST=postgres`.
+
+### Option B: Shared PostgreSQL instance
+
+If you run multiple projects on the same machine (or VPS), you can use a shared PostgreSQL instance like [shared-postgres](https://github.com/vpatrin/shared-postgres) instead.
+
+```bash
+# 1. Start shared-postgres (separate repo, runs on localhost:5432)
+cd ../shared-postgres && make up
+
+# 2. Bare-metal: just works — .env has DB_HOST=localhost by default
+make scrape
+make dev
+
+# 3. Docker containers: override DB_HOST to reach the host machine
+DB_HOST=host.docker.internal docker compose up backend
+DB_HOST=host.docker.internal docker compose run --rm scraper
+```
+
+`host.docker.internal` is a Docker Desktop (macOS/Windows) DNS name that resolves to the host machine. On Linux, use `--network=host` or the host's IP instead.
+
+> **Note:** Without `--profile dev`, the compose postgres service doesn't start. `depends_on` uses `required: false`, so backend and scraper work fine without it.
+
 ## Development
 
 ```bash
@@ -82,6 +118,7 @@ make lint          # Lint all services (ruff)
 make format        # Auto-format all services
 make test          # Run all tests
 make coverage      # Run tests with coverage + update badges
+make build         # Build all Docker images
 make clean         # Remove caches and coverage artifacts
 ```
 
