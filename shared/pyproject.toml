@@ -7,6 +7,7 @@ packages = [{include = "shared", from = ".."}]
 [tool.poetry.dependencies]
 python = "^3.12"
 sqlalchemy = "^2.0"
+loguru = ">=0.7"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.15.0"
