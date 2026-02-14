@@ -10,6 +10,7 @@ fastapi = ">=0.115"
 uvicorn = { version = ">=0.34", extras = ["standard"] }
 
 [tool.poetry.group.dev.dependencies]
+httpx = ">=0.28"
 pytest = ">=8.0"
 pytest-asyncio = ">=0.25"
 pytest-cov = ">=6.0"
