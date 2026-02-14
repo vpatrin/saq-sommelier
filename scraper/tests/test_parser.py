@@ -1,5 +1,3 @@
-"""Tests for the SAQ product page parser."""
-
 from src.parser import ProductData, parse_product
 
 

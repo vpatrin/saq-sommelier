@@ -1,9 +1,3 @@
-"""Scraper-specific configuration.
-
-Contains settings that only the scraper service needs.
-Imports shared infrastructure settings from shared.config.
-"""
-
 import os
 import sys
 from pathlib import Path

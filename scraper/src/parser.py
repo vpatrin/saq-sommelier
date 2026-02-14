@@ -1,5 +1,3 @@
-"""SAQ product page parser — extracts structured data from HTML."""
-
 import json
 from dataclasses import dataclass
 from html import unescape

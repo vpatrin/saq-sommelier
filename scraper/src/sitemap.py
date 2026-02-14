@@ -1,5 +1,3 @@
-"""SAQ sitemap fetcher — extracts product URLs from SAQ sitemaps."""
-
 from dataclasses import dataclass
 from xml.etree import ElementTree
 

@@ -1,5 +1,3 @@
-"""Shared test fixtures for scraper tests."""
-
 import pytest
 
 

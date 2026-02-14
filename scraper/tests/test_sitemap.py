@@ -1,5 +1,3 @@
-"""Tests for the SAQ sitemap fetcher."""
-
 from unittest.mock import AsyncMock
 
 import httpx
