@@ -40,7 +40,9 @@ def upgrade() -> None:
         sa.Column("color", sa.String(), nullable=True, comment="Wine color (red/white/rosé)"),
         sa.Column("size", sa.String(), nullable=True, comment="Bottle size (e.g., 750ml)"),
         sa.Column("image", sa.String(), nullable=True, comment="Product image URL"),
-        sa.Column("price", sa.Float(), nullable=True, comment="Price in CAD"),
+        sa.Column(
+            "price", sa.Numeric(precision=10, scale=2), nullable=True, comment="Price in CAD"
+        ),
         sa.Column("currency", sa.String(), nullable=True, comment="Currency code (CAD)"),
         sa.Column("availability", sa.Boolean(), nullable=True, comment="In stock?"),
         sa.Column("manufacturer", sa.String(), nullable=True, comment="Manufacturer name"),

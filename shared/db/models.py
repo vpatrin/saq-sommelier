@@ -4,9 +4,9 @@ This is the single source of truth for database schema.
 Both scraper and backend import models from here.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, Numeric, String, Text
 
 from shared.db.base import Base
 
@@ -31,14 +31,14 @@ class Product(Base):
     url = Column(String, nullable=True, comment="SAQ product page URL")
     created_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         nullable=False,
         comment="When first scraped",
     )
     updated_at = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
         comment="When last updated",
     )
@@ -52,7 +52,7 @@ class Product(Base):
     color = Column(String, nullable=True, comment="Wine color (red/white/rosé)")
     size = Column(String, nullable=True, comment="Bottle size (e.g., 750ml)")
     image = Column(String, nullable=True, comment="Product image URL")
-    price = Column(Float, nullable=True, comment="Price in CAD")
+    price = Column(Numeric(10, 2), nullable=True, comment="Price in CAD")
     currency = Column(String, nullable=True, comment="Currency code (CAD)")
     availability = Column(Boolean, nullable=True, comment="In stock?")
     manufacturer = Column(String, nullable=True, comment="Manufacturer name")
