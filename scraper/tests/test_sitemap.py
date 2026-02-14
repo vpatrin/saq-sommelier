@@ -37,7 +37,7 @@ class TestFetchSitemapIndex:
         await fetch_sitemap_index(client)
 
         client.get.assert_called_once_with(
-            "https://www.saq.com/sitemap.xml"
+            "https://www.saq.com/media/sitemaps/fr/sitemap_product.xml"
         )
 
 
