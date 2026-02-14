@@ -1,39 +1,50 @@
-import os
+"""Scraper service configuration.
 
-from dotenv import load_dotenv
+Inherits shared infrastructure settings (DB, logging) from shared.config.
+Adds scraper-specific settings (rate limiting, user agent, sitemap URL).
 
-# Load .env before importing shared settings (reads os.getenv at import time)
-load_dotenv()
+No load_dotenv() needed — pydantic-settings reads .env automatically.
+"""
 
-from shared.config import settings as shared_settings  # noqa: E402
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from shared.config import settings as shared_settings
 
 
-class ScraperSettings:
-    """Scraper service configuration."""
+class ScraperSettings(BaseSettings):
+    """Scraper-specific configuration."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        # Ignore DB_USER, DB_PASSWORD, etc. — those belong to shared Settings
+        extra="ignore",
+    )
 
     SERVICE_NAME: str = "scraper"
 
     # HTTP client settings
     USER_AGENT: str = "SAQSommelier/0.1.0 (personal project; contact@victorpatrin.dev)"
-    REQUEST_TIMEOUT: int = int(os.getenv("REQUEST_TIMEOUT", "30"))
+    REQUEST_TIMEOUT: int = 30
 
     # Rate limiting (ethical scraping)
-    RATE_LIMIT_SECONDS: int = int(os.getenv("RATE_LIMIT_SECONDS", "2"))
-
-    # Logging
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    RATE_LIMIT_SECONDS: int = 2
 
     # Sitemap URL from robots.txt (https://www.saq.com/robots.txt)
     SITEMAP_URL: str = "https://www.saq.com/media/sitemaps/fr/sitemap_product.xml"
 
-    @classmethod
-    def sitemap_index_url(cls) -> str:
+    @property
+    def sitemap_index_url(self) -> str:
         """Return the SAQ product sitemap URL."""
-        return cls.SITEMAP_URL
+        return self.SITEMAP_URL
 
     # Shared infrastructure settings (used by db.py)
-    database_url: str = shared_settings.DATABASE_URL
-    database_echo: bool = shared_settings.DATABASE_ECHO
+    @property
+    def database_url(self) -> str:
+        return shared_settings.database_url
+
+    @property
+    def database_echo(self) -> bool:
+        return shared_settings.DATABASE_ECHO
 
 
 # Global settings instance
