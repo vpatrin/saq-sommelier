@@ -6,8 +6,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /build
 
-# Copy only dependency files for caching
-COPY scraper/pyproject.toml scraper/poetry.lock ./
+# Copy shared package (path dependency of scraper)
+COPY shared/ shared/
+
+# Copy scraper dependency files + install
+COPY scraper/pyproject.toml scraper/poetry.lock scraper/
+WORKDIR /build/scraper
 RUN poetry config virtualenvs.create false \
     && poetry install --only main --no-interaction
 
@@ -15,16 +19,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Copy installed Python packages from builder
+# Copy installed Python packages from builder (includes shared via poetry install)
 COPY --from=builder /usr/local /usr/local
-
-# Copy shared code (database models, config)
-COPY shared/ shared/
 
 # Copy scraper code
 COPY scraper/src/ scraper/src/
 
-# Set working directory to scraper/ so relative imports work
 WORKDIR /app/scraper
 
 CMD ["python", "-m", "src"]
