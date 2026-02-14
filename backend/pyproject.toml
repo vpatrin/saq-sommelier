@@ -15,11 +15,20 @@ lxml = ">=5.3"
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0"
 pytest-asyncio = ">=0.25"
+pytest-cov = ">=6.0"
 ruff = "^0.15.0"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["backend"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 0
 
 [tool.ruff]
 target-version = "py312"

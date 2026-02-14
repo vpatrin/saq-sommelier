@@ -20,12 +20,21 @@ saq-shared = {path = "../shared", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0"
+pytest-cov = ">=6.0"
 ruff = "^0.15.0"
 pytest-asyncio = "^1.3.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "alembic/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 0
 
 [tool.ruff]
 target-version = "py312"
