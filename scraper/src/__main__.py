@@ -18,12 +18,11 @@ async def main(max_products: int = 5) -> None:
                      Set to None or a very large number to scrape all products.
     """
 
-    #! The async with keeps a connection pool open for all requests (reuses TCP connections → faster).
-    # The User-Agent identifies us as a bot (ethical scraping).
+    # async with keeps a connection pool open (reuses TCP connections)
+    # User-Agent identifies us as a bot (ethical scraping)
     async with httpx.AsyncClient(
         headers={"User-Agent": settings.USER_AGENT}, timeout=settings.REQUEST_TIMEOUT
     ) as client:
-        
         print("Fetching sitemap index...")
         sub_sitemap_urls = await fetch_sitemap_index(client)
         print(f"Found {len(sub_sitemap_urls)} sub-sitemaps\n")
@@ -53,7 +52,7 @@ async def main(max_products: int = 5) -> None:
 
                 # Parse HTML and create a ProductData instance
                 product = parse_product(response.text, url=entry.url)
-                
+
                 # Saves to DB (upsert)
                 await upsert_product(product)
                 print(f"✓ Saved {product.sku or 'unknown'} - {product.name or 'no name'}")
