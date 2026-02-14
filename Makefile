@@ -39,7 +39,7 @@ test: test-backend test-scraper
 
 # Build
 build-scraper:
-	docker build -t saq-scraper scraper/
+	docker build -f scraper/Dockerfile -t saq-scraper .
 
 build: build-scraper
 

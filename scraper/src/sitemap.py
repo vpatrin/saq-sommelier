@@ -1,11 +1,9 @@
-"""SAQ sitemap fetcher — extracts product URLs from SAQ sitemaps."""
-
 from dataclasses import dataclass
 from xml.etree import ElementTree
 
 import httpx
 
-from .config import SITEMAP_INDEX_URL
+from .config import settings
 
 # XML namespace mapping — needed because sitemap XML uses xmlns namespace
 _NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
@@ -19,17 +17,17 @@ class SitemapEntry:
     lastmod: str | None = None  # Equivalent to Optional[str] from typing, but cleaner.
 
 
-def fetch_sitemap_index(client: httpx.Client) -> list[str]:
+async def fetch_sitemap_index(client: httpx.AsyncClient) -> list[str]:
     """Fetch the SAQ sitemap index and return sub-sitemap URLs.
 
     Args:
-        client: An httpx.Client configured with appropriate headers and timeout.
+        client: An httpx.AsyncClient configured with appropriate headers and timeout.
 
     Returns:
         List of sub-sitemap URLs (typically 2).
     """
     # Dependency injection of client in the function for reusability, control and reuse
-    response = client.get(SITEMAP_INDEX_URL)
+    response = await client.get(settings.sitemap_index_url())
     response.raise_for_status()
     # Parsing raw bytes into XML tree
     root = ElementTree.fromstring(response.content)
@@ -43,17 +41,17 @@ def fetch_sitemap_index(client: httpx.Client) -> list[str]:
     return urls  # ["https://.../sitemap_product_1.xml", "https://.../sitemap_product_2.xml"]
 
 
-def fetch_sub_sitemap(client: httpx.Client, url: str) -> list[SitemapEntry]:
+async def fetch_sub_sitemap(client: httpx.AsyncClient, url: str) -> list[SitemapEntry]:
     """Fetch a sub-sitemap and return product URL entries.
 
     Args:
-        client: An httpx.Client configured with appropriate headers and timeout.
+        client: An httpx.AsyncClient configured with appropriate headers and timeout.
         url: The sub-sitemap URL to fetch.
 
     Returns:
         List of SitemapEntry objects with url and optional lastmod.
     """
-    response = client.get(url)
+    response = await client.get(url)
     response.raise_for_status()
     root = ElementTree.fromstring(response.content)
 

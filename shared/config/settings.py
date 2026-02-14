@@ -8,6 +8,9 @@ Only contains settings that are truly shared across all services:
 Service-specific settings belong in each service's config.py:
 - scraper/config.py - Scraper-specific (USER_AGENT, RATE_LIMIT, etc.)
 - backend/config.py - Backend-specific (JWT_SECRET, CORS, etc.)
+
+Note: This module reads from os.getenv() only.
+Each service is responsible for loading its own .env file before importing this module.
 """
 
 import os
@@ -17,12 +20,19 @@ class Settings:
     """Shared infrastructure configuration."""
 
     # Environment (dev/staging/prod)
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT")
 
     # Database (both services connect to same PostgreSQL)
+    # Can override with full DATABASE_URL or construct from components
+    DB_USER: str = os.getenv("DB_USER")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD")
+    DB_HOST: str = os.getenv("DB_HOST")
+    DB_PORT: str = os.getenv("DB_PORT")
+    DB_NAME: str = os.getenv("DB_NAME")
+
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/wine_sommelier",
+        f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
     )
 
     # Debug / Logging (consistent log level across services)

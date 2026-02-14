@@ -1,14 +1,17 @@
+# Load .env before importing shared settings (reads os.getenv at import time)
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # ============================================================================
-# SECTION 1: BOILERPLATE - Standard Alembic Setup (100% untouched)
+# SECTION 1: BOILERPLATE - Standard Alembic Setup
 # ============================================================================
 
+from logging.config import fileConfig  # noqa: E402
 
-from logging.config import fileConfig
+from sqlalchemy import engine_from_config, pool  # noqa: E402
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
+from alembic import context  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,16 +28,16 @@ if config.config_file_name is not None:
 # This is the ONLY section we customized for our project.
 # Everything below is what we added to make Alembic work with our setup.
 
-# --- Custom Import 1: Base (for autogenerate) ---
+# --- Custom Import 1: Base + Models (for autogenerate) ---
 # Why: Alembic needs to see your SQLAlchemy models to detect schema changes
 # Without this: `alembic revision --autogenerate` won't work
 # Standard practice: Required for any project using autogenerate
-from shared.db.base import Base
-
 # --- Custom Import 2: Settings (for DATABASE_URL) ---
 # Why: Don't hardcode credentials in alembic.ini, read from environment instead
 # Standard practice: 12-factor apps, Docker deployments
-from shared.config.settings import settings
+from shared.config.settings import settings  # noqa: E402
+from shared.db import models  # noqa: E402, F401 - Import models to register with Base.metadata
+from shared.db.base import Base  # noqa: E402
 
 # --- Custom Config 1: Override DATABASE_URL ---
 # Why: Our app uses async SQLAlchemy (postgresql+asyncpg) for runtime,
@@ -52,7 +55,6 @@ config.set_main_option("sqlalchemy.url", database_url)
 # Default value: None (autogenerate won't work)
 # Standard practice: Required for autogenerate, every project does this
 target_metadata = Base.metadata
-
 
 
 # ============================================================================
