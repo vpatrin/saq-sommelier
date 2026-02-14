@@ -61,3 +61,34 @@ class TestParseProductEdgeCases:
         assert result.name is None
         assert result.price is None
         assert isinstance(result, ProductData)
+
+
+class TestProductDataToDict:
+    def test_returns_all_fields(self, product_page_html: str) -> None:
+        product = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
+        d = product.to_dict()
+
+        assert isinstance(d, dict)
+        assert d["sku"] == "10327701"
+        assert d["price"] == 22.50
+        assert d["region"] == "Bordeaux"
+        assert d["url"] == "https://www.saq.com/fr/10327701"
+
+    def test_none_fields_included(self) -> None:
+        product = ProductData(name="Test Wine", sku="123")
+        d = product.to_dict()
+
+        # None fields are present (not filtered out) — DB needs them for upserts
+        assert "price" in d
+        assert d["price"] is None
+        assert d["name"] == "Test Wine"
+
+    def test_matches_dataclass_fields(self) -> None:
+        """Dict keys must match ProductData field names exactly."""
+        import dataclasses
+
+        product = ProductData()
+        d = product.to_dict()
+
+        field_names = {f.name for f in dataclasses.fields(ProductData)}
+        assert set(d.keys()) == field_names
