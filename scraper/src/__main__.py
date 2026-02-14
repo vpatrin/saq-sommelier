@@ -5,6 +5,7 @@ import asyncio
 import httpx
 from loguru import logger
 from shared.logging import setup_logging
+from sqlalchemy.exc import SQLAlchemyError
 
 from .config import settings
 from .db import upsert_product
@@ -62,10 +63,12 @@ async def main(max_products: int = 5) -> None:
 
             except httpx.HTTPError as e:
                 logger.error("HTTP error for {}: {}", entry.url, e)
+            except SQLAlchemyError:
+                logger.error("DB error for {}, skipping", entry.url)
             except Exception:
                 logger.exception("Unexpected error for {}", entry.url)
 
-        logger.success("Done! Scraped {} products.", len(products_to_scrape))
+        logger.success("Done! Scraped {} products", len(products_to_scrape))
 
 
 if __name__ == "__main__":

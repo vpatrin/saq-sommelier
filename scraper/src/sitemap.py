@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from xml.etree import ElementTree
 
 import httpx
+from loguru import logger
 
 from .config import settings
 
@@ -29,8 +30,12 @@ async def fetch_sitemap_index(client: httpx.AsyncClient) -> list[str]:
     # Dependency injection of client in the function for reusability, control and reuse
     response = await client.get(settings.sitemap_index_url())
     response.raise_for_status()
-    # Parsing raw bytes into XML tree
-    root = ElementTree.fromstring(response.content)
+
+    try:
+        root = ElementTree.fromstring(response.content)
+    except ElementTree.ParseError as e:
+        logger.error("Failed to parse sitemap index XML: {}", e)
+        raise
 
     urls = []
     for sitemap in root.findall("sm:sitemap", _NS):  # finds all <sitemap> elements
@@ -53,7 +58,12 @@ async def fetch_sub_sitemap(client: httpx.AsyncClient, url: str) -> list[Sitemap
     """
     response = await client.get(url)
     response.raise_for_status()
-    root = ElementTree.fromstring(response.content)
+
+    try:
+        root = ElementTree.fromstring(response.content)
+    except ElementTree.ParseError as e:
+        logger.error("Failed to parse sub-sitemap XML from {}: {}", url, e)
+        raise
 
     entries = []
 
