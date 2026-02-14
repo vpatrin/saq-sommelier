@@ -10,16 +10,16 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Load scraper's .env file before importing anything that reads from environment
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
+
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
-from logging.config import fileConfig
+from logging.config import fileConfig  # noqa: E402
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool  # noqa: E402
 
-from alembic import context
+from alembic import context  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -40,13 +40,12 @@ if config.config_file_name is not None:
 # Why: Alembic needs to see your SQLAlchemy models to detect schema changes
 # Without this: `alembic revision --autogenerate` won't work
 # Standard practice: Required for any project using autogenerate
-from shared.db.base import Base
-from shared.db import models  # noqa: F401 - Import models to register with Base.metadata
-
 # --- Custom Import 2: Settings (for DATABASE_URL) ---
 # Why: Don't hardcode credentials in alembic.ini, read from environment instead
 # Standard practice: 12-factor apps, Docker deployments
-from shared.config.settings import settings
+from shared.config.settings import settings  # noqa: E402
+from shared.db import models  # noqa: E402, F401 - Import models to register with Base.metadata
+from shared.db.base import Base  # noqa: E402
 
 # --- Custom Config 1: Override DATABASE_URL ---
 # Why: Our app uses async SQLAlchemy (postgresql+asyncpg) for runtime,
@@ -64,7 +63,6 @@ config.set_main_option("sqlalchemy.url", database_url)
 # Default value: None (autogenerate won't work)
 # Standard practice: Required for autogenerate, every project does this
 target_metadata = Base.metadata
-
 
 
 # ============================================================================
