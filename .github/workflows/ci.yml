@@ -30,6 +30,17 @@ jobs:
       - run: cd scraper && poetry install --only dev --no-interaction
       - run: make lint-scraper
 
+  lint-shared:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry
+      - run: cd shared && poetry install --only dev --no-interaction
+      - run: make lint-shared
+
   test-backend:
     runs-on: ubuntu-latest
     steps:
@@ -53,13 +64,14 @@ jobs:
       - run: make test-scraper
 
   lint:
-    needs: [lint-backend, lint-scraper]
+    needs: [lint-backend, lint-scraper, lint-shared]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - run: |
           if [ "${{ needs.lint-backend.result }}" != "success" ] || \
-             [ "${{ needs.lint-scraper.result }}" != "success" ]; then
+             [ "${{ needs.lint-scraper.result }}" != "success" ] || \
+             [ "${{ needs.lint-shared.result }}" != "success" ]; then
             exit 1
           fi
 

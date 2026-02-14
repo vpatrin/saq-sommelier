@@ -3,11 +3,16 @@
 import asyncio
 
 import httpx
+from loguru import logger
+from shared.logging import setup_logging
+from sqlalchemy.exc import SQLAlchemyError
 
 from .config import settings
 from .db import upsert_product
 from .parser import parse_product
 from .sitemap import fetch_sitemap_index, fetch_sub_sitemap
+
+setup_logging(settings.SERVICE_NAME, level=settings.LOG_LEVEL)
 
 
 async def main(max_products: int = 5) -> None:
@@ -23,30 +28,29 @@ async def main(max_products: int = 5) -> None:
     async with httpx.AsyncClient(
         headers={"User-Agent": settings.USER_AGENT}, timeout=settings.REQUEST_TIMEOUT
     ) as client:
-        print("Fetching sitemap index...")
+        logger.info("Fetching sitemap index...")
         sub_sitemap_urls = await fetch_sitemap_index(client)
-        print(f"Found {len(sub_sitemap_urls)} sub-sitemaps\n")
+        logger.info("Found {} sub-sitemaps", len(sub_sitemap_urls))
 
         await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
 
         # We only fetch first sub sitemap for now
-        print("Fetching first sub-sitemap...")
+        logger.info("Fetching first sub-sitemap...")
         entries = await fetch_sub_sitemap(client, sub_sitemap_urls[0])
-        print(f"Found {len(entries)} product URLs\n")
+        logger.info("Found {} product URLs", len(entries))
 
         # If max_products is None, scrape all
         products_to_scrape = entries[:max_products] if max_products else entries
-        print(f"Scraping {len(products_to_scrape)} products...\n")
+        logger.info("Scraping {} products...", len(products_to_scrape))
 
         #! Main scrape loop
         for i, entry in enumerate(products_to_scrape, 1):
             # Ethical rate limiter
             await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
 
-            print(f"[{i}/{len(products_to_scrape)}] Fetching {entry.url}...", end=" ")
-
             try:
                 # Download HTML
+                logger.info("[{}/{}] Fetching {}...", i, len(products_to_scrape), entry.url)
                 response = await client.get(entry.url)
                 response.raise_for_status()
 
@@ -55,14 +59,16 @@ async def main(max_products: int = 5) -> None:
 
                 # Saves to DB (upsert)
                 await upsert_product(product)
-                print(f"✓ Saved {product.sku or 'unknown'} - {product.name or 'no name'}")
+                logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
 
             except httpx.HTTPError as e:
-                print(f"✗ HTTP error: {e}")
-            except Exception as e:
-                print(f"✗ Error: {e}")
+                logger.error("HTTP error for {}: {}", entry.url, e)
+            except SQLAlchemyError:
+                logger.error("DB error for {}, skipping", entry.url)
+            except Exception:
+                logger.exception("Unexpected error for {}", entry.url)
 
-        print(f"\n✓ Done! Scraped {len(products_to_scrape)} products.")
+        logger.success("Done! Scraped {} products", len(products_to_scrape))
 
 
 if __name__ == "__main__":

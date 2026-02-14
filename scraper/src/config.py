@@ -1,9 +1,3 @@
-"""Scraper-specific configuration.
-
-Contains settings that only the scraper service needs.
-Imports shared infrastructure settings from shared.config.
-"""
-
 import os
 
 from dotenv import load_dotenv
@@ -17,12 +11,17 @@ from shared.config import settings as shared_settings  # noqa: E402
 class ScraperSettings:
     """Scraper service configuration."""
 
+    SERVICE_NAME: str = "scraper"
+
     # HTTP client settings
     USER_AGENT: str = "SAQSommelier/0.1.0 (personal project; contact@victorpatrin.dev)"
     REQUEST_TIMEOUT: int = int(os.getenv("REQUEST_TIMEOUT", "30"))
 
     # Rate limiting (ethical scraping)
     RATE_LIMIT_SECONDS: int = int(os.getenv("RATE_LIMIT_SECONDS", "2"))
+
+    # Logging
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
     # Sitemap URL from robots.txt (https://www.saq.com/robots.txt)
     SITEMAP_URL: str = "https://www.saq.com/media/sitemaps/fr/sitemap_product.xml"

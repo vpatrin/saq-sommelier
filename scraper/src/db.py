@@ -1,8 +1,10 @@
 from datetime import UTC, datetime
 
+from loguru import logger
 from shared.db.base import create_session_factory
 from shared.db.models import Product
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import SQLAlchemyError
 
 from .config import settings
 from .parser import ProductData
@@ -42,5 +44,10 @@ async def upsert_product(product_data: ProductData) -> None:
             set_=update_dict,  # Update these fields
         )
 
-        await session.execute(stmt)
-        await session.commit()
+        try:
+            await session.execute(stmt)
+            await session.commit()
+        except SQLAlchemyError:
+            await session.rollback()
+            logger.error("DB error upserting SKU {}", product_data.sku or "unknown")
+            raise

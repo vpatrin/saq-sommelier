@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock
+from xml.etree.ElementTree import ParseError
 
 import httpx
 import pytest
@@ -38,6 +39,14 @@ class TestFetchSitemapIndex:
             "https://www.saq.com/media/sitemaps/fr/sitemap_product.xml"
         )
 
+    @pytest.mark.asyncio
+    async def test_raises_on_invalid_xml(self) -> None:
+        client = AsyncMock(spec=httpx.AsyncClient)
+        client.get.return_value = _make_response(b"not valid xml <><>")
+
+        with pytest.raises(ParseError):
+            await fetch_sitemap_index(client)
+
 
 class TestFetchSubSitemap:
     @pytest.mark.asyncio
@@ -74,3 +83,11 @@ class TestFetchSubSitemap:
         entries = await fetch_sub_sitemap(client, "https://example.com/sitemap.xml")
 
         assert entries == []
+
+    @pytest.mark.asyncio
+    async def test_raises_on_invalid_xml(self) -> None:
+        client = AsyncMock(spec=httpx.AsyncClient)
+        client.get.return_value = _make_response(b"<<<garbage>>>")
+
+        with pytest.raises(ParseError):
+            await fetch_sub_sitemap(client, "https://example.com/sitemap.xml")
