@@ -1,38 +1,66 @@
 # SAQ Sommelier
 
-AI-powered wine recommendation platform — SAQ catalog scraper, Claude RAG, Telegram bot & web app.
+AI-powered wine recommendation engine built on the SAQ (Quebec liquor board) product catalog.
+
+[![CI](https://github.com/vpatrin/saq-sommelier/actions/workflows/ci.yml/badge.svg)](https://github.com/vpatrin/saq-sommelier/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+![backend coverage](.github/badges/coverage-backend.svg)
+![scraper coverage](.github/badges/coverage-scraper.svg)
+
+## What it does
+
+Scrapes the SAQ product catalog via their public sitemap, stores structured wine data in PostgreSQL, and will eventually provide AI-powered recommendations through a Telegram bot and web interface.
+
+**Current status:** Scraper pipeline works end-to-end (sitemap parsing, HTML extraction, database upsert). Backend and AI layers are next.
 
 ## Stack
 
-- **Backend**: Python 3.12 + FastAPI
-- **Database**: PostgreSQL 16 (async via SQLAlchemy + asyncpg)
-- **Scraping**: httpx + BeautifulSoup4 (SAQ sitemap + product pages)
-- **Migrations**: Alembic
-- **Deployment**: Docker + Docker Compose + Caddy
+| Layer      | Technology                                     |
+| ---------- | ---------------------------------------------- |
+| Backend    | Python 3.12, FastAPI                           |
+| Database   | PostgreSQL 16 (async via SQLAlchemy + asyncpg) |
+| Migrations | Alembic                                        |
+| Scraper    | httpx, BeautifulSoup4, lxml                    |
+| AI         | Claude API (planned)                           |
+| Frontend   | React + Vite (planned)                         |
+| Infra      | Docker, Docker Compose, Caddy                  |
 
-## Setup
+## Project structure
+
+```
+saq-sommelier/
+├── backend/          # FastAPI API server
+├── scraper/          # SAQ product catalog scraper
+├── shared/           # Shared DB models, base, config
+├── scripts/          # Exploration and utility scripts
+├── .github/
+│   ├── badges/       # Auto-generated coverage badges
+│   └── workflows/ci.yml
+├── Makefile
+└── docker-compose.yml
+```
+
+Each service has its own `pyproject.toml`, `Dockerfile`, and Poetry environment. Services communicate through PostgreSQL, not by importing each other.
+
+## Getting started
 
 ### Prerequisites
 
 - Python 3.12+
-- shared-postgres running (Docker)
-- SAQ database + user created in shared-postgres
+- [Poetry](https://python-poetry.org/docs/#installation)
+- PostgreSQL running locally (we use a shared instance via Docker)
 
-### Local development
+### Setup
 
 ```bash
-# Copy env file and edit with your DB credentials
-cp .env.example .env
+# Install all dependencies
+make install
 
-# Install dependencies
-pip install -e ".[dev]"
+# Copy env file and configure DB credentials
+cp scraper/.env.example scraper/.env
 
-# Start shared-postgres + run migrations
-make deps
-make migrate
-
-# Start the dev server
-make dev
+# Run database migrations
+cd scraper && poetry run alembic upgrade head && cd ..
 ```
 
 ### Run the scraper
@@ -41,35 +69,26 @@ make dev
 make scrape
 ```
 
-### Run tests
+### Run the dev server
 
 ```bash
-make test
+make dev
 ```
 
-### Production (Docker)
+## Development
 
 ```bash
-make up
+make lint          # Lint all services (ruff)
+make format        # Auto-format all services
+make test          # Run all tests
+make coverage      # Run tests with coverage + update badges
+make clean         # Remove caches and coverage artifacts
 ```
 
-## API
+## Legal
 
-- `GET /api/products` — list products (filters: `region`, `type`, `country`, `price_min`, `price_max`, `available`)
-- `GET /api/products/{saq_code}` — get a single product by SAQ code
+SAQ product data is scraped ethically via their public sitemap (listed in `robots.txt`). Rate-limited to 2s between requests with transparent bot identification. See [scripts/FINDINGS.md](scripts/FINDINGS.md) for full analysis.
 
-## Project structure
+## License
 
-```text
-app/
-├── main.py              # FastAPI app
-├── config.py            # Pydantic Settings
-├── database.py          # SQLAlchemy async engine + session
-├── models/product.py    # Product model
-├── scraper/
-│   ├── sitemap.py       # SAQ XML sitemap parser
-│   └── product_parser.py # Product page HTML parser
-├── services/
-│   └── scraper_service.py # Scraper orchestration
-└── api/products.py      # REST endpoints
-```
+MIT

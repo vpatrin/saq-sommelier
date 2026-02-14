@@ -1,8 +1,9 @@
-.PHONY: install dev scrape lint-backend lint-scraper lint format-backend format-scraper format test-backend test-scraper test build-scraper build clean
+.PHONY: install dev scrape lint-backend lint-scraper lint-shared lint format-backend format-scraper format-shared format test-backend test-scraper test coverage-backend coverage-scraper coverage build-scraper build clean
 
 install:
 	cd backend && poetry install
 	cd scraper && poetry install
+	cd shared && poetry install
 
 dev:
 	cd backend && poetry run uvicorn backend.main:app --reload --port 8000
@@ -12,30 +13,57 @@ scrape:
 
 # Lint
 lint-backend:
+	@echo "\n▶ Linting backend/"
 	cd backend && poetry run ruff check . && poetry run ruff format --check .
 
 lint-scraper:
+	@echo "\n▶ Linting scraper/"
 	cd scraper && poetry run ruff check . && poetry run ruff format --check .
 
-lint: lint-backend lint-scraper
+lint-shared:
+	@echo "\n▶ Linting shared/"
+	cd shared && poetry run ruff check . && poetry run ruff format --check .
+
+lint: lint-backend lint-scraper lint-shared
 
 # Format
 format-backend:
+	@echo "\n▶ Formatting backend/"
 	cd backend && poetry run ruff format . && poetry run ruff check --fix .
 
 format-scraper:
+	@echo "\n▶ Formatting scraper/"
 	cd scraper && poetry run ruff format . && poetry run ruff check --fix .
 
-format: format-backend format-scraper
+format-shared:
+	@echo "\n▶ Formatting shared/"
+	cd shared && poetry run ruff format . && poetry run ruff check --fix .
+
+format: format-backend format-scraper format-shared
 
 # Test
 test-backend:
+	@echo "\n▶ Testing backend/"
 	cd backend && poetry run pytest -v
 
 test-scraper:
+	@echo "\n▶ Testing scraper/"
 	cd scraper && poetry run pytest -v
 
 test: test-backend test-scraper
+
+# Coverage
+coverage-backend:
+	@echo "\n▶ Coverage backend/"
+	cd backend && poetry run pytest --cov --cov-report=term --cov-report=xml
+
+coverage-scraper:
+	@echo "\n▶ Coverage scraper/"
+	cd scraper && poetry run pytest --cov --cov-report=term --cov-report=xml
+
+coverage: coverage-backend coverage-scraper
+	@echo "\n▶ Generating badges"
+	python scripts/generate_badges.py
 
 # Build
 build-scraper:
@@ -44,7 +72,9 @@ build-scraper:
 build: build-scraper
 
 clean:
+	@echo "\n▶ Cleaning caches"
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	rm -rf .pytest_cache backend/.pytest_cache scraper/.pytest_cache
-	rm -rf .ruff_cache backend/.ruff_cache scraper/.ruff_cache
+	rm -rf .ruff_cache backend/.ruff_cache scraper/.ruff_cache shared/.ruff_cache
+	rm -rf backend/coverage.xml backend/.coverage scraper/coverage.xml scraper/.coverage
 	rm -rf *.egg-info
