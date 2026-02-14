@@ -2,18 +2,10 @@
 # SECTION 1: BOILERPLATE - Standard Alembic Setup (100% untouched)
 # ============================================================================
 
-import sys
-from pathlib import Path
+# Load .env before importing shared settings (reads os.getenv at import time)
+from dotenv import load_dotenv
 
-# Add project root to Python path so shared/ can be imported
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-# Load scraper's .env file before importing anything that reads from environment
-from dotenv import load_dotenv  # noqa: E402
-
-env_path = Path(__file__).parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
+load_dotenv()
 
 from logging.config import fileConfig  # noqa: E402
 
