@@ -16,6 +16,7 @@ psycopg2-binary = "^2.9"
 python-dotenv = "^1.2.1"
 # greenlet: Required by SQLAlchemy for async operations (manages coroutine context switching)
 greenlet = "^3.3.1"
+saq-shared = {path = "../shared", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0"
@@ -24,7 +25,7 @@ pytest-asyncio = "^1.3.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = [".", ".."]  # Add parent dir so shared/ can be imported
+pythonpath = ["."]
 
 [tool.ruff]
 target-version = "py312"

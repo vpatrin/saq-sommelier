@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "saq-shared"
+version = "0.1.0"
+description = "Shared models and config for SAQ Sommelier"
+packages = [{include = "shared", from = ".."}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+sqlalchemy = "^2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

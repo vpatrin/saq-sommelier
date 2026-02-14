@@ -776,6 +776,23 @@ files = [
 ]
 
 [[package]]
+name = "saq-shared"
+version = "0.1.0"
+description = "Shared models and config for SAQ Sommelier"
+optional = false
+python-versions = "^3.12"
+groups = ["main"]
+files = []
+develop = true
+
+[package.dependencies]
+sqlalchemy = "^2.0"
+
+[package.source]
+type = "directory"
+url = "../shared"
+
+[[package]]
 name = "soupsieve"
 version = "2.8.3"
 description = "A modern CSS selector implementation for Beautiful Soup."
@@ -901,4 +918,4 @@ markers = {dev = "python_version == \"3.12\""}
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "30c428016c31f3afef874eb1d8e2bd9d89a7ccd1b1db476cfd024e8fa251f4de"
+content-hash = "6ffa28d7f79595b353afec2abffedde9244839b65841ecb1104da527b43107cb"
