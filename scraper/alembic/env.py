@@ -1,17 +1,19 @@
-# Load .env before importing shared settings (reads os.getenv at import time)
-from dotenv import load_dotenv
-
-load_dotenv()
-
 # ============================================================================
-# SECTION 1: BOILERPLATE - Standard Alembic Setup
+# SECTION 1: IMPORTS
 # ============================================================================
 
-from logging.config import fileConfig  # noqa: E402
+from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool  # noqa: E402
+from shared.config.settings import settings
+from shared.db import models  # noqa: F401 - Import models to register with Base.metadata
+from shared.db.base import Base
+from sqlalchemy import engine_from_config, pool
 
-from alembic import context  # noqa: E402
+from alembic import context
+
+# ============================================================================
+# SECTION 2: CONFIGURATION
+# ============================================================================
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -21,44 +23,22 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-
-# ============================================================================
-# SECTION 2: CUSTOM - Project-Specific Configuration
-# ============================================================================
-# This is the ONLY section we customized for our project.
-# Everything below is what we added to make Alembic work with our setup.
-
-# --- Custom Import 1: Base + Models (for autogenerate) ---
-# Why: Alembic needs to see your SQLAlchemy models to detect schema changes
-# Without this: `alembic revision --autogenerate` won't work
-# Standard practice: Required for any project using autogenerate
-# --- Custom Import 2: Settings (for DATABASE_URL) ---
-# Why: Don't hardcode credentials in alembic.ini, read from environment instead
-# Standard practice: 12-factor apps, Docker deployments
-from shared.config.settings import settings  # noqa: E402
-from shared.db import models  # noqa: E402, F401 - Import models to register with Base.metadata
-from shared.db.base import Base  # noqa: E402
-
-# --- Custom Config 1: Override DATABASE_URL ---
-# Why: Our app uses async SQLAlchemy (postgresql+asyncpg) for runtime,
-#      but Alembic runs migrations synchronously (needs postgresql+psycopg2)
-# Standard practice: Common pattern for FastAPI + async SQLAlchemy projects
-database_url = settings.DATABASE_URL.replace(
+# Override DATABASE_URL from settings instead of hardcoding in alembic.ini.
+# Our app uses async SQLAlchemy (postgresql+asyncpg) for runtime,
+# but Alembic runs migrations synchronously (needs postgresql+psycopg2).
+database_url = settings.database_url.replace(
     "postgresql+asyncpg://",  # App runtime (async)
     "postgresql+psycopg2://",  # Alembic migrations (sync)
 )
 config.set_main_option("sqlalchemy.url", database_url)
 
-# --- Custom Config 2: Set target_metadata ---
-# Why: Alembic compares Base.metadata (your models) vs actual database schema
-# This enables: `alembic revision --autogenerate` to detect changes
-# Default value: None (autogenerate won't work)
-# Standard practice: Required for autogenerate, every project does this
+# Alembic compares Base.metadata (your models) vs actual database schema.
+# This enables: `alembic revision --autogenerate` to detect changes.
 target_metadata = Base.metadata
 
 
 # ============================================================================
-# SECTION 3: BOILERPLATE - Migration Execution Logic (100% untouched)
+# SECTION 3: MIGRATION EXECUTION LOGIC
 # ============================================================================
 
 

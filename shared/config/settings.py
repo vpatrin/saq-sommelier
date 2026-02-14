@@ -1,5 +1,10 @@
 """Shared infrastructure settings for SAQ Sommelier services.
 
+Uses Pydantic Settings for:
+- Automatic .env file loading (no manual load_dotenv() needed)
+- Fail-fast validation (missing DB_USER → clear error at startup)
+- Type coercion (bool, int handled automatically)
+
 Only contains settings that are truly shared across all services:
 - Database configuration
 - Logging configuration
@@ -8,37 +13,57 @@ Only contains settings that are truly shared across all services:
 Service-specific settings belong in each service's config.py:
 - scraper/config.py - Scraper-specific (USER_AGENT, RATE_LIMIT, etc.)
 - backend/config.py - Backend-specific (JWT_SECRET, CORS, etc.)
-
-Note: This module reads from os.getenv() only.
-Each service is responsible for loading its own .env file before importing this module.
 """
 
-import os
+from functools import cached_property
+from typing import Literal
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings:
-    """Shared infrastructure configuration."""
+class Settings(BaseSettings):
+    """Shared infrastructure configuration.
 
-    # Environment (dev/staging/prod)
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT")
+    Reads from environment variables and .env files automatically.
+    Required fields (no default) will raise ValidationError if missing.
+    """
 
-    # Database (both services connect to same PostgreSQL)
-    # Can override with full DATABASE_URL or construct from components
-    DB_USER: str = os.getenv("DB_USER")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD")
-    DB_HOST: str = os.getenv("DB_HOST")
-    DB_PORT: str = os.getenv("DB_PORT")
-    DB_NAME: str = os.getenv("DB_NAME")
-
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+    model_config = SettingsConfigDict(
+        # Each service has its own .env — pydantic-settings looks relative to CWD
+        env_file=".env",
+        env_file_encoding="utf-8",
     )
 
-    # Debug / Logging (consistent log level across services)
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
-    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
-    DATABASE_ECHO: bool = os.getenv("DATABASE_ECHO", "false").lower() == "true"
+    # Environment
+    ENVIRONMENT: Literal["development", "staging", "production"] = "development"
+
+    # Database — required fields fail-fast if missing
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5432
+    DB_NAME: str
+
+    # Optional: override the full URL directly (e.g. in Docker Compose)
+    DATABASE_URL: str | None = None
+
+    # Debug / Logging
+    LOG_LEVEL: str = "INFO"
+    DEBUG: bool = False
+    DATABASE_ECHO: bool = False
+
+    @cached_property
+    def database_url(self) -> str:
+        """Return DATABASE_URL if set, otherwise build from components.
+
+        Uses cached_property so the string is built once, not on every access.
+        """
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+        return (
+            f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}"
+            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        )
 
 
 settings = Settings()

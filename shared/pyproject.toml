@@ -8,6 +8,7 @@ packages = [{include = "shared", from = ".."}]
 python = "^3.12"
 sqlalchemy = "^2.0"
 loguru = ">=0.7"
+pydantic-settings = "^2.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.15.0"
