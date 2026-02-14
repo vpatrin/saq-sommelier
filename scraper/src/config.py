@@ -14,6 +14,7 @@ class ScraperSettings(BaseSettings):
     """Scraper-specific configuration."""
 
     model_config = SettingsConfigDict(
+        # Fallback only — see shared/config/settings.py for env loading order.
         env_file=".env",
         env_file_encoding="utf-8",
         # Ignore DB_USER, DB_PASSWORD, etc. — those belong to shared Settings
@@ -28,6 +29,9 @@ class ScraperSettings(BaseSettings):
 
     # Rate limiting (ethical scraping)
     RATE_LIMIT_SECONDS: int = 2
+
+    # Logging (per-service override — scraper might want DEBUG while backend stays INFO)
+    LOG_LEVEL: str = "INFO"
 
     # Sitemap URL from robots.txt (https://www.saq.com/robots.txt)
     SITEMAP_URL: str = "https://www.saq.com/media/sitemaps/fr/sitemap_product.xml"

@@ -24,12 +24,21 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Shared infrastructure configuration.
 
-    Reads from environment variables and .env files automatically.
+    Reads from environment variables (and .env in CWD as fallback).
     Required fields (no default) will raise ValidationError if missing.
+
+    Env var loading order:
+    - Bare metal: Makefile exports root .env → pydantic reads env vars
+    - Docker: compose passes env vars via env_file → pydantic reads env vars
+    - Tests: conftest sets env vars → pydantic reads env vars
     """
 
     model_config = SettingsConfigDict(
-        # Each service has its own .env — pydantic-settings looks relative to CWD
+        # Fallback only — in practice, env vars are already set by:
+        #   Bare metal: Makefile `-include .env` + export
+        #   Docker:     compose env_file: .env
+        #   Tests:      conftest.py os.environ.setdefault
+        # This only helps if someone runs `python` directly from the project root.
         env_file=".env",
         env_file_encoding="utf-8",
     )

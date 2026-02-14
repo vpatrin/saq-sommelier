@@ -1,14 +1,55 @@
+# Local dev:  docker compose --profile dev up  (or: make up)
+# Production: docker compose up  (postgres is external, only backend starts)
+# Run scraper: docker compose run --rm scraper
+
 services:
-  app:
-    build: .
-    container_name: saq-sommelier
-    restart: unless-stopped
+  postgres:
+    profiles: ["dev"]
+    image: postgres:17-alpine
+    container_name: saq-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-saq_sommelier}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-saq_sommelier}
+      POSTGRES_DB: ${DB_NAME:-saq_sommelier}
+    # No host port — services connect via Docker network (postgres:5432).
+    # To connect from host (e.g. DBeaver), use your shared-postgres on :5432.
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-saq_sommelier}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: saq-backend
     env_file: .env
+    environment:
+      # Override DB_HOST for compose networking (default in .env is localhost)
+      DB_HOST: ${DB_HOST:-postgres}
     ports:
       - "127.0.0.1:8000:8000"
-    networks:
-      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    restart: unless-stopped
 
-networks:
-  internal:
-    external: true
+  scraper:
+    build:
+      context: .
+      dockerfile: scraper/Dockerfile
+    container_name: saq-scraper
+    env_file: .env
+    environment:
+      DB_HOST: ${DB_HOST:-postgres}
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+
+volumes:
+  pgdata:

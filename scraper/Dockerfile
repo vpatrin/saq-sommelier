@@ -12,10 +12,19 @@ COPY shared/ shared/
 # Copy scraper dependency files + install
 COPY scraper/pyproject.toml scraper/poetry.lock scraper/
 WORKDIR /build/scraper
+
+# Poetry installs shared as editable (develop=true), creating .pth symlinks to
+# /build/shared/ — these don't survive multi-stage builds. After poetry install,
+# pip re-installs shared as a proper package into site-packages.
 RUN poetry config virtualenvs.create false \
-    && poetry install --only main --no-interaction
+    && poetry install --only main --no-interaction \
+    && pip install --no-deps --force-reinstall /build/shared
 
 FROM python:3.12-slim
+
+# Logs appear immediately in docker compose logs (no buffering)
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
 
@@ -24,6 +33,10 @@ COPY --from=builder /usr/local /usr/local
 
 # Copy scraper code
 COPY scraper/src/ scraper/src/
+
+# Run as non-root user
+RUN useradd --create-home appuser
+USER appuser
 
 WORKDIR /app/scraper
 
