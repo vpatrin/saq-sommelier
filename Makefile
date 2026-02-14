@@ -1,6 +1,7 @@
 .PHONY: install dev scrape lint-backend lint-scraper lint-shared lint format-backend format-scraper format-shared format test-backend test-scraper test coverage-backend coverage-scraper coverage build-scraper build clean
 
 install:
+	git config core.hooksPath .githooks
 	cd backend && poetry install
 	cd scraper && poetry install
 	cd shared && poetry install
