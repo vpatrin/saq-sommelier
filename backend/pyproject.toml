@@ -8,9 +8,6 @@ package-mode = false
 python = "^3.12"
 fastapi = ">=0.115"
 uvicorn = { version = ">=0.34", extras = ["standard"] }
-httpx = ">=0.28"
-beautifulsoup4 = ">=4.12"
-lxml = ">=5.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0"
