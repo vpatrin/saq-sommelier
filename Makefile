@@ -1,4 +1,10 @@
-.PHONY: install dev scrape lint-backend lint-scraper lint-shared lint format-backend format-scraper format-shared format test-backend test-scraper test coverage-backend coverage-scraper coverage build-scraper build clean
+# Load root .env and export to all child processes (bare-metal dev).
+# -include: don't fail if .env is missing (CI, fresh clone).
+# export: make vars available to commands (poetry run, pytest, etc.).
+-include .env
+export
+
+.PHONY: install dev scrape lint-backend lint-scraper lint-shared lint format-backend format-scraper format-shared format test-backend test-scraper test coverage-backend coverage-scraper coverage build-backend build-scraper build up down clean
 
 install:
 	git config core.hooksPath .githooks
@@ -67,10 +73,20 @@ coverage: coverage-backend coverage-scraper
 	python scripts/generate_badges.py
 
 # Build
+build-backend:
+	docker build -f backend/Dockerfile -t saq-backend .
+
 build-scraper:
 	docker build -f scraper/Dockerfile -t saq-scraper .
 
-build: build-scraper
+build: build-backend build-scraper
+
+# Docker Compose (local dev)
+up:
+	docker compose --profile dev up -d
+
+down:
+	docker compose --profile dev down
 
 clean:
 	@echo "\n▶ Cleaning caches"

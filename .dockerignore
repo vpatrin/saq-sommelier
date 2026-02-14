@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Dev tools
+.ruff_cache/
+.vscode/
+.idea/
+*.swp
+*~
+
+# Git
+.git/
+.gitignore
+.githooks/
+
+# CI
+.github/
+
+# Scripts (exploration tools, not needed in containers)
+scripts/
+
+# Local env files
+.env
+.env.local
+*.log
+
+# Docker (don't send docker config into the build context)
+docker-compose.yml
+.dockerignore
+
+# Docs
+*.md
+LICENSE
