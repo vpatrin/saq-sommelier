@@ -1,11 +1,11 @@
-# ============================================================================
-# SECTION 1: BOILERPLATE - Standard Alembic Setup (100% untouched)
-# ============================================================================
-
 # Load .env before importing shared settings (reads os.getenv at import time)
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# ============================================================================
+# SECTION 1: BOILERPLATE - Standard Alembic Setup
+# ============================================================================
 
 from logging.config import fileConfig  # noqa: E402
 
