@@ -8,6 +8,12 @@ package-mode = false
 python = "^3.12"
 fastapi = ">=0.115"
 uvicorn = { version = ">=0.34", extras = ["standard"] }
+sqlalchemy = "^2.0"
+asyncpg = "^0.29"
+# greenlet: Required by SQLAlchemy for async operations (manages coroutine context switching)
+greenlet = "^3.3.1"
+loguru = ">=0.7"
+saq-shared = {path = "../shared", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 httpx = ">=0.28"
