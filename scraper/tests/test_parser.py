@@ -63,6 +63,23 @@ class TestParseProductEdgeCases:
         assert isinstance(result, ProductData)
 
 
+class TestProductDataAlignment:
+    def test_product_data_fields_exist_on_model(self) -> None:
+        """Every ProductData field must map to a Product column.
+
+        Catches renames in the ORM model that would silently break upserts
+        (unknown columns ignored or raising at DB level).
+        """
+        import dataclasses
+
+        from shared.db.models import Product
+
+        model_columns = set(Product.__table__.columns.keys())
+        data_fields = {f.name for f in dataclasses.fields(ProductData)}
+        missing = data_fields - model_columns
+        assert not missing, f"ProductData fields not in Product model: {missing}"
+
+
 class TestProductDataToDict:
     def test_returns_all_fields(self, product_page_html: str) -> None:
         product = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
