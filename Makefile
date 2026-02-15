@@ -19,10 +19,10 @@ scrape:
 	cd scraper && poetry run python -m src
 
 migrate:
-	cd scraper && poetry run alembic upgrade head
+	cd core && poetry run alembic upgrade head
 
 reset-db:
-	cd scraper && poetry run alembic downgrade base && poetry run alembic upgrade head
+	cd core && poetry run alembic downgrade base && poetry run alembic upgrade head
 
 # Lint
 lint-backend:
