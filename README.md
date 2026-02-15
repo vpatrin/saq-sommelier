@@ -39,7 +39,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Architecture](docs/ARCHITECTURE.md) — system design, project structure, tech decisions
 - [Data Flow](docs/DATA_FLOW.md) — three-schema boundary design
 - [Development](docs/DEVELOPMENT.md) — database setup, environment config, dev workflow
-- [Scraping Findings](scripts/FINDINGS.md) — SAQ catalog analysis and legal research
+- [Migrations](docs/MIGRATIONS.md) — Alembic setup, workflow, and troubleshooting
 
 ## Legal
 
