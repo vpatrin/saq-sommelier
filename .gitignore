@@ -34,7 +34,4 @@ htmlcov/
 # Claude
 CLAUDE.md
 
-# SAQ data (exploration artifacts)
-scripts/sitemap_urls.txt
-scripts/samples/
 *.html
