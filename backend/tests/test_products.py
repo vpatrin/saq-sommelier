@@ -63,7 +63,7 @@ def test_list_products_default_pagination():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/products")
+    resp = client.get("/api/v1/products")
     assert resp.status_code == 200
     data = resp.json()
     assert data["total"] == 3
@@ -81,7 +81,7 @@ def test_list_products_response_shape():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/products")
+    resp = client.get("/api/v1/products")
     product = resp.json()["products"][0]
     assert set(product.keys()) == EXPECTED_FIELDS
 
@@ -93,7 +93,7 @@ def test_list_products_price_serialization():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/products")
+    resp = client.get("/api/v1/products")
     assert resp.json()["products"][0]["price"] == "15.99"
 
 
@@ -103,7 +103,7 @@ def test_list_products_custom_pagination():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/products?page=2&per_page=10")
+    resp = client.get("/api/v1/products?page=2&per_page=10")
     assert resp.status_code == 200
     data = resp.json()
     assert data["total"] == 25
@@ -118,7 +118,7 @@ def test_list_products_empty():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/products")
+    resp = client.get("/api/v1/products")
     assert resp.status_code == 200
     data = resp.json()
     assert data["total"] == 0
@@ -132,7 +132,7 @@ def test_list_products_invalid_page():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/products?page=0")
+    resp = client.get("/api/v1/products?page=0")
     assert resp.status_code == 422
 
 
@@ -142,7 +142,7 @@ def test_list_products_per_page_too_large():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/products?per_page=101")
+    resp = client.get("/api/v1/products?per_page=101")
     assert resp.status_code == 422
 
 
@@ -171,7 +171,7 @@ def test_list_products_excludes_sensitive_fields():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/products")
+    resp = client.get("/api/v1/products")
     product = resp.json()["products"][0]
     # ! We decided to exclude SAQ proprietary data
     for field in ("description", "url", "image"):

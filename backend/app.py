@@ -9,4 +9,4 @@ setup_logging(SERVICE_NAME)
 
 app = FastAPI(title="SAQ Sommelier", version="0.1.0")
 app.include_router(health_router)
-app.include_router(products_router)
+app.include_router(products_router, prefix="/api/v1")
