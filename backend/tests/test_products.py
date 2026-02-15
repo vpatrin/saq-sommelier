@@ -152,7 +152,7 @@ def test_product_response_fields_exist_on_model():
     Catches renames in the ORM model that silently break the API
     (from_attributes=True returns None instead of raising).
     """
-    from shared.db.models import Product
+    from core.db.models import Product
 
     model_columns = set(Product.__table__.columns.keys())
     response_fields = set(ProductResponse.model_fields.keys())

@@ -4,13 +4,13 @@
 -include .env
 export
 
-.PHONY: install dev scrape lint-backend lint-scraper lint-shared lint format-backend format-scraper format-shared format test-backend test-scraper test coverage-backend coverage-scraper coverage build-backend build-scraper build up down clean
+.PHONY: install dev scrape lint-backend lint-scraper lint-core lint format-backend format-scraper format-core format test-backend test-scraper test coverage-backend coverage-scraper coverage build-backend build-scraper build up down clean
 
 install:
 	git config core.hooksPath .githooks
 	cd backend && poetry install
 	cd scraper && poetry install
-	cd shared && poetry install
+	cd core && poetry install
 
 dev:
 	cd backend && poetry run uvicorn backend.app:app --reload --port 8000
@@ -27,11 +27,11 @@ lint-scraper:
 	@echo "\n▶ Linting scraper/"
 	cd scraper && poetry run ruff check . && poetry run ruff format --check .
 
-lint-shared:
-	@echo "\n▶ Linting shared/"
-	cd shared && poetry run ruff check . && poetry run ruff format --check .
+lint-core:
+	@echo "\n▶ Linting core/"
+	cd core && poetry run ruff check . && poetry run ruff format --check .
 
-lint: lint-backend lint-scraper lint-shared
+lint: lint-backend lint-scraper lint-core
 
 # Format
 format-backend:
@@ -42,11 +42,11 @@ format-scraper:
 	@echo "\n▶ Formatting scraper/"
 	cd scraper && poetry run ruff format . && poetry run ruff check --fix .
 
-format-shared:
-	@echo "\n▶ Formatting shared/"
-	cd shared && poetry run ruff format . && poetry run ruff check --fix .
+format-core:
+	@echo "\n▶ Formatting core/"
+	cd core && poetry run ruff format . && poetry run ruff check --fix .
 
-format: format-backend format-scraper format-shared
+format: format-backend format-scraper format-core
 
 # Test
 test-backend:
@@ -92,6 +92,6 @@ clean:
 	@echo "\n▶ Cleaning caches"
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	rm -rf .pytest_cache backend/.pytest_cache scraper/.pytest_cache
-	rm -rf .ruff_cache backend/.ruff_cache scraper/.ruff_cache shared/.ruff_cache
+	rm -rf .ruff_cache backend/.ruff_cache scraper/.ruff_cache core/.ruff_cache
 	rm -rf backend/coverage.xml backend/.coverage scraper/coverage.xml scraper/.coverage
 	rm -rf *.egg-info

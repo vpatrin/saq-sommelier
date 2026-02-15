@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Float, Integer, Numeric, String, Text
 
-from shared.db.base import Base
+from core.db.base import Base
 
 
 class Product(Base):

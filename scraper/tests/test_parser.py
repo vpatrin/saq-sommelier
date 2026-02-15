@@ -72,7 +72,7 @@ class TestProductDataAlignment:
         """
         import dataclasses
 
-        from shared.db.models import Product
+        from core.db.models import Product
 
         model_columns = set(Product.__table__.columns.keys())
         data_fields = {f.name for f in dataclasses.fields(ProductData)}

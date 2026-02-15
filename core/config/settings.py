@@ -1,11 +1,11 @@
-"""Shared infrastructure settings for SAQ Sommelier services.
+"""Core infrastructure settings for SAQ Sommelier services.
 
 Uses Pydantic Settings for:
 - Automatic .env file loading (no manual load_dotenv() needed)
 - Fail-fast validation (missing DB_USER → clear error at startup)
 - Type coercion (bool, int handled automatically)
 
-Only contains settings that are truly shared across all services:
+Only contains settings that are truly shared across services:
 - Database configuration
 - Logging configuration
 - Environment settings
@@ -22,7 +22,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Shared infrastructure configuration.
+    """Core infrastructure configuration.
 
     Reads from environment variables (and .env in CWD as fallback).
     Required fields (no default) will raise ValidationError if missing.

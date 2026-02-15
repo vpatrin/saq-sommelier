@@ -1,23 +1,23 @@
 """Scraper service configuration.
 
-Inherits shared infrastructure settings (DB, logging) from shared.config.
+Inherits shared infrastructure settings (DB, logging) from core.config.
 Adds scraper-specific settings (rate limiting, user agent, sitemap URL).
 
 No load_dotenv() needed — pydantic-settings reads .env automatically.
 """
 
+from core.config.settings import settings as core_settings
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from shared.config.settings import settings as shared_settings
 
 
 class ScraperSettings(BaseSettings):
     """Scraper-specific configuration."""
 
     model_config = SettingsConfigDict(
-        # Fallback only — see shared/config/settings.py for env loading order.
+        # Fallback only — see core/config/settings.py for env loading order.
         env_file=".env",
         env_file_encoding="utf-8",
-        # Ignore DB_USER, DB_PASSWORD, etc. — those belong to shared Settings
+        # Ignore DB_USER, DB_PASSWORD, etc. — those belong to core Settings
         extra="ignore",
     )
 
@@ -44,11 +44,11 @@ class ScraperSettings(BaseSettings):
     # Shared infrastructure settings (used by db.py)
     @property
     def database_url(self) -> str:
-        return shared_settings.database_url
+        return core_settings.database_url
 
     @property
     def database_echo(self) -> bool:
-        return shared_settings.DATABASE_ECHO
+        return core_settings.DATABASE_ECHO
 
 
 # Global settings instance

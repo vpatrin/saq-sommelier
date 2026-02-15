@@ -918,9 +918,9 @@ files = [
 ]
 
 [[package]]
-name = "saq-shared"
+name = "saq-core"
 version = "0.1.0"
-description = "Shared models and config for SAQ Sommelier"
+description = "Core infrastructure for SAQ Sommelier (models, config, logging)"
 optional = false
 python-versions = "^3.12"
 groups = ["main"]
@@ -934,7 +934,7 @@ sqlalchemy = "^2.0"
 
 [package.source]
 type = "directory"
-url = "../shared"
+url = "../core"
 
 [[package]]
 name = "sqlalchemy"
@@ -1384,4 +1384,4 @@ dev = ["black (>=19.3b0) ; python_version >= \"3.6\"", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "a47248c265c8c861848b85759e0030e03344016b63cd5d496f3704c64c4ff8f0"
+content-hash = "fc2578b10ceab635b8de7c4bf8d3dea45bf3669f5183582bb4a84c58c033a49e"

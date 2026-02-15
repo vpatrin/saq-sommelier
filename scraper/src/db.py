@@ -1,8 +1,8 @@
 from datetime import UTC, datetime
 
+from core.db.base import create_session_factory
+from core.db.models import Product
 from loguru import logger
-from shared.db.base import create_session_factory
-from shared.db.models import Product
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 

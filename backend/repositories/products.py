@@ -1,4 +1,4 @@
-from shared.db.models import Product
+from core.db.models import Product
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -4,9 +4,9 @@
 
 from logging.config import fileConfig
 
-from shared.config.settings import settings
-from shared.db import models  # noqa: F401 - Import models to register with Base.metadata
-from shared.db.base import Base
+from core.config.settings import settings
+from core.db import models  # noqa: F401 - Import models to register with Base.metadata
+from core.db.base import Base
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context

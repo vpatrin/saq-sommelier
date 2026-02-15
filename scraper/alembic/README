@@ -8,7 +8,7 @@ Think of it as a migration tool that bridges the gap between your Python models 
 
 ## Why Use Migrations Instead of Manual SQL Scripts?
 
-**IMPORTANT:** SQLAlchemy models alone don't create database tables. The `Product` class in [shared/db/models.py](../shared/db/models.py) is just Python code - it doesn't touch PostgreSQL until you explicitly create the table.
+**IMPORTANT:** SQLAlchemy models alone don't create database tables. The `Product` class in [core/db/models.py](../core/db/models.py) is just Python code - it doesn't touch PostgreSQL until you explicitly create the table.
 
 You have three options to create tables:
 
@@ -84,7 +84,7 @@ Without this setup, `--autogenerate` would fail or produce empty migrations.
 
 Alembic compares two things:
 
-1. **Target** (desired state) — Your SQLAlchemy models in `shared/db/models.py`
+1. **Target** (desired state) — Your SQLAlchemy models in `core/db/models.py`
 2. **Current** (actual state) — What's currently in the PostgreSQL database
 
 Then it generates a **migration script** with the SQL commands needed to transform Current → Target.
@@ -104,7 +104,7 @@ Out of the box, `alembic init` generates `env.py` with boilerplate only. We cust
 ### 1. Import Base (for autogenerate)
 
 ```python
-from shared.db.base import Base
+from core.db.base import Base
 ```
 
 **Why:** Alembic needs to see your models to detect schema changes.
@@ -114,7 +114,7 @@ from shared.db.base import Base
 ### 2. Import Settings (for DATABASE_URL)
 
 ```python
-from shared.config.settings import settings
+from core.config.settings import settings
 ```
 
 **Why:** Don't hardcode credentials in `alembic.ini`, read from environment.
@@ -150,8 +150,8 @@ target_metadata = Base.metadata
 ### Development (local)
 
 ```bash
-# 1. Edit your models in shared/db/models.py
-vim shared/db/models.py
+# 1. Edit your models in core/db/models.py
+vim core/db/models.py
 
 # 2. Generate migration (Alembic detects changes)
 alembic revision --autogenerate -m "add alcohol column to products"
@@ -163,7 +163,7 @@ vim alembic/versions/xxxx_add_alcohol_column_to_products.py
 alembic upgrade head
 
 # 5. Commit migration + model changes together
-git add shared/db/models.py alembic/versions/xxxx_*.py
+git add core/db/models.py alembic/versions/xxxx_*.py
 git commit -m "feat: add alcohol column to Product model"
 ```
 
@@ -275,7 +275,7 @@ Your local `alembic/versions/` is out of sync with the database. Pull latest cod
 Check that:
 
 - `target_metadata = Base.metadata` is set in `env.py`
-- Your models are imported somewhere (via `shared.db.__init__.py`)
+- Your models are imported somewhere (via `core.db.__init__.py`)
 - You actually changed the models since last migration
 
 ### Connection refused

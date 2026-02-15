@@ -1,5 +1,5 @@
 import pytest
-from shared.config.test_utils import configure_test_db_env
+from core.config.test_utils import configure_test_db_env
 
 configure_test_db_env()
 
