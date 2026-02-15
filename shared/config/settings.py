@@ -75,26 +75,4 @@ class Settings(BaseSettings):
         )
 
 
-def configure_test_db_env() -> None:
-    """Set fallback DB env vars for test environments (no .env file in CI).
-
-    Must be called before Settings() is instantiated (i.e., before importing
-    any module that triggers `settings = Settings()`).
-
-    Values match Settings field defaults where they exist; required fields
-    (DB_USER, DB_PASSWORD, DB_NAME) get "test" as a safe dummy.
-    """
-    import os
-
-    test_env = {
-        "DB_USER": "test",
-        "DB_PASSWORD": "test",
-        "DB_HOST": "localhost",
-        "DB_PORT": "5432",
-        "DB_NAME": "test",
-    }
-    for var, default in test_env.items():
-        os.environ.setdefault(var, default)
-
-
 settings = Settings()
