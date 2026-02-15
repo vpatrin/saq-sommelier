@@ -1,12 +1,13 @@
-import os
+import pytest
+from shared.config.settings import configure_test_db_env
 
-# Set fallback DB env vars so that importing backend.db doesn't fail in CI (no .env file).
-# Tests mock get_db, so no real DB connection is made.
-for var, default in [
-    ("DB_USER", "test"),
-    ("DB_PASSWORD", "test"),
-    ("DB_HOST", "localhost"),
-    ("DB_PORT", "5432"),
-    ("DB_NAME", "test"),
-]:
-    os.environ.setdefault(var, default)
+configure_test_db_env()
+
+from backend.main import app  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _clean_overrides():
+    """Clear dependency overrides after each test."""
+    yield
+    app.dependency_overrides.clear()
