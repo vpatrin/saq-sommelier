@@ -9,6 +9,12 @@ async def count(db: AsyncSession) -> int:
     return result.scalar_one()
 
 
+async def find_by_sku(db: AsyncSession, sku: str) -> Product | None:
+    """Return a single product by SKU, or None if not found."""
+    result = await db.execute(select(Product).where(Product.sku == sku))
+    return result.scalar_one_or_none()
+
+
 async def find_page(db: AsyncSession, offset: int, limit: int) -> list[Product]:
     """Return a page of products ordered by name."""
     result = await db.execute(select(Product).order_by(Product.name).offset(offset).limit(limit))

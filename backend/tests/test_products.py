@@ -57,6 +57,69 @@ def _mock_db_for_products(products: list, total: int):
     return session
 
 
+def _mock_db_for_detail(product):
+    """Mock async session — returns a single product or None."""
+    session = AsyncMock()
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = product
+    session.execute = AsyncMock(return_value=result)
+    return session
+
+
+# ── Detail endpoint ──────────────────────────────────────────────
+
+
+def test_get_product_found():
+    product = _fake_product(sku="ABC123", name="Château Test")
+    session = _mock_db_for_detail(product)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/ABC123")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["sku"] == "ABC123"
+    assert data["name"] == "Château Test"
+
+
+def test_get_product_not_found():
+    session = _mock_db_for_detail(None)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/NOPE")
+    assert resp.status_code == 404
+    assert "NOPE" in resp.json()["detail"]
+
+
+def test_get_product_response_shape():
+    """Detail endpoint returns the same fields as the list endpoint."""
+    product = _fake_product()
+    session = _mock_db_for_detail(product)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/test")
+    assert set(resp.json().keys()) == EXPECTED_FIELDS
+
+
+def test_get_product_excludes_sensitive_fields():
+    """Verbatim SAQ content must not appear in detail responses either."""
+    product = _fake_product(
+        description="SAQ text", url="https://saq.com/x", image="https://saq.com/img.jpg"
+    )
+    session = _mock_db_for_detail(product)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/test")
+    for field in ("description", "url", "image"):
+        assert field not in resp.json(), f"{field} should not be exposed in API"
+
+
+# ── List endpoint ────────────────────────────────────────────────
+
+
 def test_list_products_default_pagination():
     products = [_fake_product(sku=f"SKU{i}", name=f"Wine {i}") for i in range(3)]
     session = _mock_db_for_products(products, total=3)
