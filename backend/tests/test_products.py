@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 from fastapi.testclient import TestClient
 
+from backend.app import app
 from backend.db import get_db
-from backend.main import app
 from backend.schemas.product import ProductResponse
 
 NOW = datetime(2025, 1, 1, tzinfo=UTC)
