@@ -9,6 +9,32 @@ AI-powered wine recommendation engine built on the SAQ (Quebec liquor board) pro
 
 Scrapes ~38k products from the SAQ public sitemap, stores structured wine data in PostgreSQL, and serves it through a FastAPI API. A Telegram bot will provide natural language recommendations powered by Claude.
 
+## Architecture
+
+```mermaid
+graph LR
+    SAQ[SAQ.com]
+    Scraper[Scraper]
+    DB[(PostgreSQL)]
+    API[FastAPI]
+    Claude[Claude API]
+    Bot[Telegram Bot]
+    Web[React Dashboard]
+
+    SAQ -- sitemap XML --> Scraper
+    Scraper -- write --> DB
+    DB -- read --> API
+    API --> Claude
+    API --> Bot
+    API --> Web
+
+    style Bot stroke-dasharray: 5 5
+    style Web stroke-dasharray: 5 5
+    style Claude stroke-dasharray: 5 5
+```
+
+*Dashed = planned. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full details.*
+
 ## Quick start
 
 ```bash
