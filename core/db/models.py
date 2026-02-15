@@ -6,7 +6,7 @@ Both scraper and backend import models from here.
 
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, Index, Integer, Numeric, String, Text
 
 from core.db.base import Base
 
@@ -23,6 +23,15 @@ class Product(Base):
     """
 
     __tablename__ = "products"
+    __table_args__ = (
+        # GIN trigram: substring search (WHERE name ILIKE '%margaux%')
+        Index(
+            "ix_products_name_trgm",
+            "name",
+            postgresql_using="gin",
+            postgresql_ops={"name": "gin_trgm_ops"},
+        ),
+    )
 
     # Primary key: SAQ SKU (immutable business identifier)
     sku = Column(String, primary_key=True, nullable=False, comment="SAQ product SKU")
@@ -33,6 +42,7 @@ class Product(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         nullable=False,
+        index=True,
         comment="When first scraped",
     )
     updated_at = Column(
@@ -44,15 +54,15 @@ class Product(Base):
     )
 
     # JSON-LD fields (from <script type="application/ld+json">)
-    name = Column(String, nullable=True, comment="Product name")
+    name = Column(String, nullable=True, index=True, comment="Product name")
     description = Column(Text, nullable=True, comment="Product description")
-    category = Column(String, nullable=True, comment="Product category")
-    country = Column(String, nullable=True, comment="Country of origin")
+    category = Column(String, nullable=True, index=True, comment="Product category")
+    country = Column(String, nullable=True, index=True, comment="Country of origin")
     barcode = Column(String, nullable=True, comment="GTIN-12 barcode")
     color = Column(String, nullable=True, comment="Wine color (red/white/rosé)")
     size = Column(String, nullable=True, comment="Bottle size (e.g., 750ml)")
     image = Column(String, nullable=True, comment="Product image URL")
-    price = Column(Numeric(10, 2), nullable=True, comment="Price in CAD")
+    price = Column(Numeric(10, 2), nullable=True, index=True, comment="Price in CAD")
     currency = Column(String, nullable=True, comment="Currency code (CAD)")
     availability = Column(Boolean, nullable=True, comment="In stock?")
     manufacturer = Column(String, nullable=True, comment="Manufacturer name")
@@ -60,7 +70,7 @@ class Product(Base):
     review_count = Column(Integer, nullable=True, comment="Number of reviews")
 
     # HTML attribute fields (from <ul class="list-attributs">)
-    region = Column(String, nullable=True, comment="Wine region")
+    region = Column(String, nullable=True, index=True, comment="Wine region")
     appellation = Column(String, nullable=True, comment="Appellation d'origine")
     designation = Column(String, nullable=True, comment="Désignation réglementée")
     classification = Column(String, nullable=True, comment="Wine classification")
