@@ -4,7 +4,7 @@
 -include .env
 export
 
-.PHONY: install dev scrape lint-backend lint-scraper lint-core lint format-backend format-scraper format-core format test-backend test-scraper test coverage-backend coverage-scraper coverage build-backend build-scraper build up down clean
+.PHONY: install dev scrape migrate reset-db lint-backend lint-scraper lint-core lint format-backend format-scraper format-core format test-backend test-scraper test coverage-backend coverage-scraper coverage build-backend build-scraper build up down clean
 
 install:
 	git config core.hooksPath .githooks
@@ -17,6 +17,12 @@ dev:
 
 scrape:
 	cd scraper && poetry run python -m src
+
+migrate:
+	cd scraper && poetry run alembic upgrade head
+
+reset-db:
+	cd scraper && poetry run alembic downgrade base && poetry run alembic upgrade head
 
 # Lint
 lint-backend:
@@ -83,7 +89,7 @@ build: build-backend build-scraper
 
 # Docker Compose (local dev)
 up:
-	docker compose --profile dev up -d
+	docker compose --profile dev up -d postgres
 
 down:
 	docker compose --profile dev down
@@ -93,5 +99,4 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	rm -rf .pytest_cache backend/.pytest_cache scraper/.pytest_cache
 	rm -rf .ruff_cache backend/.ruff_cache scraper/.ruff_cache core/.ruff_cache
-	rm -rf backend/coverage.xml backend/.coverage scraper/coverage.xml scraper/.coverage
 	rm -rf *.egg-info
