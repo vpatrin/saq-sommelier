@@ -1126,9 +1126,9 @@ files = [
 ]
 
 [[package]]
-name = "saq-shared"
+name = "saq-core"
 version = "0.1.0"
-description = "Shared models and config for SAQ Sommelier"
+description = "Core infrastructure for SAQ Sommelier (models, config, logging)"
 optional = false
 python-versions = "^3.12"
 groups = ["main"]
@@ -1142,7 +1142,7 @@ sqlalchemy = "^2.0"
 
 [package.source]
 type = "directory"
-url = "../shared"
+url = "../core"
 
 [[package]]
 name = "soupsieve"
@@ -1301,4 +1301,4 @@ dev = ["black (>=19.3b0) ; python_version >= \"3.6\"", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "7fc2464f366541853862f9da30c0a6337112b52cc27510e9e2a94145b3a08118"
+content-hash = "064b36c1ed79efe11e7e4ed31a71887dc5cad27accb526d09a5884ef4457ddff"

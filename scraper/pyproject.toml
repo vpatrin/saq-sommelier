@@ -16,7 +16,7 @@ psycopg2-binary = "^2.9"
 # greenlet: Required by SQLAlchemy for async operations (manages coroutine context switching)
 greenlet = "^3.3.1"
 loguru = ">=0.7"
-saq-shared = {path = "../shared", develop = true}
+saq-core = {path = "../core", develop = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0"

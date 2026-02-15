@@ -1,5 +1,5 @@
+from core.logging import setup_logging
 from fastapi import FastAPI
-from shared.logging import setup_logging
 
 from backend.api.health import router as health_router
 from backend.api.products import router as products_router

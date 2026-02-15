@@ -31,7 +31,7 @@ Scrapes the SAQ product catalog via their public sitemap, stores structured wine
 saq-sommelier/
 ├── backend/          # FastAPI API server
 ├── scraper/          # SAQ product catalog scraper
-├── shared/           # Shared DB models, base, config
+├── core/             # Core infrastructure (models, config, logging)
 ├── scripts/          # Exploration and utility scripts
 ├── .github/
 │   ├── badges/       # Auto-generated coverage badges

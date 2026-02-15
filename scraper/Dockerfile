@@ -6,19 +6,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /build
 
-# Copy shared package (path dependency of scraper)
-COPY shared/ shared/
+# Copy core package (path dependency of scraper)
+COPY core/ core/
 
 # Copy scraper dependency files + install
 COPY scraper/pyproject.toml scraper/poetry.lock scraper/
 WORKDIR /build/scraper
 
-# Poetry installs shared as editable (develop=true), creating .pth symlinks to
-# /build/shared/ — these don't survive multi-stage builds. After poetry install,
-# pip re-installs shared as a proper package into site-packages.
+# Poetry installs core as editable (develop=true), creating .pth symlinks to
+# /build/core/ — these don't survive multi-stage builds. After poetry install,
+# pip re-installs core as a proper package into site-packages.
 RUN poetry config virtualenvs.create false \
     && poetry install --only main --no-interaction \
-    && pip install --no-deps --force-reinstall /build/shared
+    && pip install --no-deps --force-reinstall /build/core
 
 FROM python:3.12-slim
 
@@ -28,7 +28,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Copy installed Python packages from builder (includes shared via poetry install)
+# Copy installed Python packages from builder (includes core via poetry install)
 COPY --from=builder /usr/local /usr/local
 
 # Copy scraper code

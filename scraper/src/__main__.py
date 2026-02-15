@@ -3,8 +3,8 @@
 import asyncio
 
 import httpx
+from core.logging import setup_logging
 from loguru import logger
-from shared.logging import setup_logging
 from sqlalchemy.exc import SQLAlchemyError
 
 from .config import settings

@@ -1,4 +1,4 @@
-"""Test helpers that must be imported BEFORE shared.config.settings.
+"""Test helpers that must be imported BEFORE core.config.settings.
 
 Importing settings.py triggers Settings() instantiation, which fails
 in CI where no .env file exists. This module sets dummy env vars first.
@@ -10,7 +10,7 @@ import os
 def configure_test_db_env() -> None:
     """Set fallback DB env vars for test environments (no .env file in CI).
 
-    Must be called before any module imports shared.config.settings.
+    Must be called before any module imports core.config.settings.
     """
     test_env = {
         "DB_USER": "test",

@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "saq-shared"
+name = "saq-core"
 version = "0.1.0"
-description = "Shared models and config for SAQ Sommelier"
-packages = [{include = "shared", from = ".."}]
+description = "Core infrastructure for SAQ Sommelier (models, config, logging)"
+packages = [{include = "core", from = ".."}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
