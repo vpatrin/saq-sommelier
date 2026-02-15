@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Pre-commit hook — lint, test with coverage, and stage updated badges.
+# Install with: make install
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+echo ""
+make lint
+
+echo ""
+make coverage
+
+# Stage badge files if coverage changed them
+if ! git diff --quiet .github/badges/ 2>/dev/null; then
+    echo ""
+    echo "📊 Staging updated coverage badges..."
+    git add .github/badges/
+fi
+
+echo ""
+echo "✅ All checks passed — committing."

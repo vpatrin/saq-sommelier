@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Pre-push hook — runs lint and tests before allowing git push.
-# Install with: make setup
+# Pre-push hook — fast safety net (pre-commit already ran full coverage).
+# Install with: make install
 
 set -e
 
@@ -9,7 +9,7 @@ echo "🔍 Running pre-push checks..."
 echo ""
 make lint
 echo ""
-make coverage
+make test
 
 echo ""
 echo "✅ All checks passed — pushing."
