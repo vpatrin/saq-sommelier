@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProductResponse(BaseModel):
@@ -13,7 +13,7 @@ class ProductResponse(BaseModel):
     country: str | None
     color: str | None
     size: str | None
-    price: Decimal | None
+    price: Decimal | None = Field(examples=[24.95])  # For the Swagger example
     currency: str | None
     availability: bool | None
     manufacturer: str | None
