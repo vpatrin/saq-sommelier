@@ -1136,7 +1136,9 @@ files = []
 develop = true
 
 [package.dependencies]
+alembic = "^1.13"
 loguru = ">=0.7"
+psycopg2-binary = "^2.9"
 pydantic-settings = "^2.0"
 sqlalchemy = "^2.0"
 
@@ -1301,4 +1303,4 @@ dev = ["black (>=19.3b0) ; python_version >= \"3.6\"", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "064b36c1ed79efe11e7e4ed31a71887dc5cad27accb526d09a5884ef4457ddff"
+content-hash = "ae8d40dcff5b04ea0f9a952bd41ee0d266fad00a4fd6e846e2454010e0e5ddb8"

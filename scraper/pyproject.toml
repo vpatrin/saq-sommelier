@@ -10,9 +10,7 @@ httpx = ">=0.28"
 beautifulsoup4 = ">=4.12"
 lxml = ">=5.3"
 sqlalchemy = "^2.0"
-alembic = "^1.13"
 asyncpg = "^0.29"
-psycopg2-binary = "^2.9"
 # greenlet: Required by SQLAlchemy for async operations (manages coroutine context switching)
 greenlet = "^3.3.1"
 loguru = ">=0.7"
@@ -30,7 +28,7 @@ pythonpath = ["."]
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["tests/*", "alembic/*"]
+omit = ["tests/*"]
 
 [tool.coverage.report]
 show_missing = true
