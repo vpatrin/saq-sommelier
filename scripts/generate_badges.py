@@ -85,6 +85,11 @@ def main() -> None:
         badge_path.write_text(svg)
         print(f"  {name}: {percent}% -> {badge_path}")
 
+    # Clean up intermediate coverage artifacts (badges are the final output)
+    for xml_path in services.values():
+        for artifact in [xml_path, xml_path.with_name(".coverage")]:
+            artifact.unlink(missing_ok=True)
+
 
 if __name__ == "__main__":
     main()
