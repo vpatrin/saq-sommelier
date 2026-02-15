@@ -13,7 +13,7 @@ install:
 	cd shared && poetry install
 
 dev:
-	cd backend && poetry run uvicorn backend.main:app --reload --port 8000
+	cd backend && poetry run uvicorn backend.app:app --reload --port 8000
 
 scrape:
 	cd scraper && poetry run python -m src
