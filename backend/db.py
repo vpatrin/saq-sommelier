@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 
-from shared.config import settings
+from shared.config.settings import settings
 from shared.db.base import create_session_factory
 from sqlalchemy.ext.asyncio import AsyncSession
 

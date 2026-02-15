@@ -7,7 +7,7 @@ No load_dotenv() needed — pydantic-settings reads .env automatically.
 """
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from shared.config import settings as shared_settings
+from shared.config.settings import settings as shared_settings
 
 
 class ScraperSettings(BaseSettings):

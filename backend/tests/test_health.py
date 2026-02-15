@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 from fastapi.testclient import TestClient
 
+from backend.app import app
 from backend.db import get_db
-from backend.main import app
 
 
 def _mock_db():
