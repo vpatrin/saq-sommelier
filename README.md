@@ -66,6 +66,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Data Flow](docs/DATA_FLOW.md) — three-schema boundary design
 - [Development](docs/DEVELOPMENT.md) — database setup, environment config, dev workflow
 - [Migrations](docs/MIGRATIONS.md) — Alembic setup, workflow, and troubleshooting
+- [Roadmap](docs/ROADMAP.md) — project phases and progress
 
 ## Legal
 
