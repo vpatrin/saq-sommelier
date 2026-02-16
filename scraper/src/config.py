@@ -1,4 +1,7 @@
+from typing import Annotated
+
 from core.config.settings import settings as core_settings
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,10 +20,13 @@ class ScraperSettings(BaseSettings):
 
     # HTTP client settings
     USER_AGENT: str = "SAQSommelier/0.1.0 (personal project; contact@victorpatrin.dev)"
-    REQUEST_TIMEOUT: int = 30
+    REQUEST_TIMEOUT: Annotated[int, Field(ge=1)] = 30
 
     # Rate limiting (ethical scraping)
-    RATE_LIMIT_SECONDS: int = 2
+    RATE_LIMIT_SECONDS: Annotated[int, Field(ge=1)] = 2
+
+    # Dev convenience: limit how many products to scrape (0 = unlimited)
+    SCRAPE_LIMIT: Annotated[int, Field(ge=0)] = 0
 
     # Logging (per-service override — scraper might want DEBUG while backend stays INFO)
     LOG_LEVEL: str = "INFO"

@@ -13,13 +13,8 @@ from .sitemap import fetch_sitemap_index, fetch_sub_sitemap
 setup_logging(settings.SERVICE_NAME, level=settings.LOG_LEVEL)
 
 
-async def main(max_products: int = 5) -> None:
-    """Fetch sitemap, scrape products, write to database.
-
-    Args:
-        max_products: Number of products to scrape (default 5, for testing).
-                     Set to None or a very large number to scrape all products.
-    """
+async def main() -> None:
+    """Fetch sitemap, scrape products, write to database."""
 
     # async with keeps a connection pool open (reuses TCP connections)
     # User-Agent identifies us as a bot (ethical scraping)
@@ -43,8 +38,8 @@ async def main(max_products: int = 5) -> None:
             len(sub_sitemap_urls),
         )
 
-        # If max_products is None, scrape all
-        products_to_scrape = entries[:max_products] if max_products else entries
+        limit = settings.SCRAPE_LIMIT
+        products_to_scrape = entries[:limit] if limit else entries
         logger.info("Scraping {} products...", len(products_to_scrape))
 
         # Main scrape loop
