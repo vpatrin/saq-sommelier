@@ -67,6 +67,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Development](docs/DEVELOPMENT.md) — database setup, environment config, dev workflow
 - [Migrations](docs/MIGRATIONS.md) — Alembic setup, workflow, and troubleshooting
 - [Scraper Operations](docs/SCRAPER.md) — production scheduling, failure recovery, logging
+- [Telegram Bot](docs/TELEGRAM_BOT.md) — bot design, commands, API dependencies
 - [Roadmap](docs/ROADMAP.md) — project phases and progress
 
 ## Legal
