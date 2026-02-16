@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
-<<<<<<< Updated upstream
 # Pre-push hook — full checks before pushing (lint, tests, lock files).
-=======
-# Pre-push hook — run tests, check lock files.
->>>>>>> Stashed changes
 # Install with: make install
 
 set -e
