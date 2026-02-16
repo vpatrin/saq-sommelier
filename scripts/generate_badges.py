@@ -1,11 +1,3 @@
-"""Generate coverage badge SVGs from coverage XML reports.
-
-Usage: python scripts/generate_badges.py
-
-Reads coverage XML files from each service and generates SVG badges
-in the badges/ directory. No external dependencies required.
-"""
-
 import xml.etree.ElementTree as ET
 from pathlib import Path
 

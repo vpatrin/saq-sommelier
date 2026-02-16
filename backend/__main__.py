@@ -1,5 +1,3 @@
-"""Allow running the backend with ``python -m backend``."""
-
 import uvicorn
 
 from backend.app import app

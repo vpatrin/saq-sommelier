@@ -8,7 +8,7 @@ router = APIRouter(tags=["health"])
 
 
 @router.get("/health")
-async def health(db: AsyncSession = Depends(get_db)):
+async def health(db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """Health check — verifies the API is up and the database is reachable."""
     await db.execute(text("SELECT 1"))
     return {"status": "ok"}

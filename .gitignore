@@ -31,7 +31,14 @@ htmlcov/
 *.swp
 *~
 
+# macOS
+.DS_Store
+
+# Node (frontend)
+node_modules/
+
 # Claude
 CLAUDE.md
 
+# Scraper HTML samples (local exploration only)
 *.html

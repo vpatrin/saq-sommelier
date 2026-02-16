@@ -8,9 +8,9 @@ export
 
 install:
 	git config core.hooksPath .githooks
-	cd backend && poetry install
-	cd scraper && poetry install
-	cd core && poetry install
+	cd backend && poetry lock && poetry install
+	cd scraper && poetry lock && poetry install
+	cd core && poetry lock && poetry install
 
 dev:
 	cd backend && poetry run uvicorn backend.app:app --reload --port 8000

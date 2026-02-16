@@ -28,7 +28,7 @@ async def fetch_sitemap_index(client: httpx.AsyncClient) -> list[str]:
         List of sub-sitemap URLs (typically 2).
     """
     # Dependency injection of client in the function for reusability, control and reuse
-    response = await client.get(settings.sitemap_index_url)
+    response = await client.get(settings.SITEMAP_URL)
     response.raise_for_status()
 
     try:

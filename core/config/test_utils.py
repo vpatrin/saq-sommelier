@@ -1,9 +1,5 @@
-"""Test helpers that must be imported BEFORE core.config.settings.
-
-Importing settings.py triggers Settings() instantiation, which fails
-in CI where no .env file exists. This module sets dummy env vars first.
-"""
-
+# WARNING: import this BEFORE core.config.settings — Settings() instantiation
+# reads env vars at import time and fails in CI where no .env file exists.
 import os
 
 

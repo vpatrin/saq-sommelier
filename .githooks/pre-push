@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
-# Pre-push hook — fast safety net (pre-commit already ran full coverage).
+# Pre-push hook — full checks before pushing (lint, tests, lock files).
 # Install with: make install
 
 set -e
 
 echo "🔍 Running pre-push checks..."
+
+echo ""
+echo "📦 Checking lock files..."
+(cd backend && poetry check --lock)
+(cd scraper && poetry check --lock)
+(cd core && poetry check --lock)
 
 echo ""
 make lint

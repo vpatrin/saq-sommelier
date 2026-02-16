@@ -1,5 +1,3 @@
-"""SAQ product catalog scraper — fetch sitemap, parse products, write to database."""
-
 import asyncio
 
 import httpx
@@ -43,7 +41,7 @@ async def main(max_products: int = 5) -> None:
         products_to_scrape = entries[:max_products] if max_products else entries
         logger.info("Scraping {} products...", len(products_to_scrape))
 
-        #! Main scrape loop
+        # Main scrape loop
         for i, entry in enumerate(products_to_scrape, 1):
             # Ethical rate limiter
             await asyncio.sleep(settings.RATE_LIMIT_SECONDS)

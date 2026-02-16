@@ -1,19 +1,3 @@
-"""Database configuration and session management for SAQ Sommelier.
-
-This module provides:
-- Declarative Base (parent class for all SQLAlchemy models)
-- Factory function to create async engine + session factory
-
-Pattern:
-    In FastAPI/async apps, you create an async engine once at startup,
-    then create sessions per request/operation. Each session is a
-    transaction boundary (like db.session in Flask-SQLAlchemy).
-
-    Unlike Flask-SQLAlchemy where db = SQLAlchemy(app) creates a global,
-    here we use a factory function so each service controls when/how
-    the engine is created (no import-time side effects).
-"""
-
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 

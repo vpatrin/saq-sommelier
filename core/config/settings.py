@@ -1,20 +1,3 @@
-"""Core infrastructure settings for SAQ Sommelier services.
-
-Uses Pydantic Settings for:
-- Automatic .env file loading (no manual load_dotenv() needed)
-- Fail-fast validation (missing DB_USER → clear error at startup)
-- Type coercion (bool, int handled automatically)
-
-Only contains settings that are truly shared across services:
-- Database configuration
-- Logging configuration
-- Environment settings
-
-Service-specific settings belong in each service's config.py:
-- scraper/config.py - Scraper-specific (USER_AGENT, RATE_LIMIT, etc.)
-- backend/config.py - Backend-specific (JWT_SECRET, CORS, etc.)
-"""
-
 from functools import cached_property
 from typing import Literal
 
