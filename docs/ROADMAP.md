@@ -22,7 +22,7 @@
 - [x] Product model + first migration (#17)
 - [x] DB writer (#18)
 
-### Phase 3 — Production Scraper (done, hardening in progress)
+### Phase 3 — Production Scraper (done)
 
 - [x] Sitemap fetcher service (#14)
 - [x] Product parser service (#15)
@@ -34,32 +34,38 @@
 - [x] Incremental scraping via lastmod (#50, PR #94)
 - [x] Detect delisted products (#51, PR #96)
 - [x] Run summary + exit codes (#52, PR #95)
-- [ ] Weekly cronjob (#49) — systemd timer + Compose service
+- [x] Weekly cronjob (#49, PR #97) — systemd timer + Compose service
 
-### Phase 4 — API + Business Logic (in progress)
+### Phase 4 — API for Bot (in progress)
+
+Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_BOT.md) for full design.
 
 - [x] Product list endpoint (#33)
 - [x] Product detail endpoint (#34)
 - [x] Product search + filtering (#35)
 - [x] Database indexes (#26)
 - [x] Structured exception handling (#41)
-- [ ] Catalog facets endpoint (#55)
-- [ ] Stats summary endpoint (#56)
-- [ ] Price history tracking (#57)
-- [ ] In-store availability tracking (#59)
-- [ ] Auth (if needed)
+- [ ] Exclude delisted + unavailable from API (#98) — prerequisite for all bot queries
+- [ ] Catalog facets endpoint (#55) — powers bot filter buttons
+- [ ] Sort by recent + random product endpoint — powers `/new` and `/random`
+- [ ] Watches resource (CRUD) — powers `/watch`, `/unwatch`, `/alerts`
+- [ ] Price history tracking (#57) — powers price drop alerts (post-MVP)
 
 ### Phase 5 — Telegram Bot
 
-- [ ] Basic bot scaffold
-- [ ] Wire to API — query wines from chat
-- [ ] Availability alerts (#58)
+- [ ] Bot scaffold (`bot/` service, python-telegram-bot)
+- [ ] `/search` — search wines with inline keyboard filters
+- [ ] `/new` — recently added/updated wines with filters
+- [ ] `/random` — random wine with filters
+- [ ] `/watch`, `/unwatch`, `/alerts` — price drop + restock alerts
+- [ ] Weekly digest — proactive post to group chat after scraper run
+- [ ] Bot Dockerfile + Compose service
 
 ### Phase 6 — AI Layer (RAG + Claude)
 
 - [ ] ChromaDB + embeddings
 - [ ] Claude API integration
-- [ ] Natural language recommendations via Telegram
+- [ ] `/recommend` — natural language recommendations via Telegram
 
 ## Infrastructure / Chores
 
