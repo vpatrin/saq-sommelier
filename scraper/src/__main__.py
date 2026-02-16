@@ -1,4 +1,6 @@
 import asyncio
+import sys
+import time
 from datetime import date
 
 import httpx
@@ -12,6 +14,15 @@ from .parser import parse_product
 from .sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
 
 setup_logging(settings.SERVICE_NAME, level=settings.LOG_LEVEL)
+
+
+def _exit_code(saved: int, errors: int) -> int:
+    """Determine process exit code from scrape results."""
+    if errors == 0:
+        return 0  # Clean run
+    if saved > 0:
+        return 1  # Partial failure
+    return 2  # Total failure
 
 
 def _needs_scrape(entry: SitemapEntry, updated_dates: dict[str, date]) -> bool:
@@ -29,8 +40,10 @@ def _needs_scrape(entry: SitemapEntry, updated_dates: dict[str, date]) -> bool:
     return date.fromisoformat(entry.lastmod) > updated_dates[entry.sku]
 
 
-async def main() -> None:
-    """Fetch sitemap, scrape products, write to database."""
+async def main() -> int:
+    """Fetch sitemap, scrape products, write to database. Returns exit code."""
+    # monotonic is immune to system clock changes
+    start = time.monotonic()
 
     # async with keeps a connection pool open (reuses TCP connections)
     # User-Agent identifies us as a bot (ethical scraping)
@@ -72,6 +85,10 @@ async def main() -> None:
         )
 
         # Main scrape loop
+        saved = 0
+        inserted = 0
+        updated = 0
+        errors = 0
         for i, entry in enumerate(products_to_scrape, 1):
             # Ethical rate limiter
             await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
@@ -87,17 +104,50 @@ async def main() -> None:
 
                 # Saves to DB (upsert)
                 await upsert_product(product)
+                saved += 1
+                if entry.sku in updated_dates:
+                    updated += 1
+                else:
+                    inserted += 1
                 logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
 
             except httpx.HTTPError as e:
+                errors += 1
                 logger.error("HTTP error for {}: {}", entry.url, e)
             except SQLAlchemyError:
+                errors += 1
                 logger.error("DB error for {}, skipping", entry.url)
             except Exception:
+                errors += 1
                 logger.exception("Unexpected error for {}", entry.url)
 
-        logger.success("Done! Scraped {} products", len(products_to_scrape))
+    # Run summary
+    elapsed = time.monotonic() - start
+    hours, remainder = divmod(int(elapsed), 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    logger.info(
+        "Scraper run complete:\n"
+        "  Duration: {}h {}m {}s\n"
+        "  Sitemap URLs: {}\n"
+        "  Fetched: {}\n"
+        "  Inserted: {}\n"
+        "  Updated: {}\n"
+        "  Failed: {}\n"
+        "  Skipped (up-to-date): {}",
+        hours,
+        minutes,
+        seconds,
+        len(entries),
+        saved,
+        inserted,
+        updated,
+        errors,
+        skipped,
+    )
+
+    return _exit_code(saved, errors)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    sys.exit(asyncio.run(main()))
