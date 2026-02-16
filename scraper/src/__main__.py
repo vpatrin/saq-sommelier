@@ -9,7 +9,7 @@ from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 
 from .config import settings
-from .db import get_updated_dates, upsert_product
+from .db import clear_delisted, get_delisted_skus, get_updated_dates, mark_delisted, upsert_product
 from .parser import parse_product
 from .sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
 
@@ -121,6 +121,27 @@ async def main() -> int:
                 errors += 1
                 logger.exception("Unexpected error for {}", entry.url)
 
+    # Delist detection: compare sitemap SKUs vs DB SKUs
+    # Best-effort — if it fails, next run catches up
+    delisted = 0
+    relisted = 0
+    sitemap_skus = {e.sku for e in entries}
+    db_skus = set(updated_dates.keys())
+
+    try:
+        to_delist = db_skus - sitemap_skus
+        delisted = await mark_delisted(to_delist)
+        if delisted:
+            logger.info("Marked {} products as delisted", delisted)
+
+        currently_delisted = await get_delisted_skus()
+        to_relist = currently_delisted & sitemap_skus
+        relisted = await clear_delisted(to_relist)
+        if relisted:
+            logger.info("Relisted {} products (back in sitemap)", relisted)
+    except SQLAlchemyError:
+        logger.error("Delist detection failed, skipping")
+
     # Run summary
     elapsed = time.monotonic() - start
     hours, remainder = divmod(int(elapsed), 3600)
@@ -134,7 +155,9 @@ async def main() -> int:
         "  Inserted: {}\n"
         "  Updated: {}\n"
         "  Failed: {}\n"
-        "  Skipped (up-to-date): {}",
+        "  Skipped (up-to-date): {}\n"
+        "  Delisted: {}\n"
+        "  Relisted: {}",
         hours,
         minutes,
         seconds,
@@ -144,6 +167,8 @@ async def main() -> int:
         updated,
         errors,
         skipped,
+        delisted,
+        relisted,
     )
 
     return _exit_code(saved, errors)

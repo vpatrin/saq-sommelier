@@ -3,7 +3,7 @@ from datetime import UTC, date, datetime
 from core.db.base import create_session_factory
 from core.db.models import Product
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -19,6 +19,46 @@ async def get_updated_dates() -> dict[str, date]:
         stmt = select(Product.sku, Product.updated_at)
         result = await session.execute(stmt)
         return {sku: updated_at.date() for sku, updated_at in result.all()}
+
+
+async def get_delisted_skus() -> set[str]:
+    """Get SKUs of products currently marked as delisted."""
+    async with _SessionLocal() as session:
+        stmt = select(Product.sku).where(Product.delisted_at.isnot(None))
+        result = await session.execute(stmt)
+        return {row[0] for row in result.all()}
+
+
+async def mark_delisted(skus: set[str]) -> int:
+    """Set delisted_at on given SKUs. Returns count updated."""
+    if not skus:
+        return 0
+    async with _SessionLocal() as session:
+        stmt = (
+            update(Product)
+            .where(Product.sku.in_(skus))
+            .where(Product.delisted_at.is_(None))
+            .values(delisted_at=datetime.now(UTC))
+        )
+        result = await session.execute(stmt)
+        await session.commit()
+        return result.rowcount
+
+
+async def clear_delisted(skus: set[str]) -> int:
+    """Clear delisted_at on given SKUs (relist). Returns count updated."""
+    if not skus:
+        return 0
+    async with _SessionLocal() as session:
+        stmt = (
+            update(Product)
+            .where(Product.sku.in_(skus))
+            .where(Product.delisted_at.isnot(None))
+            .values(delisted_at=None)
+        )
+        result = await session.execute(stmt)
+        await session.commit()
+        return result.rowcount
 
 
 async def upsert_product(product_data: ProductData) -> None:
