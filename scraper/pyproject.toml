@@ -10,7 +10,7 @@ httpx = ">=0.28"
 beautifulsoup4 = ">=4.12"
 lxml = ">=5.3"
 sqlalchemy = "^2.0"
-asyncpg = "^0.29"
+asyncpg = "^0.31"
 # greenlet: Required by SQLAlchemy for async operations (manages coroutine context switching)
 greenlet = "^3.3.1"
 loguru = ">=0.7"
