@@ -7,6 +7,12 @@ set -e
 echo "🔍 Running pre-push checks..."
 
 echo ""
+echo "📦 Checking lock files..."
+cd backend && poetry lock --check && cd ..
+cd scraper && poetry lock --check && cd ..
+cd core && poetry lock --check && cd ..
+
+echo ""
 make lint
 echo ""
 make test
