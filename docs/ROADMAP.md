@@ -29,12 +29,12 @@
 - [x] Scraper orchestrator (#19)
 - [x] Scraper Dockerfile (#13)
 - [x] Fetch all sub-sitemaps (PR #83)
-- [ ] Error handling + observability (#78)
-- [ ] ScraperSettings validators (#84)
-- [ ] Incremental scraping via lastmod (#50)
-- [ ] Detect delisted products (#51)
-- [ ] Health metrics + run summary (#52)
-- [ ] Weekly cronjob (#49)
+- [x] Error handling (PR #86)
+- [x] ScraperSettings validators (#84)
+- [x] Incremental scraping via lastmod (#50, PR #94)
+- [x] Detect delisted products (#51, PR #96)
+- [x] Run summary + exit codes (#52, PR #95)
+- [ ] Weekly cronjob (#49) — systemd timer + Compose service
 
 ### Phase 4 — API + Business Logic (in progress)
 
@@ -76,3 +76,4 @@ Ongoing work that runs alongside the product phases.
 - [x] Backend logging (#85)
 - [ ] Full Docker dev environment (#44)
 - [ ] Port assignment convention (#53)
+- [ ] Observability — tool choice (Loki+Promtail vs alternatives), centralized logging, Grafana dashboards

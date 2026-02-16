@@ -82,7 +82,7 @@ make clean         # remove __pycache__, .pytest_cache, .ruff_cache
 
 ## Working on the scraper
 
-The scraper is a one-off task (not a long-running service). It fetches the SAQ sitemap and upserts products into PostgreSQL.
+The scraper is a one-shot batch job (not a long-running service). It fetches the SAQ sitemap and upserts products into PostgreSQL. See [SCRAPER.md](SCRAPER.md) for production scheduling and operations.
 
 ```bash
 make scrape               # run the scraper (upserts ~38k products)
