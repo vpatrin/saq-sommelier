@@ -1,9 +1,56 @@
+from datetime import UTC, date, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.parser import ProductData
+
+
+class TestGetProductTimestamps:
+    @pytest.mark.asyncio
+    async def test_returns_sku_to_date_mapping(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = MagicMock(
+            all=lambda: [
+                ("10327701", datetime(2026, 2, 1, 12, 0, tzinfo=UTC)),
+                ("99999999", datetime(2026, 1, 15, 8, 30, tzinfo=UTC)),
+            ]
+        )
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import get_updated_dates
+
+            result = await get_updated_dates()
+
+        assert result == {
+            "10327701": date(2026, 2, 1),
+            "99999999": date(2026, 1, 15),
+        }
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_dict_for_empty_db(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = MagicMock(all=lambda: [])
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import get_updated_dates
+
+            result = await get_updated_dates()
+
+        assert result == {}
 
 
 class TestUpsertProduct:
