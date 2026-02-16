@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-push hook —  run tests, check lock files.
+# Pre-push hook — run tests, check lock files.
 # Install with: make install
 
 set -e
