@@ -16,7 +16,7 @@ WORKDIR /build/backend
 # survive multi-stage builds. pip re-installs core as a proper package.
 RUN poetry config virtualenvs.create false \
     && poetry install --only main --no-interaction \
-    && pip install --no-deps --force-reinstall /build/core
+    && pip install --no-cache-dir --no-deps --force-reinstall /build/core
 
 FROM python:3.12-slim
 
