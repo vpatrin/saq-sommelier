@@ -14,8 +14,13 @@ def _apply_filters(
     region: str | None = None,
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
+    available: bool | None = None,
 ) -> Select:
     """Append WHERE clauses for each non-None filter."""
+    # Always exclude delisted products (page gone from SAQ sitemap)
+    stmt = stmt.where(Product.delisted_at.is_(None))
+    if available is not None:
+        stmt = stmt.where(Product.availability == available)  # noqa: E712
     if q is not None:
         stmt = stmt.where(Product.name.ilike(f"%{q}%"))
     if category is not None:
@@ -40,6 +45,7 @@ async def count(
     region: str | None = None,
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
+    available: bool | None = None,
 ) -> int:
     """Return the total number of products matching the given filters."""
     stmt = select(func.count()).select_from(Product)
@@ -51,14 +57,16 @@ async def count(
         region=region,
         min_price=min_price,
         max_price=max_price,
+        available=available,
     )
     result = await db.execute(stmt)
     return result.scalar_one()
 
 
 async def find_by_sku(db: AsyncSession, sku: str) -> Product | None:
-    """Return a single product by SKU, or None if not found."""
-    result = await db.execute(select(Product).where(Product.sku == sku))
+    """Return a single non-delisted product by SKU, or None if not found."""
+    stmt = select(Product).where(Product.sku == sku).where(Product.delisted_at.is_(None))
+    result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
 
@@ -73,6 +81,7 @@ async def find_page(
     region: str | None = None,
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
+    available: bool | None = None,
 ) -> list[Product]:
     """Return a page of products ordered by name, with optional filters."""
     stmt = select(Product).order_by(Product.name).offset(offset).limit(limit)
@@ -84,6 +93,7 @@ async def find_page(
         region=region,
         min_price=min_price,
         max_price=max_price,
+        available=available,
     )
     result = await db.execute(stmt)
     return list(result.scalars().all())

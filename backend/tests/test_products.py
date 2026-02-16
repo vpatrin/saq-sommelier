@@ -3,8 +3,10 @@ from decimal import Decimal
 from types import SimpleNamespace, UnionType
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from backend.app import app
 from backend.config import MAX_FILTER_LENGTH, MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
@@ -357,3 +359,62 @@ def test_sku_too_long_rejected():
     client = TestClient(app)
     resp = client.get(f"/api/v1/products/{'x' * (MAX_SKU_LENGTH + 1)}")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+# ── Active-only filtering ──────────────────────────────────────
+
+
+def _compile(stmt) -> str:
+    """Compile a SQLAlchemy statement to a SQL string for inspection."""
+    from sqlalchemy.dialects import postgresql
+
+    return str(stmt.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
+
+
+def test_list_query_always_excludes_delisted():
+    """Product list queries always filter out delisted products."""
+    from core.db.models import Product
+
+    from backend.repositories.products import _apply_filters
+
+    stmt = select(Product)
+    filtered = _apply_filters(stmt)
+    sql = _compile(filtered)
+    assert "delisted_at IS NULL" in sql
+
+
+def test_list_query_filters_available_when_requested():
+    """available=True adds availability filter; omitting it does not."""
+    from core.db.models import Product
+
+    from backend.repositories.products import _apply_filters
+
+    # Without available param — no WHERE clause on availability
+    stmt = select(Product)
+    sql_no_filter = _compile(_apply_filters(stmt))
+    assert "availability = true" not in sql_no_filter
+    assert "availability = false" not in sql_no_filter
+
+    # With available=True — availability filter added
+    sql_available = _compile(_apply_filters(stmt, available=True))
+    assert "availability = true" in sql_available
+
+
+@pytest.mark.asyncio
+async def test_detail_query_excludes_delisted():
+    """find_by_sku excludes delisted but not unavailable products."""
+    from backend.repositories.products import find_by_sku
+
+    session = AsyncMock()
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = None
+    session.execute = AsyncMock(return_value=result)
+
+    await find_by_sku(session, "TEST")
+
+    stmt = session.execute.call_args[0][0]
+    sql = _compile(stmt)
+    assert "delisted_at IS NULL" in sql
+    # Unavailable products should still be findable (for /watch)
+    assert "availability = true" not in sql
+    assert "availability = false" not in sql
