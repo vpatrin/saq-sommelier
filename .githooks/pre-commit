@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-commit hook — fast lint only (coverage runs in pre-push).
+# Pre-commit hook — fast lint only
 # Install with: make install
 
 set -e
