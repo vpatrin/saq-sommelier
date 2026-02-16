@@ -1,11 +1,3 @@
-"""Scraper service configuration.
-
-Inherits shared infrastructure settings (DB, logging) from core.config.
-Adds scraper-specific settings (rate limiting, user agent, sitemap URL).
-
-No load_dotenv() needed — pydantic-settings reads .env automatically.
-"""
-
 from core.config.settings import settings as core_settings
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -35,11 +27,6 @@ class ScraperSettings(BaseSettings):
 
     # Sitemap URL from robots.txt (https://www.saq.com/robots.txt)
     SITEMAP_URL: str = "https://www.saq.com/media/sitemaps/fr/sitemap_product.xml"
-
-    @property
-    def sitemap_index_url(self) -> str:
-        """Return the SAQ product sitemap URL."""
-        return self.SITEMAP_URL
 
     # Shared infrastructure settings (used by db.py)
     @property

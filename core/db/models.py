@@ -1,9 +1,3 @@
-"""SQLAlchemy models for SAQ Sommelier database.
-
-This is the single source of truth for database schema.
-Both scraper and backend import models from here.
-"""
-
 from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Float, Index, Integer, Numeric, String, Text

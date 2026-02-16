@@ -13,7 +13,7 @@ loguru = ">=0.7"
 pydantic-settings = "^2.13"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.15.0"
+ruff = "^0.15.1"
 
 [tool.ruff]
 target-version = "py312"

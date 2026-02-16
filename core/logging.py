@@ -1,8 +1,3 @@
-"""Logging configuration for all SAQ Sommelier services.
-
-Uses loguru — call setup_logging() once at service startup.
-"""
-
 import sys
 
 from loguru import logger
