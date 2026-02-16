@@ -1,5 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
+from fastapi import status
 from fastapi.testclient import TestClient
 
 from backend.app import app
@@ -21,7 +22,7 @@ def test_health():
     try:
         client = TestClient(app)
         resp = client.get("/health")
-        assert resp.status_code == 200
+        assert resp.status_code == status.HTTP_200_OK
         assert resp.json() == {"status": "ok"}
         mock_session.execute.assert_called_once()
     finally:

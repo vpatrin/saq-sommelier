@@ -1,18 +1,18 @@
 import math
 from decimal import Decimal
 
-from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.exceptions import NotFoundError
 from backend.repositories.products import count, find_by_sku, find_page
 from backend.schemas.product import PaginatedResponse, ProductResponse
 
 
 async def get_product(db: AsyncSession, sku: str) -> ProductResponse:
-    """Fetch a single product by SKU. Raises 404 if not found."""
+    """Fetch a single product by SKU. Raises NotFoundError if not found."""
     product = await find_by_sku(db, sku)
     if product is None:
-        raise HTTPException(status_code=404, detail=f"Product {sku!r} not found")
+        raise NotFoundError("Product", sku)
     return ProductResponse.model_validate(product)
 
 
