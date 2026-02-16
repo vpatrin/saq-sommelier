@@ -30,12 +30,18 @@ async def main(max_products: int = 5) -> None:
         sub_sitemap_urls = await fetch_sitemap_index(client)
         logger.info("Found {} sub-sitemaps", len(sub_sitemap_urls))
 
-        await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
+        # Fetch all sub-sitemaps, collecting entries into one list
+        entries = []
+        for j, sub_url in enumerate(sub_sitemap_urls, 1):
+            await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
+            logger.info("[{}/{}] Fetching sub-sitemap...", j, len(sub_sitemap_urls))
+            entries.extend(await fetch_sub_sitemap(client, sub_url))
 
-        # We only fetch first sub sitemap for now
-        logger.info("Fetching first sub-sitemap...")
-        entries = await fetch_sub_sitemap(client, sub_sitemap_urls[0])
-        logger.info("Found {} product URLs", len(entries))
+        logger.info(
+            "Found {} total product URLs across {} sub-sitemaps",
+            len(entries),
+            len(sub_sitemap_urls),
+        )
 
         # If max_products is None, scrape all
         products_to_scrape = entries[:max_products] if max_products else entries
