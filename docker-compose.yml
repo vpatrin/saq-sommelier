@@ -1,4 +1,5 @@
 # Local dev: make up / make down (starts postgres for bare-metal dev)
+# Production: systemd timer runs `docker compose up scraper` (see docs/SCRAPER.md)
 
 services:
   postgres:
@@ -19,6 +20,18 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  scraper:
+    build:
+      context: .
+      dockerfile: scraper/Dockerfile
+    env_file: .env
+    environment:
+      # Override localhost → Compose service name for container-to-container networking.
+      # Production: set to external postgres host in .env or override here.
+      DB_HOST: postgres
+    # One-shot job — don't restart after exit. Systemd timer handles scheduling.
+    restart: "no"
 
 volumes:
   pgdata:
