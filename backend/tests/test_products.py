@@ -239,3 +239,89 @@ def test_list_products_excludes_sensitive_fields():
     # ! We decided to exclude SAQ proprietary data
     for field in ("description", "url", "image"):
         assert field not in product, f"{field} should not be exposed in API"
+
+
+# ── Search & filter endpoint ────────────────────────────────────
+
+
+def test_search_by_name():
+    """?q=margaux filters products — pagination reflects filtered total."""
+    products = [_fake_product(sku="MATCH1", name="Château Margaux")]
+    session = _mock_db_for_products(products, total=1)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?q=margaux")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 1
+    assert len(data["products"]) == 1
+
+
+def test_filter_by_category():
+    products = [_fake_product(sku="RED1", category="Vin rouge")]
+    session = _mock_db_for_products(products, total=1)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?category=Vin+rouge")
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 1
+
+
+def test_filter_by_price_range():
+    products = [_fake_product(sku="MID1", price=Decimal("25.00"))]
+    session = _mock_db_for_products(products, total=1)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?min_price=15&max_price=30")
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 1
+
+
+def test_combined_filters_with_pagination():
+    """Multiple filters + pagination work together."""
+    products = [_fake_product(sku="FR1")]
+    session = _mock_db_for_products(products, total=15)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?country=France&min_price=10&page=2&per_page=10")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 15
+    assert data["page"] == 2
+    assert data["pages"] == 2
+
+
+def test_filter_no_results():
+    """Filters that match nothing return 200 with empty list, not 404."""
+    session = _mock_db_for_products([], total=0)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?country=Atlantis")
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 0
+    assert resp.json()["products"] == []
+
+
+def test_search_q_empty_string_rejected():
+    """Empty q= should be rejected (min_length=1)."""
+    session = _mock_db_for_products([], total=0)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?q=")
+    assert resp.status_code == 422
+
+
+def test_filter_negative_price_rejected():
+    """Negative price should be rejected (ge=0)."""
+    session = _mock_db_for_products([], total=0)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?min_price=-5")
+    assert resp.status_code == 422
