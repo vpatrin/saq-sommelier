@@ -1,46 +1,78 @@
 # Roadmap
 
-## Phase 0 — Scaffolding
+## Product
 
-1. Project structure
-2. Environment config
-3. Docker Compose baseline
-4. CI linting
+### Phase 0 — Scaffolding (done)
 
-## Phase 1 — Scraping Exploration
+- [x] Project structure (#1)
+- [x] Environment config (#5)
+- [x] Docker Compose baseline (#3, #4)
 
-5. Fetch and parse sitemap
-6. Download raw HTML samples
-7. BeautifulSoup extraction script
-8. Document findings
+### Phase 1 — Scraping Exploration (done)
 
-## Phase 2 — Data Layer
+- [x] Fetch and parse sitemap (#6)
+- [x] Download raw HTML samples (#7)
+- [x] BeautifulSoup extraction script (#8)
+- [x] Document findings (#9)
 
-9. SQLAlchemy setup + DB connection
-10. Alembic init
-11. Product model + first migration
-12. DB writer
+### Phase 2 — Data Layer (done)
 
-## Phase 3 — Production Scraper
+- [x] SQLAlchemy setup + DB connection (#16)
+- [x] Alembic init + migrate to core/ (#42)
+- [x] Product model + first migration (#17)
+- [x] DB writer (#18)
 
-13. Sitemap fetcher service
-14. Product parser service
-15. Scraper orchestrator
-16. Scraper Dockerfile
+### Phase 3 — Production Scraper (done, hardening in progress)
 
-## Phase 4 — API + Business Logic
+- [x] Sitemap fetcher service (#14)
+- [x] Product parser service (#15)
+- [x] Scraper orchestrator (#19)
+- [x] Scraper Dockerfile (#13)
+- [x] Fetch all sub-sitemaps (PR #83)
+- [ ] Error handling + observability (#78)
+- [ ] ScraperSettings validators (#84)
+- [ ] Incremental scraping via lastmod (#50)
+- [ ] Detect delisted products (#51)
+- [ ] Health metrics + run summary (#52)
+- [ ] Weekly cronjob (#49)
 
-17. Products endpoint (search, filter, list)
-18. Business logic — the interesting part (price tracking? new arrivals? "best value" scoring? depends on what the data reveals)
-19. Auth if needed
+### Phase 4 — API + Business Logic (in progress)
 
-## Phase 5 — Telegram Bot
+- [x] Product list endpoint (#33)
+- [x] Product detail endpoint (#34)
+- [x] Product search + filtering (#35)
+- [x] Database indexes (#26)
+- [x] Structured exception handling (#41)
+- [ ] Catalog facets endpoint (#55)
+- [ ] Stats summary endpoint (#56)
+- [ ] Price history tracking (#57)
+- [ ] In-store availability tracking (#59)
+- [ ] Auth (if needed)
 
-20. Basic bot scaffold
-21. Wire to API — query wines from chat
+### Phase 5 — Telegram Bot
 
-## Phase 6 — AI Layer (RAG + Claude)
+- [ ] Basic bot scaffold
+- [ ] Wire to API — query wines from chat
+- [ ] Availability alerts (#58)
 
-22. ChromaDB + embeddings
-23. Claude API integration
-24. Natural language recommendations via Telegram
+### Phase 6 — AI Layer (RAG + Claude)
+
+- [ ] ChromaDB + embeddings
+- [ ] Claude API integration
+- [ ] Natural language recommendations via Telegram
+
+## Infrastructure / Chores
+
+Ongoing work that runs alongside the product phases.
+
+- [x] CI linting, caching, Hadolint, coverage thresholds (#2, #72, #73, #62)
+- [x] Dependabot (#61)
+- [x] Dockerfile hardening + Compose profiles (#3, #4)
+- [x] Pydantic Settings + BackendSettings (#5, PR #80)
+- [x] CORS + input validation (PR #80)
+- [x] Rename shared/ to core/, move Alembic (#38, #39, #42)
+- [x] PR template, repo topics, README cleanup (#81, #64, #37)
+- [x] Type hints + docstring cleanup (PR #82)
+- [ ] Backend logging (#85)
+- [ ] Full Docker dev environment (#44)
+- [ ] Port assignment convention (#53)
