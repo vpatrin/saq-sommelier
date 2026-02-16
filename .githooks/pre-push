@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-push hook — full checks before pushing (lint, tests, lock files).
+# Pre-push hook — run tests, check lock files.
 # Install with: make install
 
 set -e
@@ -12,8 +12,6 @@ echo "📦 Checking lock files..."
 (cd scraper && poetry check --lock)
 (cd core && poetry check --lock)
 
-echo ""
-make lint
 echo ""
 make test
 

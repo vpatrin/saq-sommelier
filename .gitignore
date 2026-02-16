@@ -39,6 +39,7 @@ node_modules/
 
 # Claude
 CLAUDE.md
+.claude/
 
 # Scraper HTML samples (local exploration only)
 *.html
