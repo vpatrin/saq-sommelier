@@ -1,6 +1,6 @@
 from datetime import date
 
-from src.__main__ import _needs_scrape
+from src.__main__ import _exit_code, _needs_scrape
 from src.sitemap import SitemapEntry
 
 
@@ -28,3 +28,17 @@ class TestNeedsScrape:
         entry = SitemapEntry(url="https://www.saq.com/fr/10327701", lastmod="2026-01-15")
         updated_dates = {"10327701": date(2026, 2, 1)}
         assert _needs_scrape(entry, updated_dates) is False
+
+
+class TestExitCode:
+    def test_clean_run(self) -> None:
+        assert _exit_code(saved=10, errors=0) == 0
+
+    def test_no_work_is_clean(self) -> None:
+        assert _exit_code(saved=0, errors=0) == 0
+
+    def test_partial_failure(self) -> None:
+        assert _exit_code(saved=8, errors=2) == 1
+
+    def test_total_failure(self) -> None:
+        assert _exit_code(saved=0, errors=5) == 2
