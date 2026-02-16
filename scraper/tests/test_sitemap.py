@@ -16,6 +16,16 @@ def _make_response(content: bytes, status_code: int = 200) -> httpx.Response:
     )
 
 
+class TestSitemapEntrySku:
+    def test_extracts_sku_from_url(self) -> None:
+        entry = SitemapEntry(url="https://www.saq.com/fr/10327701")
+        assert entry.sku == "10327701"
+
+    def test_handles_trailing_slash(self) -> None:
+        entry = SitemapEntry(url="https://www.saq.com/fr/10327701/")
+        assert entry.sku == "10327701"
+
+
 class TestFetchSitemapIndex:
     @pytest.mark.asyncio
     async def test_returns_sub_sitemap_urls(self, sitemap_index_xml: str) -> None:
