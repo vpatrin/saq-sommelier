@@ -54,6 +54,17 @@ class TestParseProductEdgeCases:
         assert result.region is None
         assert result.grape is None
 
+    def test_malformed_jsonld_returns_empty_fields(self) -> None:
+        html = """<html><head>
+<script type="application/ld+json">{not valid json at all}</script>
+</head><body></body></html>"""
+        result = parse_product(html, url="https://www.saq.com/fr/broken")
+
+        assert result.sku is None
+        assert result.name is None
+        assert result.price is None
+        assert isinstance(result, ProductData)
+
     def test_no_jsonld_returns_empty_fields(self) -> None:
         html = "<html><body><p>Not a product page</p></body></html>"
         result = parse_product(html, url="https://www.saq.com/fr/test")
