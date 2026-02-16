@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from src.parser import ProductData
 
 
-class TestGetProductTimestamps:
+class TestGetUpdatedDates:
     @pytest.mark.asyncio
     async def test_returns_sku_to_date_mapping(self) -> None:
         mock_session = AsyncMock()
