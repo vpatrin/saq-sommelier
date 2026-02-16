@@ -1,8 +1,9 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from core.db.base import create_session_factory
 from core.db.models import Product
 from loguru import logger
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -10,6 +11,14 @@ from .config import settings
 from .parser import ProductData
 
 _SessionLocal = create_session_factory(settings.database_url, settings.database_echo)
+
+
+async def get_updated_dates() -> dict[str, date]:
+    """Fetch the last-updated date for every product in the DB."""
+    async with _SessionLocal() as session:
+        stmt = select(Product.sku, Product.updated_at)
+        result = await session.execute(stmt)
+        return {sku: updated_at.date() for sku, updated_at in result.all()}
 
 
 async def upsert_product(product_data: ProductData) -> None:
