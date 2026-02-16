@@ -7,6 +7,102 @@ from sqlalchemy.exc import SQLAlchemyError
 from src.parser import ProductData
 
 
+class TestGetDelistedSkus:
+    @pytest.mark.asyncio
+    async def test_returns_delisted_skus(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = MagicMock(all=lambda: [("10327701",), ("99999999",)])
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import get_delisted_skus
+
+            result = await get_delisted_skus()
+
+        assert result == {"10327701", "99999999"}
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_set_when_none_delisted(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = MagicMock(all=lambda: [])
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import get_delisted_skus
+
+            result = await get_delisted_skus()
+
+        assert result == set()
+
+
+class TestMarkDelisted:
+    @pytest.mark.asyncio
+    async def test_returns_zero_for_empty_set(self) -> None:
+        from src.db import mark_delisted
+
+        result = await mark_delisted(set())
+        assert result == 0
+
+    @pytest.mark.asyncio
+    async def test_executes_and_commits(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = MagicMock(rowcount=3)
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import mark_delisted
+
+            result = await mark_delisted({"111", "222", "333"})
+
+        assert result == 3
+        mock_session.execute.assert_called_once()
+        mock_session.commit.assert_called_once()
+
+
+class TestClearDelisted:
+    @pytest.mark.asyncio
+    async def test_returns_zero_for_empty_set(self) -> None:
+        from src.db import clear_delisted
+
+        result = await clear_delisted(set())
+        assert result == 0
+
+    @pytest.mark.asyncio
+    async def test_executes_and_commits(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = MagicMock(rowcount=2)
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import clear_delisted
+
+            result = await clear_delisted({"111", "222"})
+
+        assert result == 2
+        mock_session.execute.assert_called_once()
+        mock_session.commit.assert_called_once()
+
+
 class TestGetUpdatedDates:
     @pytest.mark.asyncio
     async def test_returns_sku_to_date_mapping(self) -> None:
