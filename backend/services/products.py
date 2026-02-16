@@ -1,4 +1,5 @@
 import math
+from decimal import Decimal
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,12 +20,27 @@ async def list_products(
     db: AsyncSession,
     page: int,
     per_page: int,
+    *,
+    q: str | None = None,
+    category: str | None = None,
+    country: str | None = None,
+    region: str | None = None,
+    min_price: Decimal | None = None,
+    max_price: Decimal | None = None,
 ) -> PaginatedResponse:
-    """Fetch a paginated list of products ordered by name."""
-    total = await count(db)
+    """Fetch a paginated list of products, optionally filtered."""
+    filters = dict(
+        q=q,
+        category=category,
+        country=country,
+        region=region,
+        min_price=min_price,
+        max_price=max_price,
+    )
+    total = await count(db, **filters)
 
     offset = (page - 1) * per_page
-    rows = await find_page(db, offset, per_page)
+    rows = await find_page(db, offset, per_page, **filters)
 
     return PaginatedResponse(
         products=[ProductResponse.model_validate(r) for r in rows],
