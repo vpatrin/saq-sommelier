@@ -1,4 +1,5 @@
 import asyncio
+from datetime import date
 
 import httpx
 from core.logging import setup_logging
@@ -6,11 +7,26 @@ from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 
 from .config import settings
-from .db import upsert_product
+from .db import get_updated_dates, upsert_product
 from .parser import parse_product
-from .sitemap import fetch_sitemap_index, fetch_sub_sitemap
+from .sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
 
 setup_logging(settings.SERVICE_NAME, level=settings.LOG_LEVEL)
+
+
+def _needs_scrape(entry: SitemapEntry, updated_dates: dict[str, date]) -> bool:
+    """Check if a sitemap entry needs to be scraped.
+
+    Returns True (scrape) when:
+    - No lastmod in sitemap (can't determine staleness)
+    - Product not in DB yet (new product)
+    - Sitemap lastmod is newer than DB updated_at
+    """
+    if not entry.lastmod:
+        return True
+    if entry.sku not in updated_dates:
+        return True
+    return date.fromisoformat(entry.lastmod) > updated_dates[entry.sku]
 
 
 async def main() -> None:
@@ -40,7 +56,20 @@ async def main() -> None:
 
         limit = settings.SCRAPE_LIMIT
         products_to_scrape = entries[:limit] if limit else entries
-        logger.info("Scraping {} products...", len(products_to_scrape))
+
+        # Loads {sku: last_updated_date} from DB, then O(1) dict lookup per entry
+        updated_dates = await get_updated_dates()
+
+        # Incremental scraping: skip products unchanged since last scrape
+        total_before = len(products_to_scrape)
+        products_to_scrape = [e for e in products_to_scrape if _needs_scrape(e, updated_dates)]
+        skipped = total_before - len(products_to_scrape)
+
+        logger.info(
+            "Incremental filter: {} to scrape, {} skipped (unchanged)",
+            len(products_to_scrape),
+            skipped,
+        )
 
         # Main scrape loop
         for i, entry in enumerate(products_to_scrape, 1):
