@@ -73,6 +73,6 @@ Ongoing work that runs alongside the product phases.
 - [x] Rename shared/ to core/, move Alembic (#38, #39, #42)
 - [x] PR template, repo topics, README cleanup (#81, #64, #37)
 - [x] Type hints + docstring cleanup (PR #82)
-- [ ] Backend logging (#85)
+- [x] Backend logging (#85)
 - [ ] Full Docker dev environment (#44)
 - [ ] Port assignment convention (#53)
