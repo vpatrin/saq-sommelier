@@ -27,6 +27,7 @@ async def get_products(
     region: str | None = Query(default=None, max_length=MAX_FILTER_LENGTH),
     min_price: Decimal | None = Query(default=None, ge=0),
     max_price: Decimal | None = Query(default=None, ge=0),
+    available: bool | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedResponse:
     """List products with offset-based pagination and optional filters."""
@@ -40,6 +41,7 @@ async def get_products(
         region=region,
         min_price=min_price,
         max_price=max_price,
+        available=available,
     )
 
 

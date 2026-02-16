@@ -27,6 +27,7 @@ async def list_products(
     region: str | None = None,
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
+    available: bool | None = None,
 ) -> PaginatedResponse:
     """Fetch a paginated list of products, optionally filtered."""
     filters = dict(
@@ -36,6 +37,7 @@ async def list_products(
         region=region,
         min_price=min_price,
         max_price=max_price,
+        available=available,
     )
     total = await count(db, **filters)
 

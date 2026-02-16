@@ -51,7 +51,10 @@ No command needed — it just shows up. Powered by the same data the scraper alr
 
 ## Availability model
 
-All bot queries (`/search`, `/new`, `/random`) only return wines that are **available to buy online** — `delisted_at IS NULL AND availability = TRUE`. No point showing wines you can't purchase.
+Delisted products (removed from SAQ sitemap) are always excluded from the API. Online availability is an optional filter:
+
+- `/search` — shows all products including out-of-stock, so users can find wines and set up alerts
+- `/new`, `/random` — only available wines (`?available=true`), no point suggesting something you can't buy
 
 `/watch` alerts on three events:
 
