@@ -17,6 +17,11 @@ class SitemapEntry:
     url: str
     lastmod: str | None = None  # Equivalent to Optional[str] from typing, but cleaner.
 
+    @property
+    def sku(self) -> str:
+        """Extract SKU from the URL's last path segment."""
+        return self.url.rstrip("/").split("/")[-1]
+
 
 async def fetch_sitemap_index(client: httpx.AsyncClient) -> list[str]:
     """Fetch the SAQ sitemap index and return sub-sitemap URLs.
