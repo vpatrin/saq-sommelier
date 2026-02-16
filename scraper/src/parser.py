@@ -5,6 +5,7 @@ from html import unescape
 from typing import Any
 
 from bs4 import BeautifulSoup
+from loguru import logger
 
 
 @dataclass(frozen=True)
@@ -71,7 +72,7 @@ def parse_product(html: str, url: str) -> ProductData:
     soup = BeautifulSoup(html, "lxml")  # lxml is the parser backend
 
     # JSON-LD: <script type="application/ld+json"> — price, availability, rating, image
-    jsonld_fields = _parse_jsonld(soup)
+    jsonld_fields = _parse_jsonld(soup, url)
 
     # HTML attrs: <ul class="list-attributs"> — region, grape, alcohol, sugar
     html_fields = _parse_html_attrs(soup)
@@ -83,12 +84,13 @@ def parse_product(html: str, url: str) -> ProductData:
 # -------------- HELPERS -------------- #
 
 
-def _parse_jsonld(soup: BeautifulSoup) -> dict[str, Any]:
+def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
     """Extract product fields from the first JSON-LD Product block."""
     for script in soup.find_all("script", type="application/ld+json"):
         try:
             data = json.loads(script.string or "")
         except (json.JSONDecodeError, TypeError):
+            logger.warning("Skipping unparseable JSON-LD block on {}", url)
             continue
 
         if not isinstance(data, dict) or data.get("@type") != "Product":
@@ -121,7 +123,10 @@ def _parse_jsonld(soup: BeautifulSoup) -> dict[str, Any]:
         if isinstance(offers, dict):
             price = offers.get("price")
             if price is not None:
-                fields["price"] = float(price)
+                try:
+                    fields["price"] = float(price)
+                except (ValueError, TypeError):
+                    logger.warning("Bad price value {!r} on {}", price, url)
             currency = offers.get("priceCurrency")
             if currency:
                 fields["currency"] = currency
@@ -138,10 +143,16 @@ def _parse_jsonld(soup: BeautifulSoup) -> dict[str, Any]:
         # Rating
         rating_data = data.get("aggregateRating", {})
         if isinstance(rating_data, dict) and rating_data.get("ratingValue"):
-            fields["rating"] = float(rating_data["ratingValue"])
+            try:
+                fields["rating"] = float(rating_data["ratingValue"])
+            except (ValueError, TypeError):
+                logger.warning("Bad rating value {!r} on {}", rating_data["ratingValue"], url)
             review_count = rating_data.get("reviewCount")
             if review_count is not None:
-                fields["review_count"] = int(review_count)
+                try:
+                    fields["review_count"] = int(review_count)
+                except (ValueError, TypeError):
+                    logger.warning("Bad review_count value {!r} on {}", review_count, url)
 
         return fields  # Only need the first Product block
 

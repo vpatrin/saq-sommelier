@@ -40,6 +40,14 @@ class TestFetchSitemapIndex:
         )
 
     @pytest.mark.asyncio
+    async def test_raises_on_http_error(self) -> None:
+        client = AsyncMock(spec=httpx.AsyncClient)
+        client.get.return_value = _make_response(b"", status_code=404)
+
+        with pytest.raises(httpx.HTTPStatusError):
+            await fetch_sitemap_index(client)
+
+    @pytest.mark.asyncio
     async def test_raises_on_invalid_xml(self) -> None:
         client = AsyncMock(spec=httpx.AsyncClient)
         client.get.return_value = _make_response(b"not valid xml <><>")
@@ -83,6 +91,14 @@ class TestFetchSubSitemap:
         entries = await fetch_sub_sitemap(client, "https://example.com/sitemap.xml")
 
         assert entries == []
+
+    @pytest.mark.asyncio
+    async def test_raises_on_http_error(self) -> None:
+        client = AsyncMock(spec=httpx.AsyncClient)
+        client.get.return_value = _make_response(b"", status_code=500)
+
+        with pytest.raises(httpx.HTTPStatusError):
+            await fetch_sub_sitemap(client, "https://example.com/sitemap.xml")
 
     @pytest.mark.asyncio
     async def test_raises_on_invalid_xml(self) -> None:
