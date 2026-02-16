@@ -46,6 +46,11 @@ class Product(Base):
         nullable=False,
         comment="When last updated",
     )
+    delisted_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When removed from SAQ sitemap (NULL = active)",
+    )
 
     # JSON-LD fields (from <script type="application/ld+json">)
     name = Column(String, nullable=True, index=True, comment="Product name")
