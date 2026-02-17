@@ -4,18 +4,22 @@
 -include .env
 export
 
-.PHONY: install dev scrape migrate revision reset-db lint-backend lint-scraper lint-core lint format-backend format-scraper format-core format test-backend test-scraper test coverage-backend coverage-scraper coverage build-backend build-scraper build up down clean
+.PHONY: install dev-backend dev-bot dev-scrape migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage build-backend build-scraper build up down clean
 
 install:
 	git config core.hooksPath .githooks
 	cd backend && poetry lock && poetry install
 	cd scraper && poetry lock && poetry install
 	cd core && poetry lock && poetry install
+	cd bot && poetry lock && poetry install
 
-dev:
+dev-backend:
 	cd backend && poetry run uvicorn backend.app:app --reload --port 8000
 
-scrape:
+dev-bot:
+	cd bot && poetry run python -m bot.main
+
+dev-scrape:
 	cd scraper && poetry run python -m src
 
 # Database migrations
@@ -42,7 +46,11 @@ lint-core:
 	@echo "\n▶ Linting core/"
 	cd core && poetry run ruff check . && poetry run ruff format --check .
 
-lint: lint-backend lint-scraper lint-core
+lint-bot:
+	@echo "\n▶ Linting bot/"
+	cd bot && poetry run ruff check . && poetry run ruff format --check .
+
+lint: lint-backend lint-scraper lint-core lint-bot
 
 # Format
 format-backend:
@@ -57,7 +65,11 @@ format-core:
 	@echo "\n▶ Formatting core/"
 	cd core && poetry run ruff format . && poetry run ruff check --fix .
 
-format: format-backend format-scraper format-core
+format-bot:
+	@echo "\n▶ Formatting bot/"
+	cd bot && poetry run ruff format . && poetry run ruff check --fix .
+
+format: format-backend format-scraper format-core format-bot
 
 # Test
 test-backend:
@@ -68,7 +80,11 @@ test-scraper:
 	@echo "\n▶ Testing scraper/"
 	cd scraper && poetry run pytest -v
 
-test: test-backend test-scraper
+test-bot:
+	@echo "\n▶ Testing bot/"
+	cd bot && poetry run pytest -v
+
+test: test-backend test-scraper test-bot
 
 # Coverage
 coverage-backend:
@@ -79,7 +95,11 @@ coverage-scraper:
 	@echo "\n▶ Coverage scraper/"
 	cd scraper && poetry run pytest --cov --cov-report=term --cov-report=xml
 
-coverage: coverage-backend coverage-scraper
+coverage-bot:
+	@echo "\n▶ Coverage bot/"
+	cd bot && poetry run pytest --cov --cov-report=term --cov-report=xml
+
+coverage: coverage-backend coverage-scraper coverage-bot
 	@echo "\n▶ Generating badges"
 	python scripts/generate_badges.py
 
@@ -102,6 +122,6 @@ down:
 clean:
 	@echo "\n▶ Cleaning caches"
 	find . -type d -name __pycache__ -exec rm -rf {} +
-	rm -rf .pytest_cache backend/.pytest_cache scraper/.pytest_cache
-	rm -rf .ruff_cache backend/.ruff_cache scraper/.ruff_cache core/.ruff_cache
+	rm -rf .pytest_cache backend/.pytest_cache scraper/.pytest_cache bot/.pytest_cache
+	rm -rf .ruff_cache backend/.ruff_cache scraper/.ruff_cache core/.ruff_cache bot/.ruff_cache
 	rm -rf *.egg-info
