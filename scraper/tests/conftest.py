@@ -45,7 +45,7 @@ def sub_sitemap_xml() -> str:
 
 @pytest.fixture
 def product_page_html() -> str:
-    """Product page HTML with JSON-LD and attribute list."""
+    """Product page HTML matching real SAQ structure (two JSON-LD blocks)."""
     return """<html><head>
 <script type="application/ld+json">
 {
@@ -54,25 +54,33 @@ def product_page_html() -> str:
   "sku": "10327701",
   "description": "A fine red wine",
   "category": "Vin rouge",
-  "countryOfOrigin": "France",
-  "gtin12": "00012345678901",
-  "color": "Rouge",
-  "size": "750 ml",
   "image": "https://www.saq.com/media/image.png?width=600&quality=80",
   "offers": {
     "price": 22.50,
     "priceCurrency": "CAD",
     "availability": "http://schema.org/InStock"
-  },
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@type": "Product",
+  "name": "Ch&acirc;teau Example Bordeaux",
+  "sku": "10327701",
+  "gtin12": "00012345678901",
+  "category": "Vin rouge",
   "manufacturer": {"name": "Ch&acirc;teau Example"},
   "aggregateRating": {
-    "ratingValue": 4.5,
-    "reviewCount": 100
+    "ratingValue": "4,5",
+    "reviewCount": "100"
   }
 }
 </script>
 </head><body>
 <ul class="list-attributs">
+  <li><strong data-th="Pays">France</strong></li>
+  <li><strong data-th="Couleur">Rouge</strong></li>
+  <li><strong data-th="Format">750 ml</strong></li>
   <li><strong data-th="Région">Bordeaux</strong></li>
   <li><strong data-th="Appellation d'origine">Bordeaux AOC</strong></li>
   <li><strong data-th="Cépage">Merlot 60 %, Cabernet sauvignon 40 %</strong></li>

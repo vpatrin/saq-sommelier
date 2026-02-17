@@ -7,7 +7,6 @@ class TestParseProductJsonLD:
 
         assert result.sku == "10327701"
         assert result.category == "Vin rouge"
-        assert result.country == "France"
         assert result.price == 22.50
         assert result.currency == "CAD"
         assert result.availability is True
@@ -28,13 +27,37 @@ class TestParseProductJsonLD:
 
         # &acirc; → â
         assert result.name == "Château Example Bordeaux"
-        assert result.manufacturer == "Château Example"
+
+    def test_merges_multiple_jsonld_blocks(self, product_page_html: str) -> None:
+        """Rating from block 2 is merged with price from block 1."""
+        result = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
+
+        # Block 1 has price, block 2 has rating — both should be present
+        assert result.price == 22.50
+        assert result.rating == 4.5
+        assert result.review_count == 100
+        assert result.barcode == "00012345678901"
+
+    def test_french_decimal_comma_in_rating(self, product_page_html: str) -> None:
+        """Rating value "4,5" (French comma) is parsed correctly."""
+        result = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
+
+        assert result.rating == 4.5
+
+    def test_manufacturer_not_extracted(self, product_page_html: str) -> None:
+        """Manufacturer is redundant with producer — not extracted."""
+        result = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
+
+        assert result.manufacturer is None
 
 
 class TestParseProductHtmlAttrs:
     def test_extracts_wine_attributes(self, product_page_html: str) -> None:
         result = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
 
+        assert result.country == "France"
+        assert result.color == "Rouge"
+        assert result.size == "750 ml"
         assert result.region == "Bordeaux"
         assert result.appellation == "Bordeaux AOC"
         assert result.grape == "Merlot 60 %, Cabernet sauvignon 40 %"
