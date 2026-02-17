@@ -69,7 +69,6 @@ def product_page_html() -> str:
   "sku": "10327701",
   "gtin12": "00012345678901",
   "category": "Vin rouge",
-  "manufacturer": {"name": "Ch&acirc;teau Example"},
   "aggregateRating": {
     "ratingValue": "4,5",
     "reviewCount": "100"

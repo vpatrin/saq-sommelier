@@ -64,7 +64,6 @@ class Product(Base):
     price = Column(Numeric(10, 2), nullable=True, index=True, comment="Price in CAD")
     currency = Column(String, nullable=True, comment="Currency code (CAD)")
     availability = Column(Boolean, nullable=True, comment="In stock?")
-    manufacturer = Column(String, nullable=True, comment="Manufacturer name")
     rating = Column(Float, nullable=True, comment="Aggregate rating (0-5)")
     review_count = Column(Integer, nullable=True, comment="Number of reviews")
 

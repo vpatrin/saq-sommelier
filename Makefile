@@ -26,7 +26,7 @@ revision:
 	@test -n "$(msg)" || (echo "Usage: make revision msg=\"description\"" && exit 1)
 	cd core && poetry run alembic revision --autogenerate -m "$(msg)"
 
-squash:
+squash-revisions:
 	@echo "▶ Squashing all migrations into one initial migration"
 	cd core && poetry run alembic downgrade base
 	rm -f core/alembic/versions/*.py
