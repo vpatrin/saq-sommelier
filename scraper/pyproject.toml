@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "saq-scraper"
-version = "0.1.0"
+version = "1.0.0"
 description = "SAQ product catalog scraper — sitemap-based, ethical"
 package-mode = false
 

@@ -19,7 +19,7 @@ class ScraperSettings(BaseSettings):
     SERVICE_NAME: str = "scraper"
 
     # HTTP client settings
-    USER_AGENT: str = "SAQSommelier/0.1.0 (personal project; contact@victorpatrin.dev)"
+    USER_AGENT: str = "SAQSommelier/1.0.0 (personal project)"
     REQUEST_TIMEOUT: Annotated[int, Field(ge=1)] = 30
 
     # Rate limiting (ethical scraping)

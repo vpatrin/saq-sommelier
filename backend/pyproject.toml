@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "saq-sommelier"
-version = "0.1.0"
+version = "1.0.0"
 description = "AI-powered wine recommendation platform — SAQ catalog scraper, Claude RAG, Telegram bot & web app"
 package-mode = false
 
