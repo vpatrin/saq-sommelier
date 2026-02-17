@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from core.db.models import Product
-from sqlalchemy import Select, func, select
+from sqlalchemy import Column, Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -97,3 +97,30 @@ async def find_page(
     )
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def get_distinct_values(db: AsyncSession, column: Column) -> list[str]:
+    """Return sorted distinct non-null values for a product column (active products only)."""
+    stmt = (
+        select(column)
+        .where(Product.delisted_at.is_(None))
+        .where(column.isnot(None))
+        .distinct()
+        .order_by(column)
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def get_price_range(db: AsyncSession) -> tuple[Decimal, Decimal] | None:
+    """Return (min, max) price for active products, or None if no prices exist."""
+    stmt = (
+        select(func.min(Product.price), func.max(Product.price))
+        .where(Product.delisted_at.is_(None))
+        .where(Product.price.isnot(None))
+    )
+    result = await db.execute(stmt)
+    row = result.one()
+    if row[0] is None:
+        return None
+    return (row[0], row[1])

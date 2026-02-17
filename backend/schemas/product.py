@@ -37,3 +37,16 @@ class PaginatedResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+
+
+class PriceRange(BaseModel):
+    min: Decimal
+    max: Decimal
+
+
+class FacetsResponse(BaseModel):
+    categories: list[str]
+    countries: list[str]
+    regions: list[str]
+    grapes: list[str]
+    price_range: PriceRange | None
