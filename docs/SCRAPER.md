@@ -15,7 +15,7 @@ A typical incremental run scrapes ~50-200 products instead of the full ~38k cata
 
 ## Running manually
 
-See [DEVELOPMENT.md](DEVELOPMENT.md#working-on-the-scraper) for local dev usage (`make scrape`, `make reset-db`).
+See [DEVELOPMENT.md](DEVELOPMENT.md#working-on-the-scraper) for local dev usage (`make dev-scrape`, `make reset-db`).
 
 ## Production scheduling
 
