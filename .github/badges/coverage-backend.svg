@@ -14,7 +14,7 @@
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
     <text x="57.0" y="15" fill="#010101" fill-opacity=".3">backend coverage</text>
     <text x="57.0" y="14">backend coverage</text>
-    <text x="130.25" y="15" fill="#010101" fill-opacity=".3">97%</text>
-    <text x="130.25" y="14">97%</text>
+    <text x="130.25" y="15" fill="#010101" fill-opacity=".3">94%</text>
+    <text x="130.25" y="14">94%</text>
   </g>
 </svg>

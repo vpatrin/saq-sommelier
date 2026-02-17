@@ -1,6 +1,18 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Float, Index, Integer, Numeric, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 
 from core.db.base import Base
 
@@ -81,3 +93,38 @@ class Product(Base):
 
     def __repr__(self) -> str:
         return f"<Product(sku={self.sku!r}, name={self.name!r})>"
+
+
+class Watch(Base):
+    """User watch on a product — triggers alerts on availability changes."""
+
+    __tablename__ = "watches"
+
+    # A given can watch SKU A and SKU B, but can't watch SKU A twice
+    __table_args__ = (UniqueConstraint("user_id", "sku", name="uq_watches_user_sku"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    # Opaque string — the backend doesn't parse or validate it.
+    # Channel prefix is the caller's responsibility (tg:, wa:, email:, etc.).
+    user_id = Column(
+        String,
+        nullable=False,
+        index=True,
+        comment="Channel-prefixed user ID (e.g. tg:123456)",
+    )
+    sku = Column(
+        String,
+        ForeignKey("products.sku"),
+        nullable=False,
+        index=True,
+        comment="Watched product SKU",
+    )
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="When watch was created",
+    )
+
+    def __repr__(self) -> str:
+        return f"<Watch(user_id={self.user_id!r}, sku={self.sku!r})>"
