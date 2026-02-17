@@ -99,7 +99,7 @@ class Watch(Base):
     """User watch on a product — triggers alerts on availability changes."""
 
     __tablename__ = "watches"
-    
+
     # A given can watch SKU A and SKU B, but can't watch SKU A twice
     __table_args__ = (UniqueConstraint("user_id", "sku", name="uq_watches_user_sku"),)
 
