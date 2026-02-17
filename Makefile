@@ -4,7 +4,7 @@
 -include .env
 export
 
-.PHONY: install dev scrape migrate revision squash reset-db lint-backend lint-scraper lint-core lint format-backend format-scraper format-core format test-backend test-scraper test coverage-backend coverage-scraper coverage build-backend build-scraper build up down clean
+.PHONY: install dev scrape migrate revision reset-db lint-backend lint-scraper lint-core lint format-backend format-scraper format-core format test-backend test-scraper test coverage-backend coverage-scraper coverage build-backend build-scraper build up down clean
 
 install:
 	git config core.hooksPath .githooks
@@ -25,14 +25,6 @@ migrate:
 revision:
 	@test -n "$(msg)" || (echo "Usage: make revision msg=\"description\"" && exit 1)
 	cd core && poetry run alembic revision --autogenerate -m "$(msg)"
-
-squash-revisions:
-	@echo "▶ Squashing all migrations into one initial migration"
-	cd core && poetry run alembic downgrade base
-	rm -f core/alembic/versions/*.py
-	cd core && poetry run alembic revision --autogenerate -m "initial schema"
-	@echo "⚠ Hand-add CREATE EXTENSION statements to the generated migration"
-	@echo "⚠ Then run: make reset-db"
 
 reset-db:
 	cd core && poetry run alembic downgrade base && poetry run alembic upgrade head
