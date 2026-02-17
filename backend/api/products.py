@@ -11,8 +11,8 @@ from backend.config import (
     MAX_SKU_LENGTH,
 )
 from backend.db import get_db
-from backend.schemas.product import PaginatedResponse, ProductResponse
-from backend.services.products import get_product, list_products
+from backend.schemas.product import FacetsResponse, PaginatedResponse, ProductResponse
+from backend.services.products import get_facets, get_product, list_products
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -43,6 +43,14 @@ async def get_products(
         max_price=max_price,
         available=available,
     )
+
+
+@router.get("/facets", response_model=FacetsResponse)
+async def get_product_facets(
+    db: AsyncSession = Depends(get_db),
+) -> FacetsResponse:
+    """Return distinct filter values and price range for the catalog."""
+    return await get_facets(db)
 
 
 @router.get("/{sku}", response_model=ProductResponse)

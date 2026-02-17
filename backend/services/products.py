@@ -1,11 +1,23 @@
 import math
 from decimal import Decimal
 
+from core.db.models import Product
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.exceptions import NotFoundError
-from backend.repositories.products import count, find_by_sku, find_page
-from backend.schemas.product import PaginatedResponse, ProductResponse
+from backend.repositories.products import (
+    count,
+    find_by_sku,
+    find_page,
+    get_distinct_values,
+    get_price_range,
+)
+from backend.schemas.product import (
+    FacetsResponse,
+    PaginatedResponse,
+    PriceRange,
+    ProductResponse,
+)
 
 
 async def get_product(db: AsyncSession, sku: str) -> ProductResponse:
@@ -50,4 +62,21 @@ async def list_products(
         page=page,
         per_page=per_page,
         pages=math.ceil(total / per_page) if total > 0 else 0,
+    )
+
+
+async def get_facets(db: AsyncSession) -> FacetsResponse:
+    """Fetch distinct filter values and price range for active products."""
+    categories = await get_distinct_values(db, Product.category)
+    countries = await get_distinct_values(db, Product.country)
+    regions = await get_distinct_values(db, Product.region)
+    grapes = await get_distinct_values(db, Product.grape)
+    price_result = await get_price_range(db)
+
+    return FacetsResponse(
+        categories=categories,
+        countries=countries,
+        regions=regions,
+        grapes=grapes,
+        price_range=PriceRange(min=price_result[0], max=price_result[1]) if price_result else None,
     )

@@ -4,6 +4,7 @@ from types import SimpleNamespace, UnionType
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from core.db.models import Product
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -11,6 +12,7 @@ from sqlalchemy import select
 from backend.app import app
 from backend.config import MAX_FILTER_LENGTH, MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
 from backend.db import get_db
+from backend.repositories.products import _apply_filters, find_by_sku, get_distinct_values
 from backend.schemas.product import ProductResponse
 
 NOW = datetime(2025, 1, 1, tzinfo=UTC)
@@ -219,8 +221,6 @@ def test_product_response_fields_exist_on_model():
     Catches renames in the ORM model that silently break the API
     (from_attributes=True returns None instead of raising).
     """
-    from core.db.models import Product
-
     model_columns = set(Product.__table__.columns.keys())
     response_fields = set(ProductResponse.model_fields.keys())
     missing = response_fields - model_columns
@@ -373,10 +373,6 @@ def _compile(stmt) -> str:
 
 def test_list_query_always_excludes_delisted():
     """Product list queries always filter out delisted products."""
-    from core.db.models import Product
-
-    from backend.repositories.products import _apply_filters
-
     stmt = select(Product)
     filtered = _apply_filters(stmt)
     sql = _compile(filtered)
@@ -385,10 +381,6 @@ def test_list_query_always_excludes_delisted():
 
 def test_list_query_filters_available_when_requested():
     """available=True adds availability filter; omitting it does not."""
-    from core.db.models import Product
-
-    from backend.repositories.products import _apply_filters
-
     # Without available param — no WHERE clause on availability
     stmt = select(Product)
     sql_no_filter = _compile(_apply_filters(stmt))
@@ -403,8 +395,6 @@ def test_list_query_filters_available_when_requested():
 @pytest.mark.asyncio
 async def test_detail_query_excludes_delisted():
     """find_by_sku excludes delisted but not unavailable products."""
-    from backend.repositories.products import find_by_sku
-
     session = AsyncMock()
     result = MagicMock()
     result.scalar_one_or_none.return_value = None
@@ -418,3 +408,123 @@ async def test_detail_query_excludes_delisted():
     # Unavailable products should still be findable (for /watch)
     assert "availability = true" not in sql
     assert "availability = false" not in sql
+
+
+# ── Facets endpoint ───────────────────────────────────────────
+
+
+def _mock_scalars_result(values: list):
+    """Mock result for SELECT DISTINCT queries (scalars().all())."""
+    result = MagicMock()
+    scalars_mock = MagicMock()
+    scalars_mock.all.return_value = values
+    result.scalars.return_value = scalars_mock
+    return result
+
+
+def _mock_row_result(row: tuple):
+    """Mock result for SELECT MIN/MAX queries (one())."""
+    result = MagicMock()
+    result.one.return_value = row
+    return result
+
+
+def _mock_db_for_facets(
+    categories: list[str],
+    countries: list[str],
+    regions: list[str],
+    grapes: list[str],
+    price_row: tuple,
+):
+    """Mock async session for facets — 5 sequential execute calls."""
+    session = AsyncMock()
+    session.execute = AsyncMock(
+        side_effect=[
+            _mock_scalars_result(categories),
+            _mock_scalars_result(countries),
+            _mock_scalars_result(regions),
+            _mock_scalars_result(grapes),
+            _mock_row_result(price_row),
+        ]
+    )
+    return session
+
+
+def test_facets_response_shape():
+    """Facets endpoint returns all expected keys with sorted values."""
+    session = _mock_db_for_facets(
+        categories=["Vin blanc", "Vin rouge"],
+        countries=["France", "Italie"],
+        regions=["Bordeaux", "Toscane"],
+        grapes=["Chardonnay", "Merlot"],
+        price_row=(Decimal("8.99"), Decimal("450.00")),
+    )
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/facets")
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data["categories"] == ["Vin blanc", "Vin rouge"]
+    assert data["countries"] == ["France", "Italie"]
+    assert data["regions"] == ["Bordeaux", "Toscane"]
+    assert data["grapes"] == ["Chardonnay", "Merlot"]
+    assert data["price_range"] == {"min": "8.99", "max": "450.00"}
+
+
+def test_facets_empty_catalog():
+    """Empty catalog returns empty lists and null price range."""
+    session = _mock_db_for_facets(
+        categories=[],
+        countries=[],
+        regions=[],
+        grapes=[],
+        price_row=(None, None),
+    )
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/facets")
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data["categories"] == []
+    assert data["countries"] == []
+    assert data["regions"] == []
+    assert data["grapes"] == []
+    assert data["price_range"] is None
+
+
+def test_facets_no_prices():
+    """Products exist but none have prices — lists populated, price_range null."""
+    session = _mock_db_for_facets(
+        categories=["Vin rouge"],
+        countries=["France"],
+        regions=["Bordeaux"],
+        grapes=["Merlot"],
+        price_row=(None, None),
+    )
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/facets")
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert len(data["categories"]) == 1
+    assert data["price_range"] is None
+
+
+@pytest.mark.asyncio
+async def test_facets_query_excludes_delisted():
+    """Facets queries filter out delisted products."""
+    session = AsyncMock()
+    result = MagicMock()
+    scalars_mock = MagicMock()
+    scalars_mock.all.return_value = []
+    result.scalars.return_value = scalars_mock
+    session.execute = AsyncMock(return_value=result)
+
+    await get_distinct_values(session, Product.category)
+
+    stmt = session.execute.call_args[0][0]
+    sql = _compile(stmt)
+    assert "delisted_at IS NULL" in sql
