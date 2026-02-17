@@ -36,7 +36,7 @@
 - [x] Run summary + exit codes (#52, PR #95)
 - [x] Weekly cronjob (#49, PR #97) — systemd timer + Compose service
 
-### Phase 4 — API for Bot (in progress)
+### Phase 4 — API for Bot (done)
 
 Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_BOT.md) for full design.
 
@@ -45,11 +45,11 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 - [x] Product search + filtering (#35)
 - [x] Database indexes (#26)
 - [x] Structured exception handling (#41)
-- [ ] Exclude delisted + unavailable from API (#98) — prerequisite for all bot queries
-- [ ] Catalog facets endpoint (#55) — powers bot filter buttons
-- [ ] Sort by recent + random product endpoint — powers `/new` and `/random`
-- [ ] Watches resource (CRUD) — powers `/watch`, `/unwatch`, `/alerts`
-- [ ] Price history tracking (#57) — powers price drop alerts (post-MVP)
+- [x] Exclude delisted + available filter (#98, PR #103)
+- [x] Catalog facets endpoint (#55, PR #105)
+- [x] Sort by recent + random product (#99, #100, PR #107)
+- [x] Watches CRUD (#101, PR #112) — powers `/watch`, `/unwatch`, `/alerts`
+- ~~Price history tracking (#57)~~ — descoped, SAQ prices are regulated
 
 ### Phase 5 — Telegram Bot
 
@@ -57,7 +57,7 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 - [ ] `/search` — search wines with inline keyboard filters
 - [ ] `/new` — recently added/updated wines with filters
 - [ ] `/random` — random wine with filters
-- [ ] `/watch`, `/unwatch`, `/alerts` — price drop + restock alerts
+- [ ] `/watch`, `/unwatch`, `/alerts` — availability/restock alerts
 - [ ] Weekly digest — proactive post to group chat after scraper run
 - [ ] Bot Dockerfile + Compose service
 

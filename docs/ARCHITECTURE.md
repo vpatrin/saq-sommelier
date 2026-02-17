@@ -24,19 +24,19 @@ Designed as a **modular monolith** for a solo developer serving ~20 users. Servi
                           │  /health              │
                           │  /products            │
                           │  /products/{sku}      │
-                          │  /search   (planned)  │
-                          │  /reco     (planned)  │
+                          │  /products/facets     │
+                          │  /products/random     │
+                          │  /watches             │
+                          │  /recommend (Phase 6) │
                           │                       │
-                          │  Service Layer        │
-                          │  (when needed)        │
                           └──┬──────────────┬─────┘
                              │              │
                     ┌────────▼────┐   ┌─────▼──────────┐
                     │ PostgreSQL  │   │  Claude API     │
                     │             │   │  (Haiku 3.5)    │
                     │  products   │   │                 │
-                    │  prices (?) │   │  NL queries     │
-                    │  users  (?) │   │  Recommendations │
+                    │  watches    │   │  NL queries     │
+                    │             │   │  Recommendations │
                     └────────▲────┘   └────────────────┘
                              │
                              │ writes
@@ -66,10 +66,12 @@ Designed as a **modular monolith** for a solo developer serving ~20 users. Servi
 ```
 saq-sommelier/
 ├── backend/          FastAPI API (reads from DB)
-│   ├── api/          HTTP endpoints
-│   ├── schemas/      Pydantic response models (API contract)
+│   ├── api/          HTTP endpoints (products, watches, health)
+│   ├── repositories/ Database queries (SQLAlchemy)
+│   ├── services/     Business logic + domain error translation
+│   ├── schemas/      Pydantic request/response models (API contract)
 │   ├── db.py         Session factory + get_db dependency
-│   ├── main.py       App entry point + router registration
+│   ├── app.py        App entry point + router registration
 │   └── tests/
 ├── scraper/          Standalone scraper (writes to DB)
 │   └── src/          Sitemap fetcher, HTML parser, DB upsert
@@ -90,7 +92,7 @@ Services share a PostgreSQL database but never import each other's code. Each ha
 
 ### PostgreSQL as the integration layer
 
-The scraper writes to `products`, the backend reads from `products`. No message queue, no pub/sub, no event bus. At 20 users with a static catalog, the database is the simplest reliable integration point. A queue would add complexity without adding value.
+The scraper writes to `products`, the backend reads from `products` and manages `watches`. No message queue, no pub/sub, no event bus. At 20 users with a static catalog, the database is the simplest reliable integration point. A queue would add complexity without adding value.
 
 ### Separate schemas per boundary
 
