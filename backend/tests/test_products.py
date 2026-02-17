@@ -12,7 +12,12 @@ from sqlalchemy import select
 from backend.app import app
 from backend.config import MAX_FILTER_LENGTH, MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
 from backend.db import get_db
-from backend.repositories.products import _apply_filters, find_by_sku, get_distinct_values
+from backend.repositories.products import (
+    _apply_filters,
+    find_by_sku,
+    find_random,
+    get_distinct_values,
+)
 from backend.schemas.product import ProductResponse
 
 NOW = datetime(2025, 1, 1, tzinfo=UTC)
@@ -528,3 +533,134 @@ async def test_facets_query_excludes_delisted():
     stmt = session.execute.call_args[0][0]
     sql = _compile(stmt)
     assert "delisted_at IS NULL" in sql
+
+
+# ── Sorting ───────────────────────────────────────────────────
+
+
+def test_sort_recent_returns_200():
+    """?sort=recent returns 200 with products."""
+    products = [_fake_product(sku="NEW1")]
+    session = _mock_db_for_products(products, total=1)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?sort=recent")
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["total"] == 1
+
+
+def test_sort_invalid_rejected():
+    """Invalid sort value returns 422."""
+    session = _mock_db_for_products([], total=0)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?sort=bogus")
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+def test_sort_recent_query_order():
+    """sort=recent produces ORDER BY updated_at DESC in SQL."""
+    stmt = select(Product).order_by(Product.updated_at.desc()).offset(0).limit(20)
+    stmt = _apply_filters(stmt)
+    sql = _compile(stmt)
+    assert "updated_at DESC" in sql
+
+
+def test_sort_default_query_order():
+    """Without sort, products are ordered by name."""
+    stmt = select(Product).order_by(Product.name).offset(0).limit(20)
+    stmt = _apply_filters(stmt)
+    sql = _compile(stmt)
+    assert "ORDER BY products.name" in sql
+
+
+def test_sort_price_asc_returns_200():
+    """?sort=price_asc returns 200."""
+    products = [_fake_product(sku="CHEAP1")]
+    session = _mock_db_for_products(products, total=1)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?sort=price_asc")
+    assert resp.status_code == status.HTTP_200_OK
+
+
+def test_sort_price_desc_returns_200():
+    """?sort=price_desc returns 200."""
+    products = [_fake_product(sku="PRICEY1")]
+    session = _mock_db_for_products(products, total=1)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products?sort=price_desc")
+    assert resp.status_code == status.HTTP_200_OK
+
+
+def test_sort_price_asc_query_order():
+    """sort=price_asc produces ORDER BY price ASC in SQL."""
+    stmt = select(Product).order_by(Product.price.asc()).offset(0).limit(20)
+    stmt = _apply_filters(stmt)
+    sql = _compile(stmt)
+    assert "price ASC" in sql
+
+
+def test_sort_price_desc_query_order():
+    """sort=price_desc produces ORDER BY price DESC in SQL."""
+    stmt = select(Product).order_by(Product.price.desc()).offset(0).limit(20)
+    stmt = _apply_filters(stmt)
+    sql = _compile(stmt)
+    assert "price DESC" in sql
+
+
+# ── Random endpoint ───────────────────────────────────────────
+
+
+def test_random_product_found():
+    """Random endpoint returns a single product."""
+    product = _fake_product(sku="RAND1", name="Château Random")
+    session = _mock_db_for_detail(product)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/random")
+    assert resp.status_code == status.HTTP_200_OK
+    assert set(resp.json().keys()) == EXPECTED_FIELDS
+
+
+def test_random_product_not_found():
+    """Random endpoint returns 404 when no products match."""
+    session = _mock_db_for_detail(None)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/random")
+    assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_random_with_filters():
+    """Random endpoint accepts filter params."""
+    product = _fake_product(sku="FILT1", category="Vin rouge")
+    session = _mock_db_for_detail(product)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get("/api/v1/products/random?category=Vin+rouge&min_price=10")
+    assert resp.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.asyncio
+async def test_random_query_excludes_delisted():
+    """Random query filters out delisted products."""
+    session = AsyncMock()
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = None
+    session.execute = AsyncMock(return_value=result)
+
+    await find_random(session)
+
+    stmt = session.execute.call_args[0][0]
+    sql = _compile(stmt)
+    assert "delisted_at IS NULL" in sql
+    assert "random()" in sql.lower()

@@ -9,6 +9,7 @@ from backend.repositories.products import (
     count,
     find_by_sku,
     find_page,
+    find_random,
     get_distinct_values,
     get_price_range,
 )
@@ -33,6 +34,7 @@ async def list_products(
     page: int,
     per_page: int,
     *,
+    sort: str | None = None,
     q: str | None = None,
     category: str | None = None,
     country: str | None = None,
@@ -41,7 +43,7 @@ async def list_products(
     max_price: Decimal | None = None,
     available: bool | None = None,
 ) -> PaginatedResponse:
-    """Fetch a paginated list of products, optionally filtered."""
+    """Fetch a paginated list of products, optionally filtered and sorted."""
     filters = dict(
         q=q,
         category=category,
@@ -54,7 +56,7 @@ async def list_products(
     total = await count(db, **filters)
 
     offset = (page - 1) * per_page
-    rows = await find_page(db, offset, per_page, **filters)
+    rows = await find_page(db, offset, per_page, sort=sort, **filters)
 
     return PaginatedResponse(
         products=[ProductResponse.model_validate(r) for r in rows],
@@ -63,6 +65,31 @@ async def list_products(
         per_page=per_page,
         pages=math.ceil(total / per_page) if total > 0 else 0,
     )
+
+
+async def get_random_product(
+    db: AsyncSession,
+    *,
+    category: str | None = None,
+    country: str | None = None,
+    region: str | None = None,
+    min_price: Decimal | None = None,
+    max_price: Decimal | None = None,
+    available: bool | None = None,
+) -> ProductResponse:
+    """Fetch a single random product matching filters. Raises NotFoundError if none."""
+    product = await find_random(
+        db,
+        category=category,
+        country=country,
+        region=region,
+        min_price=min_price,
+        max_price=max_price,
+        available=available,
+    )
+    if product is None:
+        raise NotFoundError("Product", "random")
+    return ProductResponse.model_validate(product)
 
 
 async def get_facets(db: AsyncSession) -> FacetsResponse:
