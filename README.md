@@ -42,8 +42,8 @@ make install              # install all dependencies (Poetry)
 cp .env.example .env      # defaults work as-is
 make up                   # start PostgreSQL (localhost:5432)
 make migrate              # create database tables
-make scrape               # populate the database (~38k products)
-make dev                  # start the backend (localhost:8000)
+make dev-scrape           # populate the database (~38k products)
+make dev-backend          # start the backend (localhost:8000)
 ```
 
 ## Development
