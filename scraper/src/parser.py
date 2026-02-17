@@ -26,10 +26,7 @@ class ProductData:
     sku: str | None = None
     description: str | None = None
     category: str | None = None
-    country: str | None = None
     barcode: str | None = None
-    color: str | None = None
-    size: str | None = None
     image: str | None = None
     price: float | None = None
     currency: str | None = None
@@ -38,6 +35,9 @@ class ProductData:
     rating: float | None = None
     review_count: int | None = None
     # HTML attribute fields
+    country: str | None = None
+    color: str | None = None
+    size: str | None = None
     region: str | None = None
     appellation: str | None = None
     designation: str | None = None
@@ -85,7 +85,13 @@ def parse_product(html: str, url: str) -> ProductData:
 
 
 def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
-    """Extract product fields from the first JSON-LD Product block."""
+    """Extract product fields from all JSON-LD Product blocks, merged.
+
+    SAQ pages emit two Product blocks: a minimal one and a rich one.
+    We merge all of them so later blocks fill in fields the first one lacks.
+    """
+    all_fields: dict[str, Any] = {}
+
     for script in soup.find_all("script", type="application/ld+json"):
         try:
             data = json.loads(script.string or "")
@@ -104,10 +110,7 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
             ("sku", "sku"),
             ("description", "description"),
             ("category", "category"),
-            ("country", "countryOfOrigin"),
             ("barcode", "gtin12"),
-            ("color", "color"),
-            ("size", "size"),
         ]:
             value = data.get(jsonld_key)
             if isinstance(value, str) and value:
@@ -130,21 +133,16 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
             currency = offers.get("priceCurrency")
             if currency:
                 fields["currency"] = currency
-            availability = offers.get("availability", "")
-            fields["availability"] = "InStock" in str(availability)
+            availability = offers.get("availability")
+            if availability is not None:
+                fields["availability"] = "InStock" in str(availability)
 
-        # Manufacturer
-        manufacturer = data.get("manufacturer", {})
-        if isinstance(manufacturer, dict):
-            mfr_name = manufacturer.get("name")
-            if isinstance(mfr_name, str) and mfr_name:
-                fields["manufacturer"] = unescape(mfr_name)
-
-        # Rating
+        # Rating — SAQ uses French decimal commas ("4,4") in block 2
         rating_data = data.get("aggregateRating", {})
         if isinstance(rating_data, dict) and rating_data.get("ratingValue"):
+            raw_rating = str(rating_data["ratingValue"]).replace(",", ".")
             try:
-                fields["rating"] = float(rating_data["ratingValue"])
+                fields["rating"] = float(raw_rating)
             except (ValueError, TypeError):
                 logger.warning("Bad rating value {!r} on {}", rating_data["ratingValue"], url)
             review_count = rating_data.get("reviewCount")
@@ -154,13 +152,16 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
                 except (ValueError, TypeError):
                     logger.warning("Bad review_count value {!r} on {}", review_count, url)
 
-        return fields  # Only need the first Product block
+        all_fields.update(fields)
 
-    return {}
+    return all_fields
 
 
 # Maps our English field names to the French labels that SAQ uses in their HTML
 _LABEL_MAP: dict[str, str] = {
+    "country": "Pays",
+    "color": "Couleur",
+    "size": "Format",
     "region": "Région",
     "appellation": "Appellation d'origine",
     "designation": "Désignation réglementée",
