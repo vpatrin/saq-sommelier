@@ -65,6 +65,7 @@ def main() -> None:
     services = {
         "backend": ROOT / "backend" / "coverage.xml",
         "scraper": ROOT / "scraper" / "coverage.xml",
+        "bot": ROOT / "bot" / "coverage.xml",
     }
 
     for name, xml_path in services.items():

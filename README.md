@@ -6,6 +6,7 @@ AI-powered wine recommendation engine built on the SAQ (Quebec liquor board) pro
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![backend coverage](.github/badges/coverage-backend.svg)
 ![scraper coverage](.github/badges/coverage-scraper.svg)
+![bot coverage](.github/badges/coverage-bot.svg)
 
 Scrapes ~38k products from the SAQ public sitemap, stores structured wine data in PostgreSQL, and serves it through a FastAPI API. A Telegram bot will provide natural language recommendations powered by Claude.
 
