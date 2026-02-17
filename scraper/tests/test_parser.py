@@ -44,12 +44,6 @@ class TestParseProductJsonLD:
 
         assert result.rating == 4.5
 
-    def test_manufacturer_not_extracted(self, product_page_html: str) -> None:
-        """Manufacturer is redundant with producer — not extracted."""
-        result = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
-
-        assert result.manufacturer is None
-
 
 class TestParseProductHtmlAttrs:
     def test_extracts_wine_attributes(self, product_page_html: str) -> None:

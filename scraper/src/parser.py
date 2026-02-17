@@ -31,7 +31,6 @@ class ProductData:
     price: float | None = None
     currency: str | None = None
     availability: bool | None = None
-    manufacturer: str | None = None
     rating: float | None = None
     review_count: int | None = None
     # HTML attribute fields

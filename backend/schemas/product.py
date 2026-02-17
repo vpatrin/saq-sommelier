@@ -16,7 +16,6 @@ class ProductResponse(BaseModel):
     price: Decimal | None = Field(examples=[24.95])  # For the Swagger example
     currency: str | None
     availability: bool | None
-    manufacturer: str | None
     rating: float | None
     review_count: int | None
     region: str | None
