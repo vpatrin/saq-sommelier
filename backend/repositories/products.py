@@ -4,6 +4,12 @@ from core.db.models import Product
 from sqlalchemy import Column, Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+_SORT_ORDERS = {
+    "recent": Product.updated_at.desc(),
+    "price_asc": Product.price.asc(),
+    "price_desc": Product.price.desc(),
+}
+
 
 def _apply_filters(
     stmt: Select,
@@ -75,6 +81,7 @@ async def find_page(
     offset: int,
     limit: int,
     *,
+    sort: str | None = None,
     q: str | None = None,
     category: str | None = None,
     country: str | None = None,
@@ -83,8 +90,9 @@ async def find_page(
     max_price: Decimal | None = None,
     available: bool | None = None,
 ) -> list[Product]:
-    """Return a page of products ordered by name, with optional filters."""
-    stmt = select(Product).order_by(Product.name).offset(offset).limit(limit)
+    """Return a page of products with optional filters and sorting."""
+    order = _SORT_ORDERS.get(sort, Product.name)
+    stmt = select(Product).order_by(order).offset(offset).limit(limit)
     stmt = _apply_filters(
         stmt,
         q=q,
@@ -110,6 +118,31 @@ async def get_distinct_values(db: AsyncSession, column: Column) -> list[str]:
     )
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def find_random(
+    db: AsyncSession,
+    *,
+    category: str | None = None,
+    country: str | None = None,
+    region: str | None = None,
+    min_price: Decimal | None = None,
+    max_price: Decimal | None = None,
+    available: bool | None = None,
+) -> Product | None:
+    """Return a single random product matching the given filters, or None."""
+    stmt = select(Product).order_by(func.random()).limit(1)
+    stmt = _apply_filters(
+        stmt,
+        category=category,
+        country=country,
+        region=region,
+        min_price=min_price,
+        max_price=max_price,
+        available=available,
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
 
 
 async def get_price_range(db: AsyncSession) -> tuple[Decimal, Decimal] | None:
