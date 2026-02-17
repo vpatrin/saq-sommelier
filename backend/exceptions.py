@@ -8,7 +8,7 @@ class NotFoundError(Exception):
 
 
 class ConflictError(Exception):
-    """ Raised when a resource already exists (e.g. duplicate watch)."""
+    """Raised when a resource already exists (e.g. duplicate watch)."""
 
     def __init__(self, resource: str, reason: str) -> None:
         self.resource = resource
