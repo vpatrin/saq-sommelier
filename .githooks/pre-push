@@ -11,6 +11,7 @@ echo "📦 Checking lock files..."
 (cd backend && poetry check --lock)
 (cd scraper && poetry check --lock)
 (cd core && poetry check --lock)
+(cd bot && poetry check --lock)
 
 echo ""
 make test

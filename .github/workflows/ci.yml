@@ -56,6 +56,21 @@ jobs:
       - run: cd core && poetry install --only dev --no-interaction
       - run: make lint-core
 
+  lint-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry==${{ env.POETRY_VERSION }}
+      - uses: actions/cache@v5
+        with:
+          path: bot/.venv
+          key: venv-bot-lint-${{ hashFiles('bot/poetry.lock') }}
+      - run: cd bot && poetry install --only dev --no-interaction
+      - run: make lint-bot
+
   lint-dockerfiles:
     runs-on: ubuntu-latest
     steps:
@@ -99,8 +114,23 @@ jobs:
       - run: cd scraper && poetry install --no-interaction
       - run: make test-scraper
 
+  test-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry==${{ env.POETRY_VERSION }}
+      - uses: actions/cache@v5
+        with:
+          path: bot/.venv
+          key: venv-bot-${{ hashFiles('bot/poetry.lock') }}
+      - run: cd bot && poetry install --no-interaction
+      - run: make test-bot
+
   lint:
-    needs: [lint-backend, lint-scraper, lint-core, lint-dockerfiles]
+    needs: [lint-backend, lint-scraper, lint-core, lint-bot, lint-dockerfiles]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -108,17 +138,19 @@ jobs:
           if [ "${{ needs.lint-backend.result }}" != "success" ] || \
              [ "${{ needs.lint-scraper.result }}" != "success" ] || \
              [ "${{ needs.lint-core.result }}" != "success" ] || \
+             [ "${{ needs.lint-bot.result }}" != "success" ] || \
              [ "${{ needs.lint-dockerfiles.result }}" != "success" ]; then
             exit 1
           fi
 
   test:
-    needs: [test-backend, test-scraper]
+    needs: [test-backend, test-scraper, test-bot]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - run: |
           if [ "${{ needs.test-backend.result }}" != "success" ] || \
-             [ "${{ needs.test-scraper.result }}" != "success" ]; then
+             [ "${{ needs.test-scraper.result }}" != "success" ] || \
+             [ "${{ needs.test-bot.result }}" != "success" ]; then
             exit 1
           fi
