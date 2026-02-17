@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "saq-bot"
+version = "1.0.0"
+description = "Telegram bot for SAQ Sommelier — wine discovery and alerts"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+python-telegram-bot = "^21.0"
+httpx = ">=0.28"
+pydantic-settings = "^2.13"
+loguru = ">=0.7"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.0"
+pytest-asyncio = ">=0.25"
+pytest-cov = ">=6.0"
+ruff = "^0.15.1"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["bot"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
