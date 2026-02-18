@@ -89,15 +89,15 @@ test: test-backend test-scraper test-bot
 # Coverage
 coverage-backend:
 	@echo "\n▶ Coverage backend/"
-	cd backend && poetry run pytest --cov --cov-report=term --cov-report=xml
+	cd backend && poetry run pytest --cov --cov-report=xml -v && poetry run coverage report
 
 coverage-scraper:
 	@echo "\n▶ Coverage scraper/"
-	cd scraper && poetry run pytest --cov --cov-report=term --cov-report=xml
+	cd scraper && poetry run pytest --cov --cov-report=xml -v && poetry run coverage report
 
 coverage-bot:
 	@echo "\n▶ Coverage bot/"
-	cd bot && poetry run pytest --cov --cov-report=term --cov-report=xml
+	cd bot && poetry run pytest --cov --cov-report=xml -v && poetry run coverage report
 
 coverage: coverage-backend coverage-scraper coverage-bot
 	@echo "\n▶ Generating badges"

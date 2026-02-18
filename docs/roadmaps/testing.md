@@ -37,7 +37,7 @@ Part of the [project roadmap](../ROADMAP.md). Multi-layer test strategy: unit �
 
 - [x] Unit tests on every PR (#2, #72, #73)
 - [x] Coverage thresholds per service — 90/75/75 in pyproject.toml (#62)
-- [ ] Coverage thresholds enforced in CI (currently local only via `make coverage-*`)
+- [x] Coverage thresholds enforced in CI (#125)
 - [ ] ML eval on PRs labeled `ml`
 
 ## Phase 7 — Test Culture (ongoing)
