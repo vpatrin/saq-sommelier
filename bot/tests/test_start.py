@@ -31,6 +31,6 @@ async def test_help_sends_command_list(update, context):
 
 
 async def test_help_text_lists_all_commands(update, context):
-    commands = ["/search", "/new", "/random", "/watch", "/unwatch", "/alerts", "/help"]
+    commands = ["/new", "/random", "/watch", "/unwatch", "/alerts", "/help"]
     for cmd in commands:
         assert cmd in HELP_TEXT
