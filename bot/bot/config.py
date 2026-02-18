@@ -19,3 +19,12 @@ class BotSettings(BaseSettings):
 
 
 settings = BotSettings()
+
+RESULTS_PER_PAGE = 5
+
+PRICE_BUCKETS: list[tuple[int, int | None, str]] = [
+    (15, 25, "15-25$"),
+    (25, 50, "25-50$"),
+    (50, 100, "50-100$"),
+    (100, None, "100$+"),
+]
