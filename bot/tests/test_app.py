@@ -1,6 +1,6 @@
 from telegram.ext import Application
 
-from bot.main import create_app
+from bot.app import create_app
 
 
 def test_create_app_returns_application() -> None:
@@ -10,5 +10,5 @@ def test_create_app_returns_application() -> None:
 
 def test_create_app_registers_handlers() -> None:
     app = create_app()
-    # /start and /help
-    assert len(app.handlers[0]) == 2
+    # /start, /help, /new, filter callback
+    assert len(app.handlers[0]) == 4
