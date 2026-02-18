@@ -4,7 +4,6 @@ from telegram.ext import ContextTypes
 HELP_TEXT = (
     "🍷 *Alerte Vin* — Wine discovery bot\n\n"
     "*Commands:*\n"
-    "/search `<query>` — Search wines by name\n"
     "/new — Recently added wines\n"
     "/random — Random wine suggestion\n"
     "/watch `<sku>` — Get alerts for availability changes\n"
