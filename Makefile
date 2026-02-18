@@ -17,7 +17,7 @@ dev-backend:
 	cd backend && poetry run uvicorn backend.app:app --reload --port 8000
 
 dev-bot:
-	cd bot && poetry run python -m bot.main
+	cd bot && poetry run python -m bot
 
 dev-scrape:
 	cd scraper && poetry run python -m src
