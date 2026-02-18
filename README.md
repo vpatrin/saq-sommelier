@@ -8,7 +8,7 @@ AI-powered wine recommendation engine built on the SAQ (Quebec liquor board) pro
 ![scraper coverage](.github/badges/coverage-scraper.svg)
 ![bot coverage](.github/badges/coverage-bot.svg)
 
-Scrapes ~38k products from the SAQ public sitemap, stores structured wine data in PostgreSQL, and serves it through a FastAPI API. A Telegram bot will provide natural language recommendations powered by Claude.
+Scrapes ~38k products from the SAQ public sitemap, stores structured wine data in PostgreSQL, and serves it through a FastAPI API. A Telegram bot provides browsing and alerts, with natural language recommendations powered by Claude coming next.
 
 ## Architecture
 
@@ -29,7 +29,6 @@ graph LR
     API --> Bot
     API --> Web
 
-    style Bot stroke-dasharray: 5 5
     style Web stroke-dasharray: 5 5
     style Claude stroke-dasharray: 5 5
 ```
@@ -69,7 +68,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Migrations](docs/MIGRATIONS.md) — Alembic setup, workflow, and troubleshooting
 - [Scraper Operations](docs/SCRAPER.md) — production scheduling, failure recovery, logging
 - [Telegram Bot](docs/TELEGRAM_BOT.md) — bot design, commands, API dependencies
-- [Roadmap](docs/ROADMAP.md) — project phases and progress
+- [Roadmap](docs/ROADMAP.md) — project phases, discipline roadmaps, and timeline
 
 ## Legal
 
