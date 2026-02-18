@@ -11,7 +11,36 @@ env:
   POETRY_VIRTUALENVS_IN_PROJECT: "true"
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      scraper: ${{ steps.filter.outputs.scraper }}
+      core: ${{ steps.filter.outputs.core }}
+      bot: ${{ steps.filter.outputs.bot }}
+      ci: ${{ steps.filter.outputs.ci }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            scraper:
+              - 'scraper/**'
+            core:
+              - 'core/**'
+            bot:
+              - 'bot/**'
+            ci:
+              - '.github/**'
+
   lint-backend:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -27,6 +56,8 @@ jobs:
       - run: make lint-backend
 
   lint-scraper:
+    needs: [changes]
+    if: needs.changes.outputs.scraper == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -42,6 +73,8 @@ jobs:
       - run: make lint-scraper
 
   lint-core:
+    needs: [changes]
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -57,6 +90,8 @@ jobs:
       - run: make lint-core
 
   lint-bot:
+    needs: [changes]
+    if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -72,6 +107,8 @@ jobs:
       - run: make lint-bot
 
   lint-dockerfiles:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.scraper == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -85,6 +122,8 @@ jobs:
           ignore: DL3008,DL4006
 
   test-backend:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -97,9 +136,11 @@ jobs:
           path: backend/.venv
           key: venv-backend-${{ hashFiles('backend/poetry.lock') }}
       - run: cd backend && poetry install --no-interaction
-      - run: make test-backend
+      - run: make coverage-backend
 
   test-scraper:
+    needs: [changes]
+    if: needs.changes.outputs.scraper == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -112,9 +153,11 @@ jobs:
           path: scraper/.venv
           key: venv-scraper-${{ hashFiles('scraper/poetry.lock') }}
       - run: cd scraper && poetry install --no-interaction
-      - run: make test-scraper
+      - run: make coverage-scraper
 
   test-bot:
+    needs: [changes]
+    if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -127,7 +170,7 @@ jobs:
           path: bot/.venv
           key: venv-bot-${{ hashFiles('bot/poetry.lock') }}
       - run: cd bot && poetry install --no-interaction
-      - run: make test-bot
+      - run: make coverage-bot
 
   lint:
     needs: [lint-backend, lint-scraper, lint-core, lint-bot, lint-dockerfiles]
@@ -135,13 +178,16 @@ jobs:
     if: always()
     steps:
       - run: |
-          if [ "${{ needs.lint-backend.result }}" != "success" ] || \
-             [ "${{ needs.lint-scraper.result }}" != "success" ] || \
-             [ "${{ needs.lint-core.result }}" != "success" ] || \
-             [ "${{ needs.lint-bot.result }}" != "success" ] || \
-             [ "${{ needs.lint-dockerfiles.result }}" != "success" ]; then
-            exit 1
-          fi
+          for result in \
+            "${{ needs.lint-backend.result }}" \
+            "${{ needs.lint-scraper.result }}" \
+            "${{ needs.lint-core.result }}" \
+            "${{ needs.lint-bot.result }}" \
+            "${{ needs.lint-dockerfiles.result }}"; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              exit 1
+            fi
+          done
 
   test:
     needs: [test-backend, test-scraper, test-bot]
@@ -149,8 +195,11 @@ jobs:
     if: always()
     steps:
       - run: |
-          if [ "${{ needs.test-backend.result }}" != "success" ] || \
-             [ "${{ needs.test-scraper.result }}" != "success" ] || \
-             [ "${{ needs.test-bot.result }}" != "success" ]; then
-            exit 1
-          fi
+          for result in \
+            "${{ needs.test-backend.result }}" \
+            "${{ needs.test-scraper.result }}" \
+            "${{ needs.test-bot.result }}"; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              exit 1
+            fi
+          done
