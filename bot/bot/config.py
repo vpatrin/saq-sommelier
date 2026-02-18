@@ -14,6 +14,7 @@ class BotSettings(BaseSettings):
 
     TELEGRAM_BOT_TOKEN: str
     BACKEND_URL: str = "http://localhost:8000"
+    BACKEND_TIMEOUT: float = 10.0
     LOG_LEVEL: str = "INFO"
 
 
