@@ -76,6 +76,16 @@ class BackendClient:
         """DELETE /api/v1/watches/{sku}?user_id=..."""
         await self._delete(f"/watches/{sku}", params={"user_id": user_id})
 
+    # ── Notifications ────────────────────────────────────────────
+
+    async def get_pending_notifications(self) -> list[dict[str, Any]]:
+        """GET /api/v1/watches/notifications — pending restock alerts."""
+        return await self._get("/watches/notifications")
+
+    async def ack_notifications(self, event_ids: list[int]) -> None:
+        """POST /api/v1/watches/notifications/ack — mark events as sent."""
+        await self._post("/watches/notifications/ack", json={"event_ids": event_ids})
+
     # ── Transport ──────────────────────────────────────────────
 
     async def _request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
