@@ -15,16 +15,18 @@ echo "📦 Checking lock files..."
 
 echo ""
 echo "🗄️  Checking migration coverage..."
-LAST_MODEL=$(git log main..HEAD -1 --format="%H" -- core/db/models.py)
 LAST_MIGRATION=$(git log main..HEAD -1 --format="%H" -- 'core/alembic/versions/')
-if [ -n "$LAST_MODEL" ]; then
-  if [ -z "$LAST_MIGRATION" ] || \
-     { [ "$LAST_MODEL" != "$LAST_MIGRATION" ] && \
-       git merge-base --is-ancestor "$LAST_MIGRATION" "$LAST_MODEL"; }; then
-    echo "❌ Model changes detected after the last migration!"
-    echo "   Run: make revision msg=\"description\""
-    exit 1
-  fi
+
+if [ -n "$LAST_MIGRATION" ]; then
+  RANGE="$LAST_MIGRATION..HEAD"
+else
+  RANGE="main..HEAD"
+fi
+
+if [ -n "$(git log "$RANGE" -1 --format=%H -- 'core/db/models*.py' 'core/db/base.py')" ]; then
+  echo "❌ Model changes detected without a corresponding migration!"
+  echo "   Run: make revision msg=\"description\""
+  exit 1
 fi
 
 echo ""
