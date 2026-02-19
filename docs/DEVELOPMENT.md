@@ -13,7 +13,7 @@ make install              # install all dependencies
 cp .env.example .env      # defaults work as-is
 make run-db               # start PostgreSQL (localhost:5432)
 make migrate              # create database tables
-make dev-scraper           # populate the database (~38k products)
+make dev-scraper          # populate the database (~38k products)
 make dev-backend          # start the backend (localhost:8000)
 ```
 
@@ -23,7 +23,7 @@ Or skip Poetry entirely and run everything in Docker:
 cp .env.example .env      # defaults work as-is
 make run                  # postgres + backend + bot (with hot reload)
 make migrate              # create database tables
-make run-scraper           # populate the database
+make run-scraper          # populate the database
 ```
 
 ## Database
@@ -73,7 +73,7 @@ All services read from a single root `.env` file. See [.env.example](../.env.exa
 make install       # poetry install for all services
 make dev-backend   # uvicorn backend on localhost:8000
 make dev-bot       # telegram bot in polling mode
-make dev-scraper    # run the scraper
+make dev-scraper   # run the scraper
 make migrate       # alembic upgrade head
 make reset-db      # wipe all data and recreate tables
 
@@ -87,7 +87,7 @@ make coverage      # tests + coverage badges
 make build         # build all service images
 make run           # full Docker dev stack (postgres + backend + bot)
 make run-db        # postgres only (for bare-metal dev)
-make run-scraper    # one-shot scrape (Docker)
+make run-scraper   # one-shot scrape (Docker)
 make down          # stop all containers
 
 # Cleanup
@@ -99,7 +99,7 @@ make clean         # remove __pycache__, .pytest_cache, .ruff_cache
 The scraper is a one-shot batch job (not a long-running service). It fetches the SAQ sitemap and upserts products into PostgreSQL. See [SCRAPER.md](SCRAPER.md) for production scheduling and operations.
 
 ```bash
-make dev-scraper           # run the scraper (upserts ~38k products)
+make dev-scraper          # run the scraper (upserts ~38k products)
 ```
 
 When iterating on parser logic, wipe the database first to test from a clean state:
@@ -140,7 +140,7 @@ Two workflows, choose whichever fits:
 
 ```bash
 make run                  # postgres + backend + bot (hot reload via volume mounts)
-make run-scraper           # one-shot scrape (docker compose run)
+make run-scraper          # one-shot scrape (docker compose run)
 make down                 # stop everything
 ```
 
@@ -152,7 +152,7 @@ Volume mounts and `--reload` are baked into `docker-compose.yml`. Edit code loca
 make run-db               # postgres only
 make dev-backend          # uvicorn with --reload
 make dev-bot              # telegram bot polling
-make dev-scraper           # one-shot scrape
+make dev-scraper          # one-shot scrape
 make down                 # stop postgres
 ```
 
