@@ -1,5 +1,3 @@
-import sys
-
 from loguru import logger
 from telegram.ext import (
     Application,
@@ -9,20 +7,11 @@ from telegram.ext import (
 )
 
 from bot.api_client import BackendClient
-from bot.config import CALLBACK_PREFIX, SERVICE_NAME, settings
+from bot.config import CALLBACK_PREFIX, CMD_HELP, CMD_NEW, CMD_RANDOM, CMD_START, settings
 from bot.handlers.filters import filter_callback
 from bot.handlers.new import new_command
+from bot.handlers.random import random_command
 from bot.handlers.start import help_command, start
-
-
-def _setup_logging() -> None:
-    logger.remove()
-    logger.add(
-        sys.stderr,
-        level=settings.LOG_LEVEL,
-        format="<level>{level:<8}</level> | {time:HH:mm:ss} | <cyan>{name}</cyan> | {message}",
-    )
-    logger.info("Logging initialized for {}", SERVICE_NAME)
 
 
 async def _post_init(application: Application) -> None:
@@ -48,9 +37,10 @@ def create_app() -> Application:
         .post_shutdown(_post_shutdown)
         .build()
     )
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("new", new_command))
+    app.add_handler(CommandHandler(CMD_START, start))
+    app.add_handler(CommandHandler(CMD_HELP, help_command))
+    app.add_handler(CommandHandler(CMD_NEW, new_command))
+    app.add_handler(CommandHandler(CMD_RANDOM, random_command))
     # Only button taps whose callback_data starts with "f:" reach filter_callback
     app.add_handler(CallbackQueryHandler(filter_callback, pattern=rf"^{CALLBACK_PREFIX}"))
     return app
