@@ -1,11 +1,14 @@
-[tool.poetry]
+[project]
 name = "saq-scraper"
 version = "1.0.0"
 description = "SAQ product catalog scraper — sitemap-based, ethical"
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+
+[tool.poetry]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.12"
 httpx = ">=0.28"
 beautifulsoup4 = ">=4.12"
 lxml = ">=5.3"

@@ -1,11 +1,14 @@
-[tool.poetry]
+[project]
 name = "saq-bot"
 version = "1.0.0"
 description = "Telegram bot for SAQ Sommelier — wine discovery and alerts"
+requires-python = ">=3.12"
+dynamic = ["dependencies"]
+
+[tool.poetry]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.12"
 python-telegram-bot = "^21.0"
 httpx = ">=0.28"
 pydantic-settings = "^2.13"
