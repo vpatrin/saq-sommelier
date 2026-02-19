@@ -128,3 +128,38 @@ class Watch(Base):
 
     def __repr__(self) -> str:
         return f"<Watch(user_id={self.user_id!r}, sku={self.sku!r})>"
+
+
+class RestockEvent(Base):
+    """Records product availability transitions detected during scrape."""
+
+    __tablename__ = "restock_events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sku = Column(
+        String,
+        ForeignKey("products.sku"),
+        nullable=False,
+        index=True,
+        comment="Product that changed availability",
+    )
+    available = Column(
+        Boolean,
+        nullable=False,
+        comment="New availability state (True=restock, False=destock)",
+    )
+    detected_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="When the change was detected",
+    )
+    processed_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+        comment="When notifications were sent (NULL=pending)",
+    )
+
+    def __repr__(self) -> str:
+        return f"<RestockEvent(sku={self.sku!r}, available={self.available!r})>"
