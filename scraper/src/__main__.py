@@ -127,7 +127,6 @@ async def main() -> int:
                     restocked += 1
                     logger.info("Restock detected for SKU {}", entry.sku)
 
-
                 logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
 
             except httpx.HTTPError as e:
