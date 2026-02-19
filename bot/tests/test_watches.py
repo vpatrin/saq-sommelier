@@ -30,21 +30,32 @@ def update():
 # ── /watch ───────────────────────────────────────────────────
 
 
+_WATCH_RESPONSE = {
+    "watch": {"id": 1, "user_id": "tg:42", "sku": "10327701", "created_at": "2026-01-01"},
+    "product": {
+        "name": "Mouton Cadet",
+        "price": "16.95",
+        "availability": True,
+        "sku": "10327701",
+    },
+}
+
+
 async def test_watch_creates_watch(update, context, api):
     context.args = ["10327701"]
-    api.create_watch.return_value = {"id": 1, "user_id": "tg:42", "sku": "10327701"}
+    api.create_watch.return_value = _WATCH_RESPONSE
 
     await watch_command(update, context)
 
     api.create_watch.assert_called_once_with("tg:42", "10327701")
     text = update.message.reply_text.call_args[0][0]
-    assert "10327701" in text
+    assert "Mouton Cadet" in text
     assert "watching" in text.lower()
 
 
 async def test_watch_accepts_saq_url(update, context, api):
     context.args = ["https://www.saq.com/fr/10327701"]
-    api.create_watch.return_value = {"id": 1, "user_id": "tg:42", "sku": "10327701"}
+    api.create_watch.return_value = _WATCH_RESPONSE
 
     await watch_command(update, context)
 
@@ -53,7 +64,7 @@ async def test_watch_accepts_saq_url(update, context, api):
 
 async def test_watch_accepts_saq_url_with_trailing_slash(update, context, api):
     context.args = ["https://www.saq.com/fr/10327701/"]
-    api.create_watch.return_value = {"id": 1, "user_id": "tg:42", "sku": "10327701"}
+    api.create_watch.return_value = _WATCH_RESPONSE
 
     await watch_command(update, context)
 
@@ -61,7 +72,7 @@ async def test_watch_accepts_saq_url_with_trailing_slash(update, context, api):
 
 
 async def test_unwatch_accepts_saq_url(update, context, api):
-    context.args = ["https://www.saq.com/en/10327701"]
+    context.args = ["https://www.saq.com/fr/10327701"]
 
     await unwatch_command(update, context)
 
@@ -114,7 +125,7 @@ async def test_watch_generic_api_error(update, context, api):
     await watch_command(update, context)
 
     text = update.message.reply_text.call_args[0][0]
-    assert "unavailable" in text.lower()
+    assert "something went wrong" in text.lower()
 
 
 # ── /unwatch ─────────────────────────────────────────────────
@@ -166,7 +177,7 @@ async def test_unwatch_generic_api_error(update, context, api):
     await unwatch_command(update, context)
 
     text = update.message.reply_text.call_args[0][0]
-    assert "unavailable" in text.lower()
+    assert "something went wrong" in text.lower()
 
 
 # ── /alerts ──────────────────────────────────────────────────

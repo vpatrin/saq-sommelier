@@ -5,7 +5,8 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
-from bot.formatters import format_watch_list
+from bot.config import SAQ_BASE_URL
+from bot.formatters import format_product_line, format_watch_list
 
 _USER_ID_PREFIX = "tg"
 
@@ -20,7 +21,7 @@ def _parse_sku(context: ContextTypes.DEFAULT_TYPE) -> str | None:
         return None
     arg = context.args[0]
     # https://www.saq.com/fr/10327701 → 10327701
-    if "saq.com/" in arg:
+    if arg.startswith(f"{SAQ_BASE_URL}/"):
         return arg.rstrip("/").rsplit("/", 1)[-1]
     return arg
 
@@ -35,7 +36,7 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     api: BackendClient = context.bot_data["api"]
 
     try:
-        await api.create_watch(_user_id(update), sku)
+        data = await api.create_watch(_user_id(update), sku)
     except BackendAPIError as exc:
         if exc.status_code == HTTPStatus.NOT_FOUND:
             await update.message.reply_text(f"Product `{sku}` not found.", parse_mode="Markdown")
@@ -46,17 +47,20 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             )
             return
         logger.warning("Backend error during /watch: {}", exc)
-        await update.message.reply_text("Backend is currently unavailable. Try again later.")
+        await update.message.reply_text("Something went wrong. Try again later.")
         return
     except BackendUnavailableError:
         logger.warning("Backend unavailable during /watch")
         await update.message.reply_text("Backend is currently unavailable. Try again later.")
         return
 
-    await update.message.reply_text(
-        f"Watching `{sku}` — you'll get alerts when availability changes.",
-        parse_mode="Markdown",
-    )
+    product = data.get("product")
+    if product:
+        line = format_product_line(product, 0).removeprefix("0. ")
+        text = f"Now watching {line}"
+    else:
+        text = f"Watching `{sku}` — you'll get alerts when availability changes."
+    await update.message.reply_text(text, parse_mode="Markdown", disable_web_page_preview=True)
 
 
 async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -75,7 +79,7 @@ async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             await update.message.reply_text(f"You're not watching `{sku}`.", parse_mode="Markdown")
             return
         logger.warning("Backend error during /unwatch: {}", exc)
-        await update.message.reply_text("Backend is currently unavailable. Try again later.")
+        await update.message.reply_text("Something went wrong. Try again later.")
         return
     except BackendUnavailableError:
         logger.warning("Backend unavailable during /unwatch")
