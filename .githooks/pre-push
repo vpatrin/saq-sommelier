@@ -14,6 +14,15 @@ echo "📦 Checking lock files..."
 (cd bot && poetry check --lock)
 
 echo ""
+echo "🗄️  Checking migration coverage..."
+if git diff main --name-only | grep -q 'core/db/models\.py' && \
+   ! git diff main --name-only | grep -q 'core/alembic/versions/'; then
+  echo "❌ Model changes detected without a migration revision!"
+  echo "   Run: make revision msg=\"description\""
+  exit 1
+fi
+
+echo ""
 make test
 
 echo ""
