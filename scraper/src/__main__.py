@@ -9,7 +9,15 @@ from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 
 from .config import settings
-from .db import clear_delisted, get_delisted_skus, get_updated_dates, mark_delisted, upsert_product
+from .db import (
+    clear_delisted,
+    emit_restock_event,
+    get_availability_map,
+    get_delisted_skus,
+    get_updated_dates,
+    mark_delisted,
+    upsert_product,
+)
 from .parser import parse_product
 from .sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
 
@@ -72,6 +80,7 @@ async def main() -> int:
 
         # Loads {sku: last_updated_date} from DB, then O(1) dict lookup per entry
         updated_dates = await get_updated_dates()
+        availability_map = await get_availability_map()
 
         # Incremental scraping: skip products unchanged since last scrape
         total_before = len(products_to_scrape)
@@ -88,6 +97,7 @@ async def main() -> int:
         saved = 0
         inserted = 0
         updated = 0
+        restocked = 0
         errors = 0
         for i, entry in enumerate(products_to_scrape, 1):
             # Ethical rate limiter
@@ -109,6 +119,12 @@ async def main() -> int:
                     updated += 1
                 else:
                     inserted += 1
+
+                # Detect restock: was unavailable, now available
+                old_avail = availability_map.get(entry.sku)
+                if old_avail is False and product.availability is True:
+                    await emit_restock_event(entry.sku, available=True)
+                    restocked += 1
                 logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
 
             except httpx.HTTPError as e:
@@ -154,6 +170,7 @@ async def main() -> int:
         "  Fetched: {}\n"
         "  Inserted: {}\n"
         "  Updated: {}\n"
+        "  Restocked: {}\n"
         "  Failed: {}\n"
         "  Skipped (up-to-date): {}\n"
         "  Delisted: {}\n"
@@ -165,6 +182,7 @@ async def main() -> int:
         saved,
         inserted,
         updated,
+        restocked,
         errors,
         skipped,
         delisted,

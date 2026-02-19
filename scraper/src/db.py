@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime
 
 from core.db.base import create_session_factory
-from core.db.models import Product
+from core.db.models import Product, RestockEvent
 from loguru import logger
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -19,6 +19,14 @@ async def get_updated_dates() -> dict[str, date]:
         stmt = select(Product.sku, Product.updated_at)
         result = await session.execute(stmt)
         return {sku: updated_at.date() for sku, updated_at in result.all()}
+
+
+async def get_availability_map() -> dict[str, bool | None]:
+    """Fetch current availability for every product in the DB."""
+    async with _SessionLocal() as session:
+        stmt = select(Product.sku, Product.availability)
+        result = await session.execute(stmt)
+        return dict(result.all())
 
 
 async def get_delisted_skus() -> set[str]:
@@ -59,6 +67,21 @@ async def clear_delisted(skus: set[str]) -> int:
         result = await session.execute(stmt)
         await session.commit()
         return result.rowcount
+
+
+async def emit_restock_event(sku: str, available: bool) -> None:
+    """Record an availability transition in the restock_events table.
+
+    Swallows errors — a missed event shouldn't crash the scraper.
+    """
+    async with _SessionLocal() as session:
+        stmt = pg_insert(RestockEvent).values(sku=sku, available=available)
+        try:
+            await session.execute(stmt)
+            await session.commit()
+        except SQLAlchemyError:
+            await session.rollback()
+            logger.error("Failed to emit restock event for SKU {}", sku)
 
 
 async def upsert_product(product_data: ProductData) -> None:
