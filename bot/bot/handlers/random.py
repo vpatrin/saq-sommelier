@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
-from bot.config import CMD_RANDOM
+from bot.config import CMD_RANDOM, SearchState
 from bot.formatters import format_product_list
 from bot.handlers.filters import build_api_params
 from bot.keyboards import build_filter_keyboard
@@ -17,7 +17,7 @@ async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     api: BackendClient = context.bot_data["api"]
 
     # "command": "random" → build_api_params adds available=True (no sort)
-    state: dict = {"query": None, "command": CMD_RANDOM, "filters": {}}
+    state: SearchState = {"query": None, "command": CMD_RANDOM, "filters": {}}
     context.user_data["search"] = state
 
     params = build_api_params(state)

@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
-from bot.config import CMD_NEW
+from bot.config import CMD_NEW, SearchState
 from bot.formatters import format_product_list
 from bot.handlers.filters import build_api_params
 from bot.keyboards import build_filter_keyboard
@@ -19,14 +19,14 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     context = state container with bot_data (shared) and user_data (per-user)
     """
 
-    # Shared API client, set once at startup in main.py — all users share it
+    # Shared API client, set once at startup in app.py — all users share it
     api: BackendClient = context.bot_data["api"]
 
     # Init search state for this user session
     # "query": None → /new has no search term (unlike /search merlot)
     # "command": "new" → build_api_params adds available=True + sort=recent
     # "filters": {} → no filters yet, mutated in-place by button taps later
-    state: dict = {"query": None, "command": CMD_NEW, "filters": {}}
+    state: SearchState = {"query": None, "command": CMD_NEW, "filters": {}}
 
     # Store as a reference — filter_callback reads and mutates this same object
     context.user_data["search"] = state

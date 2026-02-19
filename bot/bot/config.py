@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import NamedTuple, TypedDict
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,6 +23,17 @@ class BotSettings(BaseSettings):
 settings = BotSettings()
 
 RESULTS_PER_PAGE = 5
+
+# ── Context schemas ──────────────────────────────────────────
+# context.bot_data: {"api": BackendClient}  — set once in _post_init
+# context.user_data: {"search": SearchState} — set per command, read by filter_callback
+
+
+class SearchState(TypedDict):
+    query: str | None
+    command: str
+    filters: dict[str, str]
+
 
 # Command identifiers — used in app.py (registration) and state dicts (routing)
 CMD_START = "start"
