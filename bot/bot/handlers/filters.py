@@ -6,7 +6,15 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
-from bot.config import CALLBACK_CAT, CALLBACK_CLEAR, CALLBACK_PRICE, PRICE_BUCKETS, RESULTS_PER_PAGE
+from bot.config import (
+    CALLBACK_CAT,
+    CALLBACK_CLEAR,
+    CALLBACK_PRICE,
+    CMD_NEW,
+    CMD_RANDOM,
+    PRICE_BUCKETS,
+    RESULTS_PER_PAGE,
+)
 from bot.formatters import format_product_list
 from bot.keyboards import build_filter_keyboard
 
@@ -55,11 +63,11 @@ def build_api_params(state: dict[str, Any]) -> dict[str, Any]:
             params["max_price"] = bucket.max_price
 
     # Enforces product online availability if command is new or random
-    if state.get("command") in ("new", "random"):
+    if state.get("command") in (CMD_NEW, CMD_RANDOM):
         params["available"] = True
 
     # Sort by most recent if new
-    if state.get("command") == "new":
+    if state.get("command") == CMD_NEW:
         params["sort"] = "recent"
 
     return params
@@ -108,11 +116,25 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     api: BackendClient = context.bot_data["api"]
     params = build_api_params(state)
 
+    # /random uses a different endpoint — single product vs paginated list
+    is_random = state.get("command") == CMD_RANDOM
+
     try:
-        results, facets = await asyncio.gather(
-            api.list_products(**params),
-            api.get_facets(),
-        )
+        if is_random:
+            product, facets = await asyncio.gather(
+                api.get_random_product(**params),
+                api.get_facets(),
+            )
+            if product is None:
+                results = {"products": [], "total": 0, "page": 1, "per_page": 1, "pages": 0}
+            else:
+                # Random sends back only one product
+                results = {"products": [product], "total": 1, "page": 1, "per_page": 1, "pages": 1}
+        else:
+            results, facets = await asyncio.gather(
+                api.list_products(**params),
+                api.get_facets(),
+            )
     except (BackendUnavailableError, BackendAPIError):
         logger.warning("Backend unavailable during filter callback")
         await query.edit_message_text("Backend is currently unavailable. Try again later.")

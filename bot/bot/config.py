@@ -24,6 +24,12 @@ settings = BotSettings()
 
 RESULTS_PER_PAGE = 5
 
+# Command identifiers — used in app.py (registration) and state dicts (routing)
+CMD_START = "start"
+CMD_HELP = "help"
+CMD_NEW = "new"
+CMD_RANDOM = "random"
+
 # Callback data prefixes — shared between keyboards.py (build), filters.py (parse), app.py (routing)
 CALLBACK_PREFIX = "f:"
 CALLBACK_CAT = f"{CALLBACK_PREFIX}cat:"
