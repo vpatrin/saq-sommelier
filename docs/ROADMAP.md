@@ -80,23 +80,24 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and engineering plan.
 
 - [ ] Store directory scrape (#128) — one-shot `stores` table (401 rows)
-- [ ] Extract `magento_id` + `online_qty` during product scrape
-- [ ] Per-product store availability checker — paginated AJAX, diff alerts
-- [ ] Filter by store availability (in-store / online)
+- [ ] Extract `magento_id` + `online_qty` during product scrape (#148)
+- [ ] Per-product store availability checker — paginated AJAX, diff alerts (#149)
+- [ ] Filter by store availability (in-store / online) (#150)
+- [ ] Emit destock events when availability flips True → False (#144)
 
 ### Phase 5c — Bilingual Support
 
 - [ ] Per-user language preference (FR default, EN opt-in) (#134)
-- [ ] Static translation tables for structured fields (categories, types, regions)
-- [ ] Bilingual bot responses, button labels, and help text
-- [ ] Bilingual formatters
+- [ ] Static translation tables for structured fields (#151)
+- [ ] Bilingual bot responses, button labels, and help text (#152)
+- [ ] Bilingual formatters (#153)
 
 ### Phase 6 — AI Layer (RAG + Claude)
 
-- [ ] ChromaDB + embeddings
-- [ ] Claude API integration
-- [ ] `/recommend` — natural language recommendations via Telegram
-- [ ] Weekly digest — LLM-curated summary posted to group chat after scraper run
+- [ ] ChromaDB + embeddings (#154)
+- [ ] Claude API integration (#155)
+- [ ] `/recommend` — natural language recommendations via Telegram (#156)
+- [ ] Weekly digest — LLM-curated summary posted to group chat after scraper run (#120)
 
 ---
 
@@ -105,7 +106,7 @@ See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and enginee
 Phase numbers reference the [discipline roadmaps](roadmaps/) linked above.
 
 ```text
-Phase 5 (Telegram Bot)          ~5 days     ← YOU ARE HERE
+Phase 5 (Telegram Bot)          ~5 days     ✅ DONE
   + Testing 1-2: unit tests, integration tests       ~3 days
   + Platform 1: Makefile, dev environment             ~1 day
   + Env Seg 1-2: config foundation, local dev         ~1 day

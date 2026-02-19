@@ -1,10 +1,17 @@
 from collections.abc import AsyncGenerator
 
 from core.config.settings import settings
-from core.db.base import create_session_factory
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-_SessionLocal = create_session_factory(settings.database_url, settings.DATABASE_ECHO)
+engine = create_async_engine(settings.database_url, echo=settings.DATABASE_ECHO)
+_SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+async def verify_db_connection() -> None:
+    """Check that PostgreSQL is reachable. Raises on failure."""
+    async with engine.connect() as conn:
+        await conn.execute(text("SELECT 1"))
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
