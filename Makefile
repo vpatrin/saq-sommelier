@@ -105,13 +105,13 @@ coverage: coverage-backend coverage-scraper coverage-bot
 
 # Build
 build-backend:
-	docker build -f backend/Dockerfile -t saq-backend .
+	docker compose build backend
 
 build-scraper:
-	docker build -f scraper/Dockerfile -t saq-scraper .
+	docker compose build scraper
 
 build-bot:
-	docker build -f bot/Dockerfile -t saq-bot .
+	docker compose build bot
 
 build: build-backend build-scraper build-bot
 

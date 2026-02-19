@@ -29,6 +29,20 @@ class TestNeedsScrape:
         updated_dates = {"10327701": date(2026, 2, 1)}
         assert _needs_scrape(entry, updated_dates) is False
 
+    def test_datetime_lastmod_with_timezone(self) -> None:
+        entry = SitemapEntry(
+            url="https://www.saq.com/fr/10327701", lastmod="2026-02-18T15:21:49+00:00"
+        )
+        updated_dates = {"10327701": date(2026, 2, 1)}
+        assert _needs_scrape(entry, updated_dates) is True
+
+    def test_datetime_lastmod_same_day_skips(self) -> None:
+        entry = SitemapEntry(
+            url="https://www.saq.com/fr/10327701", lastmod="2026-02-01T10:30:00+00:00"
+        )
+        updated_dates = {"10327701": date(2026, 2, 1)}
+        assert _needs_scrape(entry, updated_dates) is False
+
 
 class TestExitCode:
     def test_clean_run(self) -> None:
