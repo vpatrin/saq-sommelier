@@ -74,7 +74,7 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 - [x] `/watch`, `/unwatch`, `/alerts` — passive watch list + on-demand status check (#119)
 - [ ] Post-scrape restock notifications — proactive alerts when watched products come back (#138)
 - [ ] Weekly digest — proactive post to group chat after scraper run
-- [ ] Bot Dockerfile + Compose service
+- [x] Bot Dockerfile + Compose service (#121, #44)
 
 ### Phase 5b — Store Availability
 

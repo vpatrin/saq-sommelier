@@ -4,7 +4,7 @@
 -include .env
 export
 
-.PHONY: install dev-backend dev-bot dev-scrape migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage build-backend build-scraper build up down clean
+.PHONY: install dev-backend dev-bot dev-scraper migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage build-backend build-scraper build-bot build run run-db run-scraper down clean
 
 install:
 	git config core.hooksPath .githooks
@@ -19,7 +19,7 @@ dev-backend:
 dev-bot:
 	cd bot && poetry run python -m bot
 
-dev-scrape:
+dev-scraper:
 	cd scraper && poetry run python -m src
 
 # Database migrations
@@ -110,11 +110,20 @@ build-backend:
 build-scraper:
 	docker build -f scraper/Dockerfile -t saq-scraper .
 
-build: build-backend build-scraper
+build-bot:
+	docker build -f bot/Dockerfile -t saq-bot .
 
-# Docker Compose (local dev)
-up:
+build: build-backend build-scraper build-bot
+
+# Docker Compose
+run:
+	docker compose --profile dev up -d postgres backend bot
+
+run-db:
 	docker compose --profile dev up -d postgres
+
+run-scraper:
+	docker compose run --rm scraper
 
 down:
 	docker compose --profile dev down

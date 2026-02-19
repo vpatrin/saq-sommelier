@@ -41,9 +41,9 @@ graph LR
 ```bash
 make install              # install all dependencies (Poetry)
 cp .env.example .env      # defaults work as-is
-make up                   # start PostgreSQL (localhost:5432)
+make run-db               # start PostgreSQL (localhost:5432)
 make migrate              # create database tables
-make dev-scrape           # populate the database (~38k products)
+make dev-scraper          # populate the database (~38k products)
 make dev-backend          # start the backend (localhost:8000)
 ```
 
@@ -56,7 +56,7 @@ make test          # pytest (all services)
 make coverage      # tests + coverage badges
 make migrate       # alembic upgrade head
 make build         # docker build
-make up / down     # docker compose (postgres)
+make run / down    # docker compose (full stack / stop)
 ```
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and full workflow.
