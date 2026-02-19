@@ -2,12 +2,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.exceptions import ConflictError, NotFoundError
+from backend.repositories import products as products_repo
 from backend.repositories import watches as repo
 from backend.schemas.product import ProductResponse
 from backend.schemas.watch import WatchResponse, WatchWithProduct
 
 
-async def create_watch(db: AsyncSession, user_id: str, sku: str) -> WatchResponse:
+async def create_watch(db: AsyncSession, user_id: str, sku: str) -> WatchWithProduct:
     """Create a watch. Raises ConflictError if already exists, NotFoundError if SKU invalid."""
     try:
         watch = await repo.create(db, user_id, sku)
@@ -18,7 +19,11 @@ async def create_watch(db: AsyncSession, user_id: str, sku: str) -> WatchRespons
             raise ConflictError("Watch", f"user {user_id!r} already watches SKU {sku!r}") from exc
         # FK violation — SKU doesn't exist in products table
         raise NotFoundError("Product", sku) from exc
-    return WatchResponse.model_validate(watch)
+    product = await products_repo.find_by_sku(db, sku)
+    return WatchWithProduct(
+        watch=WatchResponse.model_validate(watch),
+        product=ProductResponse.model_validate(product) if product else None,
+    )
 
 
 async def list_watches(db: AsyncSession, user_id: str) -> list[WatchWithProduct]:
