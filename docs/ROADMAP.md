@@ -64,7 +64,7 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 - [x] Watches CRUD (#101) — powers `/watch`, `/unwatch`, `/alerts`
 - ~~Price history tracking (#57)~~ — descoped, SAQ prices are regulated
 
-### Phase 5 — Telegram Bot
+### Phase 5 — Telegram Bot ✅
 
 - [x] Bot scaffold (`bot/` service, python-telegram-bot) (#115)
 - [x] Bot API client — typed httpx wrapper for backend endpoints (#116)
@@ -72,8 +72,7 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 - [x] `/new` — recently added/updated wines with filters (#118)
 - [x] `/random` — random wine with filters (#118)
 - [x] `/watch`, `/unwatch`, `/alerts` — passive watch list + on-demand status check (#119)
-- [ ] Post-scrape restock notifications — proactive alerts when watched products come back (#138)
-- [ ] Weekly digest — proactive post to group chat after scraper run
+- [x] Post-scrape restock notifications — proactive alerts when watched products come back (#138)
 - [x] Bot Dockerfile + Compose service (#121, #44)
 
 ### Phase 5b — Store Availability
@@ -97,6 +96,7 @@ See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and enginee
 - [ ] ChromaDB + embeddings
 - [ ] Claude API integration
 - [ ] `/recommend` — natural language recommendations via Telegram
+- [ ] Weekly digest — LLM-curated summary posted to group chat after scraper run
 
 ---
 
