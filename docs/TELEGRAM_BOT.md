@@ -71,6 +71,60 @@ Telegram API → Bot service → FastAPI backend → PostgreSQL
 
 No auth needed — the bot is the only API consumer for now. If/when the React dashboard is added, we'll revisit auth.
 
+## Restock notifications (#138)
+
+Event-driven pub/sub pattern using PostgreSQL as the queue.
+
+### Why event-driven?
+
+Watches are static subscriptions. The scraper detects availability transitions during upsert (it has both old and new state). Recording these as immutable events decouples the producer (scraper) from the consumer (bot) — the scraper doesn't know or care who's watching.
+
+### Data flow
+
+```
+Scraper upsert                        Bot JobQueue (periodic)
+  │                                     │
+  │ old=False, new=True?                │ GET /watches/notifications
+  │         │                           │         │
+  │    INSERT restock_events            │    JOIN restock_events × watches
+  │    (sku, available=True)            │    WHERE processed_at IS NULL
+  │                                     │         │
+  │                                     │    Send Telegram messages
+  │                                     │         │
+  │                                     │    POST /watches/notifications/ack
+  │                                     │    (set processed_at = now)
+```
+
+### Schema: `restock_events`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | serial PK | |
+| `sku` | FK → products | Which product changed |
+| `available` | boolean | New state: `True` = restock, `False` = destock |
+| `detected_at` | timestamptz | When scraper detected the change |
+| `processed_at` | timestamptz NULL | When bot sent notifications (`NULL` = pending) |
+
+### Design decisions
+
+- **v1: restock only** — scraper only emits events when `available` flips `False → True`. Users watch products because they want them back. Destock notifications can be added later without schema changes.
+- **`processed_at` per-event, not per-user** — at 20 users, one event fans out to all watchers in a single pass. A per-user delivery table (`notifications(event_id, user_id, sent_at)`) would be needed at scale but is over-engineering now.
+- **No `store_id`** — online availability only. In-store availability (Phase 5b) will use a separate `store_inventory` state table with its own event producer. The notification consumer (bot) stays the same.
+- **Bot polls via JobQueue** — the bot already runs 24/7. A periodic check every 6h is simpler than chaining a systemd unit after the scraper timer.
+
+### Task breakdown
+
+| # | Task | Service | Depends on |
+|---|------|---------|-----------|
+| 1 | `RestockEvent` model + migration | core | — |
+| 2 | Emit restock events during upsert | scraper | Task 1 |
+| 3 | Pending notifications + ack endpoints | backend | Task 1 |
+| 4 | Notification consumer (JobQueue) | bot | Task 3 |
+
+### Future: in-store availability
+
+In-store stock data lives in a separate `store_inventory` table (state, not events). When stock transitions from 0 → N at a store, that producer emits into the same notification pipeline. The bot consumer doesn't change — it just processes more events.
+
 ## API dependencies
 
 Endpoints the bot needs from the backend:
@@ -84,6 +138,7 @@ Endpoints the bot needs from the backend:
 | `/watch` | `POST /watches`, `DELETE /watches/{sku}` | Done (#101, PR #112) |
 | `/alerts` | `GET /watches?user_id=` | Done (#101, PR #112) |
 | Weekly digest | `GET /products?sort=recent` | Done (PR #107) |
+| Restock alerts | `GET /watches/notifications`, `POST /watches/notifications/ack` | #138 |
 
 ## What's NOT in scope (yet)
 
