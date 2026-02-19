@@ -1,7 +1,7 @@
 import asyncio
 import sys
 import time
-from datetime import date
+from datetime import date, datetime
 
 import httpx
 from core.logging import setup_logging
@@ -37,7 +37,7 @@ def _needs_scrape(entry: SitemapEntry, updated_dates: dict[str, date]) -> bool:
         return True
     if entry.sku not in updated_dates:
         return True
-    return date.fromisoformat(entry.lastmod) > updated_dates[entry.sku]
+    return datetime.fromisoformat(entry.lastmod).date() > updated_dates[entry.sku]
 
 
 async def main() -> int:
