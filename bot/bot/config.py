@@ -1,3 +1,5 @@
+from typing import NamedTuple, TypedDict
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SERVICE_NAME = "bot"
@@ -19,3 +21,42 @@ class BotSettings(BaseSettings):
 
 
 settings = BotSettings()
+
+RESULTS_PER_PAGE = 5
+
+# ── Context schemas ──────────────────────────────────────────
+# context.bot_data: {"api": BackendClient}  — set once in _post_init
+# context.user_data: {"search": SearchState} — set per command, read by filter_callback
+
+
+class SearchState(TypedDict):
+    query: str | None
+    command: str
+    filters: dict[str, str]
+
+
+# Command identifiers — used in app.py (registration) and state dicts (routing)
+CMD_START = "start"
+CMD_HELP = "help"
+CMD_NEW = "new"
+CMD_RANDOM = "random"
+
+# Callback data prefixes — shared between keyboards.py (build), filters.py (parse), app.py (routing)
+CALLBACK_PREFIX = "f:"
+CALLBACK_CAT = f"{CALLBACK_PREFIX}cat:"
+CALLBACK_PRICE = f"{CALLBACK_PREFIX}price:"
+CALLBACK_CLEAR = f"{CALLBACK_PREFIX}clear"
+
+
+class PriceBucket(NamedTuple):
+    min_price: int | None
+    max_price: int | None
+    label: str
+
+
+PRICE_BUCKETS: dict[str, PriceBucket] = {
+    "15-25": PriceBucket(15, 25, "15-25$"),
+    "25-50": PriceBucket(25, 50, "25-50$"),
+    "50-100": PriceBucket(50, 100, "50-100$"),
+    "100-": PriceBucket(100, None, "100$+"),
+}
