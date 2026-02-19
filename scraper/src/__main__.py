@@ -122,7 +122,7 @@ async def main() -> int:
 
                 # Detect restock: was unavailable, now available
                 old_avail = availability_map.get(entry.sku)
-                if old_avail is False and product.availability is True:
+                if old_avail is False and product.availability:
                     await emit_restock_event(entry.sku, available=True)
                     restocked += 1
                 logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
