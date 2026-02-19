@@ -30,7 +30,7 @@ if [ -n "$(git log "$RANGE" -1 --format=%H -- 'core/db/models*.py' 'core/db/base
 fi
 
 echo ""
-make test
+make coverage
 
 echo ""
 echo "✅ All checks passed — pushing."
