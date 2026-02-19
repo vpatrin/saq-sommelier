@@ -20,6 +20,7 @@ from bot.config import (
 )
 from bot.handlers.filters import filter_callback
 from bot.handlers.new import new_command
+from bot.handlers.notifications import poll_notifications
 from bot.handlers.random import random_command
 from bot.handlers.start import help_command, start
 from bot.handlers.watch import alerts_command, unwatch_command, watch_command
@@ -57,4 +58,10 @@ def create_app() -> Application:
     app.add_handler(CommandHandler(CMD_ALERTS, alerts_command))
     # Only button taps whose callback_data starts with "f:" reach filter_callback
     app.add_handler(CallbackQueryHandler(filter_callback, pattern=rf"^{CALLBACK_PREFIX}"))
+    # Poll backend for restock notifications on a timer
+    app.job_queue.run_repeating(
+        poll_notifications,
+        interval=settings.NOTIFICATION_POLL_INTERVAL,
+        first=0,
+    )
     return app
