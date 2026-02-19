@@ -4,6 +4,7 @@ AI-powered wine recommendation engine built on the SAQ (Quebec liquor board) pro
 
 [![CI](https://github.com/vpatrin/saq-sommelier/actions/workflows/ci.yml/badge.svg)](https://github.com/vpatrin/saq-sommelier/actions/workflows/ci.yml)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://docs.astral.sh/ruff/)
 ![backend coverage](.github/badges/coverage-backend.svg)
 ![scraper coverage](.github/badges/coverage-scraper.svg)
 ![bot coverage](.github/badges/coverage-bot.svg)
@@ -67,6 +68,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Development](docs/DEVELOPMENT.md) — database setup, environment config, dev workflow
 - [Migrations](docs/MIGRATIONS.md) — Alembic setup, workflow, and troubleshooting
 - [Scraper Operations](docs/SCRAPER.md) — production scheduling, failure recovery, logging
+- [Store Availability](docs/STORE_AVAILABILITY.md) — SAQ AJAX endpoints, store directory, stock checks
 - [Telegram Bot](docs/TELEGRAM_BOT.md) — bot design, commands, API dependencies
 - [Roadmap](docs/ROADMAP.md) — project phases, discipline roadmaps, and timeline
 
