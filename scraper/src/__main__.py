@@ -125,6 +125,7 @@ async def main() -> int:
                 if old_avail is False and product.availability:
                     await emit_restock_event(entry.sku, available=True)
                     restocked += 1
+
                 logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
 
             except httpx.HTTPError as e:
