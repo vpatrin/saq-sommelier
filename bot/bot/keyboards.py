@@ -14,7 +14,7 @@ def build_filter_keyboard(
     # A list of rows, each row a list of buttons
     rows: list[list[InlineKeyboardButton]] = []
 
-    # Category row -- get every categories from /facets endpoint
+    # Category row -- get every category from /facets endpoint
     categories = facets.get("categories", [])
     if categories:
         # Single select
