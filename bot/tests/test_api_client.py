@@ -186,6 +186,44 @@ async def test_delete_watch_not_found(client: BackendClient) -> None:
     assert exc_info.value.status_code == HTTPStatus.NOT_FOUND
 
 
+# ── Notifications ──────────────────────────────────────────────
+
+
+async def test_get_pending_notifications_success(client: BackendClient) -> None:
+    data = [
+        {
+            "event_id": 1,
+            "sku": "ABC",
+            "user_id": "tg:42",
+            "product_name": "Vin",
+            "detected_at": "2026-01-01",
+        }
+    ]
+    client._client.request.return_value = _response(json_data=data)
+
+    result = await client.get_pending_notifications()
+
+    assert result == data
+
+
+async def test_get_pending_notifications_empty(client: BackendClient) -> None:
+    client._client.request.return_value = _response(json_data=[])
+
+    result = await client.get_pending_notifications()
+
+    assert result == []
+
+
+async def test_ack_notifications_success(client: BackendClient) -> None:
+    client._client.request.return_value = _response(status_code=HTTPStatus.NO_CONTENT)
+
+    await client.ack_notifications([1, 2])
+
+    client._client.request.assert_called_once_with(
+        "POST", "/watches/notifications/ack", json={"event_ids": [1, 2]}
+    )
+
+
 # ── Error handling ──────────────────────────────────────────────
 
 

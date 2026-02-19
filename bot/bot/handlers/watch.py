@@ -5,14 +5,12 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
-from bot.config import SAQ_BASE_URL
+from bot.config import SAQ_BASE_URL, USER_ID_PREFIX
 from bot.formatters import format_product_line, format_watch_list
-
-_USER_ID_PREFIX = "tg"
 
 
 def _user_id(update: Update) -> str:
-    return f"{_USER_ID_PREFIX}:{update.effective_user.id}"
+    return f"{USER_ID_PREFIX}:{update.effective_user.id}"
 
 
 def _parse_sku(context: ContextTypes.DEFAULT_TYPE) -> str | None:

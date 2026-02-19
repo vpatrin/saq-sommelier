@@ -18,12 +18,14 @@ class BotSettings(BaseSettings):
     BACKEND_URL: str = "http://localhost:8000"
     BACKEND_TIMEOUT: float = 10.0
     LOG_LEVEL: str = "INFO"
+    NOTIFICATION_POLL_INTERVAL: int  # seconds — set in .env (60 dev, 21600 prod)
 
 
 settings = BotSettings()
 
 RESULTS_PER_PAGE = 5
 SAQ_BASE_URL = "https://www.saq.com/fr"
+USER_ID_PREFIX = "tg"  # user_id format: "tg:{telegram_id}"
 
 # ── Context schemas ──────────────────────────────────────────
 # context.bot_data: {"api": BackendClient}  — set once in _post_init

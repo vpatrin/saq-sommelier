@@ -74,3 +74,11 @@ def format_watch_list(watches: list[dict[str, Any]]) -> str:
     header = f"*{len(watches)} watched wine{'s' if len(watches) != 1 else ''}*"
     lines = [_format_watch_line(entry, i + 1) for i, entry in enumerate(watches)]
     return f"{header}\n\n{'\n\n'.join(lines)}"
+
+
+def format_restock_notification(notification: dict[str, Any]) -> str:
+    """Format a proactive restock alert sent by the bot."""
+    sku = notification["sku"]
+    name = notification.get("product_name") or sku
+    url = f"{SAQ_BASE_URL}/{sku}"
+    return f"\U0001f377 Back in stock: [{name}]({url})"
