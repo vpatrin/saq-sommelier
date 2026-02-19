@@ -1,12 +1,14 @@
 from typing import Any
 
+from bot.config import SAQ_BASE_URL
+
 
 def format_product_line(product: dict[str, Any], index: int) -> str:
     """
     Format a single product for Telegram Markdown display.
     Output example:
     1. Château Margaux — 89$ ✅
-    Where "Château Margaux" links to https://www.saq.com/en/15483332
+    Where "Château Margaux" links to https://www.saq.com/fr/15483332
     """
 
     name = product.get("name") or "Unknown"
@@ -17,7 +19,7 @@ def format_product_line(product: dict[str, Any], index: int) -> str:
     price_str = f"{price}$" if price is not None else "N/A"
     status = "\u2705" if available else "\u274c"
 
-    url = f"https://www.saq.com/en/{sku}"
+    url = f"{SAQ_BASE_URL}/{sku}"
     return f"{index}. [{name}]({url}) \u2014 {price_str} {status}"
 
 
@@ -43,3 +45,31 @@ def format_product_list(data: dict[str, Any]) -> str:
         header += f" (showing {len(products)})"
 
     return f"{header}\n\n{body}"
+
+
+def _format_watch_line(entry: dict[str, Any], index: int) -> str:
+    """Format a single watch entry (WatchWithProduct) for Telegram."""
+    sku = entry["watch"]["sku"]
+    product = entry.get("product")
+
+    if product:
+        name = product.get("name") or "Unknown"
+        price = product.get("price")
+        available = product.get("availability")
+        price_str = f"{price}$" if price is not None else "N/A"
+        status = "\u2705" if available else "\u274c"
+        url = f"{SAQ_BASE_URL}/{sku}"
+        return f"{index}. [{name}]({url}) \u2014 {price_str} {status}"
+
+    # Product was delisted or missing from DB
+    return f"{index}. `{sku}` \u2014 product no longer available"
+
+
+def format_watch_list(watches: list[dict[str, Any]]) -> str:
+    """Format the /alerts output — list of watched products."""
+    if not watches:
+        return "You're not watching any wines yet.\nUse /watch `<sku>` to start."
+
+    header = f"*{len(watches)} watched wine{'s' if len(watches) != 1 else ''}*"
+    lines = [_format_watch_line(entry, i + 1) for i, entry in enumerate(watches)]
+    return f"{header}\n\n{'\n\n'.join(lines)}"

@@ -7,11 +7,22 @@ from telegram.ext import (
 )
 
 from bot.api_client import BackendClient
-from bot.config import CALLBACK_PREFIX, CMD_HELP, CMD_NEW, CMD_RANDOM, CMD_START, settings
+from bot.config import (
+    CALLBACK_PREFIX,
+    CMD_ALERTS,
+    CMD_HELP,
+    CMD_NEW,
+    CMD_RANDOM,
+    CMD_START,
+    CMD_UNWATCH,
+    CMD_WATCH,
+    settings,
+)
 from bot.handlers.filters import filter_callback
 from bot.handlers.new import new_command
 from bot.handlers.random import random_command
 from bot.handlers.start import help_command, start
+from bot.handlers.watch import alerts_command, unwatch_command, watch_command
 
 
 async def _post_init(application: Application) -> None:
@@ -41,6 +52,9 @@ def create_app() -> Application:
     app.add_handler(CommandHandler(CMD_HELP, help_command))
     app.add_handler(CommandHandler(CMD_NEW, new_command))
     app.add_handler(CommandHandler(CMD_RANDOM, random_command))
+    app.add_handler(CommandHandler(CMD_WATCH, watch_command))
+    app.add_handler(CommandHandler(CMD_UNWATCH, unwatch_command))
+    app.add_handler(CommandHandler(CMD_ALERTS, alerts_command))
     # Only button taps whose callback_data starts with "f:" reach filter_callback
     app.add_handler(CallbackQueryHandler(filter_callback, pattern=rf"^{CALLBACK_PREFIX}"))
     return app

@@ -84,6 +84,13 @@ See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and enginee
 - [ ] Per-product store availability checker — paginated AJAX, diff alerts
 - [ ] Filter by store availability (in-store / online)
 
+### Phase 5c — Bilingual Support
+
+- [ ] Per-user language preference (FR default, EN opt-in) (#134)
+- [ ] Static translation tables for structured fields (categories, types, regions)
+- [ ] Bilingual bot responses, button labels, and help text
+- [ ] Bilingual formatters
+
 ### Phase 6 — AI Layer (RAG + Claude)
 
 - [ ] ChromaDB + embeddings
