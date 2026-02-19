@@ -18,6 +18,12 @@ def _fake_watch(**overrides):
     return SimpleNamespace(**defaults)
 
 
+def _fake_event(**overrides):
+    defaults = dict(id=1, sku="SKU001", available=True, detected_at=NOW, processed_at=None)
+    defaults.update(overrides)
+    return SimpleNamespace(**defaults)
+
+
 def _fake_product(**overrides):
     defaults = dict(
         sku="SKU001",
@@ -231,4 +237,99 @@ def test_delete_watch_missing_user_id():
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
     resp = client.delete("/api/v1/watches/SKU001")
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+# ── GET /watches/notifications ───────────────────────────────
+
+
+def test_pending_notifications_success():
+    """200 — returns pending notifications with product data."""
+    event = _fake_event()
+    watch = _fake_watch()
+    product = _fake_product()
+
+    with patch("backend.services.watches.repo") as mock_repo:
+        mock_repo.find_pending_notifications = AsyncMock(return_value=[(event, watch, product)])
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.get("/api/v1/watches/notifications")
+
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["event_id"] == 1
+    assert data[0]["sku"] == "SKU001"
+    assert data[0]["user_id"] == "tg:123"
+    assert data[0]["product_name"] == "Château Test"
+    assert "detected_at" in data[0]
+
+
+def test_pending_notifications_empty():
+    """200 — no pending notifications."""
+    with patch("backend.services.watches.repo") as mock_repo:
+        mock_repo.find_pending_notifications = AsyncMock(return_value=[])
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.get("/api/v1/watches/notifications")
+
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json() == []
+
+
+def test_pending_notifications_product_missing():
+    """200 — notification for a delisted product (no product data)."""
+    event = _fake_event(sku="GONE99")
+    watch = _fake_watch(sku="GONE99")
+
+    with patch("backend.services.watches.repo") as mock_repo:
+        mock_repo.find_pending_notifications = AsyncMock(return_value=[(event, watch, None)])
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.get("/api/v1/watches/notifications")
+
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data[0]["product_name"] is None
+
+
+# ── POST /watches/notifications/ack ──────────────────────────
+
+
+def test_ack_notifications_success():
+    """204 — events acknowledged."""
+    with patch("backend.services.watches.repo") as mock_repo:
+        mock_repo.ack_events = AsyncMock(return_value=2)
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.post(
+            "/api/v1/watches/notifications/ack",
+            json={"event_ids": [1, 2]},
+        )
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_ack_notifications_empty_list_rejected():
+    """422 — empty event_ids list fails validation."""
+    session = AsyncMock()
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.post(
+        "/api/v1/watches/notifications/ack",
+        json={"event_ids": []},
+    )
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+def test_ack_notifications_missing_body():
+    """422 — missing request body."""
+    session = AsyncMock()
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.post("/api/v1/watches/notifications/ack")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
