@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SERVICE_NAME = "bot"
@@ -22,9 +24,16 @@ settings = BotSettings()
 
 RESULTS_PER_PAGE = 5
 
-PRICE_BUCKETS: list[tuple[int, int | None, str]] = [
-    (15, 25, "15-25$"),
-    (25, 50, "25-50$"),
-    (50, 100, "50-100$"),
-    (100, None, "100$+"),
-]
+
+class PriceBucket(NamedTuple):
+    min_price: int | None
+    max_price: int | None
+    label: str
+
+
+PRICE_BUCKETS: dict[str, PriceBucket] = {
+    "15-25": PriceBucket(15, 25, "15-25$"),
+    "25-50": PriceBucket(25, 50, "25-50$"),
+    "50-100": PriceBucket(50, 100, "50-100$"),
+    "100-": PriceBucket(100, None, "100$+"),
+}
