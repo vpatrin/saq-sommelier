@@ -23,6 +23,7 @@ class BotSettings(BaseSettings):
 settings = BotSettings()
 
 RESULTS_PER_PAGE = 5
+SAQ_BASE_URL = "https://www.saq.com/fr"
 
 # ── Context schemas ──────────────────────────────────────────
 # context.bot_data: {"api": BackendClient}  — set once in _post_init
@@ -40,6 +41,9 @@ CMD_START = "start"
 CMD_HELP = "help"
 CMD_NEW = "new"
 CMD_RANDOM = "random"
+CMD_WATCH = "watch"
+CMD_UNWATCH = "unwatch"
+CMD_ALERTS = "alerts"
 
 # Callback data prefixes — shared between keyboards.py (build), filters.py (parse), app.py (routing)
 CALLBACK_PREFIX = "f:"

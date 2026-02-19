@@ -50,11 +50,16 @@ def _fake_product(**overrides):
 
 
 def test_create_watch_success():
-    """201 — watch created successfully."""
+    """201 — watch created with embedded product data."""
     watch = _fake_watch()
+    product = _fake_product()
 
-    with patch("backend.services.watches.repo") as mock_repo:
+    with (
+        patch("backend.services.watches.repo") as mock_repo,
+        patch("backend.services.watches.products_repo") as mock_products,
+    ):
         mock_repo.create = AsyncMock(return_value=watch)
+        mock_products.find_by_sku = AsyncMock(return_value=product)
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
@@ -62,10 +67,11 @@ def test_create_watch_success():
 
     assert resp.status_code == status.HTTP_201_CREATED
     data = resp.json()
-    assert data["user_id"] == "tg:123"
-    assert data["sku"] == "SKU001"
-    assert "id" in data
-    assert "created_at" in data
+    assert data["watch"]["user_id"] == "tg:123"
+    assert data["watch"]["sku"] == "SKU001"
+    assert "id" in data["watch"]
+    assert "created_at" in data["watch"]
+    assert data["product"]["name"] == "Château Test"
 
 
 def test_create_watch_duplicate():

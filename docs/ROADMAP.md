@@ -71,7 +71,8 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 - [x] Inline keyboard filters — shared formatters, keyboards, filter callbacks from facets API (#118)
 - [x] `/new` — recently added/updated wines with filters (#118)
 - [x] `/random` — random wine with filters (#118)
-- [ ] `/watch`, `/unwatch`, `/alerts` — availability/restock alerts
+- [x] `/watch`, `/unwatch`, `/alerts` — passive watch list + on-demand status check (#119)
+- [ ] Post-scrape restock notifications — proactive alerts when watched products come back (#138)
 - [ ] Weekly digest — proactive post to group chat after scraper run
 - [ ] Bot Dockerfile + Compose service
 
@@ -83,6 +84,13 @@ See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and enginee
 - [ ] Extract `magento_id` + `online_qty` during product scrape
 - [ ] Per-product store availability checker — paginated AJAX, diff alerts
 - [ ] Filter by store availability (in-store / online)
+
+### Phase 5c — Bilingual Support
+
+- [ ] Per-user language preference (FR default, EN opt-in) (#134)
+- [ ] Static translation tables for structured fields (categories, types, regions)
+- [ ] Bilingual bot responses, button labels, and help text
+- [ ] Bilingual formatters
 
 ### Phase 6 — AI Layer (RAG + Claude)
 

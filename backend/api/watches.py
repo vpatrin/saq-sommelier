@@ -3,17 +3,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import MAX_SKU_LENGTH, MAX_USER_ID_LENGTH
 from backend.db import get_db
-from backend.schemas.watch import WatchCreate, WatchResponse, WatchWithProduct
+from backend.schemas.watch import WatchCreate, WatchWithProduct
 from backend.services.watches import create_watch, delete_watch, list_watches
 
 router = APIRouter(prefix="/watches", tags=["watches"])
 
 
-@router.post("", response_model=WatchResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=WatchWithProduct, status_code=status.HTTP_201_CREATED)
 async def post_watch(
     body: WatchCreate,
     db: AsyncSession = Depends(get_db),
-) -> WatchResponse:
+) -> WatchWithProduct:
     """Create a watch on a product for a user."""
     return await create_watch(db, body.user_id, body.sku)
 

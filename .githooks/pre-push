@@ -14,6 +14,22 @@ echo "📦 Checking lock files..."
 (cd bot && poetry check --lock)
 
 echo ""
+echo "🗄️  Checking migration coverage..."
+LAST_MIGRATION=$(git log main..HEAD -1 --format="%H" -- 'core/alembic/versions/')
+
+if [ -n "$LAST_MIGRATION" ]; then
+  RANGE="$LAST_MIGRATION..HEAD"
+else
+  RANGE="main..HEAD"
+fi
+
+if [ -n "$(git log "$RANGE" -1 --format=%H -- 'core/db/models*.py' 'core/db/base.py')" ]; then
+  echo "❌ Model changes detected without a corresponding migration!"
+  echo "   Run: make revision msg=\"description\""
+  exit 1
+fi
+
+echo ""
 make test
 
 echo ""

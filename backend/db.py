@@ -8,6 +8,11 @@ _SessionLocal = create_session_factory(settings.database_url, settings.DATABASE_
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Yield an async DB session per request, close it when done."""
+    """Yield an async DB session per request. Auto-commits on success, rolls back on error."""
     async with _SessionLocal() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
