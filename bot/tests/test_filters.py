@@ -178,3 +178,39 @@ async def test_filter_backend_api_error(update, context, api):
 
     text = update.callback_query.edit_message_text.call_args[0][0]
     assert "unavailable" in text.lower()
+
+
+# ── Random command filter path ───────────────────────────────
+
+
+async def test_filter_random_uses_get_random_product(update, context, api):
+    context.user_data["search"] = {
+        "query": None,
+        "command": "random",
+        "filters": {},
+    }
+    api.get_random_product.return_value = {
+        "name": "Wine",
+        "price": "10.00",
+        "availability": True,
+        "sku": "X",
+    }
+    update.callback_query.data = "f:cat:Rouge"
+    await filter_callback(update, context)
+
+    api.get_random_product.assert_called_once()
+    api.list_products.assert_not_called()
+
+
+async def test_filter_random_empty_catalog(update, context, api):
+    context.user_data["search"] = {
+        "query": None,
+        "command": "random",
+        "filters": {},
+    }
+    api.get_random_product.return_value = None
+    update.callback_query.data = "f:cat:Rouge"
+    await filter_callback(update, context)
+
+    text = update.callback_query.edit_message_text.call_args[0][0]
+    assert "no results" in text.lower()

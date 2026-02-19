@@ -10,5 +10,5 @@ def test_create_app_returns_application() -> None:
 
 def test_create_app_registers_handlers() -> None:
     app = create_app()
-    # /start, /help, /new, filter callback
-    assert len(app.handlers[0]) == 4
+    # /start, /help, /new, /random, filter callback
+    assert len(app.handlers[0]) == 5
