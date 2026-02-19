@@ -1,3 +1,4 @@
+from loguru import logger
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -5,7 +6,7 @@ from backend.exceptions import ConflictError, NotFoundError
 from backend.repositories import products as products_repo
 from backend.repositories import watches as repo
 from backend.schemas.product import ProductResponse
-from backend.schemas.watch import WatchResponse, WatchWithProduct
+from backend.schemas.watch import PendingNotification, WatchResponse, WatchWithProduct
 
 
 async def create_watch(db: AsyncSession, user_id: str, sku: str) -> WatchWithProduct:
@@ -44,3 +45,26 @@ async def delete_watch(db: AsyncSession, user_id: str, sku: str) -> None:
     if watch is None:
         raise NotFoundError("Watch", sku)
     await repo.delete(db, watch)
+
+
+async def list_pending_notifications(db: AsyncSession) -> list[PendingNotification]:
+    """Return all pending restock notifications across all users."""
+    rows = await repo.find_pending_notifications(db)
+    return [
+        PendingNotification(
+            event_id=event.id,
+            sku=event.sku,
+            user_id=watch.user_id,
+            product_name=product.name if product else None,
+            detected_at=event.detected_at,
+        )
+        for event, watch, product in rows
+    ]
+
+
+async def ack_notifications(db: AsyncSession, event_ids: list[int]) -> int:
+    """Mark restock events as processed. Returns count acked."""
+    count = await repo.ack_events(db, event_ids)
+    if count < len(event_ids):
+        logger.warning("Acked %d/%d events (rest already processed)", count, len(event_ids))
+    return count
