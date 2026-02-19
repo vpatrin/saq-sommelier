@@ -1,6 +1,3 @@
-# Local dev: make up / make down (starts postgres for bare-metal dev)
-# Production: systemd timer runs `docker compose up scraper` (see docs/SCRAPER.md)
-
 services:
   postgres:
     profiles: ["dev"]
@@ -21,17 +18,51 @@ services:
       timeout: 3s
       retries: 5
 
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      # Override localhost → Compose service name for container-to-container networking.
+      DB_HOST: postgres
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./backend:/app/backend
+    command: ["uvicorn", "backend.app:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+        # Not required so prod works without the dev postgres service.
+        required: false
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    env_file: .env
+    environment:
+      # Override localhost → Compose service name for container-to-container networking.
+      BACKEND_URL: http://backend:8000
+    volumes:
+      - ./bot/bot:/app/bot/bot
+    depends_on:
+      - backend
+
   scraper:
     build:
       context: .
       dockerfile: scraper/Dockerfile
     env_file: .env
     environment:
-      # Override localhost → Compose service name for container-to-container networking.
-      # Production: set to external postgres host in .env or override here.
       DB_HOST: postgres
     # One-shot job — don't restart after exit. Systemd timer handles scheduling.
     restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
 
 volumes:
   pgdata:
