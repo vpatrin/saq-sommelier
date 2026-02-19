@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.config import MAX_SKU_LENGTH, MAX_USER_ID_LENGTH
+from backend.config import MAX_ACK_BATCH_SIZE, MAX_SKU_LENGTH, MAX_USER_ID_LENGTH
 from backend.schemas.product import ProductResponse
 
 
@@ -28,3 +28,17 @@ class WatchWithProduct(BaseModel):
 
     watch: WatchResponse
     product: ProductResponse | None
+
+
+class PendingNotification(BaseModel):
+    """One user×event pair — the bot sends one Telegram message per item."""
+
+    event_id: int
+    sku: str
+    user_id: str
+    product_name: str | None
+    detected_at: datetime
+
+
+class AckRequest(BaseModel):
+    event_ids: list[int] = Field(min_length=1, max_length=MAX_ACK_BATCH_SIZE)
