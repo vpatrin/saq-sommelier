@@ -75,6 +75,15 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 - [ ] Weekly digest — proactive post to group chat after scraper run
 - [ ] Bot Dockerfile + Compose service
 
+### Phase 5b — Store Availability
+
+See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and engineering plan.
+
+- [ ] Store directory scrape (#128) — one-shot `stores` table (401 rows)
+- [ ] Extract `magento_id` + `online_qty` during product scrape
+- [ ] Per-product store availability checker — paginated AJAX, diff alerts
+- [ ] Filter by store availability (in-store / online)
+
 ### Phase 6 — AI Layer (RAG + Claude)
 
 - [ ] ChromaDB + embeddings
