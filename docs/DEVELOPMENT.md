@@ -11,33 +11,42 @@
 ```bash
 make install              # install all dependencies
 cp .env.example .env      # defaults work as-is
-make up                   # start PostgreSQL (localhost:5432)
+make run-db               # start PostgreSQL (localhost:5432)
 make migrate              # create database tables
-make dev-scrape           # populate the database (~38k products)
+make dev-scraper           # populate the database (~38k products)
 make dev-backend          # start the backend (localhost:8000)
+```
+
+Or skip Poetry entirely and run everything in Docker:
+
+```bash
+cp .env.example .env      # defaults work as-is
+make run                  # postgres + backend + bot (with hot reload)
+make migrate              # create database tables
+make run-scraper           # populate the database
 ```
 
 ## Database
 
 ### Default: Docker Compose
 
-`make up` starts a postgres:16-alpine container on `localhost:5432`. Bare-metal tools (alembic, `make dev-backend`, `make dev-scrape`) connect to it directly. GUI tools like DBeaver can also connect to `localhost:5432` with the credentials from `.env`.
+`make run-db` starts a postgres:16-alpine container on `localhost:5432`. Bare-metal tools (alembic, `make dev-backend`, `make dev-scraper`) connect to it directly. GUI tools like DBeaver can also connect to `localhost:5432` with the credentials from `.env`.
 
 ```bash
-make up                   # start postgres
-make down                 # stop postgres (data persists in pgdata volume)
+make run-db               # start postgres only (for bare-metal dev)
+make down                 # stop all containers (data persists in pgdata volume)
 ```
 
 ### Using an existing PostgreSQL instance
 
-If you already have PostgreSQL running (e.g., [shared-postgres](https://github.com/vpatrin/shared-postgres) or a system install), skip `make up` and update `.env`:
+If you already have PostgreSQL running (e.g., [shared-postgres](https://github.com/vpatrin/shared-postgres) or a system install), skip `make run-db` and update `.env`:
 
 ```bash
 DB_HOST=localhost         # or your postgres host
 DB_PORT=5432              # or your postgres port
 ```
 
-Everything else (`make migrate`, `make dev-scrape`, `make dev-backend`) works the same.
+Everything else (`make migrate`, `make dev-scraper`, `make dev-backend`) works the same.
 
 ## Environment
 
@@ -64,7 +73,7 @@ All services read from a single root `.env` file. See [.env.example](../.env.exa
 make install       # poetry install for all services
 make dev-backend   # uvicorn backend on localhost:8000
 make dev-bot       # telegram bot in polling mode
-make dev-scrape    # run the scraper
+make dev-scraper    # run the scraper
 make migrate       # alembic upgrade head
 make reset-db      # wipe all data and recreate tables
 
@@ -75,9 +84,11 @@ make test          # pytest (all services)
 make coverage      # tests + coverage badges
 
 # Docker
-make build         # build backend Docker image
-make up            # start postgres (local dev)
-make down          # stop postgres
+make build         # build all service images
+make run           # full Docker dev stack (postgres + backend + bot)
+make run-db        # postgres only (for bare-metal dev)
+make run-scraper    # one-shot scrape (Docker)
+make down          # stop all containers
 
 # Cleanup
 make clean         # remove __pycache__, .pytest_cache, .ruff_cache
@@ -88,13 +99,13 @@ make clean         # remove __pycache__, .pytest_cache, .ruff_cache
 The scraper is a one-shot batch job (not a long-running service). It fetches the SAQ sitemap and upserts products into PostgreSQL. See [SCRAPER.md](SCRAPER.md) for production scheduling and operations.
 
 ```bash
-make dev-scrape           # run the scraper (upserts ~38k products)
+make dev-scraper           # run the scraper (upserts ~38k products)
 ```
 
 When iterating on parser logic, wipe the database first to test from a clean state:
 
 ```bash
-make reset-db && make dev-scrape
+make reset-db && make dev-scraper
 ```
 
 `make reset-db` runs `alembic downgrade base && alembic upgrade head` — drops all tables and recreates them, so the scraper starts fresh. This also validates that your migrations work in both directions.
@@ -109,7 +120,7 @@ make dev-backend          # start on localhost:8000
 
 API docs (Swagger UI) are available at [localhost:8000/docs](http://localhost:8000/docs).
 
-The backend expects a populated database. If you see empty responses, run `make dev-scrape` first.
+The backend expects a populated database. If you see empty responses, run `make dev-scraper` first.
 
 ## Working on the bot
 
@@ -123,13 +134,36 @@ Get a token from [@BotFather](https://t.me/BotFather) on Telegram and add it to 
 
 ## Docker
 
+Two workflows, choose whichever fits:
+
+### Full stack in Docker (no Poetry required)
+
 ```bash
-make up                   # start postgres for local dev
-make down                 # stop postgres
-make build                # build backend Docker image
+make run                  # postgres + backend + bot (hot reload via volume mounts)
+make run-scraper           # one-shot scrape (docker compose run)
+make down                 # stop everything
 ```
 
-Full Docker development (backend + scraper in containers) is tracked in [#44](https://github.com/vpatrin/saq-sommelier/issues/44).
+Volume mounts and `--reload` are baked into `docker-compose.yml`. Edit code locally, changes are picked up in the container. For the bot, restart the container after changes (`docker compose restart bot`).
+
+### Bare-metal dev (Poetry + containerized postgres)
+
+```bash
+make run-db               # postgres only
+make dev-backend          # uvicorn with --reload
+make dev-bot              # telegram bot polling
+make dev-scraper           # one-shot scrape
+make down                 # stop postgres
+```
+
+### Building images
+
+```bash
+make build                # build all service images (backend, scraper, bot)
+make build-backend        # build backend only
+make build-scraper        # build scraper only
+make build-bot            # build bot only
+```
 
 ## Running tests
 
