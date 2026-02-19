@@ -96,6 +96,7 @@ class TestFormatWatchList:
         assert "Mouton Cadet" in result
         assert "16.95$" in result
         assert "\u2705" in result
+        assert "since Jan 1" in result
 
     def test_multiple_watches(self):
         watches = [
@@ -128,3 +129,4 @@ class TestFormatWatchList:
         result = format_watch_list(watches)
         assert "GONE123" in result
         assert "no longer available" in result
+        assert "since Jan 1" in result

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from bot.config import SAQ_BASE_URL
@@ -49,20 +50,20 @@ def format_product_list(data: dict[str, Any]) -> str:
 
 def _format_watch_line(entry: dict[str, Any], index: int) -> str:
     """Format a single watch entry (WatchWithProduct) for Telegram."""
-    sku = entry["watch"]["sku"]
+    watch = entry["watch"]
     product = entry.get("product")
 
     if product:
-        name = product.get("name") or "Unknown"
-        price = product.get("price")
-        available = product.get("availability")
-        price_str = f"{price}$" if price is not None else "N/A"
-        status = "\u2705" if available else "\u274c"
-        url = f"{SAQ_BASE_URL}/{sku}"
-        return f"{index}. [{name}]({url}) \u2014 {price_str} {status}"
+        line = format_product_line(product, index)
+    else:
+        line = f"{index}. `{watch['sku']}` \u2014 product no longer available"
 
-    # Product was delisted or missing from DB
-    return f"{index}. `{sku}` \u2014 product no longer available"
+    created_at = watch.get("created_at")
+    if created_at:
+        dt = datetime.fromisoformat(created_at)
+        line += f" _(since {dt.strftime('%b')} {dt.day})_"
+
+    return line
 
 
 def format_watch_list(watches: list[dict[str, Any]]) -> str:
