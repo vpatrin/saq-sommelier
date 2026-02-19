@@ -149,6 +149,86 @@ class TestGetUpdatedDates:
         assert result == {}
 
 
+class TestGetAvailabilityMap:
+    @pytest.mark.asyncio
+    async def test_returns_sku_to_availability_mapping(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = MagicMock(
+            all=lambda: [("10327701", True), ("99999999", False), ("11111111", None)]
+        )
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import get_availability_map
+
+            result = await get_availability_map()
+
+        assert result == {"10327701": True, "99999999": False, "11111111": None}
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_dict_for_empty_db(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.return_value = MagicMock(all=lambda: [])
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import get_availability_map
+
+            result = await get_availability_map()
+
+        assert result == {}
+
+
+class TestEmitRestockEvent:
+    @pytest.mark.asyncio
+    async def test_executes_and_commits(self) -> None:
+        mock_session = AsyncMock()
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import emit_restock_event
+
+            await emit_restock_event("10327701", available=True)
+
+        mock_session.execute.assert_called_once()
+        mock_session.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_swallows_error_on_db_failure(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.side_effect = SQLAlchemyError("connection lost")
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import emit_restock_event
+
+            # Should NOT raise — swallows the error
+            await emit_restock_event("10327701", available=True)
+
+        mock_session.rollback.assert_called_once()
+        mock_session.commit.assert_not_called()
+
+
 class TestUpsertProduct:
     @pytest.mark.asyncio
     async def test_commits_on_successful_upsert(self) -> None:
