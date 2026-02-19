@@ -24,6 +24,12 @@ settings = BotSettings()
 
 RESULTS_PER_PAGE = 5
 
+# Callback data prefixes — shared between keyboards.py (build), filters.py (parse), app.py (routing)
+CALLBACK_PREFIX = "f:"
+CALLBACK_CAT = f"{CALLBACK_PREFIX}cat:"
+CALLBACK_PRICE = f"{CALLBACK_PREFIX}price:"
+CALLBACK_CLEAR = f"{CALLBACK_PREFIX}clear"
+
 
 class PriceBucket(NamedTuple):
     min_price: int | None

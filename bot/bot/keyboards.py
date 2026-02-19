@@ -2,7 +2,7 @@ from typing import Any
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from bot.config import PRICE_BUCKETS
+from bot.config import CALLBACK_CAT, CALLBACK_CLEAR, CALLBACK_PRICE, PRICE_BUCKETS
 
 
 def build_filter_keyboard(
@@ -22,7 +22,7 @@ def build_filter_keyboard(
         cat_buttons = []
         for cat in categories:
             label = f"\u2713 {cat}" if cat == active_cat else cat
-            cat_buttons.append(InlineKeyboardButton(label, callback_data=f"f:cat:{cat}"))
+            cat_buttons.append(InlineKeyboardButton(label, callback_data=f"{CALLBACK_CAT}{cat}"))
         rows.append(cat_buttons)
 
     # Price row - get those from hardcoded values
@@ -31,12 +31,12 @@ def build_filter_keyboard(
     price_buttons = []
     for key, bucket in PRICE_BUCKETS.items():
         display = f"\u2713 {bucket.label}" if key == active_price else bucket.label
-        price_buttons.append(InlineKeyboardButton(display, callback_data=f"f:price:{key}"))
+        price_buttons.append(InlineKeyboardButton(display, callback_data=f"{CALLBACK_PRICE}{key}"))
     rows.append(price_buttons)
 
     # Clear row (only if filters are active)
     if active_filters:
-        rows.append([InlineKeyboardButton("Clear filters", callback_data="f:clear")])
+        rows.append([InlineKeyboardButton("Clear filters", callback_data=CALLBACK_CLEAR)])
 
     # Three rows : [cat, price buckets, clear filters (if active filters)]
     return InlineKeyboardMarkup(rows)

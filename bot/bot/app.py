@@ -9,7 +9,7 @@ from telegram.ext import (
 )
 
 from bot.api_client import BackendClient
-from bot.config import SERVICE_NAME, settings
+from bot.config import CALLBACK_PREFIX, SERVICE_NAME, settings
 from bot.handlers.filters import filter_callback
 from bot.handlers.new import new_command
 from bot.handlers.start import help_command, start
@@ -51,5 +51,6 @@ def create_app() -> Application:
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("new", new_command))
-    app.add_handler(CallbackQueryHandler(filter_callback, pattern=r"^f:"))
+    # Only button taps whose callback_data starts with "f:" reach filter_callback
+    app.add_handler(CallbackQueryHandler(filter_callback, pattern=rf"^{CALLBACK_PREFIX}"))
     return app
