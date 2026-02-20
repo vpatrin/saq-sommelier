@@ -14,7 +14,7 @@ cp .env.example .env      # defaults work as-is
 make run-db               # start PostgreSQL (localhost:5432)
 make migrate              # create database tables
 make dev-scraper          # populate the database (~38k products)
-make dev-backend          # start the backend (localhost:8000)
+make dev-backend          # start the backend (localhost:8001)
 ```
 
 Or skip Poetry entirely and run everything in Docker:
@@ -64,14 +64,14 @@ All services read from a single root `.env` file. See [.env.example](../.env.exa
 | `DEBUG` | no | `false` | Debug mode |
 | `DATABASE_ECHO` | no | `false` | Log SQL queries |
 | `TELEGRAM_BOT_TOKEN` | bot only | — | Token from @BotFather |
-| `BACKEND_URL` | no | `http://localhost:8000` | API URL for the bot |
+| `BACKEND_URL` | no | `http://localhost:8001` | API URL for the bot |
 
 ## Make targets
 
 ```bash
 # Development
 make install       # poetry install for all services
-make dev-backend   # uvicorn backend on localhost:8000
+make dev-backend   # uvicorn backend on localhost:8001
 make dev-bot       # telegram bot in polling mode
 make dev-scraper   # run the scraper
 make migrate       # alembic upgrade head
@@ -115,10 +115,10 @@ make reset-db && make dev-scraper
 The backend runs with hot reload — edit code, save, and uvicorn restarts automatically.
 
 ```bash
-make dev-backend          # start on localhost:8000
+make dev-backend          # start on localhost:8001
 ```
 
-API docs (Swagger UI) are available at [localhost:8000/docs](http://localhost:8000/docs).
+API docs (Swagger UI) are available at [localhost:8001/docs](http://localhost:8001/docs).
 
 The backend expects a populated database. If you see empty responses, run `make dev-scraper` first.
 

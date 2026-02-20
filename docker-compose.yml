@@ -17,20 +17,25 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    networks:
+      - internal
 
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    container_name: saq-backend
     env_file: .env
     environment:
       # Override localhost → Compose service name for container-to-container networking.
       DB_HOST: postgres
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8001:8001"
     volumes:
       - ./backend:/app/backend
-    command: ["uvicorn", "backend.app:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "backend.app:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
+    networks:
+      - internal
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,9 +49,11 @@ services:
     env_file: .env
     environment:
       # Override localhost → Compose service name for container-to-container networking.
-      BACKEND_URL: http://backend:8000
+      BACKEND_URL: http://backend:8001
     volumes:
       - ./bot/bot:/app/bot/bot
+    networks:
+      - internal
     depends_on:
       - backend
 
@@ -59,6 +66,8 @@ services:
       DB_HOST: postgres
     # One-shot job — don't restart after exit. Systemd timer handles scheduling.
     restart: "no"
+    networks:
+      - internal
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,3 +75,7 @@ services:
 
 volumes:
   pgdata:
+
+networks:
+  internal:
+    external: true

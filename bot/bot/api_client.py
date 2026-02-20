@@ -29,7 +29,7 @@ class BackendClient:
     # ── Lifecycle ───────────────────────────────────────────────
 
     def __init__(self, base_url: str, timeout: float = 10.0) -> None:
-        self._base_url = base_url.rstrip("/")  # Prevents http://localhost:8000//api/v1
+        self._base_url = base_url.rstrip("/")  # Prevents double slash in URL
         self._timeout = timeout
         self._client: httpx.AsyncClient | None = None
 
