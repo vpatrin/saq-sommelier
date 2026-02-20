@@ -3,13 +3,18 @@
 AI-powered wine recommendation engine built on the SAQ (Quebec liquor board) product catalog.
 
 [![CI](https://github.com/vpatrin/saq-sommelier/actions/workflows/ci.yml/badge.svg)](https://github.com/vpatrin/saq-sommelier/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/tag/vpatrin/saq-sommelier?label=version)](CHANGELOG.md)
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://docs.astral.sh/ruff/)
 ![backend coverage](.github/badges/coverage-backend.svg)
 ![scraper coverage](.github/badges/coverage-scraper.svg)
 ![bot coverage](.github/badges/coverage-bot.svg)
 
-Scrapes ~38k products from the SAQ public sitemap, stores structured wine data in PostgreSQL, and serves it through a FastAPI API. A Telegram bot provides browsing and alerts, with natural language recommendations powered by Claude coming next.
+- 🍷 Scrapes ~38k products from the SAQ public sitemap into PostgreSQL
+- 🔍 FastAPI catalog API with search, filtering, and restock alerts
+- 🤖 Telegram bot for browsing, watching, and notifications
+- 📍 In-store availability lookup (planned)
+- 💬 Natural language recommendations via Claude RAG (planned)
 
 ## Architecture
 
@@ -27,8 +32,8 @@ graph LR
     Scraper -- write --> DB
     DB -- read --> API
     API --> Claude
-    API --> Bot
-    API --> Web
+    Bot -- calls --> API
+    Web -- calls --> API
 
     style Web stroke-dasharray: 5 5
     style Claude stroke-dasharray: 5 5
@@ -71,6 +76,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Store Availability](docs/STORE_AVAILABILITY.md) — SAQ AJAX endpoints, store directory, stock checks
 - [Telegram Bot](docs/TELEGRAM_BOT.md) — bot design, commands, API dependencies
 - [Roadmap](docs/ROADMAP.md) — project phases, discipline roadmaps, and timeline
+- [Changelog](CHANGELOG.md) — release history
 
 ## Legal
 
