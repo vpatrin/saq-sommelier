@@ -36,7 +36,7 @@ jobs:
             bot:
               - 'bot/**'
             ci:
-              - '.github/**'
+              - '.github/workflows/**'
 
   lint-backend:
     needs: [changes]
