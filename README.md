@@ -44,7 +44,7 @@ cp .env.example .env      # defaults work as-is
 make run-db               # start PostgreSQL (localhost:5432)
 make migrate              # create database tables
 make dev-scraper          # populate the database (~38k products)
-make dev-backend          # start the backend (localhost:8000)
+make dev-backend          # start the backend (localhost:8001)
 ```
 
 ## Development

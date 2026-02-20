@@ -9,5 +9,5 @@ def test_settings_reads_token_from_env(monkeypatch: object) -> None:
 
 def test_settings_defaults() -> None:
     s = BotSettings()
-    assert s.BACKEND_URL == "http://localhost:8000"
+    assert s.BACKEND_URL == "http://localhost:8001"
     assert s.LOG_LEVEL == "INFO"

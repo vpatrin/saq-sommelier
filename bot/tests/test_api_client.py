@@ -26,7 +26,7 @@ def _response(
 
 @pytest.fixture
 def client() -> BackendClient:
-    bc = BackendClient(base_url="http://test:8000")
+    bc = BackendClient(base_url="http://test:8001")
     bc._client = AsyncMock(spec=httpx.AsyncClient)
     return bc
 
@@ -257,7 +257,7 @@ async def test_server_error(client: BackendClient) -> None:
 
 
 async def test_open_creates_client() -> None:
-    bc = BackendClient(base_url="http://test:8000")
+    bc = BackendClient(base_url="http://test:8001")
     assert bc._client is None
 
     await bc.open()
@@ -267,7 +267,7 @@ async def test_open_creates_client() -> None:
 
 
 async def test_close_cleans_up() -> None:
-    bc = BackendClient(base_url="http://test:8000")
+    bc = BackendClient(base_url="http://test:8001")
     await bc.open()
 
     await bc.close()
@@ -276,7 +276,7 @@ async def test_close_cleans_up() -> None:
 
 
 async def test_request_without_open_fails() -> None:
-    bc = BackendClient(base_url="http://test:8000")
+    bc = BackendClient(base_url="http://test:8001")
 
     with pytest.raises(AssertionError, match="Client not open"):
         await bc.list_products()
