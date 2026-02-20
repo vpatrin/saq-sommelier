@@ -21,8 +21,7 @@ Part of the [project roadmap](../ROADMAP.md). Access control, supply chain, secr
 - [x] Dependabot — weekly updates for pip + github-actions (#61)
 - [x] Hadolint — Dockerfile linting in CI (#73)
 - [ ] pip-audit in CI — fail on known vulnerabilities in dependencies
-- [ ] Trivy container scan — scan built images in CI, weekly schedule
-- [ ] Poetry lockfile verification — `poetry check --lock` in CI (already in pre-push hook)
+- ~~Trivy container scan~~ — descoped (#74)
 
 ## Phase 4 — Secret Management (~half day)
 

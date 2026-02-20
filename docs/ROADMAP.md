@@ -76,6 +76,14 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 - [x] Post-scrape restock notifications — proactive alerts when watched products come back (#138)
 - [x] Bot Dockerfile + Compose service (#121, #44)
 
+### Phase 5a — Bot UX Polish
+
+- [ ] Improve category selection UX (#162)
+- [ ] "Back" button to return to previous results (#163)
+- [ ] Main menu with navigation buttons (#164)
+- [ ] Disable link preview for multi-result messages (#165)
+- [ ] Paginated results with next/previous buttons (#167)
+
 ### Phase 5b — Store Availability
 
 See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and engineering plan.
