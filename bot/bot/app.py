@@ -1,9 +1,11 @@
 from loguru import logger
+from telegram import Update
 from telegram.ext import (
     Application,
     ApplicationBuilder,
     CallbackQueryHandler,
     CommandHandler,
+    TypeHandler,
 )
 
 from bot.api_client import BackendClient
@@ -24,6 +26,7 @@ from bot.handlers.notifications import poll_notifications
 from bot.handlers.random import random_command
 from bot.handlers.start import help_command, start
 from bot.handlers.watch import alerts_command, unwatch_command, watch_command
+from bot.middleware import allowlist_gate, rate_limit_gate
 
 
 async def _post_init(application: Application) -> None:
@@ -49,6 +52,10 @@ def create_app() -> Application:
         .post_shutdown(_post_shutdown)
         .build()
     )
+    # Middlewares — runs before all command handlers, in group order
+    app.add_handler(TypeHandler(Update, allowlist_gate), group=-2)
+    app.add_handler(TypeHandler(Update, rate_limit_gate), group=-1)
+    # Command handlers (group=0, default)
     app.add_handler(CommandHandler(CMD_START, start))
     app.add_handler(CommandHandler(CMD_HELP, help_command))
     app.add_handler(CommandHandler(CMD_NEW, new_command))
