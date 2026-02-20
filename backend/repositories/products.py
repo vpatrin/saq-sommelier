@@ -15,7 +15,7 @@ def _apply_filters(
     stmt: Select,
     *,
     q: str | None = None,
-    category: str | None = None,
+    category: list[str] | None = None,
     country: str | None = None,
     region: str | None = None,
     min_price: Decimal | None = None,
@@ -30,7 +30,7 @@ def _apply_filters(
     if q is not None:
         stmt = stmt.where(Product.name.ilike(f"%{q}%"))
     if category is not None:
-        stmt = stmt.where(Product.category == category)
+        stmt = stmt.where(Product.category.in_(category))
     if country is not None:
         stmt = stmt.where(Product.country == country)
     if region is not None:
@@ -46,7 +46,7 @@ async def count(
     db: AsyncSession,
     *,
     q: str | None = None,
-    category: str | None = None,
+    category: list[str] | None = None,
     country: str | None = None,
     region: str | None = None,
     min_price: Decimal | None = None,
@@ -83,7 +83,7 @@ async def find_page(
     *,
     sort: str | None = None,
     q: str | None = None,
-    category: str | None = None,
+    category: list[str] | None = None,
     country: str | None = None,
     region: str | None = None,
     min_price: Decimal | None = None,
@@ -123,7 +123,7 @@ async def get_distinct_values(db: AsyncSession, column: Column) -> list[str]:
 async def find_random(
     db: AsyncSession,
     *,
-    category: str | None = None,
+    category: list[str] | None = None,
     country: str | None = None,
     region: str | None = None,
     min_price: Decimal | None = None,

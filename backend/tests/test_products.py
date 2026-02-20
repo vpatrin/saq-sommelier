@@ -278,6 +278,16 @@ def test_filter_by_category():
     assert resp.json()["total"] == 1
 
 
+def test_filter_by_multiple_categories():
+    """Multiple categories produce an IN clause."""
+    stmt = select(Product)
+    filtered = _apply_filters(stmt, category=["Vin mousseux", "Champagne"])
+    sql = _compile(filtered)
+    assert "IN" in sql
+    assert "Vin mousseux" in sql
+    assert "Champagne" in sql
+
+
 def test_filter_by_price_range():
     products = [_fake_product(sku="MID1", price=Decimal("25.00"))]
     session = _mock_db_for_products(products, total=1)
@@ -347,7 +357,7 @@ def test_search_q_too_long_rejected():
 
 
 def test_filter_category_too_long_rejected():
-    """category exceeding max_length should be rejected."""
+    """A category element exceeding max_length should be rejected."""
     session = _mock_db_for_products([], total=0)
 
     app.dependency_overrides[get_db] = lambda: session
