@@ -19,7 +19,7 @@ saq-core = {path = "../core", develop = true}
 pytest = ">=8.0"
 pytest-asyncio = ">=0.25"
 pytest-cov = ">=6.0"
-ruff = "^0.15.1"
+ruff = "^0.15.2"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
