@@ -91,7 +91,7 @@ jobs:
 
   lint-bot:
     needs: [changes]
-    if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.ci == 'true'
+    if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -161,7 +161,7 @@ jobs:
 
   test-bot:
     needs: [changes]
-    if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.ci == 'true'
+    if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
