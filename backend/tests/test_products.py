@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from backend.app import app
-from backend.config import MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
+from backend.config import MAX_FILTER_LENGTH, MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
 from backend.db import get_db
 from backend.repositories.products import (
     _apply_filters,
@@ -353,6 +353,16 @@ def test_search_q_too_long_rejected():
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
     resp = client.get(f"/api/v1/products?q={'x' * (MAX_SEARCH_LENGTH + 1)}")
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+def test_filter_category_too_long_rejected():
+    """A category element exceeding max_length should be rejected."""
+    session = _mock_db_for_products([], total=0)
+
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+    resp = client.get(f"/api/v1/products?category={'x' * (MAX_FILTER_LENGTH + 1)}")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 

@@ -68,7 +68,7 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 
 - [x] Bot scaffold (`bot/` service, python-telegram-bot) (#115)
 - [x] Bot API client — typed httpx wrapper for backend endpoints (#116)
-- [x] Inline keyboard filters — shared formatters, keyboards, filter callbacks from facets API (#118)
+- [x] Inline keyboard filters — shared formatters, keyboards, filter callbacks (#118, #161)
 - [x] `/new` — recently added/updated wines with filters (#118)
 - [x] `/random` — random wine with filters (#118)
 - [x] `/watch`, `/unwatch`, `/alerts` — passive watch list + on-demand status check (#119)
