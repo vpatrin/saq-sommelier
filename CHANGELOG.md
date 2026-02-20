@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Telegram user allowlist and per-user rate limiting (#178)
 
+### Changed
+- Disable Telegram link preview for multi-result messages, keep preview for single results (#165)
+
 ### Fixed
 - Restrict category filters to wine-only categories (#166)
 

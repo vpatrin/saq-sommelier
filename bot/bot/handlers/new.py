@@ -48,5 +48,8 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     # Send a NEW message with the keyboard attached
     await update.message.reply_text(
-        telegram_formatted_output, reply_markup=keyboard, parse_mode="Markdown"
+        telegram_formatted_output,
+        reply_markup=keyboard,
+        parse_mode="Markdown",
+        disable_web_page_preview=True,
     )

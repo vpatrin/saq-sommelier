@@ -142,6 +142,12 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # edit_message_text updates the SAME message in-place (not a new message)
     # The user sees the results + buttons refresh without chat flooding
+    # Single result → keep link preview (useful context); multiple → disable (noise)
+    is_multiple_results = len(results["products"]) > 1
+
     await query.edit_message_text(
-        telegram_formatted_output, reply_markup=keyboard, parse_mode="Markdown"
+        telegram_formatted_output,
+        reply_markup=keyboard,
+        parse_mode="Markdown",
+        disable_web_page_preview=is_multiple_results,
     )
