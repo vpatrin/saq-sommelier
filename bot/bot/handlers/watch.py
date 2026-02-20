@@ -24,6 +24,17 @@ def _parse_sku(context: ContextTypes.DEFAULT_TYPE) -> str | None:
     return arg
 
 
+async def _send_watch_recap(update: Update, api: BackendClient, user_id: str) -> None:
+    """Fetch and send the current watch list as a follow-up message."""
+    try:
+        watches = await api.list_watches(user_id)
+    except (BackendUnavailableError, BackendAPIError):
+        return  # non-critical — skip recap silently
+    if watches:
+        text = format_watch_list(watches)
+        await update.message.reply_text(text, parse_mode="Markdown", disable_web_page_preview=True)
+
+
 async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /watch <sku> — subscribe to availability alerts for a product."""
     sku = _parse_sku(context)
@@ -32,9 +43,10 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
 
     api: BackendClient = context.bot_data["api"]
+    user_id = _user_id(update)
 
     try:
-        data = await api.create_watch(_user_id(update), sku)
+        data = await api.create_watch(user_id, sku)
     except BackendAPIError as exc:
         if exc.status_code == HTTPStatus.NOT_FOUND:
             await update.message.reply_text(f"Product `{sku}` not found.", parse_mode="Markdown")
@@ -59,6 +71,7 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     else:
         text = f"Watching `{sku}` — you'll get alerts when availability changes."
     await update.message.reply_text(text, parse_mode="Markdown", disable_web_page_preview=True)
+    await _send_watch_recap(update, api, user_id)
 
 
 async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -69,9 +82,10 @@ async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
 
     api: BackendClient = context.bot_data["api"]
+    user_id = _user_id(update)
 
     try:
-        await api.delete_watch(_user_id(update), sku)
+        await api.delete_watch(user_id, sku)
     except BackendAPIError as exc:
         if exc.status_code == HTTPStatus.NOT_FOUND:
             await update.message.reply_text(f"You're not watching `{sku}`.", parse_mode="Markdown")
@@ -85,6 +99,7 @@ async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
 
     await update.message.reply_text(f"Stopped watching `{sku}`.", parse_mode="Markdown")
+    await _send_watch_recap(update, api, user_id)
 
 
 async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

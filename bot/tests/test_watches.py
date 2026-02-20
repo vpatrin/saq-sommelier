@@ -40,22 +40,40 @@ _WATCH_RESPONSE = {
     },
 }
 
+_WATCH_LIST = [
+    {
+        "watch": {"id": 1, "user_id": "tg:42", "sku": "10327701", "created_at": "2026-01-01"},
+        "product": {
+            "name": "Mouton Cadet",
+            "price": "16.95",
+            "availability": True,
+            "sku": "10327701",
+        },
+    },
+]
+
 
 async def test_watch_creates_watch(update, context, api):
     context.args = ["10327701"]
     api.create_watch.return_value = _WATCH_RESPONSE
+    api.list_watches.return_value = _WATCH_LIST
 
     await watch_command(update, context)
 
     api.create_watch.assert_called_once_with("tg:42", "10327701")
-    text = update.message.reply_text.call_args[0][0]
+    # First reply: confirmation, second: recap
+    assert update.message.reply_text.call_count == 2
+    text = update.message.reply_text.call_args_list[0][0][0]
     assert "Mouton Cadet" in text
     assert "watching" in text.lower()
+    recap = update.message.reply_text.call_args_list[1][0][0]
+    assert "1 watched wine" in recap
 
 
 async def test_watch_accepts_saq_url(update, context, api):
     context.args = ["https://www.saq.com/fr/10327701"]
     api.create_watch.return_value = _WATCH_RESPONSE
+    api.list_watches.return_value = _WATCH_LIST
 
     await watch_command(update, context)
 
@@ -65,6 +83,7 @@ async def test_watch_accepts_saq_url(update, context, api):
 async def test_watch_accepts_saq_url_with_trailing_slash(update, context, api):
     context.args = ["https://www.saq.com/fr/10327701/"]
     api.create_watch.return_value = _WATCH_RESPONSE
+    api.list_watches.return_value = _WATCH_LIST
 
     await watch_command(update, context)
 
@@ -73,6 +92,7 @@ async def test_watch_accepts_saq_url_with_trailing_slash(update, context, api):
 
 async def test_unwatch_accepts_saq_url(update, context, api):
     context.args = ["https://www.saq.com/fr/10327701"]
+    api.list_watches.return_value = []
 
     await unwatch_command(update, context)
 
@@ -133,12 +153,35 @@ async def test_watch_generic_api_error(update, context, api):
 
 async def test_unwatch_deletes_watch(update, context, api):
     context.args = ["10327701"]
+    api.list_watches.return_value = []
 
     await unwatch_command(update, context)
 
     api.delete_watch.assert_called_once_with("tg:42", "10327701")
-    text = update.message.reply_text.call_args[0][0]
+    text = update.message.reply_text.call_args_list[0][0][0]
     assert "stopped" in text.lower()
+
+
+async def test_unwatch_sends_recap(update, context, api):
+    context.args = ["10327701"]
+    api.list_watches.return_value = _WATCH_LIST
+
+    await unwatch_command(update, context)
+
+    # First reply: confirmation, second: recap
+    assert update.message.reply_text.call_count == 2
+    recap = update.message.reply_text.call_args_list[1][0][0]
+    assert "1 watched wine" in recap
+
+
+async def test_unwatch_no_recap_when_empty(update, context, api):
+    context.args = ["10327701"]
+    api.list_watches.return_value = []
+
+    await unwatch_command(update, context)
+
+    # Only confirmation, no recap for empty list
+    assert update.message.reply_text.call_count == 1
 
 
 async def test_unwatch_no_sku(update, context):
@@ -184,28 +227,13 @@ async def test_unwatch_generic_api_error(update, context, api):
 
 
 async def test_alerts_shows_watches(update, context, api):
-    api.list_watches.return_value = [
-        {
-            "watch": {
-                "id": 1,
-                "user_id": "tg:42",
-                "sku": "10327701",
-                "created_at": "2026-01-01",
-            },
-            "product": {
-                "name": "Château Margaux",
-                "price": "89.00",
-                "availability": True,
-                "sku": "10327701",
-            },
-        },
-    ]
+    api.list_watches.return_value = _WATCH_LIST
 
     await alerts_command(update, context)
 
     api.list_watches.assert_called_once_with("tg:42")
     text = update.message.reply_text.call_args[0][0]
-    assert "Château Margaux" in text
+    assert "Mouton Cadet" in text
     assert "1 watched wine" in text
 
 
