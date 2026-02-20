@@ -53,7 +53,7 @@ def create_app() -> Application:
         .build()
     )
     # Access control gate — runs before all command handlers
-    app.add_handler(TypeHandler(Update, access_control), group=-1) # group -1 to always run first
+    app.add_handler(TypeHandler(Update, access_control), group=-1)  # group -1 to always run first
     app.add_handler(CommandHandler(CMD_START, start))
     app.add_handler(CommandHandler(CMD_HELP, help_command))
     app.add_handler(CommandHandler(CMD_NEW, new_command))

@@ -32,7 +32,7 @@ USER_ID_PREFIX = "tg"  # user_id format: "tg:{telegram_id}"
 ALLOWED_USERS: frozenset[int] = frozenset(
     int(x) for x in settings.ALLOWED_USER_IDS.split(",") if x.strip()
 )
-RATE_LIMIT_CALLS = 3 # Calls per limit window
+RATE_LIMIT_CALLS = 3  # Calls per limit window
 RATE_LIMIT_WINDOW = 1.0  # in seconds
 
 # ── Context schemas ──────────────────────────────────────────
