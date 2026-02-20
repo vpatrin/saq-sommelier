@@ -34,11 +34,9 @@ Part of the [project roadmap](../ROADMAP.md). DX tooling, Docker hardening, CI/C
 - [ ] Systemd timer — daily 3am backup
 - [ ] docs/DISASTER_RECOVERY.md — recovery procedures for container crash, VPS death, bad deploy, DB corruption, ChromaDB corruption
 
-## Phase 6 — Security Hardening (~half day)
+## Phase 6 — Security Hardening
 
-- [x] Dependabot — weekly updates for pip + github-actions (#61)
-- [ ] VPS hardening via Ansible — disable root SSH, disable password auth, UFW, unattended-upgrades
-- [ ] Supply chain security — pip-audit + Trivy container scan in CI, weekly schedule
+Moved to dedicated [Security Roadmap](security.md). Dependabot (#61) and Hadolint (#73) already done.
 
 ## Phase 7 — Advanced Platform (~2 days, portfolio polish)
 
