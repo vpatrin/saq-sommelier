@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Redesigned /start and /help text with grouped commands and project branding (#164)
 
 ### Changed
+- Show updated watch list after /watch and /unwatch commands (#183)
 - Disable Telegram link preview for multi-result messages, keep preview for single results (#165)
 
 ### Fixed

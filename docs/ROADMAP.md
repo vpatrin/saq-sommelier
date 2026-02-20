@@ -83,6 +83,7 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 - [x] Main menu with navigation buttons (#164)
 - [x] Disable link preview for multi-result messages (#165)
 - [ ] Paginated results with next/previous buttons (#167)
+- [x] Auto-recap watch list after /watch and /unwatch (#183)
 
 ### Phase 5b — Store Availability
 
