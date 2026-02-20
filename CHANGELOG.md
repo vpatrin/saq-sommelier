@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Telegram user allowlist and per-user rate limiting (#178)
+
 ### Fixed
 - Restrict category filters to wine-only categories (#166)
 

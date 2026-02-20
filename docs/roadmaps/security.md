@@ -4,9 +4,10 @@ Part of the [project roadmap](../ROADMAP.md). Access control, supply chain, secr
 
 ## Phase 1 — Bot Access Control (~half day)
 
-- [ ] Telegram user allowlisting — `ALLOWED_USER_IDS` env var, reject unknown users with polite message
-- [ ] Per-user rate limiting — throttle commands to prevent abuse (e.g., 10 commands/minute)
+- [x] Telegram user allowlisting — `ALLOWED_USER_IDS` env var, reject unknown users with polite message (#178)
+- [x] Per-user rate limiting — throttle commands to prevent abuse (#178)
 - [ ] Command audit logging — log user_id + command to stdout for traceability
+- [ ] Dynamic allowlist — `/allow` admin command + PostgreSQL table, no restart to add users - To investigate
 
 ## Phase 2 — API Security (~half day)
 
