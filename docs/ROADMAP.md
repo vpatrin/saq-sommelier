@@ -1,6 +1,6 @@
 # Roadmap
 
-One project, six disciplines. Detailed task breakdowns in [roadmaps/](roadmaps/).
+One project, seven disciplines. Detailed task breakdowns in [roadmaps/](roadmaps/).
 
 | Discipline | Roadmap |
 | --- | --- |
@@ -10,6 +10,7 @@ One project, six disciplines. Detailed task breakdowns in [roadmaps/](roadmaps/)
 | Platform Engineering | [platform-engineering.md](roadmaps/platform-engineering.md) |
 | Observability | [observability.md](roadmaps/observability.md) |
 | Environment Segregation | [environment-segregation.md](roadmaps/environment-segregation.md) |
+| Security | [security.md](roadmaps/security.md) |
 
 ---
 
