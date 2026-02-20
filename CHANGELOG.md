@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Telegram user allowlist and per-user rate limiting (#178)
 
+### Added
+- Persistent reply keyboard with New wines, Random, My alerts, and Help buttons (#164)
+- Redesigned /start and /help text with grouped commands and project branding (#164)
+
 ### Changed
 - Disable Telegram link preview for multi-result messages, keep preview for single results (#165)
 
