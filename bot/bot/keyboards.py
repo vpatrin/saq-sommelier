@@ -1,8 +1,18 @@
 from typing import Any
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
-from bot.config import CALLBACK_CAT, CALLBACK_CLEAR, CALLBACK_PRICE, PRICE_BUCKETS, WINE_CATEGORIES
+from bot.config import (
+    CALLBACK_CAT,
+    CALLBACK_CLEAR,
+    CALLBACK_PRICE,
+    MENU_ALERTS,
+    MENU_HELP,
+    MENU_NEW,
+    MENU_RANDOM,
+    PRICE_BUCKETS,
+    WINE_CATEGORIES,
+)
 
 
 def build_filter_keyboard(
@@ -39,3 +49,12 @@ def build_filter_keyboard(
         rows.append([InlineKeyboardButton("Clear filters", callback_data=CALLBACK_CLEAR)])
 
     return InlineKeyboardMarkup(rows)
+
+
+MAIN_MENU = ReplyKeyboardMarkup(
+    [
+        [KeyboardButton(MENU_NEW), KeyboardButton(MENU_RANDOM)],
+        [KeyboardButton(MENU_ALERTS), KeyboardButton(MENU_HELP)],
+    ],
+    resize_keyboard=True,
+)

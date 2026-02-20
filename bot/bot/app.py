@@ -5,7 +5,9 @@ from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
     CommandHandler,
+    MessageHandler,
     TypeHandler,
+    filters,
 )
 
 from bot.api_client import BackendClient
@@ -18,6 +20,10 @@ from bot.config import (
     CMD_START,
     CMD_UNWATCH,
     CMD_WATCH,
+    MENU_ALERTS,
+    MENU_HELP,
+    MENU_NEW,
+    MENU_RANDOM,
     settings,
 )
 from bot.handlers.filters import filter_callback
@@ -63,6 +69,11 @@ def create_app() -> Application:
     app.add_handler(CommandHandler(CMD_WATCH, watch_command))
     app.add_handler(CommandHandler(CMD_UNWATCH, unwatch_command))
     app.add_handler(CommandHandler(CMD_ALERTS, alerts_command))
+    # Reply keyboard menu — text messages from persistent bottom buttons
+    app.add_handler(MessageHandler(filters.Text([MENU_NEW]), new_command))
+    app.add_handler(MessageHandler(filters.Text([MENU_RANDOM]), random_command))
+    app.add_handler(MessageHandler(filters.Text([MENU_ALERTS]), alerts_command))
+    app.add_handler(MessageHandler(filters.Text([MENU_HELP]), help_command))
     # Only button taps whose callback_data starts with "f:" reach filter_callback
     app.add_handler(CallbackQueryHandler(filter_callback, pattern=rf"^{CALLBACK_PREFIX}"))
     # Poll backend for restock notifications on a timer

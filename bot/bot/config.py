@@ -55,6 +55,12 @@ CMD_WATCH = "watch"
 CMD_UNWATCH = "unwatch"
 CMD_ALERTS = "alerts"
 
+# Reply keyboard menu labels — matched in app.py MessageHandlers
+MENU_NEW = "🆕 New wines"
+MENU_RANDOM = "🎲 Random"
+MENU_ALERTS = "📋 My alerts"
+MENU_HELP = "❓ Help"
+
 # Callback data prefixes — shared between keyboards.py (build), filters.py (parse), app.py (routing)
 CALLBACK_PREFIX = "f:"
 CALLBACK_CAT = f"{CALLBACK_PREFIX}cat:"
