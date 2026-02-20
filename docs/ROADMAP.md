@@ -79,9 +79,9 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 ### Phase 5a — Bot UX Polish
 
 - [ ] Improve category selection UX (#162)
-- [ ] "Back" button to return to previous results (#163)
-- [ ] Main menu with navigation buttons (#164)
-- [ ] Disable link preview for multi-result messages (#165)
+- [x] "Back" button to return to previous results (#163) — resolved by persistent reply keyboard
+- [x] Main menu with navigation buttons (#164)
+- [x] Disable link preview for multi-result messages (#165)
 - [ ] Paginated results with next/previous buttons (#167)
 
 ### Phase 5b — Store Availability
