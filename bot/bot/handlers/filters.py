@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any
 
 from loguru import logger
@@ -14,6 +13,7 @@ from bot.config import (
     CMD_RANDOM,
     PRICE_BUCKETS,
     RESULTS_PER_PAGE,
+    WINE_CATEGORIES,
 )
 from bot.formatters import format_product_list
 from bot.keyboards import build_filter_keyboard
@@ -50,9 +50,12 @@ def build_api_params(state: dict[str, Any]) -> dict[str, Any]:
     # Reads active filters from state
     active_filters = state.get("filters", {})
 
-    # Category passed through directly
+    # Translate category key ("rouge", "bulles") → list of DB values
     if active_filters.get("category"):
-        params["category"] = active_filters["category"]
+        cat_key = active_filters["category"]
+        wine_cat = WINE_CATEGORIES.get(cat_key)
+        if wine_cat:
+            params["category"] = wine_cat.db_values
 
     # Dict lookup into PRICE_BUCKETS
     if active_filters.get("price"):
@@ -121,20 +124,13 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     try:
         if is_random:
-            product, facets = await asyncio.gather(
-                api.get_random_product(**params),
-                api.get_facets(),
-            )
+            product = await api.get_random_product(**params)
             if product is None:
                 results = {"products": [], "total": 0, "page": 1, "per_page": 1, "pages": 0}
             else:
-                # Random sends back only one product
                 results = {"products": [product], "total": 1, "page": 1, "per_page": 1, "pages": 1}
         else:
-            results, facets = await asyncio.gather(
-                api.list_products(**params),
-                api.get_facets(),
-            )
+            results = await api.list_products(**params)
     except (BackendUnavailableError, BackendAPIError):
         logger.warning("Backend unavailable during filter callback")
         await query.edit_message_text("Backend is currently unavailable. Try again later.")
@@ -142,7 +138,7 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Rebuild output + keyboard (checkmarks now reflect the new active_filters)
     telegram_formatted_output = format_product_list(results)
-    keyboard = build_filter_keyboard(facets, active_filters)
+    keyboard = build_filter_keyboard(active_filters)
 
     # edit_message_text updates the SAME message in-place (not a new message)
     # The user sees the results + buttons refresh without chat flooding

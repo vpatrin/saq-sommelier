@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from backend.app import app
-from backend.config import MAX_FILTER_LENGTH, MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
+from backend.config import MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
 from backend.db import get_db
 from backend.repositories.products import (
     _apply_filters,
@@ -278,6 +278,16 @@ def test_filter_by_category():
     assert resp.json()["total"] == 1
 
 
+def test_filter_by_multiple_categories():
+    """Multiple categories produce an IN clause."""
+    stmt = select(Product)
+    filtered = _apply_filters(stmt, category=["Vin mousseux", "Champagne"])
+    sql = _compile(filtered)
+    assert "IN" in sql
+    assert "Vin mousseux" in sql
+    assert "Champagne" in sql
+
+
 def test_filter_by_price_range():
     products = [_fake_product(sku="MID1", price=Decimal("25.00"))]
     session = _mock_db_for_products(products, total=1)
@@ -343,16 +353,6 @@ def test_search_q_too_long_rejected():
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
     resp = client.get(f"/api/v1/products?q={'x' * (MAX_SEARCH_LENGTH + 1)}")
-    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-
-def test_filter_category_too_long_rejected():
-    """category exceeding max_length should be rejected."""
-    session = _mock_db_for_products([], total=0)
-
-    app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get(f"/api/v1/products?category={'x' * (MAX_FILTER_LENGTH + 1)}")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 

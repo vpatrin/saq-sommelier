@@ -1,5 +1,3 @@
-import asyncio
-
 from loguru import logger
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -23,10 +21,7 @@ async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     params = build_api_params(state)
 
     try:
-        product, facets = await asyncio.gather(
-            api.get_random_product(**params),
-            api.get_facets(),
-        )
+        product = await api.get_random_product(**params)
     except (BackendUnavailableError, BackendAPIError):
         logger.warning("Backend unavailable during /random command")
         await update.message.reply_text("Backend is currently unavailable. Try again later.")
@@ -39,7 +34,7 @@ async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         results = {"products": [product], "total": 1, "page": 1, "per_page": 1, "pages": 1}
 
     telegram_formatted_output = format_product_list(results)
-    keyboard = build_filter_keyboard(facets, state["filters"])
+    keyboard = build_filter_keyboard(state["filters"])
 
     await update.message.reply_text(
         telegram_formatted_output, reply_markup=keyboard, parse_mode="Markdown"

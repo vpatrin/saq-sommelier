@@ -24,7 +24,7 @@ async def get_products(
     per_page: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     sort: Literal["recent", "price_asc", "price_desc"] | None = Query(default=None),
     q: str | None = Query(default=None, min_length=1, max_length=MAX_SEARCH_LENGTH),
-    category: str | None = Query(default=None, max_length=MAX_FILTER_LENGTH),
+    category: list[str] | None = Query(default=None),
     country: str | None = Query(default=None, max_length=MAX_FILTER_LENGTH),
     region: str | None = Query(default=None, max_length=MAX_FILTER_LENGTH),
     min_price: Decimal | None = Query(default=None, ge=0),
@@ -58,7 +58,7 @@ async def get_product_facets(
 
 @router.get("/random", response_model=ProductResponse)
 async def get_random(
-    category: str | None = Query(default=None, max_length=MAX_FILTER_LENGTH),
+    category: list[str] | None = Query(default=None),
     country: str | None = Query(default=None, max_length=MAX_FILTER_LENGTH),
     region: str | None = Query(default=None, max_length=MAX_FILTER_LENGTH),
     min_price: Decimal | None = Query(default=None, ge=0),

@@ -1,5 +1,3 @@
-import asyncio
-
 from loguru import logger
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -35,12 +33,8 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     #! For /new: {"per_page": 5, "available": True, "sort": "recent"}
     params = build_api_params(state)
 
-    # Fire both API calls concurrently — saves one round-trip vs sequential
     try:
-        results, facets = await asyncio.gather(
-            api.list_products(**params),  # product data
-            api.get_facets(),  # category list for the keyboard
-        )
+        results = await api.list_products(**params)
     except (BackendUnavailableError, BackendAPIError):
         logger.warning("Backend unavailable during /new command")
         await update.message.reply_text("Backend is currently unavailable. Try again later.")
@@ -50,7 +44,7 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     telegram_formatted_output = format_product_list(results)
 
     # Build inline keyboard with filter buttons (no checkmarks yet — filters empty)
-    keyboard = build_filter_keyboard(facets, state["filters"])
+    keyboard = build_filter_keyboard(state["filters"])
 
     # Send a NEW message with the keyboard attached
     await update.message.reply_text(

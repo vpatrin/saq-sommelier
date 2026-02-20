@@ -36,7 +36,7 @@ async def list_products(
     *,
     sort: str | None = None,
     q: str | None = None,
-    category: str | None = None,
+    category: list[str] | None = None,
     country: str | None = None,
     region: str | None = None,
     min_price: Decimal | None = None,
@@ -70,7 +70,7 @@ async def list_products(
 async def get_random_product(
     db: AsyncSession,
     *,
-    category: str | None = None,
+    category: list[str] | None = None,
     country: str | None = None,
     region: str | None = None,
     min_price: Decimal | None = None,

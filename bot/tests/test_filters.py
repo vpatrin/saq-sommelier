@@ -11,18 +11,18 @@ from bot.handlers.filters import build_api_params, filter_callback, toggle_categ
 class TestToggleCategory:
     def test_select(self):
         filters = {}
-        toggle_category(filters, "Rouge")
-        assert filters["category"] == "Rouge"
+        toggle_category(filters, "rouge")
+        assert filters["category"] == "rouge"
 
     def test_deselect(self):
-        filters = {"category": "Rouge"}
-        toggle_category(filters, "Rouge")
+        filters = {"category": "rouge"}
+        toggle_category(filters, "rouge")
         assert "category" not in filters
 
     def test_switch(self):
-        filters = {"category": "Rouge"}
-        toggle_category(filters, "Blanc")
-        assert filters["category"] == "Blanc"
+        filters = {"category": "rouge"}
+        toggle_category(filters, "blanc")
+        assert filters["category"] == "blanc"
 
 
 class TestTogglePrice:
@@ -53,10 +53,18 @@ class TestBuildApiParams:
         assert "category" not in params
         assert "available" not in params
 
-    def test_search_with_category(self):
-        state = {"query": "wine", "command": "search", "filters": {"category": "Rouge"}}
+    def test_search_with_single_category(self):
+        state = {"query": "wine", "command": "search", "filters": {"category": "rouge"}}
         params = build_api_params(state)
-        assert params["category"] == "Rouge"
+        assert params["category"] == ["Vin rouge"]
+
+    def test_search_with_multi_category(self):
+        """Bulles maps to multiple DB values as a list."""
+        state = {"query": "wine", "command": "search", "filters": {"category": "bulles"}}
+        params = build_api_params(state)
+        assert isinstance(params["category"], list)
+        assert "Vin mousseux" in params["category"]
+        assert "Champagne" in params["category"]
 
     def test_search_with_price(self):
         state = {"query": "wine", "command": "search", "filters": {"price": "15-25"}}
@@ -97,13 +105,6 @@ def api():
         "per_page": 5,
         "pages": 1,
     }
-    mock.get_facets.return_value = {
-        "categories": ["Rouge"],
-        "countries": [],
-        "regions": [],
-        "grapes": [],
-        "price_range": None,
-    }
     return mock
 
 
@@ -125,17 +126,17 @@ def context(api):
 @pytest.fixture
 def update():
     mock = AsyncMock()
-    mock.callback_query.data = "f:cat:Rouge"
+    mock.callback_query.data = "f:cat:rouge"
     mock.callback_query.answer = AsyncMock()
     mock.callback_query.edit_message_text = AsyncMock()
     return mock
 
 
 async def test_filter_toggles_category(update, context):
-    update.callback_query.data = "f:cat:Rouge"
+    update.callback_query.data = "f:cat:rouge"
     await filter_callback(update, context)
 
-    assert context.user_data["search"]["filters"]["category"] == "Rouge"
+    assert context.user_data["search"]["filters"]["category"] == "rouge"
     call_kwargs = update.callback_query.edit_message_text.call_args.kwargs
     assert call_kwargs["parse_mode"] == "Markdown"
     assert call_kwargs["reply_markup"] is not None
@@ -149,7 +150,7 @@ async def test_filter_toggles_price(update, context):
 
 
 async def test_filter_clear(update, context):
-    context.user_data["search"]["filters"] = {"category": "Rouge", "price": "15-25"}
+    context.user_data["search"]["filters"] = {"category": "rouge", "price": "15-25"}
     update.callback_query.data = "f:clear"
     await filter_callback(update, context)
 
@@ -195,7 +196,7 @@ async def test_filter_random_uses_get_random_product(update, context, api):
         "availability": True,
         "sku": "X",
     }
-    update.callback_query.data = "f:cat:Rouge"
+    update.callback_query.data = "f:cat:rouge"
     await filter_callback(update, context)
 
     api.get_random_product.assert_called_once()
@@ -209,7 +210,7 @@ async def test_filter_random_empty_catalog(update, context, api):
         "filters": {},
     }
     api.get_random_product.return_value = None
-    update.callback_query.data = "f:cat:Rouge"
+    update.callback_query.data = "f:cat:rouge"
     await filter_callback(update, context)
 
     text = update.callback_query.edit_message_text.call_args[0][0]

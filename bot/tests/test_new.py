@@ -16,13 +16,6 @@ def api():
         "per_page": 5,
         "pages": 1,
     }
-    mock.get_facets.return_value = {
-        "categories": ["Rouge"],
-        "countries": [],
-        "regions": [],
-        "grapes": [],
-        "price_range": None,
-    }
     return mock
 
 
