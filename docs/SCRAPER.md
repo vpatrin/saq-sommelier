@@ -25,20 +25,23 @@ The scraper runs weekly via a **systemd timer** on the VPS. Systemd handles sche
 
 Source files: [`deploy/saq-scraper.service`](../deploy/saq-scraper.service) and [`deploy/saq-scraper.timer`](../deploy/saq-scraper.timer).
 
-Copy to the VPS:
+The service file assumes `WorkingDirectory=/opt/saq-sommelier`. If your repo lives elsewhere, either symlink it:
+
+```bash
+sudo ln -s /path/to/your/saq-sommelier /opt/saq-sommelier
+```
+
+Or edit `WorkingDirectory` in the installed service file after copying.
+
+### Installation
 
 ```bash
 sudo cp deploy/saq-scraper.{service,timer} /etc/systemd/system/
-```
-
-`Persistent=true` in the timer means if the VPS was off during the scheduled time, it runs on next boot.
-
-### Setup
-
-```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now saq-scraper.timer
 ```
+
+`Persistent=true` in the timer means if the VPS was off during the scheduled time, it runs on next boot. Only the timer is enabled — it triggers the oneshot service on schedule.
 
 ### Checking status
 

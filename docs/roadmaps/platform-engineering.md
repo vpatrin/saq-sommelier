@@ -41,6 +41,6 @@ Moved to dedicated [Security Roadmap](security.md). Dependabot (#61) and Hadolin
 ## Phase 7 — Advanced Platform (~2 days, portfolio polish)
 
 - [ ] Grafana dashboards as code — provisioned from JSON files in repo
-- [ ] Port assignment convention — docs/PORTS.md
+- [x] Port assignment convention (#53)
 - [ ] `/health/detailed` endpoint — see [SRE Phase 2](sre.md) for health check design
 - [ ] Terraform GCP — Cloud Run + Cloud SQL + Artifact Registry (documented only, not deployed)
