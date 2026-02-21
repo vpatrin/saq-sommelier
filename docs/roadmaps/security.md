@@ -20,13 +20,14 @@ Part of the [project roadmap](../ROADMAP.md). Access control, supply chain, secr
 
 - [x] Dependabot — weekly updates for pip + github-actions (#61)
 - [x] Hadolint — Dockerfile linting in CI (#73)
-- [ ] pip-audit in CI — fail on known vulnerabilities in dependencies
+- [x] pip-audit in CI — fail on known vulnerabilities in dependencies (#194)
 - ~~Trivy container scan~~ — descoped (#74)
 
 ## Phase 4 — Secret Management (~half day)
 
 - [ ] Docker secrets for production — bot token, DB password, future Claude API key via files, not env vars
 - [ ] Secret rotation procedure — documented steps for rotating bot token, DB credentials
+- [x] gitleaks in CI — scan git history for committed secrets (#194)
 - [ ] `.env` audit — verify no secrets committed in repo history (`git log -S`)
 
 ## Phase 5 — Infrastructure Hardening (~1 day)
