@@ -69,10 +69,16 @@ async def main() -> int:
             logger.info("[{}/{}] Fetching sub-sitemap...", j, len(sub_sitemap_urls))
             entries.extend(await fetch_sub_sitemap(client, sub_url))
 
+        # Filter non-product URLs (recipes, accessories have slug SKUs, not numeric)
+        total_sitemap = len(entries)
+        entries = [e for e in entries if e.sku.isdigit()]
+        skipped_non_products = total_sitemap - len(entries)
+
         logger.info(
-            "Found {} total product URLs across {} sub-sitemaps",
+            "Found {} product URLs across {} sub-sitemaps ({} non-products skipped)",
             len(entries),
             len(sub_sitemap_urls),
+            skipped_non_products,
         )
 
         limit = settings.SCRAPE_LIMIT
