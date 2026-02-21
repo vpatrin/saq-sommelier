@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Skip ~1,500 non-product URLs (recipes, accessories) during scrape, saving ~50 min per run (#188)
+
 ### Fixed
 
 - Parse prices with thousands separator (e.g. $1,624.75) instead of silently dropping them (#191)
