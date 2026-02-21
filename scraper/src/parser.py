@@ -53,7 +53,7 @@ class ProductData:
         return dataclasses.asdict(self)
 
 
-def parse_product(html: str, url: str) -> ProductData:
+def parse_product(html: str | bytes, url: str) -> ProductData:
     """Parse a SAQ product page and return structured product data.
 
     Combines data from two sources in the HTML:
@@ -61,7 +61,7 @@ def parse_product(html: str, url: str) -> ProductData:
     - HTML attribute list (region, grape, alcohol, etc.)
 
     Args:
-        html: Raw HTML string of a SAQ product page.
+        html: Raw HTML of a SAQ product page (bytes preferred for correct encoding).
         url: Product page URL (for database record).
 
     Returns:
@@ -126,7 +126,7 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
             price = offers.get("price")
             if price is not None:
                 try:
-                    fields["price"] = float(price)
+                    fields["price"] = float(str(price).replace(",", ""))
                 except (ValueError, TypeError):
                     logger.warning("Bad price value {!r} on {}", price, url)
             currency = offers.get("priceCurrency")

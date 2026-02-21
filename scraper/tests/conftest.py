@@ -93,6 +93,12 @@ def product_page_html() -> str:
 
 
 @pytest.fixture
+def product_page_html_bytes(product_page_html: str) -> bytes:
+    """Product page HTML as raw bytes (simulates response.content)."""
+    return product_page_html.encode("utf-8")
+
+
+@pytest.fixture
 def minimal_product_html() -> str:
     """Product page with minimal data (out of stock, few fields)."""
     return """<html><head>

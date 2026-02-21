@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Parse prices with thousands separator (e.g. $1,624.75) instead of silently dropping them (#191)
+- Fix encoding mojibake on product names and categories with accented characters (#191)
+
 ## [1.1.0] - 2026-02-20
 
 ### Security

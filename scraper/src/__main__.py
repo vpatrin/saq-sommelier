@@ -105,12 +105,12 @@ async def main() -> int:
 
             try:
                 # Download HTML
-                logger.info("[{}/{}] Fetching {}...", i, len(products_to_scrape), entry.url)
+                logger.info("[{}/{}] Fetching {} ...", i, len(products_to_scrape), entry.url)
                 response = await client.get(entry.url)
                 response.raise_for_status()
 
                 # Parse HTML and create a ProductData instance
-                product = parse_product(response.text, url=entry.url)
+                product = parse_product(response.content, url=entry.url)
 
                 # Saves to DB (upsert)
                 await upsert_product(product)
