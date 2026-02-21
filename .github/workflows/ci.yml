@@ -176,6 +176,67 @@ jobs:
       - run: cd bot && poetry install --no-interaction
       - run: make coverage-bot
 
+  audit-backend:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry==${{ env.POETRY_VERSION }}
+      - uses: actions/cache@v5
+        with:
+          path: backend/.venv
+          key: venv-backend-audit-${{ hashFiles('backend/poetry.lock') }}
+      - run: cd backend && poetry install --only main --no-interaction
+      - run: cd backend && .venv/bin/pip install pip-audit && .venv/bin/pip-audit
+
+  audit-scraper:
+    needs: [changes]
+    if: needs.changes.outputs.scraper == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry==${{ env.POETRY_VERSION }}
+      - uses: actions/cache@v5
+        with:
+          path: scraper/.venv
+          key: venv-scraper-audit-${{ hashFiles('scraper/poetry.lock') }}
+      - run: cd scraper && poetry install --only main --no-interaction
+      - run: cd scraper && .venv/bin/pip install pip-audit && .venv/bin/pip-audit
+
+  audit-bot:
+    needs: [changes]
+    if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install poetry==${{ env.POETRY_VERSION }}
+      - uses: actions/cache@v5
+        with:
+          path: bot/.venv
+          key: venv-bot-audit-${{ hashFiles('bot/poetry.lock') }}
+      - run: cd bot && poetry install --only main --no-interaction
+      - run: cd bot && .venv/bin/pip install pip-audit && .venv/bin/pip-audit
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   lint:
     needs: [lint-backend, lint-scraper, lint-core, lint-bot, lint-dockerfiles]
     runs-on: ubuntu-latest
@@ -203,6 +264,22 @@ jobs:
             "${{ needs.test-backend.result }}" \
             "${{ needs.test-scraper.result }}" \
             "${{ needs.test-bot.result }}"; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              exit 1
+            fi
+          done
+
+  security:
+    needs: [audit-backend, audit-scraper, audit-bot, gitleaks]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - run: |
+          for result in \
+            "${{ needs.audit-backend.result }}" \
+            "${{ needs.audit-scraper.result }}" \
+            "${{ needs.audit-bot.result }}" \
+            "${{ needs.gitleaks.result }}"; do
             if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
               exit 1
             fi
