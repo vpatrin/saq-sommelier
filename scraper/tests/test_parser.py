@@ -38,6 +38,38 @@ class TestParseProductJsonLD:
         assert result.review_count == 100
         assert result.barcode == "00012345678901"
 
+    def test_accepts_bytes_input(self, product_page_html_bytes: bytes) -> None:
+        """Parser handles raw bytes (response.content) for correct encoding."""
+        result = parse_product(product_page_html_bytes, url="https://www.saq.com/fr/10327701")
+
+        assert result.sku == "10327701"
+        assert result.name == "Château Example Bordeaux"
+        assert result.price == 22.50
+
+    def test_bytes_input_preserves_accented_characters(self) -> None:
+        """UTF-8 bytes with accents are decoded correctly (prevents mojibake)."""
+        html = """<html><head>
+<script type="application/ld+json">
+{"@type": "Product", "name": "Bière dorée", "sku": "11111111",
+ "category": "Bière dorée de type Lager"}
+</script>
+</head><body></body></html>""".encode()
+        result = parse_product(html, url="https://www.saq.com/fr/11111111")
+
+        assert result.name == "Bière dorée"
+        assert result.category == "Bière dorée de type Lager"
+
+    def test_parses_price_with_thousands_separator(self) -> None:
+        """Price "1,624.75" (thousands comma) is parsed correctly."""
+        html = """<html><head>
+<script type="application/ld+json">
+{"@type": "Product", "name": "Expensive Wine", "offers": {"price": "1,624.75"}}
+</script>
+</head><body></body></html>"""
+        result = parse_product(html, url="https://www.saq.com/fr/15411110")
+
+        assert result.price == 1624.75
+
     def test_french_decimal_comma_in_rating(self, product_page_html: str) -> None:
         """Rating value "4,5" (French comma) is parsed correctly."""
         result = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
