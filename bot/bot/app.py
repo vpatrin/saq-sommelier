@@ -11,6 +11,7 @@ from telegram.ext import (
 )
 
 from bot.api_client import BackendClient
+from bot.categories import group_facets
 from bot.config import (
     CALLBACK_PREFIX,
     CMD_ALERTS,
@@ -40,6 +41,16 @@ async def _post_init(application: Application) -> None:
     await api.open()
     application.bot_data["api"] = api
     logger.info("BackendClient initialized ({})", settings.BACKEND_URL)
+
+    # Fetch product facets and cache grouped categories for filter keyboard
+    try:
+        facets = await api.get_facets()
+        application.bot_data["category_groups"] = group_facets(facets["categories"])
+        group_count = len(application.bot_data["category_groups"])
+        logger.info("Category groups loaded ({} active groups)", group_count)
+    except Exception:
+        logger.warning("Failed to fetch facets — category filters will use fallback")
+        application.bot_data["category_groups"] = {}
 
 
 async def _post_shutdown(application: Application) -> None:

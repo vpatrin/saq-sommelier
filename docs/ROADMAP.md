@@ -109,6 +109,21 @@ See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and enginee
 - [ ] `/recommend` — natural language recommendations via Telegram (#156)
 - [ ] Weekly digest — LLM-curated summary posted to group chat after scraper run (#120)
 
+### Ideas (unscoped)
+
+- [ ] `/occasion` — context-aware suggestions ("wine for a BBQ", "gift for belle-mère") via Claude
+- [ ] `/budget` — smart budget optimizer ("best rouge under $40") with value reasoning
+- [ ] `/surprise` — discovery roulette that pushes outside comfort zone based on watch history
+- [ ] `/gifter` — opt-in watch list sharing between friends for gift ideas
+- [ ] `/blind` — blind tasting game: bot describes a wine, friends guess, track scores
+- [ ] `/split` — group buy coordinator: share a bottle deal, track RSVPs among friends
+- [ ] `/terroir` — region deep-dive with educational context + current SAQ inventory
+- [ ] `/versus` — head-to-head wine comparison with Claude commentary on when to pick each
+- [ ] `/cellar` — personal purchase tracker with taste profile insights over time
+- [ ] `/digest` — weekly curated new arrivals summary, personalized to group preferences (#120)
+- [ ] Rating aggregator — enrich products with Vivino scores and critic ratings; fuzzy name matching
+- [ ] Price comparison vs France — compare SAQ prices to French retail (Wine-Searcher, Vinatis)
+
 ---
 
 ## Timeline Estimate
