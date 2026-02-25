@@ -15,7 +15,7 @@ async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     api: BackendClient = context.bot_data["api"]
 
     # "command": "random" → build_api_params adds available=True (no sort)
-    state: SearchState = {"query": None, "command": CMD_RANDOM, "filters": {}}
+    state: SearchState = {"query": None, "command": CMD_RANDOM, "filters": {}, "page": 1}
     context.user_data["search"] = state
 
     grouped = context.bot_data.get("category_groups")

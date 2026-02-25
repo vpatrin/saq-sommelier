@@ -95,11 +95,22 @@ class TestBuildApiParams:
     }
 
     def test_search_no_filters(self):
-        state = {"query": "merlot", "command": "search", "filters": {}}
+        state = {"query": "merlot", "command": "search", "filters": {}, "page": 1}
         params = build_api_params(state, self._grouped)
         assert params["q"] == "merlot"
+        assert params["page"] == 1
         assert "category" not in params
         assert "available" not in params
+
+    def test_page_forwarded(self):
+        state = {"query": None, "command": "new", "filters": {}, "page": 3}
+        params = build_api_params(state, self._grouped)
+        assert params["page"] == 3
+
+    def test_page_defaults_to_one(self):
+        state = {"query": None, "command": "search", "filters": {}}
+        params = build_api_params(state, self._grouped)
+        assert params["page"] == 1
 
     def test_search_with_single_category(self):
         state = {"query": "wine", "command": "search", "filters": {"category": "rouge"}}
@@ -330,3 +341,46 @@ async def test_filter_random_empty_catalog(update, context, api):
 
     text = update.callback_query.edit_message_text.call_args[0][0]
     assert "no results" in text.lower()
+
+
+# ── Pagination callbacks ─────────────────────────────────────
+
+
+async def test_page_next(update, context, api):
+    context.user_data["search"]["page"] = 1
+    api.list_products.return_value = {
+        "products": [{"name": "Wine", "price": "10.00", "availability": True, "sku": "X"}],
+        "total": 10,
+        "page": 2,
+        "per_page": 5,
+        "pages": 2,
+    }
+    update.callback_query.data = "f:page:next"
+    await filter_callback(update, context)
+
+    assert context.user_data["search"]["page"] == 2
+    assert api.list_products.call_args.kwargs["page"] == 2
+
+
+async def test_page_prev(update, context, api):
+    context.user_data["search"]["page"] = 3
+    update.callback_query.data = "f:page:prev"
+    await filter_callback(update, context)
+
+    assert context.user_data["search"]["page"] == 2
+
+
+async def test_page_prev_clamps_to_one(update, context, api):
+    context.user_data["search"]["page"] = 1
+    update.callback_query.data = "f:page:prev"
+    await filter_callback(update, context)
+
+    assert context.user_data["search"]["page"] == 1
+
+
+async def test_filter_resets_page(update, context, api):
+    context.user_data["search"]["page"] = 3
+    update.callback_query.data = "f:cat:rouge"
+    await filter_callback(update, context)
+
+    assert context.user_data["search"]["page"] == 1

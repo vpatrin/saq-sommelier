@@ -120,6 +120,51 @@ class TestSubgroupRows:
         assert sub_buttons[0].text == "Bière"
 
 
+class TestPaginationRow:
+    """Pagination row — only when total_pages > 1."""
+
+    def test_no_pagination_single_page(self):
+        kb = build_filter_keyboard({}, _SAMPLE_GROUPED, current_page=1, total_pages=1)
+        for row in kb.inline_keyboard:
+            for btn in row:
+                assert btn.callback_data not in ("f:page:next", "f:page:prev", "noop")
+
+    def test_pagination_shown_on_first_page(self):
+        kb = build_filter_keyboard({}, _SAMPLE_GROUPED, current_page=1, total_pages=5)
+        page_row = [
+            row for row in kb.inline_keyboard if any(btn.callback_data == "noop" for btn in row)
+        ]
+        assert len(page_row) == 1
+        buttons = page_row[0]
+        # First page: no prev, page indicator, next
+        assert len(buttons) == 2
+        assert "1/5" in buttons[0].text
+        assert buttons[1].callback_data == "f:page:next"
+
+    def test_pagination_shown_on_middle_page(self):
+        kb = build_filter_keyboard({}, _SAMPLE_GROUPED, current_page=3, total_pages=5)
+        page_row = [
+            row for row in kb.inline_keyboard if any(btn.callback_data == "noop" for btn in row)
+        ]
+        buttons = page_row[0]
+        # Middle page: prev, page indicator, next
+        assert len(buttons) == 3
+        assert buttons[0].callback_data == "f:page:prev"
+        assert "3/5" in buttons[1].text
+        assert buttons[2].callback_data == "f:page:next"
+
+    def test_pagination_shown_on_last_page(self):
+        kb = build_filter_keyboard({}, _SAMPLE_GROUPED, current_page=5, total_pages=5)
+        page_row = [
+            row for row in kb.inline_keyboard if any(btn.callback_data == "noop" for btn in row)
+        ]
+        buttons = page_row[0]
+        # Last page: prev, page indicator, no next
+        assert len(buttons) == 2
+        assert buttons[0].callback_data == "f:page:prev"
+        assert "5/5" in buttons[1].text
+
+
 class TestPriceAndClearRows:
     """Price row + clear row behavior."""
 

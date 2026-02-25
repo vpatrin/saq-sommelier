@@ -44,6 +44,7 @@ class SearchState(TypedDict):
     query: str | None
     command: str
     filters: dict[str, str]
+    page: int
 
 
 # Command identifiers — used in app.py (registration) and state dicts (routing)
@@ -67,6 +68,8 @@ CALLBACK_FAM = f"{CALLBACK_PREFIX}fam:"
 CALLBACK_CAT = f"{CALLBACK_PREFIX}cat:"
 CALLBACK_PRICE = f"{CALLBACK_PREFIX}price:"
 CALLBACK_CLEAR = f"{CALLBACK_PREFIX}clear"
+CALLBACK_PAGE_NEXT = f"{CALLBACK_PREFIX}page:next"
+CALLBACK_PAGE_PREV = f"{CALLBACK_PREFIX}page:prev"
 
 
 class PriceBucket(NamedTuple):

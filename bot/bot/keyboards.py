@@ -7,6 +7,8 @@ from bot.config import (
     CALLBACK_CAT,
     CALLBACK_CLEAR,
     CALLBACK_FAM,
+    CALLBACK_PAGE_NEXT,
+    CALLBACK_PAGE_PREV,
     CALLBACK_PRICE,
     MENU_ALERTS,
     MENU_HELP,
@@ -19,6 +21,9 @@ from bot.config import (
 def build_filter_keyboard(
     active_filters: dict[str, Any],
     grouped_categories: dict[str, list[str]] | None = None,
+    *,
+    current_page: int = 1,
+    total_pages: int = 1,
 ) -> InlineKeyboardMarkup:
     """Build two-level inline keyboard: families → subgroups → price → clear.
 
@@ -65,6 +70,22 @@ def build_filter_keyboard(
         for key, bucket in PRICE_BUCKETS.items()
     ]
     rows.append(price_buttons)
+
+    # ── Pagination row (only when there are multiple pages) ──
+    if total_pages > 1:
+        page_buttons: list[InlineKeyboardButton] = []
+        if current_page > 1:
+            page_buttons.append(
+                InlineKeyboardButton("\u25c0 Préc.", callback_data=CALLBACK_PAGE_PREV)
+            )
+        page_buttons.append(
+            InlineKeyboardButton(f"{current_page}/{total_pages}", callback_data="noop")
+        )
+        if current_page < total_pages:
+            page_buttons.append(
+                InlineKeyboardButton("Suiv. \u25b6", callback_data=CALLBACK_PAGE_NEXT)
+            )
+        rows.append(page_buttons)
 
     # ── Clear row (only if filters are active) ──
     if active_filters:

@@ -10,6 +10,8 @@ from bot.config import (
     CALLBACK_CAT,
     CALLBACK_CLEAR,
     CALLBACK_FAM,
+    CALLBACK_PAGE_NEXT,
+    CALLBACK_PAGE_PREV,
     CALLBACK_PRICE,
     CMD_NEW,
     CMD_RANDOM,
@@ -54,8 +56,8 @@ def build_api_params(
 ) -> dict[str, Any]:
     """Build API query params from search state."""
 
-    # Always sets per page from config
-    params: dict[str, Any] = {"per_page": RESULTS_PER_PAGE}
+    # Always sets per page from config; forward page number from state
+    params: dict[str, Any] = {"per_page": RESULTS_PER_PAGE, "page": state.get("page", 1)}
 
     # Only if there's a search query, e.g /new doesn't use a query
     if state.get("query"):
@@ -126,14 +128,22 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     active_filters = state["filters"]
 
     # Route the tap to the right toggle based on the prefix
-    if data == CALLBACK_CLEAR:
-        active_filters.clear()
-    elif data.startswith(CALLBACK_FAM):
-        toggle_family(active_filters, data.removeprefix(CALLBACK_FAM))
-    elif data.startswith(CALLBACK_CAT):
-        toggle_category(active_filters, data.removeprefix(CALLBACK_CAT))
-    elif data.startswith(CALLBACK_PRICE):
-        toggle_price(active_filters, data.removeprefix(CALLBACK_PRICE))
+    # Pagination buttons change the page; filter buttons reset to page 1
+    if data == CALLBACK_PAGE_NEXT:
+        state["page"] = state["page"] + 1
+    elif data == CALLBACK_PAGE_PREV:
+        state["page"] = max(1, state["page"] - 1)
+    else:
+        # Any filter change resets to page 1
+        state["page"] = 1
+        if data == CALLBACK_CLEAR:
+            active_filters.clear()
+        elif data.startswith(CALLBACK_FAM):
+            toggle_family(active_filters, data.removeprefix(CALLBACK_FAM))
+        elif data.startswith(CALLBACK_CAT):
+            toggle_category(active_filters, data.removeprefix(CALLBACK_CAT))
+        elif data.startswith(CALLBACK_PRICE):
+            toggle_price(active_filters, data.removeprefix(CALLBACK_PRICE))
 
     # Re-query the backend with the updated filters
     api: BackendClient = context.bot_data["api"]
@@ -159,7 +169,12 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Rebuild output + keyboard (checkmarks now reflect the new active_filters)
     telegram_formatted_output = format_product_list(results)
-    keyboard = build_filter_keyboard(active_filters, grouped)
+    keyboard = build_filter_keyboard(
+        active_filters,
+        grouped,
+        current_page=results["page"],
+        total_pages=results["pages"],
+    )
 
     # edit_message_text updates the SAME message in-place (not a new message)
     # The user sees the results + buttons refresh without chat flooding
