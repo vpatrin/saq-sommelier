@@ -19,6 +19,7 @@ from .db import (
     upsert_product,
 )
 from .parser import parse_product
+from .robots import is_allowed, load_robots
 from .sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
 
 setup_logging(settings.SERVICE_NAME, level=settings.LOG_LEVEL)
@@ -69,15 +70,29 @@ async def main() -> int:
             logger.info("[{}/{}] Fetching sub-sitemap...", j, len(sub_sitemap_urls))
             entries.extend(await fetch_sub_sitemap(client, sub_url))
 
+        # Load robots.txt rules (one sync HTTP call, fail-fast for compliance)
+        try:
+            rp = load_robots(settings.ROBOTS_URL)
+        except Exception:
+            logger.error("Cannot fetch robots.txt — aborting to ensure compliance")
+            return 2
+
+        # Filter URLs disallowed by robots.txt
+        before_robots = len(entries)
+        entries = [e for e in entries if is_allowed(rp, e.url, settings.USER_AGENT)]
+        skipped_robots = before_robots - len(entries)
+
         # Filter non-product URLs (recipes, accessories have slug SKUs, not numeric)
         total_sitemap = len(entries)
         entries = [e for e in entries if e.sku.isdigit()]
         skipped_non_products = total_sitemap - len(entries)
 
         logger.info(
-            "Found {} product URLs across {} sub-sitemaps ({} non-products skipped)",
+            "Found {} product URLs across {} sub-sitemaps"
+            " ({} blocked by robots.txt, {} non-products skipped)",
             len(entries),
             len(sub_sitemap_urls),
+            skipped_robots,
             skipped_non_products,
         )
 
@@ -175,6 +190,7 @@ async def main() -> int:
         "Scraper run complete:\n"
         "  Duration: {}h {}m {}s\n"
         "  Sitemap URLs: {}\n"
+        "  Skipped (robots.txt): {}\n"
         "  Fetched: {}\n"
         "  Inserted: {}\n"
         "  Updated: {}\n"
@@ -187,6 +203,7 @@ async def main() -> int:
         minutes,
         seconds,
         len(entries),
+        skipped_robots,
         saved,
         inserted,
         updated,

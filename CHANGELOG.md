@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Programmatic robots.txt compliance — scraper filters disallowed URLs and aborts if robots.txt is unreachable (#196)
+
 ### Changed
 
 - Two-level category filter keyboard: 3 families (Vins/Spiritueux/Autres) with expandable subgroups (#190)

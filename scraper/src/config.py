@@ -31,7 +31,8 @@ class ScraperSettings(BaseSettings):
     # Logging (per-service override — scraper might want DEBUG while backend stays INFO)
     LOG_LEVEL: str = "INFO"
 
-    # Sitemap URL from robots.txt (https://www.saq.com/robots.txt)
+    # robots.txt and sitemap URLs
+    ROBOTS_URL: str = "https://www.saq.com/robots.txt"
     SITEMAP_URL: str = "https://www.saq.com/media/sitemaps/fr/sitemap_product.xml"
 
     # Shared infrastructure settings (used by db.py)
