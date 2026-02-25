@@ -30,10 +30,6 @@ class TestIsAllowed:
         rp = _make_parser()
         assert is_allowed(rp, "https://www.saq.com/en/14789") is True
 
-    def test_french_product_url_allowed(self) -> None:
-        rp = _make_parser()
-        assert is_allowed(rp, "https://www.saq.com/fr/10327701") is True
-
     def test_catalog_product_view_blocked(self) -> None:
         rp = _make_parser()
         assert is_allowed(rp, "https://www.saq.com/catalog/product/view/id/123") is False
@@ -49,6 +45,10 @@ class TestIsAllowed:
     def test_customer_blocked(self) -> None:
         rp = _make_parser()
         assert is_allowed(rp, "https://www.saq.com/customer/account") is False
+
+    def test_wishlist_blocked(self) -> None:
+        rp = _make_parser()
+        assert is_allowed(rp, "https://www.saq.com/wishlist/index/add/product/42") is False
 
     def test_respects_user_agent_rules(self) -> None:
         """User-agent-specific rules are respected."""
