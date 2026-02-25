@@ -90,3 +90,7 @@ class TestExitCode:
 
     def test_total_failure(self) -> None:
         assert _exit_code(saved=0, errors=5) == EXIT_FATAL
+
+    def test_only_404s_is_clean(self) -> None:
+        # 404s increment not_found, not errors — exit code unaffected (#197)
+        assert _exit_code(saved=0, errors=0) == EXIT_OK

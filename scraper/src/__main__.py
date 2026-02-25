@@ -2,6 +2,7 @@ import asyncio
 import sys
 import time
 from datetime import date, datetime
+from http import HTTPStatus
 
 import httpx
 from core.logging import setup_logging
@@ -120,6 +121,7 @@ async def main() -> int:
         inserted = 0
         updated = 0
         restocked = 0
+        not_found = 0
         errors = 0
         for i, entry in enumerate(products_to_scrape, 1):
             # Ethical rate limiter
@@ -151,6 +153,13 @@ async def main() -> int:
 
                 logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
 
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == HTTPStatus.NOT_FOUND:
+                    not_found += 1
+                    logger.warning("Not found (stale sitemap entry): {}", entry.url)
+                else:
+                    errors += 1
+                    logger.error("HTTP error for {}: {}", entry.url, e)
             except httpx.HTTPError as e:
                 errors += 1
                 logger.error("HTTP error for {}: {}", entry.url, e)
@@ -196,6 +205,7 @@ async def main() -> int:
         "  Inserted: {}\n"
         "  Updated: {}\n"
         "  Restocked: {}\n"
+        "  Not found: {}\n"
         "  Failed: {}\n"
         "  Skipped (up-to-date): {}\n"
         "  Delisted: {}\n"
@@ -209,6 +219,7 @@ async def main() -> int:
         inserted,
         updated,
         restocked,
+        not_found,
         errors,
         skipped,
         delisted,
