@@ -5,15 +5,16 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
+from bot.categories import expand_family, expand_group
 from bot.config import (
     CALLBACK_CAT,
     CALLBACK_CLEAR,
+    CALLBACK_FAM,
     CALLBACK_PRICE,
     CMD_NEW,
     CMD_RANDOM,
     PRICE_BUCKETS,
     RESULTS_PER_PAGE,
-    WINE_CATEGORIES,
 )
 from bot.formatters import format_product_list
 from bot.keyboards import build_filter_keyboard
@@ -21,9 +22,19 @@ from bot.keyboards import build_filter_keyboard
 #! Toggle helpers — pure dict mutations, no Telegram logic:
 
 
+def toggle_family(filters: dict[str, Any], family_key: str) -> None:
+    """Toggle a family filter. Selecting a family always clears any subgroup."""
+    if filters.get("family") == family_key:
+        filters.pop("family", None)
+        filters.pop("category", None)
+    else:
+        filters["family"] = family_key
+        filters.pop("category", None)
+
+
 def toggle_category(filters: dict[str, Any], value: str) -> None:
-    """Toggle a category filter (select or deselect)."""
-    if filters.get("category") == value:  # We deselect by tapping again
+    """Toggle a category subgroup filter (select or deselect)."""
+    if filters.get("category") == value:
         filters.pop("category", None)
     else:
         filters["category"] = value
@@ -37,7 +48,10 @@ def toggle_price(filters: dict[str, Any], bucket_key: str) -> None:
         filters["price"] = bucket_key
 
 
-def build_api_params(state: dict[str, Any]) -> dict[str, Any]:
+def build_api_params(
+    state: dict[str, Any],
+    grouped_categories: dict[str, list[str]] | None = None,
+) -> dict[str, Any]:
     """Build API query params from search state."""
 
     # Always sets per page from config
@@ -50,12 +64,16 @@ def build_api_params(state: dict[str, Any]) -> dict[str, Any]:
     # Reads active filters from state
     active_filters = state.get("filters", {})
 
-    # Translate category key ("rouge", "bulles") → list of DB values
+    # Translate category filters → list of raw DB category values
+    # Subgroup takes precedence: "rouge" → just red wines; family alone → all wines
     if active_filters.get("category"):
-        cat_key = active_filters["category"]
-        wine_cat = WINE_CATEGORIES.get(cat_key)
-        if wine_cat:
-            params["category"] = wine_cat.db_values
+        db_values = expand_group(active_filters["category"], grouped_categories)
+        if db_values:
+            params["category"] = db_values
+    elif active_filters.get("family"):
+        db_values = expand_family(active_filters["family"], grouped_categories)
+        if db_values:
+            params["category"] = db_values
 
     # Dict lookup into PRICE_BUCKETS
     if active_filters.get("price"):
@@ -110,6 +128,8 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Route the tap to the right toggle based on the prefix
     if data == CALLBACK_CLEAR:
         active_filters.clear()
+    elif data.startswith(CALLBACK_FAM):
+        toggle_family(active_filters, data.removeprefix(CALLBACK_FAM))
     elif data.startswith(CALLBACK_CAT):
         toggle_category(active_filters, data.removeprefix(CALLBACK_CAT))
     elif data.startswith(CALLBACK_PRICE):
@@ -117,7 +137,8 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Re-query the backend with the updated filters
     api: BackendClient = context.bot_data["api"]
-    params = build_api_params(state)
+    grouped = context.bot_data.get("category_groups")
+    params = build_api_params(state, grouped)
 
     # /random uses a different endpoint — single product vs paginated list
     is_random = state.get("command") == CMD_RANDOM
@@ -138,7 +159,7 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Rebuild output + keyboard (checkmarks now reflect the new active_filters)
     telegram_formatted_output = format_product_list(results)
-    keyboard = build_filter_keyboard(active_filters)
+    keyboard = build_filter_keyboard(active_filters, grouped)
 
     # edit_message_text updates the SAME message in-place (not a new message)
     # The user sees the results + buttons refresh without chat flooding

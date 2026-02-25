@@ -31,7 +31,8 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     # Translate search state → backend query params
     #! For /new: {"per_page": 5, "available": True, "sort": "recent"}
-    params = build_api_params(state)
+    grouped = context.bot_data.get("category_groups")
+    params = build_api_params(state, grouped)
 
     try:
         results = await api.list_products(**params)
@@ -44,7 +45,7 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     telegram_formatted_output = format_product_list(results)
 
     # Build inline keyboard with filter buttons (no checkmarks yet — filters empty)
-    keyboard = build_filter_keyboard(state["filters"])
+    keyboard = build_filter_keyboard(state["filters"], grouped)
 
     # Send a NEW message with the keyboard attached
     await update.message.reply_text(

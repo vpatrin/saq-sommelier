@@ -63,26 +63,10 @@ MENU_HELP = "❓ Help"
 
 # Callback data prefixes — shared between keyboards.py (build), filters.py (parse), app.py (routing)
 CALLBACK_PREFIX = "f:"
+CALLBACK_FAM = f"{CALLBACK_PREFIX}fam:"
 CALLBACK_CAT = f"{CALLBACK_PREFIX}cat:"
 CALLBACK_PRICE = f"{CALLBACK_PREFIX}price:"
 CALLBACK_CLEAR = f"{CALLBACK_PREFIX}clear"
-
-
-class WineCategory(NamedTuple):
-    label: str
-    db_values: list[str]
-
-
-# Button key → (display label, matching DB category values)
-WINE_CATEGORIES: dict[str, WineCategory] = {
-    "rouge": WineCategory("Rouge", ["Vin rouge"]),
-    "blanc": WineCategory("Blanc", ["Vin blanc"]),
-    "rose": WineCategory("Rosé", ["Vin rosé"]),
-    "bulles": WineCategory(
-        "Bulles",
-        ["Vin mousseux", "Vin mousseux rosé", "Vin mousseux rouge", "Champagne", "Champagne rosé"],
-    ),
-}
 
 
 class PriceBucket(NamedTuple):

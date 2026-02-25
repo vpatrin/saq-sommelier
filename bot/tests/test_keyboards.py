@@ -1,42 +1,149 @@
+from bot.categories import CATEGORY_FAMILIES
 from bot.keyboards import build_filter_keyboard
 
+# Sample grouped data — a few groups have products
+_SAMPLE_GROUPED = {
+    "rouge": ["Vin rouge"],
+    "blanc": ["Vin blanc"],
+    "rose": ["Vin rosé"],
+    "bulles": ["Champagne", "Vin mousseux"],
+    "fortifie": ["Porto blanc"],
+    "whisky": ["Whisky écossais"],
+    "rhum": ["Rhum agricole"],
+    "biere": ["Bière artisanale"],
+}
 
-class TestBuildFilterKeyboard:
-    def test_no_active_filters(self):
-        kb = build_filter_keyboard({})
-        # Row 0: 4 wine categories, Row 1: price buckets, no clear row
+
+class TestFamilyRow:
+    """Family row — always present, 3 buttons."""
+
+    def test_family_row_always_present(self):
+        kb = build_filter_keyboard({}, _SAMPLE_GROUPED)
+        first_row = kb.inline_keyboard[0]
+        assert len(first_row) == 3
+        assert [btn.callback_data for btn in first_row] == [
+            "f:fam:vins",
+            "f:fam:spiritueux",
+            "f:fam:autres",
+        ]
+
+    def test_family_labels(self):
+        kb = build_filter_keyboard({}, _SAMPLE_GROUPED)
+        labels = [btn.text for btn in kb.inline_keyboard[0]]
+        assert labels == ["🍷 Vins", "🥃 Spiritueux", "🍺 Autres"]
+
+    def test_active_family_shows_checkmark(self):
+        kb = build_filter_keyboard({"family": "vins"}, _SAMPLE_GROUPED)
+        labels = [btn.text for btn in kb.inline_keyboard[0]]
+        assert labels == ["✓ 🍷 Vins", "🥃 Spiritueux", "🍺 Autres"]
+
+    def test_family_row_present_even_without_grouped(self):
+        kb = build_filter_keyboard({}, None)
+        first_row = kb.inline_keyboard[0]
+        assert len(first_row) == 3
+
+
+class TestSubgroupRows:
+    """Subgroup rows — only when a family is active."""
+
+    def test_no_subgroups_when_no_family(self):
+        kb = build_filter_keyboard({}, _SAMPLE_GROUPED)
+        # Row 0 = families, Row 1 = prices — no subgroup rows
         assert len(kb.inline_keyboard) == 2
-        assert kb.inline_keyboard[0][0].text == "Rouge"
-        assert kb.inline_keyboard[0][0].callback_data == "f:cat:rouge"
-        assert len(kb.inline_keyboard[0]) == 4
 
-    def test_active_category_shows_checkmark(self):
-        kb = build_filter_keyboard({"category": "rouge"})
-        # 3 rows: categories, price, clear
-        assert len(kb.inline_keyboard) == 3
-        assert kb.inline_keyboard[0][0].text == "\u2713 Rouge"
-        assert kb.inline_keyboard[0][1].text == "Blanc"
+    def test_subgroups_appear_when_family_active(self):
+        kb = build_filter_keyboard({"family": "vins"}, _SAMPLE_GROUPED)
+        # families + 2 subgroup rows + price + clear
+        sub_buttons = [
+            btn
+            for row in kb.inline_keyboard[1:]
+            for btn in row
+            if btn.callback_data.startswith("f:cat:")
+        ]
+        assert len(sub_buttons) == 5  # rouge, blanc, rose, bulles, fortifie
+        assert sub_buttons[0].text == "Vin rouge"
+        assert sub_buttons[0].callback_data == "f:cat:rouge"
+
+    def test_subgroups_chunked_into_rows_of_3(self):
+        kb = build_filter_keyboard({"family": "vins"}, _SAMPLE_GROUPED)
+        # 5 subgroups → row of 3 + row of 2
+        sub_row_1 = kb.inline_keyboard[1]
+        sub_row_2 = kb.inline_keyboard[2]
+        assert len(sub_row_1) == 3
+        assert len(sub_row_2) == 2
+
+    def test_active_subgroup_shows_checkmark(self):
+        kb = build_filter_keyboard({"family": "vins", "category": "rouge"}, _SAMPLE_GROUPED)
+        sub_buttons = [
+            btn
+            for row in kb.inline_keyboard[1:]
+            for btn in row
+            if btn.callback_data.startswith("f:cat:")
+        ]
+        assert sub_buttons[0].text == "\u2713 Vin rouge"
+        assert sub_buttons[1].text == "Vin blanc"
+
+    def test_empty_subgroups_hidden_with_grouped(self):
+        """Spiritueux family: only whisky and rhum are in _SAMPLE_GROUPED."""
+        kb = build_filter_keyboard({"family": "spiritueux"}, _SAMPLE_GROUPED)
+        sub_buttons = [
+            btn
+            for row in kb.inline_keyboard[1:]
+            for btn in row
+            if btn.callback_data.startswith("f:cat:")
+        ]
+        labels = [btn.text for btn in sub_buttons]
+        assert labels == ["Whisky", "Rhum"]
+
+    def test_all_subgroups_shown_when_grouped_is_none(self):
+        """Without facets data, show all children of the active family."""
+        kb = build_filter_keyboard({"family": "vins"}, None)
+        sub_buttons = [
+            btn
+            for row in kb.inline_keyboard[1:]
+            for btn in row
+            if btn.callback_data.startswith("f:cat:")
+        ]
+        vins_children = CATEGORY_FAMILIES["vins"].children
+        assert len(sub_buttons) == len(vins_children)
+
+    def test_switching_family_shows_different_subgroups(self):
+        kb = build_filter_keyboard({"family": "autres"}, _SAMPLE_GROUPED)
+        sub_buttons = [
+            btn
+            for row in kb.inline_keyboard[1:]
+            for btn in row
+            if btn.callback_data.startswith("f:cat:")
+        ]
+        # Only biere is in _SAMPLE_GROUPED for the "autres" family
+        assert len(sub_buttons) == 1
+        assert sub_buttons[0].text == "Bière"
+
+
+class TestPriceAndClearRows:
+    """Price row + clear row behavior."""
+
+    def test_price_row_always_present(self):
+        kb = build_filter_keyboard({}, _SAMPLE_GROUPED)
+        # No family active → Row 0 = families, Row 1 = prices
+        price_row = kb.inline_keyboard[1]
+        assert len(price_row) == 4
+        assert price_row[0].callback_data == "f:price:15-25"
 
     def test_active_price_shows_checkmark(self):
-        kb = build_filter_keyboard({"price": "15-25"})
-        price_row = kb.inline_keyboard[1]
-        assert price_row[0].text == "\u2713 15-25$"
-        assert price_row[1].text == "25-50$"
+        kb = build_filter_keyboard({"price": "25-50"}, _SAMPLE_GROUPED)
+        price_row = kb.inline_keyboard[-2]  # second to last (before clear)
+        assert price_row[1].text == "\u2713 25-50$"
 
     def test_clear_row_when_filters_active(self):
-        kb = build_filter_keyboard({"category": "blanc"})
+        kb = build_filter_keyboard({"family": "vins"}, _SAMPLE_GROUPED)
         last_row = kb.inline_keyboard[-1]
         assert len(last_row) == 1
         assert last_row[0].callback_data == "f:clear"
+        assert "Effacer" in last_row[0].text
 
     def test_no_clear_row_when_no_filters(self):
-        kb = build_filter_keyboard({})
+        kb = build_filter_keyboard({}, _SAMPLE_GROUPED)
         for row in kb.inline_keyboard:
             for btn in row:
                 assert btn.callback_data != "f:clear"
-
-    def test_all_four_categories_present(self):
-        kb = build_filter_keyboard({})
-        cat_row = kb.inline_keyboard[0]
-        labels = [btn.text for btn in cat_row]
-        assert labels == ["Rouge", "Blanc", "Rosé", "Bulles"]

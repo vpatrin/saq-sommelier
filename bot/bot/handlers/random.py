@@ -18,7 +18,8 @@ async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     state: SearchState = {"query": None, "command": CMD_RANDOM, "filters": {}}
     context.user_data["search"] = state
 
-    params = build_api_params(state)
+    grouped = context.bot_data.get("category_groups")
+    params = build_api_params(state, grouped)
 
     try:
         product = await api.get_random_product(**params)
@@ -34,7 +35,7 @@ async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         results = {"products": [product], "total": 1, "page": 1, "per_page": 1, "pages": 1}
 
     telegram_formatted_output = format_product_list(results)
-    keyboard = build_filter_keyboard(state["filters"])
+    keyboard = build_filter_keyboard(state["filters"], grouped)
 
     await update.message.reply_text(
         telegram_formatted_output, reply_markup=keyboard, parse_mode="Markdown"
