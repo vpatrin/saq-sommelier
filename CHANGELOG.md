@@ -10,11 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Programmatic robots.txt compliance — scraper filters disallowed URLs and aborts if robots.txt is unreachable (#196)
+- Paginated results with prev/next navigation buttons (#167)
 
 ### Changed
 
 - HTTP 404s logged as warnings instead of errors, counted separately in run summary (#197)
-- Two-level category filter keyboard: 3 families (Vins/Spiritueux/Autres) with expandable subgroups (#190)
+- Flat wine type filter keyboard (Rouge/Blanc/Rosé/Bulles) replaces two-level family hierarchy (#167)
 - Skip ~1,500 non-product URLs (recipes, accessories) during scrape, saving ~50 min per run (#188)
 
 ### Fixed
