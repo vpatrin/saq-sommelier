@@ -24,7 +24,7 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     # "query": None → /new has no search term (unlike /search merlot)
     # "command": "new" → build_api_params adds available=True + sort=recent
     # "filters": {} → no filters yet, mutated in-place by button taps later
-    state: SearchState = {"query": None, "command": CMD_NEW, "filters": {}}
+    state: SearchState = {"query": None, "command": CMD_NEW, "filters": {}, "page": 1}
 
     # Store as a reference — filter_callback reads and mutates this same object
     context.user_data["search"] = state
@@ -45,7 +45,12 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     telegram_formatted_output = format_product_list(results)
 
     # Build inline keyboard with filter buttons (no checkmarks yet — filters empty)
-    keyboard = build_filter_keyboard(state["filters"], grouped)
+    keyboard = build_filter_keyboard(
+        state["filters"],
+        grouped,
+        current_page=results.get("page", 1),
+        total_pages=results.get("pages", 1),
+    )
 
     # Send a NEW message with the keyboard attached
     await update.message.reply_text(

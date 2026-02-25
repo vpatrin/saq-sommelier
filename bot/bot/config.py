@@ -44,6 +44,7 @@ class SearchState(TypedDict):
     query: str | None
     command: str
     filters: dict[str, str]
+    page: int
 
 
 # Command identifiers — used in app.py (registration) and state dicts (routing)
@@ -63,10 +64,11 @@ MENU_HELP = "❓ Help"
 
 # Callback data prefixes — shared between keyboards.py (build), filters.py (parse), app.py (routing)
 CALLBACK_PREFIX = "f:"
-CALLBACK_FAM = f"{CALLBACK_PREFIX}fam:"
 CALLBACK_CAT = f"{CALLBACK_PREFIX}cat:"
 CALLBACK_PRICE = f"{CALLBACK_PREFIX}price:"
 CALLBACK_CLEAR = f"{CALLBACK_PREFIX}clear"
+CALLBACK_PAGE_NEXT = f"{CALLBACK_PREFIX}page:next"
+CALLBACK_PAGE_PREV = f"{CALLBACK_PREFIX}page:prev"
 
 
 class PriceBucket(NamedTuple):
@@ -74,6 +76,15 @@ class PriceBucket(NamedTuple):
     max_price: int | None
     label: str
 
+
+# Wine type buttons for the default filter keyboard (Row 1)
+# Keys match CATEGORY_GROUPS — display only, grouping data lives in categories.py
+WINE_GROUPS: dict[str, str] = {
+    "rouge": "🍷 Rouge",
+    "blanc": "🥂 Blanc",
+    "rose": "🌸 Rosé",
+    "bulles": "🍾 Bulles",
+}
 
 PRICE_BUCKETS: dict[str, PriceBucket] = {
     "15-25": PriceBucket(15, 25, "15-25$"),

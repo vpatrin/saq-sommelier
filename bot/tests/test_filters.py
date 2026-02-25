@@ -7,7 +7,6 @@ from bot.handlers.filters import (
     build_api_params,
     filter_callback,
     toggle_category,
-    toggle_family,
     toggle_price,
 )
 
@@ -29,40 +28,6 @@ class TestToggleCategory:
         filters = {"category": "rouge"}
         toggle_category(filters, "blanc")
         assert filters["category"] == "blanc"
-
-
-class TestToggleFamily:
-    def test_select(self):
-        filters = {}
-        toggle_family(filters, "vins")
-        assert filters["family"] == "vins"
-
-    def test_deselect(self):
-        filters = {"family": "vins"}
-        toggle_family(filters, "vins")
-        assert "family" not in filters
-
-    def test_switch(self):
-        filters = {"family": "vins"}
-        toggle_family(filters, "spiritueux")
-        assert filters["family"] == "spiritueux"
-
-    def test_clears_category_on_select(self):
-        filters = {"family": "vins", "category": "rouge"}
-        toggle_family(filters, "spiritueux")
-        assert filters["family"] == "spiritueux"
-        assert "category" not in filters
-
-    def test_clears_category_on_deselect(self):
-        filters = {"family": "vins", "category": "rouge"}
-        toggle_family(filters, "vins")
-        assert "family" not in filters
-        assert "category" not in filters
-
-    def test_preserves_price(self):
-        filters = {"family": "vins", "price": "15-25"}
-        toggle_family(filters, "spiritueux")
-        assert filters["price"] == "15-25"
 
 
 class TestTogglePrice:
@@ -95,11 +60,22 @@ class TestBuildApiParams:
     }
 
     def test_search_no_filters(self):
-        state = {"query": "merlot", "command": "search", "filters": {}}
+        state = {"query": "merlot", "command": "search", "filters": {}, "page": 1}
         params = build_api_params(state, self._grouped)
         assert params["q"] == "merlot"
+        assert params["page"] == 1
         assert "category" not in params
         assert "available" not in params
+
+    def test_page_forwarded(self):
+        state = {"query": None, "command": "new", "filters": {}, "page": 3}
+        params = build_api_params(state, self._grouped)
+        assert params["page"] == 3
+
+    def test_page_defaults_to_one(self):
+        state = {"query": None, "command": "search", "filters": {}}
+        params = build_api_params(state, self._grouped)
+        assert params["page"] == 1
 
     def test_search_with_single_category(self):
         state = {"query": "wine", "command": "search", "filters": {"category": "rouge"}}
@@ -157,36 +133,6 @@ class TestBuildApiParams:
         params = build_api_params(state, None)
         assert params["category"] == ["Vin rouge"]
 
-    def test_family_without_subgroup_expands_all_groups(self):
-        """Family only → expand all child groups into one category list."""
-        state = {"query": None, "command": "search", "filters": {"family": "vins"}}
-        params = build_api_params(state, self._grouped)
-        # vins has rouge, blanc, bulles in _grouped (rose/fortifie absent)
-        expected = [
-            "Vin rouge",
-            "Vin blanc",
-            "Champagne",
-            "Champagne rosé",
-            "Vin mousseux",
-            "Vin mousseux rosé",
-        ]
-        assert sorted(params["category"]) == sorted(expected)
-
-    def test_subgroup_takes_precedence_over_family(self):
-        """When both family and category set, only the subgroup is expanded."""
-        state = {
-            "query": None,
-            "command": "search",
-            "filters": {"family": "vins", "category": "rouge"},
-        }
-        params = build_api_params(state, self._grouped)
-        assert params["category"] == ["Vin rouge"]
-
-    def test_unknown_family_no_category_param(self):
-        state = {"query": None, "command": "search", "filters": {"family": "nonexistent"}}
-        params = build_api_params(state, self._grouped)
-        assert "category" not in params
-
 
 # ── Filter callback handler ───────────────────────────────────
 
@@ -221,7 +167,7 @@ def context(api):
             "query": "wine",
             "command": "search",
             "filters": {},
-            "message_id": 1,
+            "page": 1,
         }
     }
     return ctx
@@ -253,16 +199,8 @@ async def test_filter_toggles_price(update, context):
     assert context.user_data["search"]["filters"]["price"] == "15-25"
 
 
-async def test_filter_toggles_family(update, context):
-    update.callback_query.data = "f:fam:vins"
-    await filter_callback(update, context)
-
-    assert context.user_data["search"]["filters"]["family"] == "vins"
-
-
 async def test_filter_clear(update, context):
     context.user_data["search"]["filters"] = {
-        "family": "vins",
         "category": "rouge",
         "price": "15-25",
     }
@@ -330,3 +268,46 @@ async def test_filter_random_empty_catalog(update, context, api):
 
     text = update.callback_query.edit_message_text.call_args[0][0]
     assert "no results" in text.lower()
+
+
+# ── Pagination callbacks ─────────────────────────────────────
+
+
+async def test_page_next(update, context, api):
+    context.user_data["search"]["page"] = 1
+    api.list_products.return_value = {
+        "products": [{"name": "Wine", "price": "10.00", "availability": True, "sku": "X"}],
+        "total": 10,
+        "page": 2,
+        "per_page": 5,
+        "pages": 2,
+    }
+    update.callback_query.data = "f:page:next"
+    await filter_callback(update, context)
+
+    assert context.user_data["search"]["page"] == 2
+    assert api.list_products.call_args.kwargs["page"] == 2
+
+
+async def test_page_prev(update, context, api):
+    context.user_data["search"]["page"] = 3
+    update.callback_query.data = "f:page:prev"
+    await filter_callback(update, context)
+
+    assert context.user_data["search"]["page"] == 2
+
+
+async def test_page_prev_clamps_to_one(update, context, api):
+    context.user_data["search"]["page"] = 1
+    update.callback_query.data = "f:page:prev"
+    await filter_callback(update, context)
+
+    assert context.user_data["search"]["page"] == 1
+
+
+async def test_filter_resets_page(update, context, api):
+    context.user_data["search"]["page"] = 3
+    update.callback_query.data = "f:cat:rouge"
+    await filter_callback(update, context)
+
+    assert context.user_data["search"]["page"] == 1

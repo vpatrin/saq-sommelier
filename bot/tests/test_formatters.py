@@ -65,7 +65,25 @@ class TestFormatProductList:
         data = {"products": products, "total": 42, "page": 1, "per_page": 5, "pages": 9}
         result = format_product_list(data)
         assert "*42 results*" in result
-        assert "showing 5" in result
+        assert "page 1/9" in result
+
+    def test_page_indicator_hidden_for_single_page(self):
+        products = [
+            {"name": f"Wine {i}", "price": "10.00", "availability": True, "sku": f"S{i}"}
+            for i in range(3)
+        ]
+        data = {"products": products, "total": 3, "page": 1, "per_page": 5, "pages": 1}
+        result = format_product_list(data)
+        assert "page" not in result
+
+    def test_page_indicator_middle_page(self):
+        products = [
+            {"name": f"Wine {i}", "price": "10.00", "availability": True, "sku": f"S{i}"}
+            for i in range(5)
+        ]
+        data = {"products": products, "total": 20, "page": 3, "per_page": 5, "pages": 4}
+        result = format_product_list(data)
+        assert "page 3/4" in result
 
 
 class TestFormatWatchList:

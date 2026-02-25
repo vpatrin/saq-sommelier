@@ -29,9 +29,9 @@ Commands like `/new`, `/random`, and `/search` present inline keyboard buttons t
 
 ```
 User: /new
-Bot:  [Rouge] [Blanc] [Rosé] [Mousseux]
-      [< 15$] [15-25$] [25-50$] [50$+]
-User: taps [Rouge] then [15-25$]
+Bot:  [🍷 Rouge] [🥂 Blanc] [🌸 Rosé] [🍾 Bulles]
+      [15-25$] [25-50$] [50-100$] [100$+]
+User: taps [🍷 Rouge] then [15-25$]
 Bot:  3 new reds under $25 this week:
       1. Mouton Cadet 2022 — 16.95$
       2. ...

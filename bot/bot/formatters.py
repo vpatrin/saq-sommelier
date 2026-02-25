@@ -42,8 +42,10 @@ def format_product_list(data: dict[str, Any]) -> str:
     body = "\n\n".join(lines)
 
     header = f"*{total} result{'s' if total != 1 else ''}*"
-    if total > len(products):
-        header += f" (showing {len(products)})"
+    current_page = data["page"]
+    total_pages = data["pages"]
+    if total_pages > 1:
+        header += f" — page {current_page}/{total_pages}"
 
     return f"{header}\n\n{body}"
 
