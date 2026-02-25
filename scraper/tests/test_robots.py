@@ -3,6 +3,7 @@ from urllib.robotparser import RobotFileParser
 
 import pytest
 
+from src.config import settings
 from src.robots import is_allowed, load_robots
 
 # SAQ-like robots.txt rules for testing (no network needed)
@@ -73,7 +74,7 @@ class TestLoadRobots:
 
     def test_returns_robot_file_parser(self) -> None:
         with patch.object(RobotFileParser, "read"):
-            rp = load_robots("https://www.saq.com/robots.txt")
+            rp = load_robots(settings.ROBOTS_URL)
         assert isinstance(rp, RobotFileParser)
 
     def test_raises_on_network_error(self) -> None:
@@ -81,4 +82,4 @@ class TestLoadRobots:
             patch.object(RobotFileParser, "read", side_effect=OSError("network down")),
             pytest.raises(OSError),
         ):
-            load_robots("https://www.saq.com/robots.txt")
+            load_robots(settings.ROBOTS_URL)
