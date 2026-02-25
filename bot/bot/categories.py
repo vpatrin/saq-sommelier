@@ -1,11 +1,11 @@
 from typing import NamedTuple
 
 # ── Category grouping ──────────────────────────────────────────
-# Display concern only — groups 280+ raw SAQ categories into ~21 user-friendly groups,
-# then bundles those groups into 3 families (Vins / Spiritueux / Autres) for a two-level
-# filter keyboard. The backend API stays unchanged (filters by exact `category` strings
-# via IN clause). Raw categories are discovered dynamically via /products/facets and
-# matched by prefix.
+# Display concern only — groups 280+ raw SAQ categories into ~21 user-friendly groups.
+# Default keyboard shows 4 wine types (config.WINE_GROUPS); /spirits and /others use
+# CATEGORY_FAMILIES to display their subgroups. The backend API stays unchanged (filters
+# by exact `category` strings via IN clause). Raw categories are discovered dynamically
+# via /products/facets and matched by prefix.
 
 
 class CategoryGroup(NamedTuple):
