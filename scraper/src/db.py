@@ -69,7 +69,7 @@ async def clear_delisted(skus: set[str]) -> int:
         return result.rowcount
 
 
-async def emit_restock_event(sku: str, available: bool) -> None:
+async def emit_stock_event(sku: str, available: bool) -> None:
     """Record an availability transition in the restock_events table.
 
     Swallows errors — a missed event shouldn't crash the scraper.

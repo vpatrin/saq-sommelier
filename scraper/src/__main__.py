@@ -14,7 +14,7 @@ from .constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
 from .db import (
     clear_delisted,
     delete_old_restock_events,
-    emit_restock_event,
+    emit_stock_event,
     get_availability_map,
     get_delisted_skus,
     get_updated_dates,
@@ -122,6 +122,7 @@ async def main() -> int:
         inserted = 0
         updated = 0
         restocked = 0
+        destocked = 0
         not_found = 0
         errors = 0
         for i, entry in enumerate(products_to_scrape, 1):
@@ -145,12 +146,16 @@ async def main() -> int:
                 else:
                     inserted += 1
 
-                # Detect restock: was unavailable, now available
+                # Detect availability transitions
                 old_avail = availability_map.get(entry.sku)
                 if old_avail is False and product.availability:
-                    await emit_restock_event(entry.sku, available=True)
+                    await emit_stock_event(entry.sku, available=True)
                     restocked += 1
                     logger.info("Restock detected for SKU {}", entry.sku)
+                elif old_avail is True and not product.availability:
+                    await emit_stock_event(entry.sku, available=False)
+                    destocked += 1
+                    logger.info("Destock detected for SKU {}", entry.sku)
 
                 logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
 
@@ -209,6 +214,7 @@ async def main() -> int:
         "  Inserted: {}\n"
         "  Updated: {}\n"
         "  Restocked: {}\n"
+        "  Destocked: {}\n"
         "  Not found: {}\n"
         "  Failed: {}\n"
         "  Skipped (up-to-date): {}\n"
@@ -223,6 +229,7 @@ async def main() -> int:
         inserted,
         updated,
         restocked,
+        destocked,
         not_found,
         errors,
         skipped,

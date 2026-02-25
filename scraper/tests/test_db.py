@@ -189,7 +189,7 @@ class TestGetAvailabilityMap:
         assert result == {}
 
 
-class TestEmitRestockEvent:
+class TestEmitStockEvent:
     @pytest.mark.asyncio
     async def test_executes_and_commits(self) -> None:
         mock_session = AsyncMock()
@@ -201,9 +201,9 @@ class TestEmitRestockEvent:
         mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("src.db._SessionLocal", mock_factory):
-            from src.db import emit_restock_event
+            from src.db import emit_stock_event
 
-            await emit_restock_event("10327701", available=True)
+            await emit_stock_event("10327701", available=True)
 
         mock_session.execute.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -220,10 +220,10 @@ class TestEmitRestockEvent:
         mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("src.db._SessionLocal", mock_factory):
-            from src.db import emit_restock_event
+            from src.db import emit_stock_event
 
             # Should NOT raise — swallows the error
-            await emit_restock_event("10327701", available=True)
+            await emit_stock_event("10327701", available=True)
 
         mock_session.rollback.assert_called_once()
         mock_session.commit.assert_not_called()
