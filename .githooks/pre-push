@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-push hook — run tests, check lock files.
+# Pre-push hook — test only changed services, check lock files.
 # Install with: make install
 
 set -e
@@ -29,8 +29,40 @@ if [ -n "$(git log "$RANGE" -1 --format=%H -- 'core/db/models*.py' 'core/db/base
   exit 1
 fi
 
-echo ""
-make coverage
+# Detect which services changed on this branch
+TESTABLE=(backend scraper bot)
+changed_dirs=$(git diff --name-only main..HEAD | cut -d/ -f1 | sort -u)
+
+to_test=()
+core_changed=false
+
+for dir in $changed_dirs; do
+  for svc in "${TESTABLE[@]}"; do
+    if [ "$dir" = "$svc" ]; then
+      to_test+=("$svc")
+    fi
+  done
+  [ "$dir" = "core" ] && core_changed=true
+done
+
+# Core cascade: core changes affect all testable services
+if $core_changed; then
+  to_test=(backend scraper bot)
+fi
+
+# Deduplicate
+to_test=($(printf '%s\n' "${to_test[@]}" | sort -u))
+
+if [ ${#to_test[@]} -eq 0 ]; then
+  echo ""
+  echo "No testable service changes — skipping coverage."
+else
+  echo ""
+  echo "🧪 Testing changed services: ${to_test[*]}"
+  for svc in "${to_test[@]}"; do
+    make "coverage-$svc"
+  done
+fi
 
 echo ""
 echo "✅ All checks passed — pushing."

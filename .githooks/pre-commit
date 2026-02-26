@@ -1,13 +1,43 @@
 #!/usr/bin/env bash
-# Pre-commit hook — fast lint only
+# Pre-commit hook — lint only changed services
 # Install with: make install
 
 set -e
 
-echo "🔍 Running pre-commit checks..."
+SERVICES=(backend scraper core bot)
+changed_dirs=$(git diff --cached --name-only | cut -d/ -f1 | sort -u)
 
-echo ""
-make lint
+# Detect which services have staged changes
+to_lint=()
+core_changed=false
+
+for dir in $changed_dirs; do
+  for svc in "${SERVICES[@]}"; do
+    if [ "$dir" = "$svc" ]; then
+      to_lint+=("$svc")
+      [ "$svc" = "core" ] && core_changed=true
+    fi
+  done
+done
+
+# Core cascade: core changes affect all services
+if $core_changed; then
+  to_lint=(backend scraper core bot)
+fi
+
+# Deduplicate
+to_lint=($(printf '%s\n' "${to_lint[@]}" | sort -u))
+
+if [ ${#to_lint[@]} -eq 0 ]; then
+  echo "No service changes staged — skipping lint."
+  exit 0
+fi
+
+echo "🔍 Linting changed services: ${to_lint[*]}"
+
+for svc in "${to_lint[@]}"; do
+  make "lint-$svc"
+done
 
 echo ""
 echo "✅ Lint passed — committing."
