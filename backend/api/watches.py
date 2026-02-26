@@ -37,7 +37,7 @@ async def get_watches(
 async def get_pending_notifications(
     db: AsyncSession = Depends(get_db),
 ) -> list[PendingNotification]:
-    """List all pending restock notifications (for bot polling)."""
+    """List all pending stock event notifications (for bot polling)."""
     return await list_pending_notifications(db)
 
 
