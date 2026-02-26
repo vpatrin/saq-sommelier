@@ -4,7 +4,7 @@
 -include .env
 export
 
-.PHONY: install dev-backend dev-bot dev-scraper migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage build-backend build-scraper build-bot build run run-db run-scraper down clean
+.PHONY: install dev-backend dev-bot dev-scraper migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit build-backend build-scraper build-bot build run run-db run-scraper down clean
 
 install:
 	git config core.hooksPath .githooks
@@ -101,6 +101,25 @@ coverage-bot:
 	cd bot && poetry run pytest --cov --cov-report=xml -v && poetry run coverage report
 
 coverage: coverage-backend coverage-scraper coverage-bot
+
+# Audit
+audit-core:
+	@echo "\n▶ Auditing core/"
+	cd core && poetry run pip-audit
+
+audit-backend:
+	@echo "\n▶ Auditing backend/"
+	cd backend && poetry run pip-audit
+
+audit-scraper:
+	@echo "\n▶ Auditing scraper/"
+	cd scraper && poetry run pip-audit
+
+audit-bot:
+	@echo "\n▶ Auditing bot/"
+	cd bot && poetry run pip-audit
+
+audit: audit-core audit-backend audit-scraper audit-bot
 	@echo "\n▶ Generating badges"
 	python scripts/generate_badges.py
 
