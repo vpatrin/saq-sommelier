@@ -27,6 +27,6 @@ runs:
     - uses: actions/cache@v5
       with:
         path: ${{ inputs.service }}/.venv
-        key: venv-${{ inputs.service }}-${{ hashFiles(format('{0}/poetry.lock', inputs.service)) }}
+        key: venv-${{ inputs.service }}-${{ inputs.install-args || 'all' }}-${{ hashFiles(format('{0}/poetry.lock', inputs.service)) }}
     - run: cd ${{ inputs.service }} && poetry install ${{ inputs.install-args }} --no-interaction
       shell: bash
