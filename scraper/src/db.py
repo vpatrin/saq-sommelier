@@ -15,6 +15,13 @@ from .stores import StoreData
 _SessionLocal = create_session_factory(settings.database_url, settings.database_echo)
 
 
+async def stores_populated() -> bool:
+    """Return True if the stores table has at least one row."""
+    async with _SessionLocal() as session:
+        result = await session.execute(select(Store.saq_store_id).limit(1))
+        return result.first() is not None
+
+
 async def get_updated_dates() -> dict[str, date]:
     """Fetch the last-updated date for every product in the DB."""
     async with _SessionLocal() as session:

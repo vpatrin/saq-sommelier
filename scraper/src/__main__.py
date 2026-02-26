@@ -19,11 +19,14 @@ from .db import (
     get_delisted_skus,
     get_updated_dates,
     mark_delisted,
+    stores_populated,
     upsert_product,
+    upsert_stores,
 )
-from .parser import parse_product
+from .products import parse_product
 from .robots import is_allowed, load_robots
 from .sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
+from .stores import fetch_stores
 
 setup_logging(settings.SERVICE_NAME, level=settings.LOG_LEVEL)
 
@@ -62,6 +65,17 @@ async def main() -> int:
     async with httpx.AsyncClient(
         headers={"User-Agent": settings.USER_AGENT}, timeout=settings.REQUEST_TIMEOUT
     ) as client:
+        # Bootstrap store directory on first run — stores are physical locations,
+        # rarely change. Re-populate by clearing the stores table and re-running.
+        if not await stores_populated():
+            logger.info("Stores table empty — bootstrapping store directory...")
+            try:
+                stores = await fetch_stores(client)
+                await upsert_stores(stores)
+                logger.info("Store bootstrap complete: {} stores loaded", len(stores))
+            except Exception:
+                logger.warning("Store bootstrap failed — continuing without store data")
+
         logger.info("Fetching sitemap index...")
         sub_sitemap_urls = await fetch_sitemap_index(client)
         logger.info("Found {} sub-sitemaps", len(sub_sitemap_urls))
@@ -241,4 +255,6 @@ async def main() -> int:
 
 
 if __name__ == "__main__":
+    # Entry point: python -m src
+    # For the store directory, use: python -m src.stores
     sys.exit(asyncio.run(main()))
