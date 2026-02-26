@@ -120,8 +120,6 @@ audit-bot:
 	cd bot && poetry run pip-audit
 
 audit: audit-core audit-backend audit-scraper audit-bot
-	@echo "\n▶ Generating badges"
-	python scripts/generate_badges.py
 
 # Build
 build-backend:
