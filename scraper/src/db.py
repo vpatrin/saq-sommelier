@@ -1,14 +1,16 @@
+from dataclasses import asdict
 from datetime import UTC, date, datetime, timedelta
 
 from core.db.base import create_session_factory
-from core.db.models import Product, StockEvent
+from core.db.models import Product, StockEvent, Store
 from loguru import logger
 from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
 from .config import settings
-from .parser import ProductData
+from .products import ProductData
+from .stores import StoreData
 
 _SessionLocal = create_session_factory(settings.database_url, settings.database_echo)
 
@@ -119,7 +121,7 @@ async def upsert_product(product_data: ProductData) -> None:
         SET name = EXCLUDED.name, price = EXCLUDED.price, updated_at = NOW()
     """
     async with _SessionLocal() as session:
-        product_dict = product_data.to_dict()
+        product_dict = asdict(product_data)
         product_dict["created_at"] = datetime.now(UTC)
         product_dict["updated_at"] = datetime.now(UTC)
 
@@ -130,7 +132,7 @@ async def upsert_product(product_data: ProductData) -> None:
         update_dict["updated_at"] = datetime.now(UTC)
 
         stmt = stmt.on_conflict_do_update(
-            index_elements=["sku"],  # Conflict on primary key (sku)
+            index_elements=list(Product.__table__.primary_key),
             set_=update_dict,  # Update these fields
         )
 
@@ -140,4 +142,30 @@ async def upsert_product(product_data: ProductData) -> None:
         except SQLAlchemyError:
             await session.rollback()
             logger.error("DB error upserting SKU {}", product_data.sku or "unknown")
+            raise
+
+
+async def upsert_stores(stores: list[StoreData]) -> None:
+    """Bulk upsert stores into the database."""
+    if not stores:
+        return
+
+    now = datetime.now(UTC)
+    values_list = [{**asdict(store), "created_at": now} for store in stores]
+
+    # Preserve created_at on re-runs — same semantics as Product.created_at
+    update_cols = [c for c in values_list[0] if c not in ("saq_store_id", "created_at")]
+
+    async with _SessionLocal() as session:
+        stmt = pg_insert(Store).values(values_list)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=list(Store.__table__.primary_key),
+            set_={col: stmt.excluded[col] for col in update_cols},
+        )
+        try:
+            await session.execute(stmt)
+            await session.commit()
+        except SQLAlchemyError:
+            await session.rollback()
+            logger.error("DB error upserting {} stores", len(stores))
             raise
