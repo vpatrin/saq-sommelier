@@ -5,11 +5,14 @@
 The scraper is a one-shot batch job, not a long-running service. Each run:
 
 1. Fetches the SAQ sitemap index and all sub-sitemaps
-2. Compares sitemap `lastmod` dates against DB `updated_at` (incremental — skips unchanged products)
-3. Scrapes only new/updated product pages, upserts to PostgreSQL
-4. Detects delisted products (in DB but not in sitemap) and marks them with `delisted_at`
-5. Relists products that reappear in the sitemap
-6. Exits with a status code: `0` (clean), `1` (partial failure), `2` (total failure)
+2. Validates URLs against SAQ's `robots.txt` via `urllib.robotparser` — disallowed URLs are skipped, and the run aborts if `robots.txt` is unreachable (#196)
+3. Filters non-product URLs (only numeric SKU paths are scraped)
+4. Compares sitemap `lastmod` dates against DB `updated_at` (incremental — skips unchanged products)
+5. Scrapes only new/updated product pages, upserts to PostgreSQL
+6. Emits stock events when availability changes (restock or destock) for the notification pipeline
+7. Detects delisted products (in DB but not in sitemap) and marks them with `delisted_at`
+8. Relists products that reappear in the sitemap
+9. Exits with a named status code: `EXIT_SUCCESS` (0), `EXIT_PARTIAL` (1), `EXIT_FAILURE` (2)
 
 A typical incremental run scrapes ~50-200 products instead of the full ~38k catalog.
 
@@ -74,8 +77,19 @@ Delist detection is best-effort. If it fails, it logs an error and the next run 
 
 ## Exit codes
 
-| Code | Meaning | Action needed |
-|------|---------|---------------|
-| `0` | Clean run | None |
-| `1` | Partial failure (some products saved, some failed) | Check logs, usually transient |
-| `2` | Total failure (nothing saved) | Investigate — likely SAQ down or DB unreachable |
+Defined as named constants in `scraper/src/constants.py`.
+
+| Code | Constant | Meaning | Action needed |
+| ---- | -------- | ------- | ------------- |
+| `0` | `EXIT_SUCCESS` | Clean run | None |
+| `1` | `EXIT_PARTIAL` | Partial failure (some products saved, some failed) | Check logs, usually transient |
+| `2` | `EXIT_FAILURE` | Total failure (nothing saved) | Investigate — likely SAQ down or DB unreachable |
+
+## Robots.txt compliance
+
+The scraper programmatically enforces SAQ's `robots.txt` rules (#196):
+
+- On startup, fetches and parses `https://www.saq.com/robots.txt` via `urllib.robotparser`
+- Each URL is checked with `can_fetch()` before scraping — disallowed paths (e.g. `/catalog/product/view/`) are skipped with a warning
+- If `robots.txt` is unreachable, the run **aborts** rather than scraping blind — fail-safe over fail-open
+- Non-product URLs (paths without a numeric SKU) are also filtered out (#188)

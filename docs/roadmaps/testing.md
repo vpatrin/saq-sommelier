@@ -4,10 +4,10 @@ Part of the [project roadmap](../ROADMAP.md). Multi-layer test strategy: unit �
 
 ## Phase 1 — Unit Tests (~2 days)
 
-- [ ] Test infrastructure — conftest files, pytest markers (unit/integration/ml/slow), pyproject.toml config
-- [x] Scraper unit tests — parser, sitemap fetcher + saved HTML fixtures (#20)
-- [ ] Backend unit tests — scoring service, guardrails, LLM service (mocked Claude)
-- [ ] Bot unit tests — handlers (mocked Telegram), formatters
+- [x] Test infrastructure — conftest files in all 3 services, pyproject.toml config. Remaining: pytest markers (unit/integration/ml/slow) (#204)
+- [x] Scraper unit tests — parser, sitemap fetcher, DB writer, config, incremental logic (#20)
+- [x] Backend unit tests — products (list/detail/search/facets/sort/random), watches CRUD, health
+- [x] Bot unit tests — handlers, formatters, middleware, keyboards, config, API client, notifications
 
 ## Phase 2 — Integration Tests (~1.5 days)
 
@@ -43,4 +43,4 @@ Part of the [project roadmap](../ROADMAP.md). Multi-layer test strategy: unit �
 ## Phase 7 — Test Culture (ongoing)
 
 - [ ] docs/TESTING.md — coverage targets, classification table, bug-to-test rule
-- [ ] Product factory (`tests/fixtures/factory.py`) — `make_red()`, `make_white()`, `make_wines(n)`
+- [ ] Product factory (`tests/fixtures/factory.py`) — `make_red()`, `make_white()`, `make_wines(n)` → see #204

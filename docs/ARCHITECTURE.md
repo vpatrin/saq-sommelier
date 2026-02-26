@@ -82,7 +82,7 @@ saq-sommelier/
 │   ├── db/           SQLAlchemy base, models, session factory
 │   ├── config/       Pydantic Settings (DB connection)
 │   └── logging.py    Loguru setup
-├── scripts/          Exploration tools (not deployed)
+├── deploy/           Systemd unit files for production scheduling
 ├── docs/             Architecture and findings
 └── .github/          CI workflows
 ```
@@ -133,7 +133,7 @@ The design principle: add infrastructure when a bottleneck is measured, not when
 - **Host**: Hetzner CX22 (4GB RAM, 40GB SSD, Debian 13)
 - **Reverse proxy**: Caddy (SSL + routing via victorpatrin.dev subdomains)
 - **Containers**: Docker Compose (`make run` for full dev stack, `make run-db` for bare-metal dev)
-- **Database**: PostgreSQL 16 (shared instance, `wine_sommelier` database)
+- **Database**: PostgreSQL 16 (shared instance, `saq_sommelier` database)
 - **CI**: GitHub Actions (lint + test per service, summary gates)
 
 ## Legal constraints
@@ -147,4 +147,4 @@ SAQ scraping follows a sitemap-first approach for legal defensibility:
 - Never hotlink SAQ images
 - Respect all Disallow rules in robots.txt
 
-Full scraping findings documented in [scripts/FINDINGS.md](../scripts/FINDINGS.md).
+Scraper operations documented in [SCRAPER.md](SCRAPER.md).
