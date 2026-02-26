@@ -79,7 +79,7 @@ class BackendClient:
     # ── Notifications ────────────────────────────────────────────
 
     async def get_pending_notifications(self) -> list[dict[str, Any]]:
-        """GET /api/v1/watches/notifications — pending restock alerts."""
+        """GET /api/v1/watches/notifications — pending stock event alerts."""
         return await self._get("/watches/notifications")
 
     async def ack_notifications(self, event_ids: list[int]) -> None:

@@ -53,8 +53,6 @@ async def find_pending_notifications(
         .outerjoin(Product, StockEvent.sku == Product.sku)
         # Skip already-notified events
         .where(StockEvent.processed_at.is_(None))
-        # Only "back in stock" events
-        .where(StockEvent.available.is_(True))
         # Oldest first (FIFO)
         .order_by(StockEvent.detected_at.asc())
         # Match MAX_ACK_BATCH_SIZE — bot can ack everything it receives in one call

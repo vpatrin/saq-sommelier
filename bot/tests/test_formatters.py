@@ -1,4 +1,10 @@
-from bot.formatters import format_product_line, format_product_list, format_watch_list
+from bot.formatters import (
+    format_destock_notification,
+    format_product_line,
+    format_product_list,
+    format_restock_notification,
+    format_watch_list,
+)
 
 
 class TestFormatProductLine:
@@ -148,3 +154,30 @@ class TestFormatWatchList:
         assert "GONE123" in result
         assert "no longer available" in result
         assert "since Jan 1" in result
+
+
+class TestFormatRestockNotification:
+    def test_with_product_name(self):
+        notif = {"sku": "10327701", "product_name": "Mouton Cadet"}
+        result = format_restock_notification(notif)
+        assert "Back in stock" in result
+        assert "[Mouton Cadet](https://www.saq.com/fr/10327701)" in result
+
+    def test_without_product_name(self):
+        notif = {"sku": "10327701", "product_name": None}
+        result = format_restock_notification(notif)
+        assert "10327701" in result
+
+
+class TestFormatDestockNotification:
+    def test_with_product_name(self):
+        notif = {"sku": "10327701", "product_name": "Mouton Cadet"}
+        result = format_destock_notification(notif)
+        assert "Out of stock" in result
+        assert "[Mouton Cadet](https://www.saq.com/fr/10327701)" in result
+
+    def test_without_product_name(self):
+        notif = {"sku": "10327701", "product_name": None}
+        result = format_destock_notification(notif)
+        assert "Out of stock" in result
+        assert "10327701" in result

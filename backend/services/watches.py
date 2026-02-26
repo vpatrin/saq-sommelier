@@ -48,13 +48,14 @@ async def delete_watch(db: AsyncSession, user_id: str, sku: str) -> None:
 
 
 async def list_pending_notifications(db: AsyncSession) -> list[PendingNotification]:
-    """Return all pending restock notifications across all users."""
+    """Return all pending stock event notifications across all users."""
     rows = await repo.find_pending_notifications(db)
     return [
         PendingNotification(
             event_id=event.id,
             sku=event.sku,
             user_id=watch.user_id,
+            available=event.available,
             product_name=product.name if product else None,
             detected_at=event.detected_at,
         )
@@ -63,7 +64,7 @@ async def list_pending_notifications(db: AsyncSession) -> list[PendingNotificati
 
 
 async def ack_notifications(db: AsyncSession, event_ids: list[int]) -> int:
-    """Mark restock events as processed. Returns count acked."""
+    """Mark stock events as processed. Returns count acked."""
     count = await repo.ack_events(db, event_ids)
     if count < len(event_ids):
         logger.warning("Acked %d/%d events (rest already processed)", count, len(event_ids))

@@ -262,6 +262,7 @@ def test_pending_notifications_success():
     assert data[0]["event_id"] == 1
     assert data[0]["sku"] == "SKU001"
     assert data[0]["user_id"] == "tg:123"
+    assert data[0]["available"] is True
     assert data[0]["product_name"] == "Château Test"
     assert "detected_at" in data[0]
 
@@ -294,6 +295,26 @@ def test_pending_notifications_product_missing():
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data[0]["product_name"] is None
+
+
+def test_pending_notifications_destock_event():
+    """200 — destock event (available=False) is included in notifications."""
+    event = _fake_event(available=False)
+    watch = _fake_watch()
+    product = _fake_product()
+
+    with patch("backend.services.watches.repo") as mock_repo:
+        mock_repo.find_pending_notifications = AsyncMock(return_value=[(event, watch, product)])
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.get("/api/v1/watches/notifications")
+
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["available"] is False
+    assert data[0]["sku"] == "SKU001"
 
 
 # ── POST /watches/notifications/ack ──────────────────────────

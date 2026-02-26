@@ -3,7 +3,7 @@ from telegram.ext import ContextTypes
 
 from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
 from bot.config import USER_ID_PREFIX
-from bot.formatters import format_restock_notification
+from bot.formatters import format_destock_notification, format_restock_notification
 
 
 def _parse_user_id(user_id: str) -> int | None:
@@ -32,7 +32,8 @@ async def _process_batch(api: BackendClient, context: ContextTypes.DEFAULT_TYPE)
             logger.warning("Skipping notification with unknown user_id: {}", notif["user_id"])
             acked_ids.append(notif["event_id"])  # ack to prevent infinite re-fetch
             continue
-        text = format_restock_notification(notif)
+        fmt = format_restock_notification if notif["available"] else format_destock_notification
+        text = fmt(notif)
 
         try:
             await context.bot.send_message(

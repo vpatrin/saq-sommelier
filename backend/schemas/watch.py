@@ -36,6 +36,7 @@ class PendingNotification(BaseModel):
     event_id: int
     sku: str
     user_id: str
+    available: bool
     product_name: str | None
     detected_at: datetime
 

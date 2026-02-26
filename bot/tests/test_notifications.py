@@ -11,6 +11,7 @@ def _notif(**overrides):
         "event_id": 1,
         "sku": "10327701",
         "user_id": "tg:42",
+        "available": True,
         "product_name": "Mouton Cadet",
         "detected_at": "2026-01-01T00:00:00",
     }
@@ -81,6 +82,29 @@ async def test_poll_no_pending_notifications(context, api):
 
     context.bot.send_message.assert_not_called()
     api.ack_notifications.assert_not_called()
+
+
+# ── Restock vs destock ───────────────────────────────────────
+
+
+async def test_poll_restock_sends_back_in_stock(context, api):
+    api.get_pending_notifications.side_effect = [[_notif(available=True)], []]
+
+    await poll_notifications(context)
+
+    text = context.bot.send_message.call_args[1]["text"]
+    assert "Back in stock" in text
+    assert "Mouton Cadet" in text
+
+
+async def test_poll_destock_sends_out_of_stock(context, api):
+    api.get_pending_notifications.side_effect = [[_notif(available=False)], []]
+
+    await poll_notifications(context)
+
+    text = context.bot.send_message.call_args[1]["text"]
+    assert "Out of stock" in text
+    assert "Mouton Cadet" in text
 
 
 # ── Product name missing ─────────────────────────────────────
