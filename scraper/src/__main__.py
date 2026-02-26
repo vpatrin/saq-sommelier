@@ -256,5 +256,4 @@ async def main() -> int:
 
 if __name__ == "__main__":
     # Entry point: python -m src
-    # For the store directory, use: python -m src.stores
     sys.exit(asyncio.run(main()))
