@@ -49,6 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: backend
@@ -61,6 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: scraper
@@ -73,6 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: core
@@ -85,6 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: bot
@@ -119,6 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: backend
@@ -130,6 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: scraper
@@ -141,6 +147,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: bot
@@ -154,6 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: core
@@ -165,6 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: backend
@@ -176,6 +185,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: scraper
@@ -187,6 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
         with:
           service: bot
