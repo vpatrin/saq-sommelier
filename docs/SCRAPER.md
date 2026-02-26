@@ -16,6 +16,12 @@ The scraper is a one-shot batch job, not a long-running service. Each run:
 
 A typical incremental run scrapes ~50-200 products instead of the full ~38k catalog.
 
+## Store directory bootstrap
+
+The scraper automatically populates the `stores` table on first run if it is empty. No separate command is needed.
+
+SAQ stores are physical locations — they rarely change. If a new store opens or closes, clear the `stores` table and run the scraper; the bootstrap will re-fetch all 401 stores before starting the product scrape.
+
 ## Running manually
 
 See [DEVELOPMENT.md](DEVELOPMENT.md#working-on-the-scraper) for local dev usage (`make dev-scraper`, `make reset-db`).
