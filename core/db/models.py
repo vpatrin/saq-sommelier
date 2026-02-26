@@ -17,6 +17,44 @@ from sqlalchemy import (
 from core.db.base import Base
 
 
+class Store(Base):
+    """SAQ physical store location.
+
+    Populated via scraper --stores flag (one-shot per deployment).
+    Primary key is the SAQ store identifier (e.g. "23009"), stable across API versions.
+    """
+
+    __tablename__ = "stores"
+
+    saq_store_id = Column(
+        String, primary_key=True, comment="SAQ store identifier (API 'identifier' field)"
+    )
+    name = Column(String, nullable=False, comment="Store display name")
+    store_type = Column(
+        String, nullable=True, comment="SAQ, SAQ Sélection, SAQ Express, SAQ Dépôt, etc."
+    )
+    address = Column(String, nullable=True, comment="Street address (address1)")
+    city = Column(String, nullable=False, index=True, comment="City")
+    postcode = Column(String, nullable=True, comment="Postal code")
+    telephone = Column(String, nullable=True, comment="Phone number")
+    latitude = Column(Float, nullable=True, comment="GPS latitude")
+    longitude = Column(Float, nullable=True, comment="GPS longitude")
+    temporarily_closed = Column(
+        Boolean, nullable=False, default=False, comment="Temporarily closed flag"
+    )
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="When first scraped",
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<Store(saq_store_id={self.saq_store_id!r}, name={self.name!r}, city={self.city!r})>"
+        )
+
+
 class Product(Base):
     """SAQ product model - maps to ProductData from parser.
 
