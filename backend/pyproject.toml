@@ -2,7 +2,7 @@
 name = "saq-sommelier"
 version = "1.0.0"
 description = "AI-powered wine recommendation platform — SAQ catalog scraper, Claude RAG, Telegram bot & web app"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<4.0"
 dynamic = ["dependencies"]
 
 [tool.poetry]
@@ -24,6 +24,7 @@ pytest = ">=8.0"
 pytest-asyncio = ">=0.25"
 pytest-cov = ">=6.0"
 ruff = "^0.15.2"
+pip-audit = ">=2.7"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

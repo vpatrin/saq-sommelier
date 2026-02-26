@@ -1,0 +1,31 @@
+name: Setup Python Service
+description: Install Python + Poetry, cache venv, install dependencies
+
+inputs:
+  service:
+    description: Service directory name (backend, scraper, core, bot)
+    required: true
+  python-version:
+    description: Python version to install
+    default: '3.12'
+  poetry-version:
+    description: Poetry version to install
+    default: '2.1.3'
+  install-args:
+    description: Extra args for poetry install (e.g. --only dev)
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+    - run: pip install poetry==${{ inputs.poetry-version }}
+      shell: bash
+    - uses: actions/cache@v5
+      with:
+        path: ${{ inputs.service }}/.venv
+        key: venv-${{ inputs.service }}-${{ inputs.install-args || 'all' }}-${{ hashFiles(format('{0}/poetry.lock', inputs.service)) }}
+    - run: cd ${{ inputs.service }} && poetry install ${{ inputs.install-args }} --no-interaction
+      shell: bash

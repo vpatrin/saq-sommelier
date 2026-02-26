@@ -2,7 +2,7 @@
 name = "saq-core"
 version = "1.0.0"
 description = "Core infrastructure for SAQ Sommelier (models, config, logging)"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<4.0"
 dynamic = ["dependencies"]
 
 [tool.poetry]
@@ -17,6 +17,7 @@ pydantic-settings = "^2.13"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.15.2"
+pip-audit = ">=2.7"
 
 [tool.ruff]
 target-version = "py312"
