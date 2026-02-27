@@ -168,8 +168,42 @@ class Watch(Base):
         return f"<Watch(user_id={self.user_id!r}, sku={self.sku!r})>"
 
 
+class UserStorePreference(Base):
+    """Per-user preferred SAQ store — used to scope in-store restock alerts."""
+
+    __tablename__ = "user_store_preferences"
+
+    # Opaque string — consistent with Watch.user_id convention.
+    user_id = Column(
+        String,
+        primary_key=True,
+        comment="Channel-prefixed user ID (e.g. tg:123456)",
+    )
+    saq_store_id = Column(
+        String,
+        ForeignKey("stores.saq_store_id"),
+        primary_key=True,
+        comment="Preferred store identifier",
+    )
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="When preference was saved",
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<UserStorePreference(user_id={self.user_id!r}, saq_store_id={self.saq_store_id!r})>"
+        )
+
+
 class StockEvent(Base):
-    """Records product availability transitions detected during scrape."""
+    """Records product availability transitions detected during scrape.
+
+    saq_store_id is NULL for online events (weekly scraper) and non-NULL for
+    in-store events (daily availability checker).
+    """
 
     __tablename__ = "stock_events"
 
@@ -186,6 +220,14 @@ class StockEvent(Base):
         nullable=False,
         comment="New availability state (True=restock, False=destock)",
     )
+    # NULL = online event (weekly scraper); non-NULL = in-store event (daily availability checker)
+    saq_store_id = Column(
+        String,
+        ForeignKey("stores.saq_store_id"),
+        nullable=True,
+        index=True,
+        comment="Store where change was detected (NULL = online)",
+    )
     detected_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
@@ -200,4 +242,7 @@ class StockEvent(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<StockEvent(sku={self.sku!r}, available={self.available!r})>"
+        return (
+            f"<StockEvent(sku={self.sku!r}, available={self.available!r}, "
+            f"saq_store_id={self.saq_store_id!r})>"
+        )
