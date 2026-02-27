@@ -8,10 +8,14 @@ from bot.config import (
     CALLBACK_PAGE_NEXT,
     CALLBACK_PAGE_PREV,
     CALLBACK_PRICE,
+    CALLBACK_STORE_DONE,
+    CALLBACK_STORE_REMOVE,
+    CALLBACK_STORE_TOGGLE,
     MENU_ALERTS,
     MENU_HELP,
     MENU_NEW,
     MENU_RANDOM,
+    MENU_STORES,
     PRICE_BUCKETS,
     WINE_GROUPS,
 )
@@ -82,7 +86,63 @@ def build_filter_keyboard(
 MAIN_MENU = ReplyKeyboardMarkup(
     [
         [KeyboardButton(MENU_NEW), KeyboardButton(MENU_RANDOM)],
-        [KeyboardButton(MENU_ALERTS), KeyboardButton(MENU_HELP)],
+        [KeyboardButton(MENU_ALERTS), KeyboardButton(MENU_STORES)],
+        [KeyboardButton(MENU_HELP)],
     ],
     resize_keyboard=True,
 )
+
+
+LOCATION_KEYBOARD = ReplyKeyboardMarkup(
+    [
+        [KeyboardButton("\U0001f4cd Send my location", request_location=True)],
+        [KeyboardButton("\u2190 Back")],
+    ],
+    resize_keyboard=True,
+    one_time_keyboard=True,
+)
+
+
+def build_store_keyboard(
+    stores: list[dict[str, Any]],
+    saved_ids: set[str],
+) -> InlineKeyboardMarkup:
+    """Build inline keyboard for toggling store preferences.
+
+    Each row: one store button showing name + distance, with a checkmark if saved.
+    Last row: "Done" button.
+    """
+    rows: list[list[InlineKeyboardButton]] = []
+    for store in stores:
+        store_id = store["saq_store_id"]
+        name = store.get("name") or store_id
+        distance = store.get("distance_km")
+        label = f"{name} ({distance:.1f} km)" if distance is not None else name
+        prefix = "\u2705 " if store_id in saved_ids else "\u25fb "
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    f"{prefix}{label}",
+                    callback_data=f"{CALLBACK_STORE_TOGGLE}{store_id}",
+                )
+            ]
+        )
+    rows.append([InlineKeyboardButton("\u2714 Done", callback_data=CALLBACK_STORE_DONE)])
+    return InlineKeyboardMarkup(rows)
+
+
+def build_saved_stores_keyboard(stores: list[dict[str, Any]]) -> InlineKeyboardMarkup | None:
+    """Build inline keyboard with remove buttons for saved stores. None if no stores."""
+    if not stores:
+        return None
+    rows: list[list[InlineKeyboardButton]] = []
+    for pref in stores:
+        store = pref.get("store", pref)
+        store_id = store.get("saq_store_id") or pref.get("saq_store_id")
+        name = store.get("name") or store_id
+        city = store.get("city", "")
+        label = f"\u2716 {name} — {city}" if city else f"\u2716 {name}"
+        rows.append(
+            [InlineKeyboardButton(label, callback_data=f"{CALLBACK_STORE_REMOVE}{store_id}")]
+        )
+    return InlineKeyboardMarkup(rows)

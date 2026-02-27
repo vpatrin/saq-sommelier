@@ -76,6 +76,24 @@ class BackendClient:
         """DELETE /api/v1/watches/{sku}?user_id=..."""
         await self._delete(f"/watches/{sku}", params={"user_id": user_id})
 
+    # ── Stores ───────────────────────────────────────────────────
+
+    async def get_nearby_stores(self, lat: float, lng: float) -> list[dict[str, Any]]:
+        """GET /api/v1/stores/nearby — stores sorted by distance from coordinates."""
+        return await self._get("/stores/nearby", params={"lat": lat, "lng": lng})
+
+    async def list_user_stores(self, user_id: str) -> list[dict[str, Any]]:
+        """GET /api/v1/users/{user_id}/stores — user's preferred stores."""
+        return await self._get(f"/users/{user_id}/stores")
+
+    async def add_user_store(self, user_id: str, saq_store_id: str) -> dict[str, Any]:
+        """POST /api/v1/users/{user_id}/stores — add a store to preferences."""
+        return await self._post(f"/users/{user_id}/stores", json={"saq_store_id": saq_store_id})
+
+    async def remove_user_store(self, user_id: str, saq_store_id: str) -> None:
+        """DELETE /api/v1/users/{user_id}/stores/{saq_store_id}."""
+        await self._delete(f"/users/{user_id}/stores/{saq_store_id}")
+
     # ── Notifications ────────────────────────────────────────────
 
     async def get_pending_notifications(self) -> list[dict[str, Any]]:

@@ -38,6 +38,6 @@ async def test_help_sends_help_text_with_keyboard(update, context):
 
 
 async def test_help_text_lists_all_commands(update, context):
-    commands = ["/new", "/random", "/watch", "/unwatch", "/alerts", "/help"]
+    commands = ["/new", "/random", "/watch", "/unwatch", "/alerts", "/mystores", "/help"]
     for cmd in commands:
         assert cmd in HELP_TEXT

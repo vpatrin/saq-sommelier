@@ -14,8 +14,11 @@ from bot.api_client import BackendClient
 from bot.categories import group_facets
 from bot.config import (
     CALLBACK_PREFIX,
+    CALLBACK_STORE_DONE,
+    CALLBACK_STORE_PREFIX,
     CMD_ALERTS,
     CMD_HELP,
+    CMD_MYSTORES,
     CMD_NEW,
     CMD_RANDOM,
     CMD_START,
@@ -25,9 +28,18 @@ from bot.config import (
     MENU_HELP,
     MENU_NEW,
     MENU_RANDOM,
+    MENU_STORES,
     settings,
 )
 from bot.handlers.filters import filter_callback
+from bot.handlers.mystores import (
+    back_handler,
+    location_handler,
+    mystores_command,
+    store_done_callback,
+    store_remove_callback,
+    store_toggle_callback,
+)
 from bot.handlers.new import new_command
 from bot.handlers.notifications import poll_notifications
 from bot.handlers.random import random_command
@@ -80,12 +92,24 @@ def create_app() -> Application:
     app.add_handler(CommandHandler(CMD_WATCH, watch_command))
     app.add_handler(CommandHandler(CMD_UNWATCH, unwatch_command))
     app.add_handler(CommandHandler(CMD_ALERTS, alerts_command))
+    app.add_handler(CommandHandler(CMD_MYSTORES, mystores_command))
+    # Location messages — triggers nearby store lookup
+    app.add_handler(MessageHandler(filters.LOCATION, location_handler))
     # Reply keyboard menu — text messages from persistent bottom buttons
     app.add_handler(MessageHandler(filters.Text([MENU_NEW]), new_command))
     app.add_handler(MessageHandler(filters.Text([MENU_RANDOM]), random_command))
     app.add_handler(MessageHandler(filters.Text([MENU_ALERTS]), alerts_command))
+    app.add_handler(MessageHandler(filters.Text([MENU_STORES]), mystores_command))
     app.add_handler(MessageHandler(filters.Text([MENU_HELP]), help_command))
-    # Only button taps whose callback_data starts with "f:" reach filter_callback
+    app.add_handler(MessageHandler(filters.Text(["\u2190 Back"]), back_handler))
+    # Inline button callbacks — store selection ("s:") and product filters ("f:")
+    app.add_handler(
+        CallbackQueryHandler(store_toggle_callback, pattern=rf"^{CALLBACK_STORE_PREFIX}toggle:")
+    )
+    app.add_handler(
+        CallbackQueryHandler(store_remove_callback, pattern=rf"^{CALLBACK_STORE_PREFIX}rm:")
+    )
+    app.add_handler(CallbackQueryHandler(store_done_callback, pattern=rf"^{CALLBACK_STORE_DONE}$"))
     app.add_handler(CallbackQueryHandler(filter_callback, pattern=rf"^{CALLBACK_PREFIX}"))
     # Poll backend for restock notifications on a timer
     app.job_queue.run_repeating(

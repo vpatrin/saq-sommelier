@@ -92,3 +92,24 @@ def format_destock_notification(notification: dict[str, Any]) -> str:
     name = notification.get("product_name") or sku
     url = f"{SAQ_BASE_URL}/{sku}"
     return f"\U0001f4e6 Out of stock: [{name}]({url})"
+
+
+# ── Stores ────────────────────────────────────────────────────
+
+
+def format_user_stores(stores: list[dict[str, Any]]) -> str:
+    """Format the /mystores summary — list of saved stores."""
+    if not stores:
+        return "\U0001f4cd *My stores* (0 saved)\n\nNo stores saved yet."
+
+    count = len(stores)
+    header = f"\U0001f4cd *{count} saved store{'s' if count != 1 else ''}*"
+    lines = []
+    for i, pref in enumerate(stores, 1):
+        store = pref.get("store", pref)
+        name = store.get("name") or "Unknown"
+        city = store.get("city", "")
+        lines.append(f"{i}. {name} — {city}")
+
+    body = "\n".join(lines)
+    return f"{header}\n\n{body}"

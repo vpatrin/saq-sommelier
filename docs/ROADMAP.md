@@ -85,7 +85,7 @@ See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API reference
 - ~~Extract `magento_id` from HTML (#148)~~ — eliminated, GraphQL batch lookup used instead
 - [x] `UserStorePreference` model + migration (#231)
 - [x] `/stores` API endpoints — nearby + user preference CRUD (#232)
-- [ ] `/mystores` bot command — GPS-based store picker (#233)
+- [x] `/mystores` bot command — GPS-based store picker (#233)
 - [ ] Per-product store availability checker — GraphQL resolve + AJAX fetch + diff alerts (#149)
 - ~~Filter by store availability (#150)~~ — out of scope, SAQ.com does this natively
 
