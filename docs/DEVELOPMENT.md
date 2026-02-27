@@ -96,7 +96,7 @@ make clean         # remove __pycache__, .pytest_cache, .ruff_cache
 
 ## Working on the scraper
 
-The scraper is a one-shot batch job (not a long-running service). It fetches the SAQ sitemap and upserts products into PostgreSQL. See [SCRAPER.md](SCRAPER.md) for production scheduling and operations.
+The scraper is a one-shot batch job (not a long-running service). It fetches the SAQ sitemap and upserts products into PostgreSQL. See [OPERATIONS.md](OPERATIONS.md) for production scheduling and operations.
 
 ```bash
 make dev-scraper          # run the scraper (upserts ~38k products)
@@ -181,3 +181,43 @@ make coverage
 ```
 
 Tests use an in-memory SQLite database by default (no PostgreSQL required).
+
+## Migrations
+
+The model (`core/db/models.py`) is the source of truth for the DB schema. Alembic generates migrations by diffing the model against the live database.
+
+### Workflow
+
+```bash
+# 1. Edit the model
+vim core/db/models.py
+
+# 2. Autogenerate migration (requires running DB)
+make revision msg="add alcohol column"
+
+# 3. Review the generated file in core/alembic/versions/
+
+# 4. Apply
+make migrate
+
+# 5. Commit model + migration together
+git add core/db/models.py core/alembic/versions/xxxx_*.py
+```
+
+### Rules
+
+- **Model = source of truth** — columns, indexes, constraints all defined on the model
+- **Forward-only in production** — never run `downgrade()` in prod; write a new migration to fix mistakes
+- **`downgrade()` is a dev convenience** — `make reset-db` uses it to replay from scratch
+- **Autogenerate detects** new/removed columns, indexes, type changes — but NOT column renames (sees drop+add) or data migrations; hand-add those
+- **Pre-production:** squash all migrations into one clean `initial` before first deploy
+
+### Quick reference
+
+| Task | Command |
+| --- | --- |
+| Apply all pending | `make migrate` |
+| Generate migration | `make revision msg="description"` |
+| Full reset (dev only) | `make reset-db` |
+| Check current version | `cd core && poetry run alembic current` |
+| Show history | `cd core && poetry run alembic history` |

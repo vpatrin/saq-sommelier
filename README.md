@@ -67,15 +67,14 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md) — system design, project structure, tech decisions
-- [Data Flow](docs/DATA_FLOW.md) — three-schema boundary design
-- [Development](docs/DEVELOPMENT.md) — database setup, environment config, dev workflow
-- [Migrations](docs/MIGRATIONS.md) — Alembic setup, workflow, and troubleshooting
-- [Scraper Operations](docs/SCRAPER.md) — production scheduling, failure recovery, logging
-- [Store Availability](docs/STORE_AVAILABILITY.md) — SAQ AJAX endpoints, store directory, stock checks
-- [Telegram Bot](docs/TELEGRAM_BOT.md) — bot design, commands, API dependencies
-- [Roadmap](docs/ROADMAP.md) — project phases, discipline roadmaps, and timeline
+- [Architecture](docs/ARCHITECTURE.md) — system design, schema boundaries, key decisions
+- [Development](docs/DEVELOPMENT.md) — local setup, workflows, migrations
+- [Operations](docs/OPERATIONS.md) — production scheduling, scraper ops, failure recovery
+- [Engineering](docs/ENGINEERING.md) — testing, security, observability, SRE, platform, ML/MLOps
+- [Roadmap](docs/ROADMAP.md) — product phases and timeline
 - [Changelog](CHANGELOG.md) — release history
+- [specs/STORE_AVAILABILITY.md](docs/specs/STORE_AVAILABILITY.md) — store availability feature spec
+- [specs/TELEGRAM_BOT.md](docs/specs/TELEGRAM_BOT.md) — Telegram bot design and commands
 
 ## Legal
 

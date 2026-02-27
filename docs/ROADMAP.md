@@ -1,16 +1,6 @@
 # Roadmap
 
-One project, seven disciplines. Detailed task breakdowns in [roadmaps/](roadmaps/).
-
-| Discipline | Roadmap |
-| --- | --- |
-| ML / MLOps | [ml-mlops.md](roadmaps/ml-mlops.md) |
-| Testing | [testing.md](roadmaps/testing.md) |
-| SRE | [sre.md](roadmaps/sre.md) |
-| Platform Engineering | [platform-engineering.md](roadmaps/platform-engineering.md) |
-| Observability | [observability.md](roadmaps/observability.md) |
-| Environment Segregation | [environment-segregation.md](roadmaps/environment-segregation.md) |
-| Security | [security.md](roadmaps/security.md) |
+Product phases below. Engineering discipline targets (testing, security, observability, SRE, platform, ML/MLOps) in [ENGINEERING.md](ENGINEERING.md).
 
 ---
 
@@ -52,7 +42,7 @@ One project, seven disciplines. Detailed task breakdowns in [roadmaps/](roadmaps
 
 ### Phase 4 — API for Bot ✅
 
-Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_BOT.md) for full design.
+Backend endpoints driven by Telegram bot needs. See [specs/TELEGRAM_BOT.md](specs/TELEGRAM_BOT.md) for full design.
 
 - [x] Product list endpoint (#33)
 - [x] Product detail endpoint (#34)
@@ -88,9 +78,9 @@ Backend endpoints driven by Telegram bot needs. See [TELEGRAM_BOT.md](TELEGRAM_B
 
 ### Phase 5b — Store Availability
 
-See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and engineering plan.
+See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API reference and engineering plan.
 
-- [ ] Store directory scrape (#128) — one-shot `stores` table (401 rows)
+- [x] Store directory scrape (#128) — one-shot `stores` table (401 rows)
 - [ ] Extract `magento_id` + `online_qty` during product scrape (#148)
 - [ ] Per-product store availability checker — paginated AJAX, diff alerts (#149)
 - [ ] Filter by store availability (in-store / online) (#150)
@@ -129,7 +119,7 @@ See [STORE_AVAILABILITY.md](STORE_AVAILABILITY.md) for API reference and enginee
 
 ## Timeline Estimate
 
-Phase numbers reference the [discipline roadmaps](roadmaps/) linked above.
+Discipline targets referenced in [ENGINEERING.md](ENGINEERING.md).
 
 ```text
 Phase 5 (Telegram Bot)          ~5 days     ✅ DONE

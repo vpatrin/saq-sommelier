@@ -15,7 +15,6 @@ Target audience: ~20 friends in a private group chat.
 
 | Command | Description | Example |
 |---|---|---|
-| `/search <query>` | Search wines by name | `/search mouton cadet` |
 | `/new` | Recently added or updated wines | `/new` → filter by type/price |
 | `/random` | Random wine suggestion | `/random` → filter by type/price |
 | `/watch <sku>` | Get alerts for availability changes | `/watch 10327701` |
@@ -25,7 +24,7 @@ Target audience: ~20 friends in a private group chat.
 
 ## Filter flow
 
-Commands like `/new`, `/random`, and `/search` present inline keyboard buttons to narrow results:
+Commands like `/new` and `/random` present inline keyboard buttons to narrow results:
 
 ```
 User: /new
@@ -123,7 +122,7 @@ Endpoints the bot needs from the backend:
 
 | Bot feature | API endpoint | Status |
 |---|---|---|
-| `/search` | `GET /products?q=&category=&price_max=` | Done |
+| Product search (filters) | `GET /products?q=&category=&price_max=` | Done |
 | `/new` | `GET /products?sort=recent` | Done (PR #107) |
 | `/random` | `GET /products/random` | Done (PR #107) |
 | Filter buttons | `GET /products/facets` | Done (#55, PR #105) |
