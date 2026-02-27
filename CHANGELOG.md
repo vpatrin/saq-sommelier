@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `/stores/nearby` endpoint — returns nearest SAQ stores sorted by GPS distance (#232)
+- User store preferences CRUD — `/users/{id}/stores` add, list, and remove preferred stores (#232)
 - Store directory — SAQ physical store locations scraped and stored on first scraper run (#128)
 - Programmatic robots.txt compliance — scraper filters disallowed URLs and aborts if robots.txt is unreachable (#196)
 - Paginated results with prev/next navigation buttons (#167)
