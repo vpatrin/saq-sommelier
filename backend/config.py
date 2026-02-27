@@ -11,6 +11,10 @@ MAX_SKU_LENGTH = 50
 MAX_USER_ID_LENGTH = 100
 MAX_ACK_BATCH_SIZE = 100
 
+DEFAULT_NEARBY_LIMIT = 5
+MAX_NEARBY_LIMIT = 20
+MAX_SAQ_STORE_ID_LENGTH = 20
+
 
 class BackendSettings(BaseSettings):
     """Backend-specific configuration (CORS, auth, etc.)."""
