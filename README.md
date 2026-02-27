@@ -70,6 +70,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Architecture](docs/ARCHITECTURE.md) — system design, schema boundaries, key decisions
 - [Development](docs/DEVELOPMENT.md) — local setup, workflows, migrations
 - [Operations](docs/OPERATIONS.md) — production scheduling, scraper ops, failure recovery
+- [Production](docs/PRODUCTION.md) — VPS state, backups, security hardening, observability infra
 - [Engineering](docs/ENGINEERING.md) — testing, security, observability, SRE, platform, ML/MLOps
 - [Roadmap](docs/ROADMAP.md) — product phases and timeline
 - [Changelog](CHANGELOG.md) — release history

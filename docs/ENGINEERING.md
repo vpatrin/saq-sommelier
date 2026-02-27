@@ -3,6 +3,7 @@
 Discipline-level targets across testing, security, observability, platform engineering, SRE, environment segregation, and ML/MLOps.
 
 Granular task breakdowns live in GitHub issues. This file tracks what's done and what's next at a strategy level.
+Infrastructure-level production targets (VPS hardening, backups, Grafana) tracked in [PRODUCTION.md](PRODUCTION.md).
 
 ---
 
@@ -24,9 +25,8 @@ Granular task breakdowns live in GitHub issues. This file tracks what's done and
 **Done:** Dependabot (pip + GitHub Actions weekly), Hadolint (Dockerfile linting in CI), pip-audit (vulnerability scanning in CI), gitleaks (secret detection in CI), CORS configuration (env-driven allowed origins), input validation (Pydantic, max lengths), Telegram user allowlist (`ALLOWED_USER_IDS` env var, #178), per-user rate limiting (#178).
 
 **Next:**
-- Infrastructure hardening: SSH key-only auth, UFW (allow 22/80/443 only), Fail2ban, unattended-upgrades — one-time VPS setup, done once and never touched again
-- Docker secrets: move bot token + DB password from `.env` file to Docker secret files — eliminates plaintext credentials on disk
 - `.env` audit: verify no secrets committed in git history (`git log -S 'password'`)
+- Docker secrets: move bot token + DB password from `.env` file to Docker secret files — eliminates plaintext credentials on disk
 - API key auth: `X-API-Key` header on bot→backend calls — needed once the React dashboard exposes the API publicly
 - `SECURITY.md`: responsible disclosure policy — one-page file, strong portfolio/interview signal
 
@@ -40,7 +40,6 @@ Granular task breakdowns live in GitHub issues. This file tracks what's done and
 - Scraper failure alert: systemd `OnFailure=` unit sends Telegram DM on `EXIT_FAILURE` — currently silent failures with no visibility
 - API request logging middleware → `api_request_logs` table (path, status, latency, user_id) — baseline for SLO tracking
 - Structured JSON logging: consistent fields (timestamp, level, service, message) across all services — Loki/Grafana-ready without Loki
-- Grafana: scraper health + API health dashboards — needs VPS CX32 upgrade for RAM headroom
 - LLM cost tracking: token usage per request, daily budget cap alert (Phase 6)
 
 ---
@@ -51,7 +50,6 @@ Granular task breakdowns live in GitHub issues. This file tracks what's done and
 
 **Next:**
 - `docs/DEPLOYMENT.md` (#227): deploy flow, migration order, rollback procedure, initial VPS bootstrap — production is live but the process is only in your head
-- `infra/scripts/backup-db.sh`: daily PostgreSQL dump + 7-day retention, systemd timer at 3am — no backups is the single biggest production risk right now
 - CD pipeline: push to main → build image → push to GHCR → SSH deploy to VPS — currently manual and undocumented
 - Image tagging: `:latest` for production, `:YYYYMMDD-HHMMSS` for rollback archive — enables one-command rollback
 - `docker-compose.prod.yml`: explicit resource limits, restart policies, health checks, no debug ports — current compose mixes dev and prod concerns
@@ -78,7 +76,6 @@ Granular task breakdowns live in GitHub issues. This file tracks what's done and
 **Next:**
 - `docker-compose.prod.yml`: production-specific compose with no hot-reload volumes, explicit restart policies, no debug ports
 - Secrets injection: migrate bot token + DB credentials from `.env` file to Docker secrets or environment-injected at deploy time
-- Staging environment: separate DB, separate `@SAQSommelierStagingBot` token — only needed when multi-person or when preview deploys matter
 
 ---
 

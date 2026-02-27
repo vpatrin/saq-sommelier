@@ -65,6 +65,9 @@ All services read from a single root `.env` file. See [.env.example](../.env.exa
 | `DATABASE_ECHO` | no | `false` | Log SQL queries |
 | `TELEGRAM_BOT_TOKEN` | bot only | — | Token from @BotFather |
 | `BACKEND_URL` | no | `http://localhost:8001` | API URL for the bot |
+| `SCRAPE_LIMIT` | no | `500` | Max products to scrape per run (0 = full catalog) |
+| `NOTIFICATION_POLL_INTERVAL` | no | `60` | Bot notification poll interval in seconds (21600 = 6h in prod) |
+| `ALLOWED_USER_IDS` | no | — | Comma-separated Telegram user IDs (empty = allow all) |
 
 ## Make targets
 
@@ -210,7 +213,6 @@ git add core/db/models.py core/alembic/versions/xxxx_*.py
 - **Forward-only in production** — never run `downgrade()` in prod; write a new migration to fix mistakes
 - **`downgrade()` is a dev convenience** — `make reset-db` uses it to replay from scratch
 - **Autogenerate detects** new/removed columns, indexes, type changes — but NOT column renames (sees drop+add) or data migrations; hand-add those
-- **Pre-production:** squash all migrations into one clean `initial` before first deploy
 
 ### Quick reference
 

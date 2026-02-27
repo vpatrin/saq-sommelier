@@ -147,8 +147,6 @@ The design principle: add infrastructure when a bottleneck is measured, not when
 
 ## Infrastructure
 
-- **Host**: Hetzner CX22 (4GB RAM, 40GB SSD, Debian 13)
-- **Reverse proxy**: Caddy (SSL + routing via victorpatrin.dev subdomains)
 - **Containers**: Docker Compose (`make run` for full dev stack, `make run-db` for bare-metal dev)
 - **Database**: PostgreSQL 16 (shared instance, `saq_sommelier` database)
 - **CI**: GitHub Actions (lint + test per service, summary gates)
