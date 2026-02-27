@@ -83,7 +83,7 @@ See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API reference
 - [x] Store directory scrape (#128) — one-shot `stores` table (401 rows)
 - [x] Emit destock events when availability flips True → False (#144)
 - ~~Extract `magento_id` from HTML (#148)~~ — eliminated, GraphQL batch lookup used instead
-- [ ] `UserStorePreference` model + migration (#231)
+- [x] `UserStorePreference` model + migration (#231)
 - [ ] `/stores` API endpoints — nearby + user preference CRUD (#232)
 - [ ] `/mystores` bot command — GPS-based store picker (#233)
 - [ ] Per-product store availability checker — GraphQL resolve + AJAX fetch + diff alerts (#149)
