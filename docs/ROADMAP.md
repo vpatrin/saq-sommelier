@@ -81,10 +81,13 @@ Backend endpoints driven by Telegram bot needs. See [specs/TELEGRAM_BOT.md](spec
 See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API reference and engineering plan.
 
 - [x] Store directory scrape (#128) — one-shot `stores` table (401 rows)
-- [ ] Extract `magento_id` + `online_qty` during product scrape (#148)
-- [ ] Per-product store availability checker — paginated AJAX, diff alerts (#149)
-- [ ] Filter by store availability (in-store / online) (#150)
 - [x] Emit destock events when availability flips True → False (#144)
+- ~~Extract `magento_id` from HTML (#148)~~ — eliminated, GraphQL batch lookup used instead
+- [x] `UserStorePreference` model + migration (#231)
+- [ ] `/stores` API endpoints — nearby + user preference CRUD (#232)
+- [ ] `/mystores` bot command — GPS-based store picker (#233)
+- [ ] Per-product store availability checker — GraphQL resolve + AJAX fetch + diff alerts (#149)
+- ~~Filter by store availability (#150)~~ — out of scope, SAQ.com does this natively
 
 ### Phase 5c — Bilingual Support
 

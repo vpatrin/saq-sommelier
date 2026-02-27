@@ -2,7 +2,7 @@
 
 Infrastructure-level state and outstanding work for the production VPS.
 Application deployment process documented in [DEPLOYMENT.md](DEPLOYMENT.md) (#227, not yet written).
-Step-by-step setup instructions live in the [infra repo](https://github.com/vpatrin/infra).
+Step-by-step setup instructions live in the infra repo (private).
 
 ---
 
