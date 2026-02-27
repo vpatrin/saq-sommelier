@@ -20,7 +20,7 @@ def _user_id(update: Update) -> str:
 
 
 def _stores_header(count: int) -> str:
-    return f"\U0001f4cd *{count} saved store{'s' if count != 1 else ''}*\nTap to remove."
+    return f"\U0001f4cd *{count} saved store{'s' if count != 1 else ''}*"
 
 
 async def mystores_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -37,7 +37,7 @@ async def mystores_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     keyboard = build_saved_stores_keyboard(prefs)
     if keyboard:
-        header = _stores_header(len(prefs))
+        header = f"{_stores_header(len(prefs))}\nTap to remove."
         await update.message.reply_text(header, parse_mode="Markdown", reply_markup=keyboard)
         await update.message.reply_text(
             "Share your location to add more stores.",
@@ -152,7 +152,7 @@ async def store_remove_callback(update: Update, context: ContextTypes.DEFAULT_TY
     except (BackendUnavailableError, BackendAPIError):
         prefs = []
 
-    text = _stores_header(len(prefs)) if prefs else format_user_stores(prefs)
+    text = f"{_stores_header(len(prefs))}\nTap to remove." if prefs else format_user_stores(prefs)
     await query.edit_message_text(
         text, parse_mode="Markdown", reply_markup=build_saved_stores_keyboard(prefs)
     )
