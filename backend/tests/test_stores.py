@@ -92,6 +92,25 @@ def test_nearby_excludes_stores_without_coordinates():
     assert data[0]["saq_store_id"] == "A"
 
 
+def test_nearby_excludes_non_consumer_store_types():
+    """200 — SAQ Restauration and Vin en vrac stores are excluded."""
+    consumer = _fake_store(saq_store_id="A", store_type="SAQ")
+    restaurant = _fake_store(saq_store_id="B", store_type="SAQ Restauration")
+    vrac = _fake_store(saq_store_id="C", store_type="Vin en vrac")
+
+    with patch("backend.services.stores.repo") as mock_repo:
+        mock_repo.get_all_stores = AsyncMock(return_value=[consumer, restaurant, vrac])
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.get("/api/v1/stores/nearby?lat=45.52&lng=-73.60")
+
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["saq_store_id"] == "A"
+
+
 def test_nearby_empty_db():
     """200 — empty list when no stores exist."""
     with patch("backend.services.stores.repo") as mock_repo:
