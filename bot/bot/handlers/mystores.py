@@ -65,8 +65,8 @@ async def location_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         "Nearest SAQ stores \u2014 tap to add/remove:",
         reply_markup=keyboard,
     )
-    # Restore main menu keyboard via a separate lightweight message
-    await update.message.reply_text("\u200b", reply_markup=MAIN_MENU)
+    # Restore main menu reply keyboard
+    await update.message.reply_text("Tap a store to add or remove it.", reply_markup=MAIN_MENU)
 
 
 async def store_toggle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -93,8 +93,8 @@ async def store_toggle_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await query.answer("Store not found.", show_alert=True)
             return
         if exc.status_code == HTTPStatus.CONFLICT:
-            # Already saved — refresh the keyboard to reflect current state
-            pass
+            # Race condition: store was added between list and add — mark as saved
+            saved_ids.add(store_id)
         else:
             logger.warning("Backend error during store toggle: {}", exc)
             await query.answer("Something went wrong.", show_alert=True)
