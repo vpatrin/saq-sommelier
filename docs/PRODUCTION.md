@@ -8,11 +8,11 @@ Step-by-step setup instructions live in the [infra repo](https://github.com/vpat
 
 ## Current state
 
-- **VPS**: Hetzner CX22, Debian 13 — `web-01` (46.225.60.16)
+- **VPS**: Hetzner CX22, Debian 13 — `web-01`
 - **User**: `victor` (root SSH blocked)
 - **Auth**: SSH key only (password auth disabled)
 - **Firewall**: Hetzner network firewall + ufw — ports 22/80/443 only
-- **DNS**: `victorpatrin.dev` + wildcard `*` → 46.225.60.16 (Porkbun)
+- **DNS**: `victorpatrin.dev` + wildcard `*` → VPS IP (Porkbun)
 - **Docker**: Docker CE + Compose plugin installed
 - **Swap**: 2G at `/swapfile`, swappiness=10
 - **Reverse proxy**: Caddy (SSL + routing via victorpatrin.dev subdomains)
