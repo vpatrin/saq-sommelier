@@ -7,6 +7,9 @@ from backend.exceptions import ConflictError, NotFoundError
 from backend.repositories import stores as repo
 from backend.schemas.store import StoreOut, StoreWithDistance, UserStorePreferenceOut
 
+# Store types not open to regular consumers
+EXCLUDED_STORE_TYPES = {"SAQ Restauration", "Vin en vrac"}
+
 
 def _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     """Calculates the shortest path along the Earth's surface between two GPS points"""
@@ -31,6 +34,8 @@ async def get_nearby_stores(
     results: list[StoreWithDistance] = []
     for store in stores:
         if store.latitude is None or store.longitude is None:
+            continue
+        if store.store_type in EXCLUDED_STORE_TYPES:
             continue
         dist = _haversine_km(lat, lng, store.latitude, store.longitude)
         store_data = StoreOut.model_validate(store).model_dump()
