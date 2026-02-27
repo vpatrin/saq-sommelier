@@ -55,12 +55,14 @@ CMD_RANDOM = "random"
 CMD_WATCH = "watch"
 CMD_UNWATCH = "unwatch"
 CMD_ALERTS = "alerts"
+CMD_MYSTORES = "mystores"
 
 # Reply keyboard menu labels — matched in app.py MessageHandlers
 MENU_NEW = "🆕 New wines"
 MENU_RANDOM = "🎲 Random"
 MENU_ALERTS = "📋 My alerts"
 MENU_HELP = "❓ Help"
+MENU_STORES = "📍 My stores"
 
 # Callback data prefixes — shared between keyboards.py (build), filters.py (parse), app.py (routing)
 CALLBACK_PREFIX = "f:"
@@ -69,6 +71,11 @@ CALLBACK_PRICE = f"{CALLBACK_PREFIX}price:"
 CALLBACK_CLEAR = f"{CALLBACK_PREFIX}clear"
 CALLBACK_PAGE_NEXT = f"{CALLBACK_PREFIX}page:next"
 CALLBACK_PAGE_PREV = f"{CALLBACK_PREFIX}page:prev"
+
+# Store selection callbacks — shared between keyboards.py and mystores handler
+CALLBACK_STORE_PREFIX = "s:"
+CALLBACK_STORE_TOGGLE = f"{CALLBACK_STORE_PREFIX}toggle:"
+CALLBACK_STORE_DONE = f"{CALLBACK_STORE_PREFIX}done"
 
 
 class PriceBucket(NamedTuple):
