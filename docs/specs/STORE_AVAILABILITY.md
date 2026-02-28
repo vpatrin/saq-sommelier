@@ -17,75 +17,110 @@ Out of scope: browsing or filtering products by store. SAQ.com already does this
 
 ## API Reference
 
-Common: `X-Requested-With: XMLHttpRequest` header required on all AJAX endpoints. Pagination: 10 per page, increment `loaded` by 10 until `is_last_page: true`.
+SAQ runs Magento 2 with Fastly CDN. Three data sources, each with different strengths:
 
-### Store directory
+| Source | What it gives us | Limitations |
+|---|---|---|
+| GraphQL | Online availability, price, magento_id (batch) | No per-store quantities, no wine attributes |
+| AJAX store locator | Per-store quantities (per product, paginated) | No batching across products, page size fixed at 10 |
+| HTML scrape | Wine attributes (grape, region, alcohol, ...) | CDN-cached (availability/price can be stale) |
 
-```text
-GET /fr/store/locator/ajaxlist?loaded={offset}&fastly_geolocate=1
-```
+### GraphQL (`POST /graphql`)
 
-401 stores, 41 pages. No `qty` field — pure directory.
+Unauthenticated Magento 2 GraphQL. No API key, no special headers.
 
-```json
-{
-  "total": 401,
-  "is_last_page": false,
-  "list": [{
-    "identifier": "23009",
-    "name": "Du Parc - Fairmount Ouest",
-    "address1": "5610, avenue du Parc",
-    "city": "Montréal",
-    "postcode": "H2V 4H9",
-    "telephone": "514-274-0498",
-    "latitude": "45.52071",
-    "longitude": "-73.598804",
-    "temporarily_closed": false,
-    "additional_attributes": { "type": { "label": "SAQ" } }
-  }]
-}
-```
-
-Store types in production (confirmed from full 401-store fetch): SAQ (273), SAQ Sélection (91), SAQ Express (23), SAQ Dépôt (10), SAQ Restauration (3), Vin en vrac (1). Express/Dépôt stores have significantly different inventory levels — `store_type` is kept.
-
-### Per-product store availability
-
-```text
-GET /fr/store/locator/ajaxlist/context/product/id/{magento_id}?loaded={offset}&fastly_geolocate=1
-```
-
-Same paginated shape, scoped to stores carrying the product. Adds `qty` per store. **No store filter param exists** — always returns all stores carrying the product. `lat/lng` params only affect sort order, not filtering. No auth required.
-
-```json
-{
-  "total": 108,
-  "is_last_page": false,
-  "list": [{
-    "identifier": "23009",
-    "name": "Du Parc - Fairmount Ouest",
-    "city": "Montréal",
-    "qty": 45
-  }]
-}
-```
-
-### Magento GraphQL — confirmed unauthenticated
+**Request:**
 
 ```graphql
-POST /graphql
+POST https://www.saq.com/graphql
 Content-Type: application/json
 
-{ products(filter: { sku: { in: ["15483332", "14099363"] } }) {
-    items { id sku name stock_status }
+{ products(filter: { sku: { in: ["15483332", "880500"] } }) {
+    items { id sku stock_status }
 }}
 ```
 
-Resolves SAQ SKU → Magento internal `id` in batch (tested: 3 SKUs → 3 IDs in one call). No API key, no headers required. **This eliminates the need to scrape product HTML for `magento_id`** — a major simplification vs the original plan.
+**Available fields on products:**
 
-```python
-# 50 watched SKUs → 3 GraphQL calls (batch of 20) → ~1 second
-POST /graphql { products(filter: { sku: { in: [...] } }) { items { id sku } } }
+| Field | Type | Notes |
+|---|---|---|
+| `id` | Int | Magento internal ID — **required for AJAX store endpoint** |
+| `sku` | String | SAQ product code |
+| `name` | String | Product name |
+| `stock_status` | Enum | `IN_STOCK` / `OUT_OF_STOCK` — **online purchase only**, stores can have stock independently |
+| `price_range` | Object | `{minimum_price: {regular_price: {value, currency}, discount: {amount_off, percent_off}}}` |
+| `rating_summary` | Float | Out of 100 (e.g. `80`) |
+| `review_count` | Int | Number of reviews |
+| `image` | Object | `{url, label}` — CDN image URL |
+| `categories` | Array | Category names (Vin rouge, Pastilles de goût, etc.) |
+| `only_x_left_in_stock` | Float | **Useless** — `null` when in stock, `0` when out. Mirrors `stock_status` |
+| `description` | Object | **Empty** — SAQ doesn't populate this in Magento |
+| `custom_attributesV2` | Object | **Broken** — returns Internal Server Error on SAQ's installation |
+
+**Available filters (query-level):**
+
+| Filter | Type | Notes |
+|---|---|---|
+| `sku: {in: [...]}` | Batch lookup | **Our primary use** — up to 20 per call |
+| `store_availability_list: {eq: "23066"}` | Catalog filter | "Products at this store" — returns products, no qty. Not useful for per-product alerts |
+| `cepage`, `region_origine`, `pays_origine`, `appellation` | Facet filters | Wine attributes as **filter inputs** only, not output fields |
+| `price`, `pourcentage_alcool_par_volume` | Range filters | Numeric ranges |
+| `name`, `nom_producteur` | Text match | Name/producer search |
+
+**Key finding — `stock_status` is online only:**
+
+Verified with SKU 880500 (Domaine Berthaut-Gerbet Fixin): GraphQL returns `OUT_OF_STOCK` but AJAX shows 20 stores with bottles (1-20 qty each). `stock_status` reflects whether the product is purchasable on saq.com, not whether physical stores carry it.
+
+**Batching:** 20 SKUs per call is safe (tested). 50 watched SKUs = 3 calls.
+
+**Introspection:** Schema is fully introspectable (`__type`, `__schema` queries). Discovered `store_availability_list` filter and all `ProductAttributeFilterInput` fields via introspection.
+
+### AJAX store locator (`GET /fr/store/locator/ajaxlist`)
+
+Paginated JSON endpoint. Requires `X-Requested-With: XMLHttpRequest` header.
+
+**Parameters:**
+
+| Param | Required | Default | Purpose |
+|---|---|---|---|
+| `context` | No | (none) | Set `"product"` for per-product stock. Without it: all 401 stores, no `qty` field |
+| `id` | No | (none) | **Magento ID** (from GraphQL `id` field), not SKU. Only meaningful with `context=product` |
+| `loaded` | No | `0` | Pagination offset. Increment by 10 (page size is hardcoded server-side, cannot be overridden) |
+| `latitude` / `longitude` | No | (none) | Sort by proximity. Same results, different order |
+| `fastly_geolocate` | No | (none) | CDN auto-detect IP for proximity sort. **Not used** — irrelevant from VPS |
+
+Tested and rejected: `limit`, `pageSize`, `count` — all ignored by the server. Page size is fixed at 10.
+
+**Store directory mode** (no `context`/`id`):
+
+```text
+GET /fr/store/locator/ajaxlist?loaded=0
+→ 401 stores, 41 pages. No qty field.
 ```
+
+**Per-product mode** (`context=product&id={magento_id}`):
+
+```text
+GET /fr/store/locator/ajaxlist?context=product&id=301436&loaded=0
+→ Only stores carrying the product, with qty per store.
+```
+
+```json
+{
+  "total": 20,
+  "is_last_page": false,
+  "list": [{
+    "identifier": "23066",
+    "name": "Beaubien - St-André",
+    "city": "Montréal",
+    "qty": 1
+  }]
+}
+```
+
+Store count per product varies widely: niche wine ~20 stores (2 pages), popular wine 300+ stores (30+ pages).
+
+Store types in production (from full 401-store fetch): SAQ (273), SAQ Sélection (91), SAQ Express (23), SAQ Dépôt (10), SAQ Restauration (3), Vin en vrac (1).
 
 ### Nearest store (shortcut)
 
@@ -94,17 +129,7 @@ GET /fr/store/pointofsale/ajaxgetclosest/?latitude={lat}&longitude={lng}
 X-Requested-With: XMLHttpRequest
 ```
 
-Returns the **single nearest store** only. Not suitable for multi-store picker — use the full directory with lat/lng sort instead. Useful as a "quick pick nearest" shortcut.
-
-### Online quantity (product page HTML)
-
-The product page at `/fr/{sku}` contains an online stock count:
-
-```python
-re.search(r'(\d+)\s+available online', html).group(1)
-```
-
-Extractable during the existing product scrape — zero extra requests. Low-value for alerts (boolean IN_STOCK/OUT_OF_STOCK is sufficient). **Skipped for now.**
+Returns the **single nearest store** only. Not suitable for multi-store picker — use the full directory with lat/lng sort instead.
 
 ---
 
@@ -136,8 +161,8 @@ One call to the availability endpoint returns **all stores** for a product. Stor
 
 ### Two separate scraping timers
 
-- **Weekly:** full product scrape (existing) — keeps catalog fresh, detects online restocks/destocks
-- **Daily:** store availability check for **watched SKUs only** — ~18 min, delivers store alerts within 24h
+- **Weekly:** catalog attribute sync (name, region, grape, price, image, ...) + delist/relist detection. Does **not** emit StockEvents — availability data from HTML is CDN-cached and unreliable.
+- **Daily (`--check-watches`):** online + store availability for **all watched SKUs** — GraphQL `stock_status` for online, AJAX for per-store quantities. AJAX runs for **all** SKUs regardless of `stock_status` (stores can have stock when online is OUT_OF_STOCK).
 
 ### `StockEvent` extension for store events
 
@@ -184,15 +209,16 @@ class UserStorePreference(Base):
     created_at   = Column(DateTime(timezone=True), nullable=False)
 ```
 
-### `ProductStoreAvailability` (issue #149)
+### `ProductAvailability` (issue #149)
 
 ```python
-class ProductStoreAvailability(Base):
-    __tablename__ = "product_store_availability"
-    sku        = Column(String, ForeignKey("products.sku"), primary_key=True)
-    store_qty  = Column(JSONB, nullable=False, default=dict)
+class ProductAvailability(Base):
+    __tablename__ = "product_availability"
+    sku              = Column(String, ForeignKey("products.sku"), primary_key=True)
+    online_available = Column(Boolean, nullable=True)     # GraphQL stock_status
+    store_qty        = Column(JSONB, nullable=False, default=dict)
     # {"23009": 44, "23132": 12, ...}
-    checked_at = Column(DateTime(timezone=True), nullable=False)
+    checked_at       = Column(DateTime(timezone=True), nullable=False)
 ```
 
 ---
@@ -231,47 +257,49 @@ Superseded by GraphQL batch lookup. No stored column, no parser change.
 
 ---
 
-### Issue #149 — Per-product store availability checker
+### Issue #149 — Per-product availability checker (`--check-watches`)
 
 **`scraper/src/availability.py`:**
 
 ```python
-async def resolve_magento_ids(client, skus) -> dict[str, int]: ...
+async def resolve_graphql_products(client, skus) -> dict[str, GraphQLProduct]: ...
 async def fetch_store_availability(client, magento_id) -> dict[str, int]: ...
-async def run_availability_check(skus) -> None: ...
+async def run_availability_check(client) -> int: ...
 ```
 
 **Checker loop:**
 
 ```python
-# 1. Watched SKUs with at least one user who has store preferences
-watched_skus = SELECT DISTINCT w.sku FROM watches w
-               WHERE EXISTS (SELECT 1 FROM user_store_preferences WHERE user_id = w.user_id)
+# 1. ALL watched SKUs (no store pref filter)
+watched_skus = SELECT DISTINCT sku FROM watches
 
-# 2. Batch-resolve magento_ids (50 SKUs = 3 GraphQL calls)
-magento_ids = await resolve_magento_ids(client, watched_skus)
+# 2. Batch-resolve via GraphQL (50 SKUs = 3 calls) → magento_id + stock_status
+graphql_products = await resolve_graphql_products(client, watched_skus)
 
-# 3. For each SKU: fetch → diff → emit
-for sku, magento_id in magento_ids.items():
-    new_map = await fetch_store_availability(client, magento_id)
-    old_map = (await get_product_store_availability(sku)).store_qty or {}
-    restocked = {sid for sid in new_map if old_map.get(sid, 0) == 0 and new_map[sid] > 0}
-    destocked  = {sid for sid in old_map if old_map[sid] > 0 and new_map.get(sid, 0) == 0}
-    await upsert_product_store_availability(sku, new_map)
-    for saq_store_id in restocked:
-        await emit_store_stock_event(sku, saq_store_id, available=True)
+# 3. For each SKU:
+for sku, gql in graphql_products.items():
+    old_online, old_qty = await get_product_availability(sku)
+    new_online = gql.stock_status == "IN_STOCK"
+
+    # 3a. Online diff — emit StockEvent(saq_store_id=NULL) on transition
+    if old_online is not None and old_online != new_online:
+        await emit_stock_event(sku, available=new_online)
+
+    # 3b. Store diff — ALWAYS fetch, regardless of stock_status
+    #      (stores can have stock when online is OUT_OF_STOCK)
+    new_qty = await fetch_store_availability(client, gql.magento_id)
+    # ... diff old_qty vs new_qty, emit store StockEvents ...
+    await upsert_product_availability(sku, online_available=new_online, store_qty=new_qty)
 ```
 
 **Alert routing (bot notification consumer):**
 
 ```python
-# For each pending StockEvent with saq_store_id set:
-notified_users = SELECT usp.user_id FROM user_store_preferences usp
-                 WHERE usp.saq_store_id = event.saq_store_id
-                 AND EXISTS (SELECT 1 FROM watches w WHERE w.user_id = usp.user_id AND w.sku = event.sku)
+# Online events (saq_store_id IS NULL) → notify all watchers
+# Store events (saq_store_id IS NOT NULL) → route via UserStorePreference JOIN
 ```
 
-**Scale:** ~50 SKUs × 11 pages avg × 2s ≈ 18 min worst case.
+**Scale:** ~50 SKUs × GraphQL batch (~3 calls) + all SKUs × AJAX pages (varies: 2-30 pages per SKU depending on distribution).
 
 **Notification format:**
 
@@ -306,6 +334,9 @@ New   UserStorePreference        ── /mystores bot + /nearby ───┤
 ## Operational Notes
 
 - Store bootstrap: runs automatically on first scraper run (empty stores table). Re-run by clearing the table.
-- Availability check: daily systemd timer, independent of weekly product scrape. Exits immediately if no watched SKUs have users with store preferences.
-- If GraphQL is down → checker logs and skips all SKUs gracefully; no partial writes.
-- `product_store_availability` only contains rows for watched SKUs — not the full catalog.
+- Availability check (`--check-watches`): daily systemd timer, independent of weekly product scrape. Exits immediately if no watched SKUs exist.
+- If GraphQL is down → checker logs and aborts gracefully; no partial writes.
+- `product_availability` only contains rows for watched SKUs — not the full catalog.
+- AJAX store check runs for ALL watched SKUs — `OUT_OF_STOCK` online does not imply empty stores (verified with real data).
+- Weekly scrape does **not** emit StockEvents — CDN-cached HTML availability is unreliable. Only `--check-watches` emits events.
+- See [CATALOG_AVAILABILITY.md](CATALOG_AVAILABILITY.md) for planned Phase 6 extension to full-catalog daily checks (needed for RAG).

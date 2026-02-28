@@ -19,7 +19,9 @@ def _fake_watch(**overrides):
 
 
 def _fake_event(**overrides):
-    defaults = dict(id=1, sku="SKU001", available=True, detected_at=NOW, processed_at=None)
+    defaults = dict(
+        id=1, sku="SKU001", available=True, saq_store_id=None, detected_at=NOW, processed_at=None
+    )
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 
@@ -250,7 +252,9 @@ def test_pending_notifications_success():
     product = _fake_product()
 
     with patch("backend.services.watches.repo") as mock_repo:
-        mock_repo.find_pending_notifications = AsyncMock(return_value=[(event, watch, product)])
+        mock_repo.find_pending_notifications = AsyncMock(
+            return_value=[(event, watch, product, None)]
+        )
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
@@ -286,7 +290,7 @@ def test_pending_notifications_product_missing():
     watch = _fake_watch(sku="GONE99")
 
     with patch("backend.services.watches.repo") as mock_repo:
-        mock_repo.find_pending_notifications = AsyncMock(return_value=[(event, watch, None)])
+        mock_repo.find_pending_notifications = AsyncMock(return_value=[(event, watch, None, None)])
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
@@ -304,7 +308,9 @@ def test_pending_notifications_destock_event():
     product = _fake_product()
 
     with patch("backend.services.watches.repo") as mock_repo:
-        mock_repo.find_pending_notifications = AsyncMock(return_value=[(event, watch, product)])
+        mock_repo.find_pending_notifications = AsyncMock(
+            return_value=[(event, watch, product, None)]
+        )
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
@@ -315,6 +321,49 @@ def test_pending_notifications_destock_event():
     assert len(data) == 1
     assert data[0]["available"] is False
     assert data[0]["sku"] == "SKU001"
+
+
+def test_pending_notifications_store_event():
+    """200 — store event includes saq_store_id and store_name."""
+    event = _fake_event(saq_store_id="23009")
+    watch = _fake_watch()
+    product = _fake_product()
+    store = SimpleNamespace(saq_store_id="23009", name="Du Parc - Fairmount Ouest")
+
+    with patch("backend.services.watches.repo") as mock_repo:
+        mock_repo.find_pending_notifications = AsyncMock(
+            return_value=[(event, watch, product, store)]
+        )
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.get("/api/v1/watches/notifications")
+
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data[0]["saq_store_id"] == "23009"
+    assert data[0]["store_name"] == "Du Parc - Fairmount Ouest"
+
+
+def test_pending_notifications_online_event_has_null_store():
+    """200 — online event has null store fields."""
+    event = _fake_event()
+    watch = _fake_watch()
+    product = _fake_product()
+
+    with patch("backend.services.watches.repo") as mock_repo:
+        mock_repo.find_pending_notifications = AsyncMock(
+            return_value=[(event, watch, product, None)]
+        )
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.get("/api/v1/watches/notifications")
+
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data[0]["saq_store_id"] is None
+    assert data[0]["store_name"] is None
 
 
 # ── POST /watches/notifications/ack ──────────────────────────

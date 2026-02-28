@@ -1,8 +1,15 @@
 from dataclasses import asdict
 from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
 from core.db.base import create_session_factory
-from core.db.models import Product, StockEvent, Store
+from core.db.models import (
+    Product,
+    ProductAvailability,
+    StockEvent,
+    Store,
+    Watch,
+)
 from loguru import logger
 from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -78,13 +85,17 @@ async def clear_delisted(skus: set[str]) -> int:
         return result.rowcount
 
 
-async def emit_stock_event(sku: str, available: bool) -> None:
+async def emit_stock_event(sku: str, available: bool, *, saq_store_id: str | None = None) -> None:
     """Record an availability transition in the stock_events table.
 
     Swallows errors — a missed event shouldn't crash the scraper.
+    saq_store_id: NULL = online event, non-NULL = in-store event.
     """
     async with _SessionLocal() as session:
-        stmt = pg_insert(StockEvent).values(sku=sku, available=available)
+        values: dict[str, Any] = {"sku": sku, "available": available}
+        if saq_store_id is not None:
+            values["saq_store_id"] = saq_store_id
+        stmt = pg_insert(StockEvent).values(**values)
         try:
             await session.execute(stmt)
             await session.commit()
@@ -150,6 +161,59 @@ async def upsert_product(product_data: ProductData) -> None:
             await session.rollback()
             logger.error("DB error upserting SKU {}", product_data.sku or "unknown")
             raise
+
+
+async def get_watched_skus() -> list[str]:
+    """Get all distinct SKUs from the watches table."""
+    async with _SessionLocal() as session:
+        stmt = select(Watch.sku).distinct()
+        result = await session.execute(stmt)
+        return [row[0] for row in result.all()]
+
+
+async def get_product_availability(sku: str) -> tuple[bool | None, dict[str, int]]:
+    """Get current online_available and store_qty for a SKU.
+
+    Returns (None, {}) if no record exists yet.
+    """
+    async with _SessionLocal() as session:
+        stmt = select(ProductAvailability.online_available, ProductAvailability.store_qty).where(
+            ProductAvailability.sku == sku
+        )
+        result = await session.execute(stmt)
+        row = result.first()
+        if row is None:
+            return None, {}
+        return row[0], row[1] or {}
+
+
+async def upsert_product_availability(
+    sku: str,
+    *,
+    online_available: bool | None = None,
+    store_qty: dict[str, int] | None = None,
+) -> None:
+    """Insert or update the availability snapshot for a watched SKU."""
+    now = datetime.now(UTC)
+    values: dict[str, Any] = {"sku": sku, "checked_at": now}
+    update_set: dict[str, Any] = {"checked_at": now}
+
+    if online_available is not None:
+        values["online_available"] = online_available
+        update_set["online_available"] = online_available
+    if store_qty is not None:
+        values["store_qty"] = store_qty
+        update_set["store_qty"] = store_qty
+
+    async with _SessionLocal() as session:
+        stmt = pg_insert(ProductAvailability).values(**values)
+        stmt = stmt.on_conflict_do_update(index_elements=["sku"], set_=update_set)
+        try:
+            await session.execute(stmt)
+            await session.commit()
+        except SQLAlchemyError:
+            await session.rollback()
+            logger.error("Failed to upsert product availability for SKU {}", sku)
 
 
 async def upsert_stores(stores: list[StoreData]) -> None:

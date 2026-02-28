@@ -83,6 +83,9 @@ def format_restock_notification(notification: dict[str, Any]) -> str:
     sku = notification["sku"]
     name = notification.get("product_name") or sku
     url = f"{SAQ_BASE_URL}/{sku}"
+    store_name = notification.get("store_name")
+    if store_name:
+        return f"\U0001f377 Back in stock at *{store_name}*: [{name}]({url})"
     return f"\U0001f377 Back in stock: [{name}]({url})"
 
 
@@ -91,6 +94,9 @@ def format_destock_notification(notification: dict[str, Any]) -> str:
     sku = notification["sku"]
     name = notification.get("product_name") or sku
     url = f"{SAQ_BASE_URL}/{sku}"
+    store_name = notification.get("store_name")
+    if store_name:
+        return f"\U0001f4e6 Out of stock at *{store_name}*: [{name}]({url})"
     return f"\U0001f4e6 Out of stock: [{name}]({url})"
 
 

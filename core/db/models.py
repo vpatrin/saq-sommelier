@@ -13,6 +13,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 
 from core.db.base import Base
 
@@ -198,11 +199,51 @@ class UserStorePreference(Base):
         )
 
 
-class StockEvent(Base):
-    """Records product availability transitions detected during scrape.
+class ProductAvailability(Base):
+    """Per-product availability snapshot for watched SKUs.
 
-    saq_store_id is NULL for online events (weekly scraper) and non-NULL for
-    in-store events (daily availability checker).
+    Online availability from GraphQL stock_status, store quantities from AJAX.
+    Only contains rows for watched SKUs (not the full catalog).
+    Updated daily by --check-watches.
+    """
+
+    __tablename__ = "product_availability"
+
+    sku = Column(
+        String,
+        ForeignKey("products.sku"),
+        primary_key=True,
+        comment="Watched product SKU",
+    )
+    online_available = Column(
+        Boolean,
+        nullable=True,
+        comment="Online availability from GraphQL stock_status (NULL = not yet checked)",
+    )
+    store_qty = Column(
+        JSONB,
+        nullable=False,
+        default=dict,
+        comment='Store stock map: {"23009": 44, "23132": 12}',
+    )
+    checked_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="When availability was last checked",
+    )
+
+    def __repr__(self) -> str:
+        n = len(self.store_qty) if self.store_qty else 0
+        online = self.online_available
+        return f"<ProductAvailability(sku={self.sku!r}, online={online}, stores={n})>"
+
+
+class StockEvent(Base):
+    """Records product availability transitions.
+
+    saq_store_id is NULL for online events and non-NULL for in-store events.
+    Both are emitted by the daily availability checker (--check-watches).
     """
 
     __tablename__ = "stock_events"
@@ -220,7 +261,7 @@ class StockEvent(Base):
         nullable=False,
         comment="New availability state (True=restock, False=destock)",
     )
-    # NULL = online event (weekly scraper); non-NULL = in-store event (daily availability checker)
+    # NULL = online event; non-NULL = in-store event
     saq_store_id = Column(
         String,
         ForeignKey("stores.saq_store_id"),

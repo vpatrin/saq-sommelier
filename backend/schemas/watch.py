@@ -39,6 +39,9 @@ class PendingNotification(BaseModel):
     available: bool
     product_name: str | None
     detected_at: datetime
+    # NULL = online event, non-NULL = in-store event
+    saq_store_id: str | None = None
+    store_name: str | None = None
 
 
 class AckRequest(BaseModel):

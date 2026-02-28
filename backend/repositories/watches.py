@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
-from core.db.models import Product, StockEvent, Watch
-from sqlalchemy import select, update
+from core.db.models import Product, StockEvent, Store, UserStorePreference, Watch
+from sqlalchemy import and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import MAX_ACK_BATCH_SIZE
@@ -43,23 +43,47 @@ async def delete(db: AsyncSession, watch: Watch) -> None:
 
 async def find_pending_notifications(
     db: AsyncSession,
-) -> list[tuple[StockEvent, Watch, Product | None]]:
-    """Return all pending stock event notifications (events x watches), with product data."""
-    stmt = (
+) -> list[tuple[StockEvent, Watch, Product | None, Store | None]]:
+    """Return pending notifications — online to all watchers, store to preference matches."""
+    # Online events (saq_store_id IS NULL) — notify all watchers
+    online_stmt = (
         select(StockEvent, Watch, Product)
-        # Only events where someone is watching that SKU
         .join(Watch, StockEvent.sku == Watch.sku)
-        # Attach product info if available
         .outerjoin(Product, StockEvent.sku == Product.sku)
-        # Skip already-notified events
         .where(StockEvent.processed_at.is_(None))
-        # Oldest first (FIFO)
+        .where(StockEvent.saq_store_id.is_(None))
         .order_by(StockEvent.detected_at.asc())
-        # Match MAX_ACK_BATCH_SIZE — bot can ack everything it receives in one call
         .limit(MAX_ACK_BATCH_SIZE)
     )
-    result = await db.execute(stmt)
-    return list(result.all())
+    online_rows = (await db.execute(online_stmt)).all()
+
+    # Store events (saq_store_id IS NOT NULL) — route via UserStorePreference
+    store_stmt = (
+        select(StockEvent, Watch, Product, Store)
+        .join(Watch, StockEvent.sku == Watch.sku)
+        .join(
+            UserStorePreference,
+            and_(
+                Watch.user_id == UserStorePreference.user_id,
+                StockEvent.saq_store_id == UserStorePreference.saq_store_id,
+            ),
+        )
+        .outerjoin(Product, StockEvent.sku == Product.sku)
+        .outerjoin(Store, StockEvent.saq_store_id == Store.saq_store_id)
+        .where(StockEvent.processed_at.is_(None))
+        .where(StockEvent.saq_store_id.isnot(None))
+        .order_by(StockEvent.detected_at.asc())
+        .limit(MAX_ACK_BATCH_SIZE)
+    )
+    store_rows = (await db.execute(store_stmt)).all()
+
+    # Merge: pad online rows with None store to match unified return type
+    results: list[tuple[StockEvent, Watch, Product | None, Store | None]] = [
+        (event, watch, product, None) for event, watch, product in online_rows
+    ]
+    results.extend(store_rows)
+    results.sort(key=lambda r: r[0].detected_at)
+    return results[:MAX_ACK_BATCH_SIZE]
 
 
 async def ack_events(db: AsyncSession, event_ids: list[int]) -> int:

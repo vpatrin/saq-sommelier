@@ -58,8 +58,10 @@ async def list_pending_notifications(db: AsyncSession) -> list[PendingNotificati
             available=event.available,
             product_name=product.name if product else None,
             detected_at=event.detected_at,
+            saq_store_id=event.saq_store_id,
+            store_name=store.name if store else None,
         )
-        for event, watch, product in rows
+        for event, watch, product, store in rows
     ]
 
 
