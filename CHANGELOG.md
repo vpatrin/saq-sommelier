@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Per-product store availability checker — daily alerts for watched wines at preferred stores (#149)
 - `/mystores` bot command — GPS-based store picker with inline toggle keyboard (#233)
 - `/stores/nearby` endpoint — returns nearest SAQ stores sorted by GPS distance (#232)
 - User store preferences CRUD — `/users/{id}/stores` add, list, and remove preferred stores (#232)
