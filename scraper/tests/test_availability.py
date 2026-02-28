@@ -297,17 +297,20 @@ class TestRunAvailabilityCheck:
         mock_emit.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_no_online_event_on_first_check(self) -> None:
-        """First check (old_online=None) should not emit online event."""
+    async def test_no_events_on_first_check(self) -> None:
+        """First check (old_online=None) establishes baseline — no events emitted."""
         client = AsyncMock(spec=httpx.AsyncClient)
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
             patch("src.availability.get_watched_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
-            patch("src.availability.fetch_store_availability", return_value={}),
+            patch(
+                "src.availability.fetch_store_availability",
+                return_value={"23009": 44, "23132": 12},
+            ),
             patch("src.availability.get_product_availability", return_value=(None, {})),
-            patch("src.availability.upsert_product_availability"),
+            patch("src.availability.upsert_product_availability") as mock_upsert,
             patch("src.availability.emit_stock_event") as mock_emit,
             patch("src.availability.asyncio.sleep"),
         ):
@@ -315,6 +318,10 @@ class TestRunAvailabilityCheck:
 
         assert events == 0
         mock_emit.assert_not_called()
+        # Snapshot is still saved — baseline for next run
+        mock_upsert.assert_called_once_with(
+            "15483332", online_available=True, store_qty={"23009": 44, "23132": 12}
+        )
 
     @pytest.mark.asyncio
     async def test_aborts_when_graphql_resolves_nothing(self) -> None:

@@ -4,7 +4,7 @@
 -include .env
 export
 
-.PHONY: install dev-backend dev-bot dev-scraper migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit build-backend build-scraper build-bot build run run-db run-scraper down clean
+.PHONY: install dev-backend dev-bot dev-scraper check-watches migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit build-backend build-scraper build-bot build run run-db run-scraper down clean
 
 install:
 	git config core.hooksPath .githooks
@@ -21,6 +21,9 @@ dev-bot:
 
 dev-scraper:
 	cd scraper && poetry run python -m src
+
+check-watches:
+	cd scraper && poetry run python -m src --check-watches
 
 # Database migrations
 migrate:

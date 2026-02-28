@@ -134,49 +134,88 @@ async def run_availability_check(client: httpx.AsyncClient) -> int:
     if unresolved:
         logger.warning("Could not resolve {} SKUs: {}", len(unresolved), unresolved)
 
-    events_emitted = 0
+    online_restocks = 0
+    online_destocks = 0
+    store_restocks = 0
+    store_destocks = 0
+    baselines = 0
+    errors = 0
+    total = len(graphql_products)
 
-    for sku, gql in graphql_products.items():
+    for i, (sku, gql) in enumerate(graphql_products.items(), 1):
+        logger.info("[{}/{}] {} ({})", i, total, sku, gql.stock_status)
+
         try:
             # What's currently in DB
             old_online, old_qty = await get_product_availability(sku)
             new_online = gql.stock_status == "IN_STOCK"
+            is_first_check = old_online is None
 
             # Online availability diff
-            if old_online is not None and old_online != new_online:
+            if not is_first_check and old_online != new_online:
                 await emit_stock_event(sku, available=new_online)
-                events_emitted += 1
+                if new_online:
+                    online_restocks += 1
+                else:
+                    online_destocks += 1
                 label = "RESTOCK" if new_online else "DESTOCK"
                 logger.info("{} (online): {}", label, sku)
 
             # Store availability — ALWAYS check, regardless of online stock_status.
             # Stores can carry stock when online is OUT_OF_STOCK (verified with SKU 880500).
             new_qty = await fetch_store_availability(client, gql.magento_id)
+            logger.info("  {} stores carrying stock", len(new_qty))
 
-            # Store diff: detect restocks and destocks per store
-            all_stores = set(old_qty.keys()) | set(new_qty.keys())
-            for store_id in all_stores:
-                old_val = old_qty.get(store_id, 0)
-                new_val = new_qty.get(store_id, 0)
+            # Store diff: only emit events if we have a baseline (not first check).
+            # First check establishes the snapshot — no diff to compare.
+            if is_first_check:
+                baselines += 1
+            else:
+                all_stores = set(old_qty.keys()) | set(new_qty.keys())
+                for store_id in all_stores:
+                    old_val = old_qty.get(store_id, 0)
+                    new_val = new_qty.get(store_id, 0)
 
-                if old_val == 0 and new_val > 0:
-                    await emit_stock_event(sku, available=True, saq_store_id=store_id)
-                    events_emitted += 1
-                    logger.info("RESTOCK: {} at store {} ({} bottles)", sku, store_id, new_val)
-                elif old_val > 0 and new_val == 0:
-                    await emit_stock_event(sku, available=False, saq_store_id=store_id)
-                    events_emitted += 1
-                    logger.info("DESTOCK: {} at store {} (was {} bottles)", sku, store_id, old_val)
+                    if old_val == 0 and new_val > 0:
+                        await emit_stock_event(sku, available=True, saq_store_id=store_id)
+                        store_restocks += 1
+                        logger.info("RESTOCK: {} at store {} ({} bottles)", sku, store_id, new_val)
+                    elif old_val > 0 and new_val == 0:
+                        await emit_stock_event(sku, available=False, saq_store_id=store_id)
+                        store_destocks += 1
+                        logger.info(
+                            "DESTOCK: {} at store {} (was {} bottles)", sku, store_id, old_val
+                        )
 
             await upsert_product_availability(sku, online_available=new_online, store_qty=new_qty)
         except SQLAlchemyError:
+            errors += 1
             logger.error("DB error processing SKU {} — skipping", sku)
 
         await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
 
+    events_emitted = online_restocks + online_destocks + store_restocks + store_destocks
     logger.info(
-        "Availability check complete: {} SKUs checked, {} events emitted",
-        len(graphql_products),
+        "Availability check complete:\n"
+        "  Watched SKUs: {}\n"
+        "  Resolved: {}\n"
+        "  Unresolved: {}\n"
+        "  First-check baselines: {}\n"
+        "  Online restocks: {}\n"
+        "  Online destocks: {}\n"
+        "  Store restocks: {}\n"
+        "  Store destocks: {}\n"
+        "  Total events: {}\n"
+        "  Errors: {}",
+        len(skus),
+        total,
+        len(skus) - total,
+        baselines,
+        online_restocks,
+        online_destocks,
+        store_restocks,
+        store_destocks,
         events_emitted,
+        errors,
     )
     return events_emitted
