@@ -86,10 +86,12 @@ Paginated JSON endpoint. Requires `X-Requested-With: XMLHttpRequest` header.
 | `context` | No | (none) | Set `"product"` for per-product stock. Without it: all 401 stores, no `qty` field |
 | `id` | No | (none) | **Magento ID** (from GraphQL `id` field), not SKU. Only meaningful with `context=product` |
 | `loaded` | No | `0` | Pagination offset. Increment by 10 (page size is hardcoded server-side, cannot be overridden) |
-| `latitude` / `longitude` | No | (none) | Sort by proximity. Same results, different order |
+| `latitude` / `longitude` | No | (none) | Sort by proximity — **targeted fetch key** (see below) |
 | `fastly_geolocate` | No | (none) | CDN auto-detect IP for proximity sort. **Not used** — irrelevant from VPS |
 
-Tested and rejected: `limit`, `pageSize`, `count` — all ignored by the server. Page size is fixed at 10.
+Tested and rejected: `limit`, `pageSize`, `count`, `radius`, `store_id`, `identifier`, `postal_code`, `zip` — all ignored by the server. Page size is fixed at 10. No single-store filtering exists.
+
+**Targeted store fetch (optimization):** Pass a store's own lat/lng coordinates — that store appears first in results. One request per (product × store) instead of paginating through all ~112 stores. With 3 preferred stores: 3 requests vs ~11 pages per product.
 
 **Store directory mode** (no `context`/`id`):
 
@@ -299,7 +301,7 @@ for sku, gql in graphql_products.items():
 # Store events (saq_store_id IS NOT NULL) → route via UserStorePreference JOIN
 ```
 
-**Scale:** ~50 SKUs × GraphQL batch (~3 calls) + all SKUs × AJAX pages (varies: 2-30 pages per SKU depending on distribution).
+**Scale (with targeted fetch):** ~50 SKUs × GraphQL batch (~3 calls) + per SKU × target stores AJAX (1 request per store). With 3 preferred stores: 50 × 3 = 150 requests vs 50 × ~11 pages = 550.
 
 **Notification format:**
 

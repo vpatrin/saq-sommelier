@@ -107,6 +107,63 @@ The scraper programmatically enforces SAQ's `robots.txt` rules:
 
 ---
 
+## Availability checker
+
+Daily job that checks online and in-store availability for watched SKUs. Separate from the weekly product scrape — runs as `python -m src --check-watches`.
+
+### How it works
+
+1. Loads all watched SKUs (`SELECT DISTINCT sku FROM watches`)
+2. Batch-resolves Magento IDs + `stock_status` via GraphQL (batches of 20)
+3. For each SKU: fetches per-store quantities via AJAX, diffs against previous snapshot
+4. Emits `StockEvent` rows on transitions (online restock/destock, per-store restock/destock)
+5. Upserts `product_availability` with the new snapshot
+6. Purges stock events older than 7 days
+
+Exits immediately if no watched SKUs exist. See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API details and routing logic.
+
+### Scheduling and operations
+
+Runs daily at 2am via systemd timer, one hour before the DB backup (3am).
+
+Source files: [`deploy/saq-watches.service`](../deploy/saq-watches.service) and [`deploy/saq-watches.timer`](../deploy/saq-watches.timer).
+
+```bash
+# Install
+sudo cp deploy/saq-watches.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now saq-watches.timer
+
+# Status and logs
+systemctl status saq-watches.timer
+journalctl -u saq-watches.service -n 50 --no-pager
+
+# Manual trigger
+sudo systemctl start saq-watches.service
+```
+
+### Running locally
+
+```bash
+cd scraper && poetry run python -m src --check-watches
+```
+
+Requires a running PostgreSQL with at least one watch in the `watches` table. Without watched SKUs, it exits immediately.
+
+### Resilience
+
+The checker is **idempotent**. If it crashes mid-run, the next run re-diffs from the last saved snapshot. Worst case: a missed transition gets detected 24 hours late.
+
+Same no-auto-retry policy as the scraper — if SAQ is down, the next daily run catches up.
+
+### Runtime estimate
+
+With targeted store fetching (lat/lng): ~50 SKUs × 3 preferred stores = 150 AJAX requests + 3 GraphQL calls at 2s rate limit = **~5 minutes**.
+
+Without targeting (full pagination): ~50 SKUs × ~11 pages = 550 AJAX requests = **~18 minutes**.
+
+---
+
 ## Migrations
 
 ### Applying migrations

@@ -89,12 +89,35 @@ See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API reference
 - [x] Per-product store availability checker — GraphQL resolve + AJAX fetch + diff alerts (#149)
 - ~~Filter by store availability (#150)~~ — out of scope, SAQ.com does this natively
 
-### Phase 5c — Bilingual Support
+### Phase 5c — Watch UX
+
+- [ ] Auto-detect pasted SAQ URLs — prompt "Watch this?" without `/watch` command
+- [ ] Inline unwatch buttons on `/alerts` list (#240)
+- [ ] Deep links — `t.me/bot?start=watch_{sku}` for external watch triggers
+
+### Phase 5d — Bilingual Support
 
 - [ ] Per-user language preference (FR default, EN opt-in) (#134)
 - [ ] Static translation tables for structured fields (#151)
 - [ ] Bilingual bot responses, button labels, and help text (#152)
 - [ ] Bilingual formatters (#153)
+
+### Phase 5e — Discovery Rework (`/new` + `/random`)
+
+Fix `/new` and `/random` so they solve real user problems instead of being demo placeholders.
+
+**Phase 1 — Fix the basics:**
+
+- [ ] Fix `/new` sort — use `created_at DESC` instead of `updated_at DESC` (current sort shows re-scrape order, not actual new arrivals)
+- [ ] Richer product cards — show grape, region, country below the name/price line
+- [ ] Default `/random` to wine categories only (not whisky, beer, sake, etc.)
+- [ ] "🔄 Another" button on `/random` — re-roll without retyping the command
+
+**Phase 2 — Make them useful:**
+
+- [ ] Timeframe filter on `/new` — 7j / 30j / 90j buttons to scope "new since when"
+- [ ] Inline "👁 Watch" button on product cards — one tap to watch from `/new` or `/random`
+- [ ] Budget-aware defaults — remember last-used price filter per user
 
 ### Phase 6 — AI Layer (RAG + Claude)
 
@@ -117,6 +140,7 @@ See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API reference
 - [ ] `/digest` — weekly curated new arrivals summary, personalized to group preferences (#120)
 - [ ] Rating aggregator — enrich products with Vivino scores and critic ratings; fuzzy name matching
 - [ ] Price comparison vs France — compare SAQ prices to French retail (Wine-Searcher, Vinatis)
+- [ ] Chrome extension — floating "Watch" button on SAQ product pages, triggers deep link to bot
 
 ---
 
