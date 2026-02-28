@@ -168,6 +168,22 @@ class TestFormatRestockNotification:
         result = format_restock_notification(notif)
         assert "10327701" in result
 
+    def test_with_store_name(self):
+        notif = {
+            "sku": "10327701",
+            "product_name": "Mouton Cadet",
+            "store_name": "Du Parc - Fairmount Ouest",
+        }
+        result = format_restock_notification(notif)
+        assert "Back in stock at *Du Parc - Fairmount Ouest*" in result
+        assert "[Mouton Cadet](https://www.saq.com/fr/10327701)" in result
+
+    def test_online_event_no_store(self):
+        notif = {"sku": "10327701", "product_name": "Mouton Cadet", "store_name": None}
+        result = format_restock_notification(notif)
+        assert "Back in stock:" in result
+        assert "at *" not in result
+
 
 class TestFormatDestockNotification:
     def test_with_product_name(self):
@@ -181,3 +197,18 @@ class TestFormatDestockNotification:
         result = format_destock_notification(notif)
         assert "Out of stock" in result
         assert "10327701" in result
+
+    def test_with_store_name(self):
+        notif = {
+            "sku": "10327701",
+            "product_name": "Mouton Cadet",
+            "store_name": "Marché Atwater",
+        }
+        result = format_destock_notification(notif)
+        assert "Out of stock at *Marché Atwater*" in result
+
+    def test_online_event_no_store(self):
+        notif = {"sku": "10327701", "product_name": "Mouton Cadet", "store_name": None}
+        result = format_destock_notification(notif)
+        assert "Out of stock:" in result
+        assert "at *" not in result
