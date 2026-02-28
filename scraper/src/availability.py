@@ -127,8 +127,8 @@ async def run_availability_check(client: httpx.AsyncClient) -> int:
 
     graphql_products = await resolve_graphql_products(client, skus)
     if not graphql_products:
-        logger.warning("GraphQL resolved 0 products — aborting")
-        return 0
+        msg = f"GraphQL resolved 0 of {len(skus)} watched SKUs — aborting"
+        raise RuntimeError(msg)
 
     unresolved = set(skus) - set(graphql_products.keys())
     if unresolved:

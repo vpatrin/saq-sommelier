@@ -324,13 +324,12 @@ class TestRunAvailabilityCheck:
         )
 
     @pytest.mark.asyncio
-    async def test_aborts_when_graphql_resolves_nothing(self) -> None:
+    async def test_raises_when_graphql_resolves_nothing(self) -> None:
         client = AsyncMock(spec=httpx.AsyncClient)
 
         with (
             patch("src.availability.get_watched_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value={}),
+            pytest.raises(RuntimeError, match="resolved 0 of 1"),
         ):
-            events = await run_availability_check(client)
-
-        assert events == 0
+            await run_availability_check(client)
