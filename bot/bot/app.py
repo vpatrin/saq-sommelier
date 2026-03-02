@@ -17,6 +17,7 @@ from bot.config import (
     CALLBACK_PREFIX,
     CALLBACK_STORE_DONE,
     CALLBACK_STORE_PREFIX,
+    CALLBACK_WATCH_PREFIX,
     CMD_ALERTS,
     CMD_HELP,
     CMD_MYSTORES,
@@ -45,7 +46,7 @@ from bot.handlers.new import new_command
 from bot.handlers.notifications import poll_notifications
 from bot.handlers.random import random_command
 from bot.handlers.start import help_command, start
-from bot.handlers.watch import alerts_command, unwatch_command, watch_command
+from bot.handlers.watch import alerts_command, unwatch_command, watch_command, watch_remove_callback
 from bot.middleware import allowlist_gate, rate_limit_gate
 
 
@@ -115,7 +116,10 @@ def create_app() -> Application:
     app.add_handler(MessageHandler(filters.Text([MENU_STORES]), mystores_command))
     app.add_handler(MessageHandler(filters.Text([MENU_HELP]), help_command))
     app.add_handler(MessageHandler(filters.Text(["\u2190 Back"]), back_handler))
-    # Inline button callbacks — store selection ("s:") and product filters ("f:")
+    # Inline button callbacks — watch removal ("w:"), store selection ("s:"), product filters ("f:")
+    app.add_handler(
+        CallbackQueryHandler(watch_remove_callback, pattern=rf"^{CALLBACK_WATCH_PREFIX}rm:")
+    )
     app.add_handler(
         CallbackQueryHandler(store_toggle_callback, pattern=rf"^{CALLBACK_STORE_PREFIX}toggle:")
     )

@@ -11,6 +11,7 @@ from bot.config import (
     CALLBACK_STORE_DONE,
     CALLBACK_STORE_REMOVE,
     CALLBACK_STORE_TOGGLE,
+    CALLBACK_WATCH_REMOVE,
     MENU_ALERTS,
     MENU_HELP,
     MENU_NEW,
@@ -144,5 +145,21 @@ def build_saved_stores_keyboard(stores: list[dict[str, Any]]) -> InlineKeyboardM
         label = f"\u2716 {name} — {city}" if city else f"\u2716 {name}"
         rows.append(
             [InlineKeyboardButton(label, callback_data=f"{CALLBACK_STORE_REMOVE}{store_id}")]
+        )
+    return InlineKeyboardMarkup(rows)
+
+
+def build_watch_keyboard(watches: list[dict[str, Any]]) -> InlineKeyboardMarkup | None:
+    """Build inline keyboard with remove buttons for watched wines. None if empty."""
+    if not watches:
+        return None
+    rows: list[list[InlineKeyboardButton]] = []
+    for entry in watches:
+        watch = entry["watch"]
+        product = entry.get("product")
+        sku = watch["sku"]
+        name = (product or {}).get("name") or sku
+        rows.append(
+            [InlineKeyboardButton(f"\u2716 {name}", callback_data=f"{CALLBACK_WATCH_REMOVE}{sku}")]
         )
     return InlineKeyboardMarkup(rows)

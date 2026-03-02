@@ -78,6 +78,10 @@ CALLBACK_STORE_TOGGLE = f"{CALLBACK_STORE_PREFIX}toggle:"
 CALLBACK_STORE_REMOVE = f"{CALLBACK_STORE_PREFIX}rm:"
 CALLBACK_STORE_DONE = f"{CALLBACK_STORE_PREFIX}done"
 
+# Watch removal callbacks — shared between keyboards.py and watch handler
+CALLBACK_WATCH_PREFIX = "w:"
+CALLBACK_WATCH_REMOVE = f"{CALLBACK_WATCH_PREFIX}rm:"
+
 
 class PriceBucket(NamedTuple):
     min_price: int | None
