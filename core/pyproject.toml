@@ -16,7 +16,7 @@ loguru = ">=0.7"
 pydantic-settings = "^2.13"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.15.2"
+ruff = "^0.15.4"
 pip-audit = ">=2.7"
 
 [tool.ruff]
