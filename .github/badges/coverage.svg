@@ -18,8 +18,8 @@
     <text x="31.0" y="14">coverage</text>
     <text x="103.75" y="15" fill="#010101" fill-opacity=".3">backend 87%</text>
     <text x="103.75" y="14">backend 87%</text>
-    <text x="187.25" y="15" fill="#010101" fill-opacity=".3">scraper 78%</text>
-    <text x="187.25" y="14">scraper 78%</text>
+    <text x="187.25" y="15" fill="#010101" fill-opacity=".3">scraper 80%</text>
+    <text x="187.25" y="14">scraper 80%</text>
     <text x="257.75" y="15" fill="#010101" fill-opacity=".3">bot 93%</text>
     <text x="257.75" y="14">bot 93%</text>
   </g>
