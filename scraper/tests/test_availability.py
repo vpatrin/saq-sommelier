@@ -280,7 +280,7 @@ class TestRunAvailabilityCheck:
     async def test_skips_when_no_watched_skus(self) -> None:
         client = AsyncMock(spec=httpx.AsyncClient)
 
-        with patch("src.availability.get_watched_skus", return_value=[]):
+        with patch("src.availability.get_watchable_skus", return_value=[]):
             events = await run_availability_check(client)
 
         assert events == 0
@@ -291,7 +291,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value=_TARGET_STORES),
             patch(
@@ -320,7 +320,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value=_STORE_A),
             patch("src.availability.fetch_targeted_availability", return_value={"23009": 0}),
@@ -340,7 +340,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value={}),
             patch("src.availability.get_product_availability", return_value=(False, {})),
@@ -359,7 +359,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="OUT_OF_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value=_STORE_A),
             patch("src.availability.fetch_targeted_availability", return_value={"23009": 10}),
@@ -383,7 +383,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="OUT_OF_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value=_STORE_A),
             patch("src.availability.get_product_availability", return_value=(None, {})),
@@ -404,7 +404,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value=_STORE_A),
             patch("src.availability.fetch_targeted_availability", return_value={"23009": 10}),
@@ -425,7 +425,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value=_TARGET_STORES),
             patch(
@@ -451,7 +451,7 @@ class TestRunAvailabilityCheck:
         client = AsyncMock(spec=httpx.AsyncClient)
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value={}),
             pytest.raises(RuntimeError, match="resolved 0 of 1"),
         ):
@@ -464,7 +464,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value={}),
             patch("src.availability.get_product_availability", return_value=(False, {})),
@@ -485,7 +485,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value=_TARGET_STORES),
             patch(
@@ -510,7 +510,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status=None)}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value=_STORE_A),
             patch(
@@ -540,7 +540,7 @@ class TestRunAvailabilityCheck:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             # Only store 23009 in preferences now (23132 removed)
             patch("src.availability.get_watched_store_coords", return_value=_STORE_A),
@@ -568,7 +568,7 @@ class TestFailedEvents:
         gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
 
         with (
-            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.get_watchable_skus", return_value=["15483332"]),
             patch("src.availability.resolve_graphql_products", return_value=gql),
             patch("src.availability.get_watched_store_coords", return_value={}),
             patch("src.availability.get_product_availability", return_value=(False, {})),

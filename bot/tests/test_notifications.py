@@ -18,6 +18,7 @@ def _notif(**overrides):
         "saq_store_id": None,
         "store_name": None,
         "online_available": True,
+        "delisted": False,
     }
     defaults.update(overrides)
     return defaults
@@ -188,3 +189,33 @@ async def test_poll_skips_unknown_user_id_format(context, api):
     context.bot.send_message.assert_not_called()
     # Acked to prevent infinite re-fetch — unsendable notifications must not block the queue
     api.ack_notifications.assert_called_once_with([1])
+
+
+# ── Delist notifications ──────────────────────────────────────
+
+
+async def test_poll_delist_sends_removed_from_catalog(context, api):
+    api.get_pending_notifications.side_effect = [
+        [_notif(available=False, delisted=True)],
+        [],
+    ]
+
+    await poll_notifications(context)
+
+    text = context.bot.send_message.call_args[1]["text"]
+    assert "removed from SAQ" in text
+    assert "Mouton Cadet" in text
+
+
+async def test_poll_delist_not_grouped_with_destock(context, api):
+    """A delist and a destock for the same SKU produce two separate messages."""
+    batch = [
+        _notif(event_id=1, available=False, delisted=False),
+        _notif(event_id=2, available=False, delisted=True),
+    ]
+    api.get_pending_notifications.side_effect = [batch, []]
+
+    await poll_notifications(context)
+
+    assert context.bot.send_message.call_count == 2
+    api.ack_notifications.assert_called_once_with([1, 2])

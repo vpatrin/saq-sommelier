@@ -6,7 +6,7 @@ from telegram.ext import ContextTypes
 
 from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
 from bot.config import USER_ID_PREFIX
-from bot.formatters import format_stock_notification
+from bot.formatters import format_delist_notification, format_stock_notification
 
 
 def _parse_user_id(user_id: str) -> int | None:
@@ -30,18 +30,20 @@ async def _process_batch(api: BackendClient, context: ContextTypes.DEFAULT_TYPE)
 
     acked_ids: list[int] = []
 
-    # Group by (chat_id, sku, available) — one message per product per direction
-    groups: dict[tuple[int, str, bool], list[dict]] = defaultdict(list)
+    # Group by (chat_id, sku, available, delisted) — one message per product per direction
+    groups: dict[tuple[int, str, bool, bool], list[dict]] = defaultdict(list)
     for notif in notifications:
         chat_id = _parse_user_id(notif["user_id"])
         if chat_id is None:
             logger.warning("Skipping notification with unknown user_id: {}", notif["user_id"])
             acked_ids.append(notif["event_id"])
             continue
-        groups[(chat_id, notif["sku"], notif["available"])].append(notif)
+        groups[(chat_id, notif["sku"], notif["available"], notif.get("delisted", False))].append(
+            notif
+        )
 
-    for (chat_id, _sku, _available), group in groups.items():
-        text = format_stock_notification(group)
+    for (chat_id, _sku, _available, _delisted), group in groups.items():
+        text = format_delist_notification(group[0]) if _delisted else format_stock_notification(group)
         try:
             await context.bot.send_message(
                 chat_id=chat_id, text=text, parse_mode="Markdown", disable_web_page_preview=True

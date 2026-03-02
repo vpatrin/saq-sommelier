@@ -17,8 +17,10 @@ from .constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
 from .db import (
     clear_delisted,
     delete_old_stock_events,
+    emit_stock_event,
     get_delisted_skus,
     get_updated_dates,
+    get_watched_skus,
     mark_delisted,
     upsert_product,
     upsert_stores,
@@ -168,6 +170,12 @@ async def _detect_delists(sitemap_skus: set[str], db_skus: set[str]) -> tuple[in
         delisted = await mark_delisted(to_delist)
         if delisted:
             logger.info("Marked {} products as delisted", delisted)
+
+        if to_delist:
+            watched = set(await get_watched_skus())
+            for sku in to_delist & watched:
+                await emit_stock_event(sku, available=False)
+                logger.info("Emitted delist event for watched SKU {}", sku)
 
         currently_delisted = await get_delisted_skus()
         to_relist = currently_delisted & sitemap_skus

@@ -10,7 +10,7 @@ from .config import settings
 from .db import (
     emit_stock_event,
     get_product_availability,
-    get_watched_skus,
+    get_watchable_skus,
     get_watched_store_coords,
     upsert_product_availability,
 )
@@ -176,7 +176,7 @@ async def run_availability_check(client: httpx.AsyncClient) -> int:
 
     Returns the number of stock events emitted.
     """
-    skus = await get_watched_skus()
+    skus = await get_watchable_skus()
     if not skus:
         logger.info("No watched SKUs — skipping availability check")
         return 0

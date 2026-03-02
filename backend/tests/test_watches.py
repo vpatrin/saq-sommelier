@@ -49,6 +49,7 @@ def _fake_product(**overrides):
         producer=None,
         created_at=NOW,
         updated_at=NOW,
+        delisted_at=None,
     )
     defaults.update(overrides)
     return SimpleNamespace(**defaults)

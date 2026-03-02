@@ -30,7 +30,7 @@ class WatchWithProduct(BaseModel):
     product: ProductOut | None
 
 
-class PendingNotification(BaseModel):
+class NotificationOut(BaseModel):
     """One user×event pair — grouped by (user, sku) on the bot side for sending."""
 
     event_id: int
@@ -44,6 +44,8 @@ class PendingNotification(BaseModel):
     store_name: str | None = None
     # Current online availability from products table (independent of event type)
     online_available: bool | None = None
+    # True when the product was removed from SAQ's catalog (delisted_at is set on Product)
+    delisted: bool = False
 
 
 class AckIn(BaseModel):
