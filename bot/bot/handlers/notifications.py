@@ -43,7 +43,9 @@ async def _process_batch(api: BackendClient, context: ContextTypes.DEFAULT_TYPE)
         )
 
     for (chat_id, _sku, _available, _delisted), group in groups.items():
-        text = format_delist_notification(group[0]) if _delisted else format_stock_notification(group)
+        text = (
+            format_delist_notification(group[0]) if _delisted else format_stock_notification(group)
+        )
         try:
             await context.bot.send_message(
                 chat_id=chat_id, text=text, parse_mode="Markdown", disable_web_page_preview=True
