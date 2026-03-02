@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from bot.handlers.watch import _do_watch
 from bot.keyboards import MAIN_MENU
 
 HELP_TEXT = (
@@ -22,6 +23,10 @@ HELP_TEXT = (
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if context.args and context.args[0].startswith("watch_"):
+        sku = context.args[0].removeprefix("watch_")
+        await _do_watch(update, context, sku)
+        return
     await update.message.reply_text(
         HELP_TEXT,
         parse_mode="Markdown",

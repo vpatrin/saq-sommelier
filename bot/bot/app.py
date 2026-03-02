@@ -17,7 +17,9 @@ from bot.config import (
     CALLBACK_PREFIX,
     CALLBACK_STORE_DONE,
     CALLBACK_STORE_PREFIX,
+    CALLBACK_WATCH_CONFIRM,
     CALLBACK_WATCH_PREFIX,
+    CALLBACK_WATCH_SKIP,
     CMD_ALERTS,
     CMD_HELP,
     CMD_MYSTORES,
@@ -46,6 +48,7 @@ from bot.handlers.new import new_command
 from bot.handlers.notifications import poll_notifications
 from bot.handlers.random import random_command
 from bot.handlers.start import help_command, start
+from bot.handlers.url_paste import url_paste_handler, watch_confirm_callback, watch_skip_callback
 from bot.handlers.watch import alerts_command, unwatch_command, watch_command, watch_remove_callback
 from bot.middleware import allowlist_gate, rate_limit_gate
 
@@ -116,10 +119,21 @@ def create_app() -> Application:
     app.add_handler(MessageHandler(filters.Text([MENU_STORES]), mystores_command))
     app.add_handler(MessageHandler(filters.Text([MENU_HELP]), help_command))
     app.add_handler(MessageHandler(filters.Text(["\u2190 Back"]), back_handler))
+    # SAQ URL paste — detect product links in messages and offer a Watch prompt
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND & filters.Regex(r"saq\.com/(?:fr|en)/\d+"),
+            url_paste_handler,
+        )
+    )
     # Inline button callbacks — watch removal ("w:"), store selection ("s:"), product filters ("f:")
     app.add_handler(
         CallbackQueryHandler(watch_remove_callback, pattern=rf"^{CALLBACK_WATCH_PREFIX}rm:")
     )
+    app.add_handler(
+        CallbackQueryHandler(watch_confirm_callback, pattern=rf"^{CALLBACK_WATCH_CONFIRM}")
+    )
+    app.add_handler(CallbackQueryHandler(watch_skip_callback, pattern=rf"^{CALLBACK_WATCH_SKIP}$"))
     app.add_handler(
         CallbackQueryHandler(store_toggle_callback, pattern=rf"^{CALLBACK_STORE_PREFIX}toggle:")
     )

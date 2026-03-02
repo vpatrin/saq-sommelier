@@ -53,13 +53,8 @@ async def _send_watch_list(update: Update, api: BackendClient, user_id: str) -> 
     await _render_watch_list(update, watches)
 
 
-async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle /watch <sku> — subscribe to availability alerts for a product."""
-    sku = _parse_sku(context)
-    if not sku:
-        await update.message.reply_text("Usage: /watch `<sku or URL>`", parse_mode="Markdown")
-        return
-
+async def _do_watch(update: Update, context: ContextTypes.DEFAULT_TYPE, sku: str) -> None:
+    """Watch a product by SKU — shared by /watch and the deeplink handler."""
     api: BackendClient = context.bot_data["api"]
     user_id = _user_id(update)
 
@@ -83,6 +78,15 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
 
     await _send_watch_list(update, api, user_id)
+
+
+async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /watch <sku> — subscribe to availability alerts for a product."""
+    sku = _parse_sku(context)
+    if not sku:
+        await update.message.reply_text("Usage: /watch `<sku or URL>`", parse_mode="Markdown")
+        return
+    await _do_watch(update, context, sku)
 
 
 async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

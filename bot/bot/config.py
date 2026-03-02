@@ -78,9 +78,11 @@ CALLBACK_STORE_TOGGLE = f"{CALLBACK_STORE_PREFIX}toggle:"
 CALLBACK_STORE_REMOVE = f"{CALLBACK_STORE_PREFIX}rm:"
 CALLBACK_STORE_DONE = f"{CALLBACK_STORE_PREFIX}done"
 
-# Watch removal callbacks — shared between keyboards.py and watch handler
+# Watch callbacks — shared between keyboards.py, watch handler, and url_paste handler
 CALLBACK_WATCH_PREFIX = "w:"
 CALLBACK_WATCH_REMOVE = f"{CALLBACK_WATCH_PREFIX}rm:"
+CALLBACK_WATCH_CONFIRM = f"{CALLBACK_WATCH_PREFIX}confirm:"
+CALLBACK_WATCH_SKIP = f"{CALLBACK_WATCH_PREFIX}skip"
 
 
 class PriceBucket(NamedTuple):

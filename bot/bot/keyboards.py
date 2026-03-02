@@ -11,7 +11,9 @@ from bot.config import (
     CALLBACK_STORE_DONE,
     CALLBACK_STORE_REMOVE,
     CALLBACK_STORE_TOGGLE,
+    CALLBACK_WATCH_CONFIRM,
     CALLBACK_WATCH_REMOVE,
+    CALLBACK_WATCH_SKIP,
     MENU_ALERTS,
     MENU_HELP,
     MENU_NEW,
@@ -147,6 +149,20 @@ def build_saved_stores_keyboard(stores: list[dict[str, Any]]) -> InlineKeyboardM
             [InlineKeyboardButton(label, callback_data=f"{CALLBACK_STORE_REMOVE}{store_id}")]
         )
     return InlineKeyboardMarkup(rows)
+
+
+def build_watch_prompt_keyboard(sku: str) -> InlineKeyboardMarkup:
+    """Build Watch / Skip inline keyboard for URL paste prompts."""
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "Watch \U0001f514", callback_data=f"{CALLBACK_WATCH_CONFIRM}{sku}"
+                ),
+                InlineKeyboardButton("Skip \u2715", callback_data=CALLBACK_WATCH_SKIP),
+            ]
+        ]
+    )
 
 
 def build_watch_keyboard(watches: list[dict[str, Any]]) -> InlineKeyboardMarkup | None:
