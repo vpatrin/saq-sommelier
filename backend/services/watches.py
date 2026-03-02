@@ -6,7 +6,7 @@ from backend.exceptions import ConflictError, NotFoundError
 from backend.repositories import products as products_repo
 from backend.repositories import watches as repo
 from backend.schemas.product import ProductOut
-from backend.schemas.watch import PendingNotification, WatchOut, WatchWithProduct
+from backend.schemas.watch import NotificationOut, WatchOut, WatchWithProduct
 
 
 async def create_watch(db: AsyncSession, user_id: str, sku: str) -> WatchWithProduct:
@@ -53,11 +53,11 @@ async def delete_watch(db: AsyncSession, user_id: str, sku: str) -> None:
     await repo.delete(db, watch)
 
 
-async def list_pending_notifications(db: AsyncSession) -> list[PendingNotification]:
+async def list_pending_notifications(db: AsyncSession) -> list[NotificationOut]:
     """Return all pending stock event notifications across all users."""
     rows = await repo.find_pending_notifications(db)
     return [
-        PendingNotification(
+        NotificationOut(
             event_id=event.id,
             sku=event.sku,
             user_id=watch.user_id,
@@ -67,6 +67,7 @@ async def list_pending_notifications(db: AsyncSession) -> list[PendingNotificati
             saq_store_id=event.saq_store_id,
             store_name=store.name if store else None,
             online_available=product.availability if product else None,
+            delisted=product.delisted_at is not None if product else False,
         )
         for event, watch, product, store in rows
     ]

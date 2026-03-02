@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Programmatic robots.txt compliance — scraper filters disallowed URLs and aborts if robots.txt is unreachable (#196)
 - Paginated results with prev/next navigation buttons (#167)
 - Out-of-stock notifications — watched products now alert users when availability drops (#212)
+- Delist notifications — users watching a product are alerted when SAQ removes it from the catalog (#243)
 
 ### Changed
 

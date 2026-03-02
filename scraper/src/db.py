@@ -160,6 +160,19 @@ async def get_watched_skus() -> list[str]:
         return [row[0] for row in result.all()]
 
 
+async def get_watchable_skus() -> list[str]:
+    """Get watched SKUs for non-delisted products — for --check-watches availability polling."""
+    async with _SessionLocal() as session:
+        stmt = (
+            select(Watch.sku)
+            .join(Product, Watch.sku == Product.sku)
+            .where(Product.delisted_at.is_(None))
+            .distinct()
+        )
+        result = await session.execute(stmt)
+        return [row[0] for row in result.all()]
+
+
 async def get_watched_store_coords() -> dict[str, tuple[float, float]]:
     """Get coordinates for all stores in user preferences.
 

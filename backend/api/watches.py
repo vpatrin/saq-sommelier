@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import MAX_SKU_LENGTH, MAX_USER_ID_LENGTH
 from backend.db import get_db
-from backend.schemas.watch import AckIn, PendingNotification, WatchIn, WatchWithProduct
+from backend.schemas.watch import AckIn, NotificationOut, WatchIn, WatchWithProduct
 from backend.services.watches import (
     ack_notifications,
     create_watch,
@@ -33,10 +33,10 @@ async def get_watches(
     return await list_watches(db, user_id)
 
 
-@router.get("/notifications", response_model=list[PendingNotification])
+@router.get("/notifications", response_model=list[NotificationOut])
 async def get_pending_notifications(
     db: AsyncSession = Depends(get_db),
-) -> list[PendingNotification]:
+) -> list[NotificationOut]:
     """List all pending stock event notifications (for bot polling)."""
     return await list_pending_notifications(db)
 

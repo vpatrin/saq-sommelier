@@ -1,4 +1,5 @@
 from bot.formatters import (
+    format_delist_notification,
     format_product_line,
     format_product_list,
     format_stock_notification,
@@ -246,3 +247,22 @@ class TestFormatStockNotification:
         notifs = [_notif(saq_store_id="23009", store_name=None)]
         result = format_stock_notification(notifs)
         assert "\u2022 23009" in result
+
+
+class TestFormatDelistNotification:
+    def test_includes_product_name_and_link(self):
+        notif = _notif(available=False, delisted=True)
+        result = format_delist_notification(notif)
+        assert "Mouton Cadet" in result
+        assert "removed from SAQ" in result
+        assert "https://www.saq.com/fr/10327701" in result
+
+    def test_fallback_to_sku_when_no_name(self):
+        notif = _notif(available=False, delisted=True, product_name=None)
+        result = format_delist_notification(notif)
+        assert "10327701" in result
+
+    def test_keep_watch_message(self):
+        notif = _notif(available=False, delisted=True)
+        result = format_delist_notification(notif)
+        assert "watch" in result.lower()

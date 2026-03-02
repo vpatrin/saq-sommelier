@@ -23,6 +23,56 @@ def _make_store() -> StoreData:
     )
 
 
+class TestDetectDelists:
+    @pytest.mark.asyncio
+    async def test_emits_event_for_watched_delisted_sku(self) -> None:
+        from src.__main__ import _detect_delists
+
+        with (
+            patch("src.__main__.mark_delisted", AsyncMock(return_value=1)),
+            patch("src.__main__.get_watched_skus", AsyncMock(return_value=["10327701"])),
+            patch("src.__main__.emit_stock_event", AsyncMock()) as mock_emit,
+            patch("src.__main__.get_delisted_skus", AsyncMock(return_value=set())),
+            patch("src.__main__.clear_delisted", AsyncMock(return_value=0)),
+        ):
+            # sitemap lost "10327701" → to_delist = {"10327701"}
+            await _detect_delists(sitemap_skus=set(), db_skus={"10327701"})
+
+        mock_emit.assert_called_once_with("10327701", available=False)
+
+    @pytest.mark.asyncio
+    async def test_no_event_when_delisted_sku_not_watched(self) -> None:
+        from src.__main__ import _detect_delists
+
+        with (
+            patch("src.__main__.mark_delisted", AsyncMock(return_value=1)),
+            patch("src.__main__.get_watched_skus", AsyncMock(return_value=["OTHER"])),
+            patch("src.__main__.emit_stock_event", AsyncMock()) as mock_emit,
+            patch("src.__main__.get_delisted_skus", AsyncMock(return_value=set())),
+            patch("src.__main__.clear_delisted", AsyncMock(return_value=0)),
+        ):
+            await _detect_delists(sitemap_skus=set(), db_skus={"10327701"})
+
+        mock_emit.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_no_event_when_nothing_delisted(self) -> None:
+        from src.__main__ import _detect_delists
+
+        with (
+            patch("src.__main__.mark_delisted", AsyncMock(return_value=0)),
+            patch("src.__main__.get_watched_skus", AsyncMock()) as mock_watched,
+            patch("src.__main__.emit_stock_event", AsyncMock()) as mock_emit,
+            patch("src.__main__.get_delisted_skus", AsyncMock(return_value=set())),
+            patch("src.__main__.clear_delisted", AsyncMock(return_value=0)),
+        ):
+            # sitemap_skus == db_skus — nothing to delist
+            await _detect_delists({"10327701"}, {"10327701"})
+
+        mock_watched.assert_not_called()
+        mock_emit.assert_not_called()
+
+
 class TestScrapeStores:
     @pytest.mark.asyncio
     async def test_returns_exit_ok_on_success(self) -> None:

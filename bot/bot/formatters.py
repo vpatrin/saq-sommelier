@@ -78,6 +78,18 @@ def format_watch_list(watches: list[dict[str, Any]]) -> str:
     return f"{header}\n\n{'\n\n'.join(lines)}"
 
 
+def format_delist_notification(notif: dict[str, Any]) -> str:
+    """Format a delist alert — product removed from SAQ's catalog."""
+    sku = notif["sku"]
+    name = notif.get("product_name") or sku
+    url = f"{SAQ_BASE_URL}/{sku}"
+    return (
+        f"\U0001f6ab *{name}* has been removed from SAQ's catalog.\n"
+        f"Your watch is kept — you'll be notified if it returns.\n"
+        f"\U0001f517 [saq.com/{sku}]({url})"
+    )
+
+
 def format_stock_notification(notifications: list[dict[str, Any]]) -> str:
     """Format a grouped stock alert — one message per (user, product, direction)."""
     first = notifications[0]
