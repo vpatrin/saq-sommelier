@@ -1,8 +1,7 @@
 from bot.formatters import (
-    format_destock_notification,
     format_product_line,
     format_product_list,
-    format_restock_notification,
+    format_stock_notification,
     format_watch_list,
 )
 
@@ -156,59 +155,94 @@ class TestFormatWatchList:
         assert "since Jan 1" in result
 
 
-class TestFormatRestockNotification:
-    def test_with_product_name(self):
-        notif = {"sku": "10327701", "product_name": "Mouton Cadet"}
-        result = format_restock_notification(notif)
+def _notif(**overrides):
+    defaults = {
+        "sku": "10327701",
+        "product_name": "Mouton Cadet",
+        "available": True,
+        "saq_store_id": None,
+        "store_name": None,
+        "online_available": True,
+    }
+    defaults.update(overrides)
+    return defaults
+
+
+class TestFormatStockNotification:
+    def test_single_store_restock(self):
+        notifs = [_notif(saq_store_id="23009", store_name="Du Parc")]
+        result = format_stock_notification(notifs)
         assert "Back in stock" in result
         assert "[Mouton Cadet](https://www.saq.com/fr/10327701)" in result
+        assert "\u2022 Du Parc" in result
 
-    def test_without_product_name(self):
-        notif = {"sku": "10327701", "product_name": None}
-        result = format_restock_notification(notif)
+    def test_multiple_stores_restock(self):
+        notifs = [
+            _notif(saq_store_id="23009", store_name="Du Parc"),
+            _notif(saq_store_id="23010", store_name="Atwater"),
+        ]
+        result = format_stock_notification(notifs)
+        assert "Back in stock" in result
+        assert "\u2022 Du Parc" in result
+        assert "\u2022 Atwater" in result
+
+    def test_online_only_restock(self):
+        notifs = [_notif()]
+        result = format_stock_notification(notifs)
+        assert "Back in stock online" in result
+        assert "[Mouton Cadet]" in result
+        assert "\u2022" not in result
+
+    def test_online_only_destock(self):
+        notifs = [_notif(available=False)]
+        result = format_stock_notification(notifs)
+        assert "Out of stock online" in result
+
+    def test_store_restock_with_online_available(self):
+        notifs = [_notif(saq_store_id="23009", store_name="Du Parc", online_available=True)]
+        result = format_stock_notification(notifs)
+        assert "Also available online" in result
+
+    def test_store_destock_with_online_available(self):
+        notifs = [
+            _notif(
+                saq_store_id="23009",
+                store_name="Du Parc",
+                available=False,
+                online_available=True,
+            )
+        ]
+        result = format_stock_notification(notifs)
+        assert "Out of stock" in result
+        assert "Still available online" in result
+
+    def test_store_events_online_not_available(self):
+        notifs = [_notif(saq_store_id="23009", store_name="Du Parc", online_available=False)]
+        result = format_stock_notification(notifs)
+        assert "available online" not in result.lower()
+
+    def test_store_events_online_unknown(self):
+        notifs = [_notif(saq_store_id="23009", store_name="Du Parc", online_available=None)]
+        result = format_stock_notification(notifs)
+        assert "available online" not in result.lower()
+
+    def test_mixed_online_and_store(self):
+        notifs = [
+            _notif(),  # online event
+            _notif(saq_store_id="23009", store_name="Du Parc"),
+        ]
+        result = format_stock_notification(notifs)
+        assert "\u2022 Online" in result
+        assert "\u2022 Du Parc" in result
+        # No addendum — "Online" already in bullet list
+        assert "Also available online" not in result
+
+    def test_no_product_name_uses_sku(self):
+        notifs = [_notif(product_name=None)]
+        result = format_stock_notification(notifs)
         assert "10327701" in result
 
-    def test_with_store_name(self):
-        notif = {
-            "sku": "10327701",
-            "product_name": "Mouton Cadet",
-            "store_name": "Du Parc - Fairmount Ouest",
-        }
-        result = format_restock_notification(notif)
-        assert "Back in stock at *Du Parc - Fairmount Ouest*" in result
-        assert "[Mouton Cadet](https://www.saq.com/fr/10327701)" in result
-
-    def test_online_event_no_store(self):
-        notif = {"sku": "10327701", "product_name": "Mouton Cadet", "store_name": None}
-        result = format_restock_notification(notif)
-        assert "Back in stock:" in result
-        assert "at *" not in result
-
-
-class TestFormatDestockNotification:
-    def test_with_product_name(self):
-        notif = {"sku": "10327701", "product_name": "Mouton Cadet"}
-        result = format_destock_notification(notif)
-        assert "Out of stock" in result
-        assert "[Mouton Cadet](https://www.saq.com/fr/10327701)" in result
-
-    def test_without_product_name(self):
-        notif = {"sku": "10327701", "product_name": None}
-        result = format_destock_notification(notif)
-        assert "Out of stock" in result
-        assert "10327701" in result
-
-    def test_with_store_name(self):
-        notif = {
-            "sku": "10327701",
-            "product_name": "Mouton Cadet",
-            "store_name": "Marché Atwater",
-        }
-        result = format_destock_notification(notif)
-        assert "Out of stock at *Marché Atwater*" in result
-
-    def test_online_event_no_store(self):
-        notif = {"sku": "10327701", "product_name": "Mouton Cadet", "store_name": None}
-        result = format_destock_notification(notif)
-        assert "Out of stock:" in result
-        assert "at *" not in result
+    def test_store_name_fallback_to_store_id(self):
+        notifs = [_notif(saq_store_id="23009", store_name=None)]
+        result = format_stock_notification(notifs)
+        assert "\u2022 23009" in result

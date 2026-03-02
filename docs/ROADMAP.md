@@ -76,7 +76,7 @@ Backend endpoints driven by Telegram bot needs. See [specs/TELEGRAM_BOT.md](spec
 - [x] Paginated results with next/previous buttons (#167)
 - [x] Auto-recap watch list after /watch and /unwatch (#183)
 
-### Phase 5b — Store Availability
+### Phase 5b — Store Availability ✅
 
 See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API reference and engineering plan.
 

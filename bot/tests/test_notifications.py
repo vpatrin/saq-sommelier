@@ -14,6 +14,9 @@ def _notif(**overrides):
         "available": True,
         "product_name": "Mouton Cadet",
         "detected_at": "2026-01-01T00:00:00",
+        "saq_store_id": None,
+        "store_name": None,
+        "online_available": True,
     }
     defaults.update(overrides)
     return defaults
@@ -93,7 +96,7 @@ async def test_poll_restock_sends_back_in_stock(context, api):
     await poll_notifications(context)
 
     text = context.bot.send_message.call_args[1]["text"]
-    assert "Back in stock" in text
+    assert "Back in stock online" in text
     assert "Mouton Cadet" in text
 
 
@@ -103,8 +106,28 @@ async def test_poll_destock_sends_out_of_stock(context, api):
     await poll_notifications(context)
 
     text = context.bot.send_message.call_args[1]["text"]
-    assert "Out of stock" in text
+    assert "Out of stock online" in text
     assert "Mouton Cadet" in text
+
+
+# ── Grouping ─────────────────────────────────────────────────
+
+
+async def test_poll_groups_same_product(context, api):
+    """Two store events for same user+sku produce one message, both acked."""
+    batch = [
+        _notif(event_id=1, saq_store_id="23009", store_name="Du Parc"),
+        _notif(event_id=2, saq_store_id="23010", store_name="Atwater"),
+    ]
+    api.get_pending_notifications.side_effect = [batch, []]
+
+    await poll_notifications(context)
+
+    context.bot.send_message.assert_called_once()
+    text = context.bot.send_message.call_args[1]["text"]
+    assert "Du Parc" in text
+    assert "Atwater" in text
+    api.ack_notifications.assert_called_once_with([1, 2])
 
 
 # ── Product name missing ─────────────────────────────────────

@@ -31,7 +31,7 @@ class WatchWithProduct(BaseModel):
 
 
 class PendingNotification(BaseModel):
-    """One user×event pair — the bot sends one Telegram message per item."""
+    """One user×event pair — grouped by (user, sku) on the bot side for sending."""
 
     event_id: int
     sku: str
@@ -42,6 +42,8 @@ class PendingNotification(BaseModel):
     # NULL = online event, non-NULL = in-store event
     saq_store_id: str | None = None
     store_name: str | None = None
+    # Current online availability from products table (independent of event type)
+    online_available: bool | None = None
 
 
 class AckRequest(BaseModel):

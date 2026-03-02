@@ -78,26 +78,52 @@ def format_watch_list(watches: list[dict[str, Any]]) -> str:
     return f"{header}\n\n{'\n\n'.join(lines)}"
 
 
-def format_restock_notification(notification: dict[str, Any]) -> str:
-    """Format a proactive restock alert sent by the bot."""
-    sku = notification["sku"]
-    name = notification.get("product_name") or sku
+def format_stock_notification(notifications: list[dict[str, Any]]) -> str:
+    """Format a grouped stock alert — one message per (user, product, direction)."""
+    first = notifications[0]
+    sku = first["sku"]
+    name = first.get("product_name") or sku
     url = f"{SAQ_BASE_URL}/{sku}"
-    store_name = notification.get("store_name")
-    if store_name:
-        return f"\U0001f377 Back in stock at *{store_name}*: [{name}]({url})"
-    return f"\U0001f377 Back in stock: [{name}]({url})"
+    is_restock = first["available"]
+    online_available = first.get("online_available")
+
+    stores: list[str] = []
+    has_online_event = False
+    for n in notifications:
+        loc = _event_location(n)
+        if loc:
+            stores.append(loc)
+        else:
+            has_online_event = True
+
+    # Online-only — no bullet list
+    if not stores and has_online_event:
+        verb = "Back in stock online" if is_restock else "Out of stock online"
+        emoji = "\U0001f377" if is_restock else "\U0001f4e6"
+        return f"{emoji} {verb}: [{name}]({url})"
+
+    emoji = "\U0001f377" if is_restock else "\U0001f4e6"
+    verb = "Back in stock" if is_restock else "Out of stock"
+    lines = [f"{emoji} {verb}: [{name}]({url})"]
+
+    if has_online_event:
+        lines.append("  \u2022 Online")
+    for loc in stores:
+        lines.append(f"  \u2022 {loc}")
+
+    # Online availability hint when no online event in the group
+    if not has_online_event and online_available is True:
+        hint = "Also available online" if is_restock else "Still available online"
+        lines.append(f"\U0001f310 {hint}")
+
+    return "\n".join(lines)
 
 
-def format_destock_notification(notification: dict[str, Any]) -> str:
-    """Format a proactive destock alert sent by the bot."""
-    sku = notification["sku"]
-    name = notification.get("product_name") or sku
-    url = f"{SAQ_BASE_URL}/{sku}"
-    store_name = notification.get("store_name")
-    if store_name:
-        return f"\U0001f4e6 Out of stock at *{store_name}*: [{name}]({url})"
-    return f"\U0001f4e6 Out of stock: [{name}]({url})"
+def _event_location(n: dict[str, Any]) -> str | None:
+    """Return store name for store events, None for online events."""
+    if n.get("saq_store_id") is None:
+        return None
+    return n.get("store_name") or n["saq_store_id"]
 
 
 # ── Stores ────────────────────────────────────────────────────
