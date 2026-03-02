@@ -28,8 +28,9 @@ async def _send_watch_recap(update: Update, api: BackendClient, user_id: str) ->
     """Fetch and send the current watch list as a follow-up message."""
     try:
         watches = await api.list_watches(user_id)
-    except (BackendUnavailableError, BackendAPIError):
-        return  # non-critical — skip recap silently
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.debug("Skipping watch recap — backend unavailable: {}", exc)
+        return
     if watches:
         text = format_watch_list(watches)
         await update.message.reply_text(text, parse_mode="Markdown", disable_web_page_preview=True)
@@ -59,8 +60,8 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         logger.warning("Backend error during /watch: {}", exc)
         await update.message.reply_text("Something went wrong. Try again later.")
         return
-    except BackendUnavailableError:
-        logger.warning("Backend unavailable during /watch")
+    except BackendUnavailableError as exc:
+        logger.warning("Backend unavailable during /watch: {}", exc)
         await update.message.reply_text("Backend is currently unavailable. Try again later.")
         return
 
@@ -93,8 +94,8 @@ async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         logger.warning("Backend error during /unwatch: {}", exc)
         await update.message.reply_text("Something went wrong. Try again later.")
         return
-    except BackendUnavailableError:
-        logger.warning("Backend unavailable during /unwatch")
+    except BackendUnavailableError as exc:
+        logger.warning("Backend unavailable during /unwatch: {}", exc)
         await update.message.reply_text("Backend is currently unavailable. Try again later.")
         return
 
@@ -108,8 +109,8 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     try:
         watches = await api.list_watches(_user_id(update))
-    except (BackendUnavailableError, BackendAPIError):
-        logger.warning("Backend unavailable during /alerts")
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.warning("Backend unavailable during /alerts: {}", exc)
         await update.message.reply_text("Backend is currently unavailable. Try again later.")
         return
 

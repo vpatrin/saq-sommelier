@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from loguru import logger
+from telegram.error import TelegramError
 from telegram.ext import ContextTypes
 
 from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
@@ -20,8 +21,8 @@ async def _process_batch(api: BackendClient, context: ContextTypes.DEFAULT_TYPE)
     """Fetch one batch of notifications, group by product, send messages, ack."""
     try:
         notifications = await api.get_pending_notifications()
-    except (BackendUnavailableError, BackendAPIError):
-        logger.warning("Notification poll skipped — backend unavailable")
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.warning("Notification poll skipped — backend unavailable: {}", exc)
         return False
 
     if not notifications:
@@ -45,8 +46,8 @@ async def _process_batch(api: BackendClient, context: ContextTypes.DEFAULT_TYPE)
             await context.bot.send_message(
                 chat_id=chat_id, text=text, parse_mode="Markdown", disable_web_page_preview=True
             )
-        except Exception:
-            logger.warning("Failed to send notification to chat_id={}", chat_id)
+        except TelegramError as exc:
+            logger.warning("Failed to send notification to chat_id={}: {}", chat_id, exc)
 
         # Ack regardless — if send failed (user blocked bot), retrying forever is worse
         acked_ids.extend(n["event_id"] for n in group)
@@ -55,8 +56,8 @@ async def _process_batch(api: BackendClient, context: ContextTypes.DEFAULT_TYPE)
         try:
             await api.ack_notifications(acked_ids)
             logger.info("Acked {} event(s)", len(acked_ids))
-        except (BackendUnavailableError, BackendAPIError):
-            logger.warning("Failed to ack {} events — will retry next poll", len(acked_ids))
+        except (BackendUnavailableError, BackendAPIError) as exc:
+            logger.warning("Failed to ack {} events — will retry next poll: {}", len(acked_ids), exc)
             return False
 
     return True

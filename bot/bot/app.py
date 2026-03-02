@@ -5,12 +5,13 @@ from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
     CommandHandler,
+    ContextTypes,
     MessageHandler,
     TypeHandler,
     filters,
 )
 
-from bot.api_client import BackendClient
+from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
 from bot.categories import group_facets
 from bot.config import (
     CALLBACK_PREFIX,
@@ -60,9 +61,20 @@ async def _post_init(application: Application) -> None:
         application.bot_data["category_groups"] = group_facets(facets["categories"])
         group_count = len(application.bot_data["category_groups"])
         logger.info("Category groups loaded ({} active groups)", group_count)
-    except Exception:
-        logger.warning("Failed to fetch facets — category filters will use fallback")
+    except (BackendUnavailableError, BackendAPIError, KeyError, TypeError) as exc:
+        logger.warning("Failed to fetch facets — category filters will use fallback: {}", exc)
         application.bot_data["category_groups"] = {}
+
+
+async def _error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Log unhandled exceptions from bot handlers via loguru instead of stdlib logging."""
+    user_id = None
+    update_type = type(update).__name__
+    if isinstance(update, Update):
+        user_id = update.effective_user.id if update.effective_user else None
+    logger.opt(exception=context.error).error(
+        "Unhandled exception in bot handler (update={}, user={})", update_type, user_id
+    )
 
 
 async def _post_shutdown(application: Application) -> None:
@@ -81,6 +93,7 @@ def create_app() -> Application:
         .post_shutdown(_post_shutdown)
         .build()
     )
+    app.add_error_handler(_error_handler)
     # Middlewares — runs before all command handlers, in group order
     app.add_handler(TypeHandler(Update, allowlist_gate), group=-2)
     app.add_handler(TypeHandler(Update, rate_limit_gate), group=-1)

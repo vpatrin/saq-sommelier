@@ -23,8 +23,8 @@ async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     try:
         product = await api.get_random_product(**params)
-    except (BackendUnavailableError, BackendAPIError):
-        logger.warning("Backend unavailable during /random command")
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.warning("Backend unavailable during /random command: {}", exc)
         await update.message.reply_text("Backend is currently unavailable. Try again later.")
         return
 

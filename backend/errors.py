@@ -2,6 +2,7 @@ from fastapi import FastAPI, status
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from loguru import logger
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.exceptions import ConflictError, NotFoundError
 
@@ -23,4 +24,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
             content={"detail": str(exc)},
+        )
+
+    @app.exception_handler(SQLAlchemyError)
+    async def db_error_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
+        logger.opt(exception=exc).error("{} {} — DB error", request.method, request.url.path)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Database error"},
         )

@@ -262,9 +262,9 @@ async def run_availability_check(client: httpx.AsyncClient) -> int:
                         )
 
             await upsert_product_availability(sku, online_available=new_online, store_qty=new_qty)
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
             errors += 1
-            logger.error("DB error processing SKU {} — skipping", sku)
+            logger.error("DB error processing SKU {} — skipping: {}", sku, exc)
 
         await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
 

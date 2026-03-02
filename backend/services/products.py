@@ -88,7 +88,7 @@ async def get_random_product(
         available=available,
     )
     if product is None:
-        raise NotFoundError("Product", "random")
+        raise NotFoundError("Product", "no product matches the given filters")
     return ProductResponse.model_validate(product)
 
 

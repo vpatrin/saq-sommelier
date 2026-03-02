@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Availability checker now exits with EXIT_FATAL when GraphQL resolves 0 products instead of silently reporting success (#244)
 - Parse prices with thousands separator (e.g. $1,624.75) instead of silently dropping them (#191)
 - Fix encoding mojibake on product names and categories with accented characters (#191)
+- DB errors in scraper and bot now logged with full context — previously swallowed silently (#249)
+- Unhandled bot handler exceptions now logged via loguru instead of being silently discarded (#249)
+- Loguru format string `%d/%d` in watch ack warning now correctly substituted (#249)
 
 ## [1.1.0] - 2026-02-20
 

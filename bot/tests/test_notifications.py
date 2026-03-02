@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock
 
 import pytest
+from telegram.error import Forbidden
 
 from bot.api_client import BackendUnavailableError
 from bot.handlers.notifications import poll_notifications
@@ -158,7 +159,7 @@ async def test_poll_backend_unavailable_skips(context, api):
 async def test_poll_send_failure_still_acks(context, api):
     """If Telegram rejects a message (user blocked bot), we still ack to avoid retry loops."""
     api.get_pending_notifications.side_effect = [[_notif()], []]
-    context.bot.send_message.side_effect = Exception("Forbidden: bot was blocked")
+    context.bot.send_message.side_effect = Forbidden("bot was blocked")
 
     await poll_notifications(context)
 

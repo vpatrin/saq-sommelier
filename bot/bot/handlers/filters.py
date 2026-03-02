@@ -144,8 +144,8 @@ async def filter_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 results = {"products": [product], "total": 1, "page": 1, "per_page": 1, "pages": 1}
         else:
             results = await api.list_products(**params)
-    except (BackendUnavailableError, BackendAPIError):
-        logger.warning("Backend unavailable during filter callback")
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.warning("Backend unavailable during filter callback: {}", exc)
         await query.edit_message_text("Backend is currently unavailable. Try again later.")
         return
 

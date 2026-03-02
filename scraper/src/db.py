@@ -89,7 +89,6 @@ async def clear_delisted(skus: set[str]) -> int:
 async def emit_stock_event(sku: str, available: bool, *, saq_store_id: str | None = None) -> None:
     """Record an availability transition in the stock_events table.
 
-    Swallows errors — a missed event shouldn't crash the scraper.
     saq_store_id: NULL = online event, non-NULL = in-store event.
     """
     async with _SessionLocal() as session:
@@ -100,9 +99,10 @@ async def emit_stock_event(sku: str, available: bool, *, saq_store_id: str | Non
         try:
             await session.execute(stmt)
             await session.commit()
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
             await session.rollback()
-            logger.error("Failed to emit stock event for SKU {}", sku)
+            logger.opt(exception=exc).error("Failed to emit stock event for SKU {}", sku)
+            raise
 
 
 async def delete_old_stock_events(days: int) -> None:
@@ -118,9 +118,9 @@ async def delete_old_stock_events(days: int) -> None:
             await session.commit()
             if result.rowcount:
                 logger.info("Purged {} stock events older than {} days", result.rowcount, days)
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
             await session.rollback()
-            logger.error("Stock event cleanup failed, skipping")
+            logger.opt(exception=exc).warning("Stock event cleanup failed, skipping")
 
 
 async def upsert_product(product_data: ProductData) -> None:
@@ -158,9 +158,9 @@ async def upsert_product(product_data: ProductData) -> None:
         try:
             await session.execute(stmt)
             await session.commit()
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
             await session.rollback()
-            logger.error("DB error upserting SKU {}", product_data.sku or "unknown")
+            logger.opt(exception=exc).error("DB error upserting SKU {}", product_data.sku or "unknown")
             raise
 
 
@@ -231,9 +231,10 @@ async def upsert_product_availability(
         try:
             await session.execute(stmt)
             await session.commit()
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
             await session.rollback()
-            logger.error("Failed to upsert product availability for SKU {}", sku)
+            logger.opt(exception=exc).error("Failed to upsert product availability for SKU {}", sku)
+            raise
 
 
 async def upsert_stores(stores: list[StoreData]) -> None:
@@ -256,7 +257,7 @@ async def upsert_stores(stores: list[StoreData]) -> None:
         try:
             await session.execute(stmt)
             await session.commit()
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
             await session.rollback()
-            logger.error("DB error upserting {} stores", len(stores))
+            logger.opt(exception=exc).error("DB error upserting {} stores", len(stores))
             raise

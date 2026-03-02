@@ -36,8 +36,8 @@ async def new_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     try:
         results = await api.list_products(**params)
-    except (BackendUnavailableError, BackendAPIError):
-        logger.warning("Backend unavailable during /new command")
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.warning("Backend unavailable during /new command: {}", exc)
         await update.message.reply_text("Backend is currently unavailable. Try again later.")
         return
 

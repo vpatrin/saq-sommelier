@@ -89,8 +89,8 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
     for script in soup.find_all("script", type="application/ld+json"):
         try:
             data = json.loads(script.string or "")
-        except (json.JSONDecodeError, TypeError):
-            logger.warning("Skipping unparseable JSON-LD block on {}", url)
+        except (json.JSONDecodeError, TypeError) as exc:
+            logger.warning("Skipping unparseable JSON-LD block on {}: {}", url, exc)
             continue
 
         if not isinstance(data, dict) or data.get("@type") != "Product":
@@ -122,8 +122,8 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
             if price is not None:
                 try:
                     fields["price"] = float(str(price).replace(",", ""))
-                except (ValueError, TypeError):
-                    logger.warning("Bad price value {!r} on {}", price, url)
+                except (ValueError, TypeError) as exc:
+                    logger.warning("Bad price value {!r} on {}: {}", price, url, exc)
             currency = offers.get("priceCurrency")
             if currency:
                 fields["currency"] = currency
@@ -137,14 +137,14 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
             raw_rating = str(rating_data["ratingValue"]).replace(",", ".")
             try:
                 fields["rating"] = float(raw_rating)
-            except (ValueError, TypeError):
-                logger.warning("Bad rating value {!r} on {}", rating_data["ratingValue"], url)
+            except (ValueError, TypeError) as exc:
+                logger.warning("Bad rating value {!r} on {}: {}", rating_data["ratingValue"], url, exc)
             review_count = rating_data.get("reviewCount")
             if review_count is not None:
                 try:
                     fields["review_count"] = int(review_count)
-                except (ValueError, TypeError):
-                    logger.warning("Bad review_count value {!r} on {}", review_count, url)
+                except (ValueError, TypeError) as exc:
+                    logger.warning("Bad review_count value {!r} on {}: {}", review_count, url, exc)
 
         all_fields.update(fields)
 

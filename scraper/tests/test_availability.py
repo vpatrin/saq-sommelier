@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.availability import (
     GraphQLProduct,
@@ -557,3 +558,30 @@ class TestRunAvailabilityCheck:
 
         assert events == 0
         mock_emit.assert_not_called()
+
+
+class TestFailedEvents:
+    @pytest.mark.asyncio
+    async def test_failed_emit_skips_sku_entirely(self) -> None:
+        """If emit_stock_event raises, the outer SKU handler catches it — no event, no upsert."""
+        client = AsyncMock(spec=httpx.AsyncClient)
+        gql = {"15483332": GraphQLProduct(magento_id=42, stock_status="IN_STOCK")}
+
+        with (
+            patch("src.availability.get_watched_skus", return_value=["15483332"]),
+            patch("src.availability.resolve_graphql_products", return_value=gql),
+            patch("src.availability.get_watched_store_coords", return_value={}),
+            patch("src.availability.get_product_availability", return_value=(False, {})),
+            patch("src.availability.upsert_product_availability") as mock_upsert,
+            patch(
+                "src.availability.emit_stock_event",
+                side_effect=SQLAlchemyError("db down"),
+            ) as mock_emit,
+            patch("src.availability.asyncio.sleep"),
+        ):
+            events = await run_availability_check(client)
+
+        assert events == 0
+        mock_emit.assert_called_once_with("15483332", available=True)
+        # Snapshot skipped — whole SKU was aborted by the outer error handler
+        mock_upsert.assert_not_called()

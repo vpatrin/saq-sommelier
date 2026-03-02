@@ -116,6 +116,9 @@ class BackendClient:
         except httpx.TimeoutException as exc:
             logger.error("Backend timeout: {}", exc)
             raise BackendUnavailableError("Backend timed out") from exc
+        except httpx.HTTPError as exc:
+            logger.error("Backend transport error: {}", exc)
+            raise BackendUnavailableError(str(exc)) from exc
 
     async def _get(self, path: str, **kwargs: Any) -> Any:
         resp = await self._request("GET", path, **kwargs)
@@ -149,6 +152,6 @@ class BackendClient:
         if response.content:
             try:
                 detail = response.json().get("detail", detail)
-            except (ValueError, KeyError):
-                pass
+            except (ValueError, KeyError) as exc:
+                logger.debug("Cannot parse error body from response: {}", exc)
         raise BackendAPIError(response.status_code, detail)

@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import time
+import urllib.error
 from datetime import date, datetime
 from http import HTTPStatus
 
@@ -74,8 +75,8 @@ async def main() -> int:
                 stores = await fetch_stores(client)
                 await upsert_stores(stores)
                 logger.info("Store bootstrap complete: {} stores loaded", len(stores))
-            except Exception:
-                logger.warning("Store bootstrap failed — continuing without store data")
+            except (httpx.HTTPError, SQLAlchemyError, ValueError, KeyError) as exc:
+                logger.warning("Store bootstrap failed — continuing without store data: {}", exc)
 
         logger.info("Fetching sitemap index...")
         sub_sitemap_urls = await fetch_sitemap_index(client)
@@ -91,8 +92,8 @@ async def main() -> int:
         # Load robots.txt rules (one sync HTTP call, fail-fast for compliance)
         try:
             rp = load_robots(settings.ROBOTS_URL)
-        except Exception:
-            logger.error("Cannot fetch robots.txt — aborting to ensure compliance")
+        except urllib.error.URLError as exc:
+            logger.opt(exception=exc).error("Cannot fetch robots.txt — aborting to ensure compliance")
             return EXIT_FATAL
 
         # Filter URLs disallowed by robots.txt
@@ -118,8 +119,12 @@ async def main() -> int:
         products_to_scrape = entries[:limit] if limit else entries
 
         # Loads {sku: last_updated_date} from DB, then O(1) dict lookup per entry
-        updated_dates = await get_updated_dates()
-        availability_map = await get_availability_map()
+        try:
+            updated_dates = await get_updated_dates()
+            availability_map = await get_availability_map()
+        except SQLAlchemyError as exc:
+            logger.opt(exception=exc).error("DB error loading product data — aborting")
+            return EXIT_FATAL
 
         # Incremental scraping: skip products unchanged since last scrape
         total_before = len(products_to_scrape)
@@ -184,9 +189,9 @@ async def main() -> int:
             except httpx.HTTPError as e:
                 errors += 1
                 logger.error("HTTP error for {}: {}", entry.url, e)
-            except SQLAlchemyError:
+            except SQLAlchemyError as exc:
                 errors += 1
-                logger.error("DB error for {}, skipping", entry.url)
+                logger.error("DB error for {}: {}", entry.url, exc)
             except Exception:
                 errors += 1
                 logger.exception("Unexpected error for {}", entry.url)
@@ -209,8 +214,8 @@ async def main() -> int:
         relisted = await clear_delisted(to_relist)
         if relisted:
             logger.info("Relisted {} products (back in sitemap)", relisted)
-    except SQLAlchemyError:
-        logger.error("Delist detection failed, skipping")
+    except SQLAlchemyError as exc:
+        logger.opt(exception=exc).warning("Delist detection failed, skipping")
 
     # Housekeeping: purge old stock events
     await delete_old_stock_events(days=settings.STOCK_EVENT_RETENTION_DAYS)

@@ -30,8 +30,8 @@ async def mystores_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     try:
         prefs = await api.list_user_stores(user_id)
-    except (BackendUnavailableError, BackendAPIError):
-        logger.warning("Backend unavailable during /mystores")
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.warning("Backend unavailable during /mystores: {}", exc)
         await update.message.reply_text("Backend is currently unavailable. Try again later.")
         return
 
@@ -62,8 +62,8 @@ async def location_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     try:
         nearby = await api.get_nearby_stores(loc.latitude, loc.longitude)
         prefs = await api.list_user_stores(user_id)
-    except (BackendUnavailableError, BackendAPIError):
-        logger.warning("Backend unavailable during location lookup")
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.warning("Backend unavailable during location lookup: {}", exc)
         await update.message.reply_text(
             "Backend is currently unavailable. Try again later.",
             reply_markup=MAIN_MENU,
@@ -115,7 +115,8 @@ async def store_toggle_callback(update: Update, context: ContextTypes.DEFAULT_TY
             logger.warning("Backend error during store toggle: {}", exc)
             await query.answer("Something went wrong.", show_alert=True)
             return
-    except BackendUnavailableError:
+    except BackendUnavailableError as exc:
+        logger.warning("Backend unavailable during store toggle (user={}): {}", user_id, exc)
         await query.answer("Backend unavailable.", show_alert=True)
         return
 
@@ -143,13 +144,15 @@ async def store_remove_callback(update: Update, context: ContextTypes.DEFAULT_TY
             logger.warning("Backend error during store remove: {}", exc)
             await query.answer("Something went wrong.", show_alert=True)
             return
-    except BackendUnavailableError:
+    except BackendUnavailableError as exc:
+        logger.warning("Backend unavailable during store remove (user={}): {}", user_id, exc)
         await query.answer("Backend unavailable.", show_alert=True)
         return
 
     try:
         prefs = await api.list_user_stores(user_id)
-    except (BackendUnavailableError, BackendAPIError):
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.warning("Failed to refresh stores after remove (user={}): {}", user_id, exc)
         prefs = []
 
     text = (
@@ -177,7 +180,8 @@ async def store_done_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     try:
         prefs = await api.list_user_stores(user_id)
-    except (BackendUnavailableError, BackendAPIError):
+    except (BackendUnavailableError, BackendAPIError) as exc:
+        logger.warning("Failed to refresh stores after done (user={}): {}", user_id, exc)
         prefs = []
 
     text = format_user_stores(prefs)

@@ -18,7 +18,9 @@ async def create_watch(db: AsyncSession, user_id: str, sku: str) -> WatchWithPro
         error_msg = str(exc.orig) if exc.orig else str(exc)
         if "uq_watches_user_sku" in error_msg:
             raise ConflictError("Watch", f"user {user_id!r} already watches SKU {sku!r}") from exc
-        # FK violation — SKU doesn't exist in products table
+        # Assumed FK violation — SKU doesn't exist in products table.
+        # Log in case a future constraint triggers this path unexpectedly.
+        logger.warning("IntegrityError on watch create (sku={}, constraint not uq_watches_user_sku): {}", sku, error_msg)
         raise NotFoundError("Product", sku) from exc
     product = await products_repo.find_by_sku(db, sku)
     return WatchWithProduct(
@@ -70,5 +72,5 @@ async def ack_notifications(db: AsyncSession, event_ids: list[int]) -> int:
     """Mark stock events as processed. Returns count acked."""
     count = await repo.ack_events(db, event_ids)
     if count < len(event_ids):
-        logger.warning("Acked %d/%d events (rest already processed)", count, len(event_ids))
+        logger.warning("Acked {}/{} events (rest already processed)", count, len(event_ids))
     return count

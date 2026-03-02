@@ -244,7 +244,7 @@ class TestEmitStockEvent:
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_swallows_error_on_db_failure(self) -> None:
+    async def test_rolls_back_and_raises_on_db_failure(self) -> None:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = SQLAlchemyError("connection lost")
 
@@ -257,8 +257,8 @@ class TestEmitStockEvent:
         with patch("src.db._SessionLocal", mock_factory):
             from src.db import emit_stock_event
 
-            # Should NOT raise — swallows the error
-            await emit_stock_event("10327701", available=True)
+            with pytest.raises(SQLAlchemyError):
+                await emit_stock_event("10327701", available=True)
 
         mock_session.rollback.assert_called_once()
         mock_session.commit.assert_not_called()
@@ -412,6 +412,47 @@ class TestUpsertStores:
 
             with pytest.raises(SQLAlchemyError):
                 await upsert_stores([self._make_store()])
+
+        mock_session.rollback.assert_called_once()
+        mock_session.commit.assert_not_called()
+
+
+class TestUpsertProductAvailability:
+    @pytest.mark.asyncio
+    async def test_executes_and_commits(self) -> None:
+        mock_session = AsyncMock()
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import upsert_product_availability
+
+            await upsert_product_availability("10327701", online_available=True)
+
+        mock_session.execute.assert_called_once()
+        mock_session.commit.assert_called_once()
+        mock_session.rollback.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_rolls_back_and_raises_on_db_error(self) -> None:
+        mock_session = AsyncMock()
+        mock_session.execute.side_effect = SQLAlchemyError("connection lost")
+
+        mock_ctx = MagicMock()
+        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+        mock_factory = MagicMock(return_value=mock_ctx)
+
+        with patch("src.db._SessionLocal", mock_factory):
+            from src.db import upsert_product_availability
+
+            with pytest.raises(SQLAlchemyError):
+                await upsert_product_availability("10327701", online_available=True)
 
         mock_session.rollback.assert_called_once()
         mock_session.commit.assert_not_called()
