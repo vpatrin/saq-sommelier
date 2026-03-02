@@ -86,7 +86,7 @@ def test_get_product_found():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/ABC123")
+    resp = client.get("/api/products/ABC123")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["sku"] == "ABC123"
@@ -98,7 +98,7 @@ def test_get_product_not_found():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/NOPE")
+    resp = client.get("/api/products/NOPE")
     assert resp.status_code == status.HTTP_404_NOT_FOUND
     assert "NOPE" in resp.json()["detail"]
 
@@ -110,7 +110,7 @@ def test_get_product_response_shape():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/test")
+    resp = client.get("/api/products/test")
     assert set(resp.json().keys()) == EXPECTED_FIELDS
 
 
@@ -123,7 +123,7 @@ def test_get_product_excludes_sensitive_fields():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/test")
+    resp = client.get("/api/products/test")
     for field in ("description", "url", "image"):
         assert field not in resp.json(), f"{field} should not be exposed in API"
 
@@ -137,7 +137,7 @@ def test_list_products_default_pagination():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products")
+    resp = client.get("/api/products")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 3
@@ -155,7 +155,7 @@ def test_list_products_response_shape():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products")
+    resp = client.get("/api/products")
     product = resp.json()["products"][0]
     assert set(product.keys()) == EXPECTED_FIELDS
 
@@ -167,7 +167,7 @@ def test_list_products_price_serialization():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products")
+    resp = client.get("/api/products")
     assert resp.json()["products"][0]["price"] == "15.99"
 
 
@@ -177,7 +177,7 @@ def test_list_products_custom_pagination():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?page=2&per_page=10")
+    resp = client.get("/api/products?page=2&per_page=10")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 25
@@ -192,7 +192,7 @@ def test_list_products_empty():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products")
+    resp = client.get("/api/products")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 0
@@ -206,7 +206,7 @@ def test_list_products_invalid_page():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?page=0")
+    resp = client.get("/api/products?page=0")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -216,7 +216,7 @@ def test_list_products_per_page_too_large():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?per_page=101")
+    resp = client.get("/api/products?per_page=101")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -243,7 +243,7 @@ def test_list_products_excludes_sensitive_fields():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products")
+    resp = client.get("/api/products")
     product = resp.json()["products"][0]
     # ! We decided to exclude SAQ proprietary data
     for field in ("description", "url", "image"):
@@ -260,7 +260,7 @@ def test_search_by_name():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?q=margaux")
+    resp = client.get("/api/products?q=margaux")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 1
@@ -273,7 +273,7 @@ def test_filter_by_category():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?category=Vin+rouge")
+    resp = client.get("/api/products?category=Vin+rouge")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["total"] == 1
 
@@ -294,7 +294,7 @@ def test_filter_by_price_range():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?min_price=15&max_price=30")
+    resp = client.get("/api/products?min_price=15&max_price=30")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["total"] == 1
 
@@ -306,7 +306,7 @@ def test_combined_filters_with_pagination():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?country=France&min_price=10&page=2&per_page=10")
+    resp = client.get("/api/products?country=France&min_price=10&page=2&per_page=10")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 15
@@ -320,7 +320,7 @@ def test_filter_no_results():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?country=Atlantis")
+    resp = client.get("/api/products?country=Atlantis")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["total"] == 0
     assert resp.json()["products"] == []
@@ -332,7 +332,7 @@ def test_search_q_empty_string_rejected():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?q=")
+    resp = client.get("/api/products?q=")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -342,7 +342,7 @@ def test_filter_negative_price_rejected():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?min_price=-5")
+    resp = client.get("/api/products?min_price=-5")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -352,7 +352,7 @@ def test_search_q_too_long_rejected():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get(f"/api/v1/products?q={'x' * (MAX_SEARCH_LENGTH + 1)}")
+    resp = client.get(f"/api/products?q={'x' * (MAX_SEARCH_LENGTH + 1)}")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -362,7 +362,7 @@ def test_filter_category_too_long_rejected():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get(f"/api/v1/products?category={'x' * (MAX_FILTER_LENGTH + 1)}")
+    resp = client.get(f"/api/products?category={'x' * (MAX_FILTER_LENGTH + 1)}")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -372,7 +372,7 @@ def test_sku_too_long_rejected():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get(f"/api/v1/products/{'x' * (MAX_SKU_LENGTH + 1)}")
+    resp = client.get(f"/api/products/{'x' * (MAX_SKU_LENGTH + 1)}")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -477,7 +477,7 @@ def test_facets_response_shape():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/facets")
+    resp = client.get("/api/products/facets")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["categories"] == ["Vin blanc", "Vin rouge"]
@@ -499,7 +499,7 @@ def test_facets_empty_catalog():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/facets")
+    resp = client.get("/api/products/facets")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["categories"] == []
@@ -521,7 +521,7 @@ def test_facets_no_prices():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/facets")
+    resp = client.get("/api/products/facets")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert len(data["categories"]) == 1
@@ -555,7 +555,7 @@ def test_sort_recent_returns_200():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?sort=recent")
+    resp = client.get("/api/products?sort=recent")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["total"] == 1
 
@@ -566,7 +566,7 @@ def test_sort_invalid_rejected():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?sort=bogus")
+    resp = client.get("/api/products?sort=bogus")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -593,7 +593,7 @@ def test_sort_price_asc_returns_200():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?sort=price_asc")
+    resp = client.get("/api/products?sort=price_asc")
     assert resp.status_code == status.HTTP_200_OK
 
 
@@ -604,7 +604,7 @@ def test_sort_price_desc_returns_200():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products?sort=price_desc")
+    resp = client.get("/api/products?sort=price_desc")
     assert resp.status_code == status.HTTP_200_OK
 
 
@@ -634,7 +634,7 @@ def test_random_product_found():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/random")
+    resp = client.get("/api/products/random")
     assert resp.status_code == status.HTTP_200_OK
     assert set(resp.json().keys()) == EXPECTED_FIELDS
 
@@ -645,7 +645,7 @@ def test_random_product_not_found():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/random")
+    resp = client.get("/api/products/random")
     assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -656,7 +656,7 @@ def test_random_with_filters():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/v1/products/random?category=Vin+rouge&min_price=10")
+    resp = client.get("/api/products/random?category=Vin+rouge&min_price=10")
     assert resp.status_code == status.HTTP_200_OK
 
 

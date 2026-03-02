@@ -49,7 +49,7 @@ def test_nearby_returns_stores_sorted_by_distance():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.get("/api/v1/stores/nearby?lat=45.52&lng=-73.60")
+        resp = client.get("/api/stores/nearby?lat=45.52&lng=-73.60")
 
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
@@ -68,7 +68,7 @@ def test_nearby_limit_respected():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.get("/api/v1/stores/nearby?lat=45.52&lng=-73.60&limit=3")
+        resp = client.get("/api/stores/nearby?lat=45.52&lng=-73.60&limit=3")
 
     assert resp.status_code == status.HTTP_200_OK
     assert len(resp.json()) == 3
@@ -84,7 +84,7 @@ def test_nearby_excludes_stores_without_coordinates():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.get("/api/v1/stores/nearby?lat=45.52&lng=-73.60")
+        resp = client.get("/api/stores/nearby?lat=45.52&lng=-73.60")
 
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
@@ -103,7 +103,7 @@ def test_nearby_excludes_non_consumer_store_types():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.get("/api/v1/stores/nearby?lat=45.52&lng=-73.60")
+        resp = client.get("/api/stores/nearby?lat=45.52&lng=-73.60")
 
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
@@ -118,7 +118,7 @@ def test_nearby_empty_db():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.get("/api/v1/stores/nearby?lat=45.52&lng=-73.60")
+        resp = client.get("/api/stores/nearby?lat=45.52&lng=-73.60")
 
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == []
@@ -137,7 +137,7 @@ def test_get_user_stores_success():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.get("/api/v1/users/tg:123/stores")
+        resp = client.get("/api/users/tg:123/stores")
 
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
@@ -153,7 +153,7 @@ def test_get_user_stores_empty():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.get("/api/v1/users/tg:123/stores")
+        resp = client.get("/api/users/tg:123/stores")
 
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == []
@@ -173,7 +173,7 @@ def test_add_user_store_success():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.post("/api/v1/users/tg:123/stores", json={"saq_store_id": "23009"})
+        resp = client.post("/api/users/tg:123/stores", json={"saq_store_id": "23009"})
 
     assert resp.status_code == status.HTTP_201_CREATED
     data = resp.json()
@@ -188,7 +188,7 @@ def test_add_user_store_store_not_found():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.post("/api/v1/users/tg:123/stores", json={"saq_store_id": "99999"})
+        resp = client.post("/api/users/tg:123/stores", json={"saq_store_id": "99999"})
 
     assert resp.status_code == status.HTTP_404_NOT_FOUND
 
@@ -203,7 +203,7 @@ def test_add_user_store_duplicate():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.post("/api/v1/users/tg:123/stores", json={"saq_store_id": "23009"})
+        resp = client.post("/api/users/tg:123/stores", json={"saq_store_id": "23009"})
 
     assert resp.status_code == status.HTTP_409_CONFLICT
 
@@ -218,7 +218,7 @@ def test_remove_user_store_success():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.delete("/api/v1/users/tg:123/stores/23009")
+        resp = client.delete("/api/users/tg:123/stores/23009")
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -230,6 +230,6 @@ def test_remove_user_store_not_found():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.delete("/api/v1/users/tg:123/stores/99999")
+        resp = client.delete("/api/users/tg:123/stores/99999")
 
     assert resp.status_code == status.HTTP_404_NOT_FOUND

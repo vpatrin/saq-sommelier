@@ -35,7 +35,7 @@ class BackendClient:
 
     async def open(self) -> None:
         self._client = httpx.AsyncClient(
-            base_url=f"{self._base_url}/api/v1",
+            base_url=f"{self._base_url}/api",
             timeout=self._timeout,
         )
 
@@ -47,61 +47,61 @@ class BackendClient:
     # ── Products ────────────────────────────────────────────────
 
     async def list_products(self, **params: Any) -> dict[str, Any]:
-        """GET /api/v1/products with optional query params."""
+        """GET /api/products with optional query params."""
         return await self._get("/products", params=params)
 
     async def get_product(self, sku: str) -> dict[str, Any] | None:
-        """GET /api/v1/products/{sku}. Returns None if 404."""
+        """GET /api/products/{sku}. Returns None if 404."""
         return await self._get_or_none(f"/products/{sku}")
 
     async def get_random_product(self, **params: Any) -> dict[str, Any] | None:
-        """GET /api/v1/products/random. Returns None if 404 (empty catalog)."""
+        """GET /api/products/random. Returns None if 404 (empty catalog)."""
         return await self._get_or_none("/products/random", params=params)
 
     async def get_facets(self) -> dict[str, Any]:
-        """GET /api/v1/products/facets."""
+        """GET /api/products/facets."""
         return await self._get("/products/facets")
 
     # ── Watches ─────────────────────────────────────────────────
 
     async def create_watch(self, user_id: str, sku: str) -> dict[str, Any]:
-        """POST /api/v1/watches."""
+        """POST /api/watches."""
         return await self._post("/watches", json={"user_id": user_id, "sku": sku})
 
     async def list_watches(self, user_id: str) -> list[dict[str, Any]]:
-        """GET /api/v1/watches?user_id=..."""
+        """GET /api/watches?user_id=..."""
         return await self._get("/watches", params={"user_id": user_id})
 
     async def delete_watch(self, user_id: str, sku: str) -> None:
-        """DELETE /api/v1/watches/{sku}?user_id=..."""
+        """DELETE /api/watches/{sku}?user_id=..."""
         await self._delete(f"/watches/{sku}", params={"user_id": user_id})
 
     # ── Stores ───────────────────────────────────────────────────
 
     async def get_nearby_stores(self, lat: float, lng: float) -> list[dict[str, Any]]:
-        """GET /api/v1/stores/nearby — stores sorted by distance from coordinates."""
+        """GET /api/stores/nearby — stores sorted by distance from coordinates."""
         return await self._get("/stores/nearby", params={"lat": lat, "lng": lng})
 
     async def list_user_stores(self, user_id: str) -> list[dict[str, Any]]:
-        """GET /api/v1/users/{user_id}/stores — user's preferred stores."""
+        """GET /api/users/{user_id}/stores — user's preferred stores."""
         return await self._get(f"/users/{user_id}/stores")
 
     async def add_user_store(self, user_id: str, saq_store_id: str) -> dict[str, Any]:
-        """POST /api/v1/users/{user_id}/stores — add a store to preferences."""
+        """POST /api/users/{user_id}/stores — add a store to preferences."""
         return await self._post(f"/users/{user_id}/stores", json={"saq_store_id": saq_store_id})
 
     async def remove_user_store(self, user_id: str, saq_store_id: str) -> None:
-        """DELETE /api/v1/users/{user_id}/stores/{saq_store_id}."""
+        """DELETE /api/users/{user_id}/stores/{saq_store_id}."""
         await self._delete(f"/users/{user_id}/stores/{saq_store_id}")
 
     # ── Notifications ────────────────────────────────────────────
 
     async def get_pending_notifications(self) -> list[dict[str, Any]]:
-        """GET /api/v1/watches/notifications — pending stock event alerts."""
+        """GET /api/watches/notifications — pending stock event alerts."""
         return await self._get("/watches/notifications")
 
     async def ack_notifications(self, event_ids: list[int]) -> None:
-        """POST /api/v1/watches/notifications/ack — mark events as sent."""
+        """POST /api/watches/notifications/ack — mark events as sent."""
         await self._post("/watches/notifications/ack", json={"event_ids": event_ids})
 
     # ── Transport ──────────────────────────────────────────────
