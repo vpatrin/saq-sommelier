@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Weekly scraper no longer emits stock events from CDN-cached HTML, eliminating false restock/destock notifications (#241)
 - Prevent false destock alerts when GraphQL omits `stock_status` — field now defaults to unknown instead of `OUT_OF_STOCK` (#248)
 - Fix first-run store event flood — first availability check now establishes baseline without emitting spurious events (#149)
 - Availability checker now exits with EXIT_FATAL when GraphQL resolves 0 products instead of silently reporting success (#244)
