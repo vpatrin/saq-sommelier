@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `/alerts` shows inline remove buttons per wine — tap to unwatch without typing `/unwatch` (#240)
+- `/watch` and `/unwatch` now show the updated watch list keyboard directly, with no separate confirmation message (#240)
 - Group stock notifications by product — one message per wine listing all affected stores, with online availability hint (#256)
 - Targeted store availability fetch — checks only preferred stores via lat/lng proximity instead of paginating all ~400 stores (#254)
 - HTTP 404s logged as warnings instead of errors, counted separately in run summary (#197)

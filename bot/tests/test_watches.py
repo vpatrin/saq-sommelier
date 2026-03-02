@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from bot.api_client import BackendAPIError, BackendUnavailableError
-from bot.handlers.watch import alerts_command, unwatch_command, watch_command
+from bot.handlers.watch import alerts_command, unwatch_command, watch_command, watch_remove_callback
 
 
 @pytest.fixture
@@ -27,18 +27,23 @@ def update():
     return mock
 
 
+@pytest.fixture
+def callback_query():
+    mock = AsyncMock()
+    mock.data = "w:rm:10327701"
+    return mock
+
+
+@pytest.fixture
+def callback_update(callback_query):
+    mock = AsyncMock()
+    mock.effective_user.id = 42
+    mock.callback_query = callback_query
+    return mock
+
+
 # ── /watch ───────────────────────────────────────────────────
 
-
-_WATCH_RESPONSE = {
-    "watch": {"id": 1, "user_id": "tg:42", "sku": "10327701", "created_at": "2026-01-01"},
-    "product": {
-        "name": "Mouton Cadet",
-        "price": "16.95",
-        "availability": True,
-        "sku": "10327701",
-    },
-}
 
 _WATCH_LIST = [
     {
@@ -55,24 +60,20 @@ _WATCH_LIST = [
 
 async def test_watch_creates_watch(update, context, api):
     context.args = ["10327701"]
-    api.create_watch.return_value = _WATCH_RESPONSE
     api.list_watches.return_value = _WATCH_LIST
 
     await watch_command(update, context)
 
     api.create_watch.assert_called_once_with("tg:42", "10327701")
-    # First reply: confirmation, second: recap
-    assert update.message.reply_text.call_count == 2
-    text = update.message.reply_text.call_args_list[0][0][0]
-    assert "Mouton Cadet" in text
-    assert "watching" in text.lower()
-    recap = update.message.reply_text.call_args_list[1][0][0]
-    assert "1 watched wine" in recap
+    # Single reply: the watch list keyboard
+    assert update.message.reply_text.call_count == 1
+    text = update.message.reply_text.call_args[0][0]
+    assert "👀" in text
+    assert "1 watched wine" in text
 
 
 async def test_watch_accepts_saq_url(update, context, api):
     context.args = ["https://www.saq.com/fr/10327701"]
-    api.create_watch.return_value = _WATCH_RESPONSE
     api.list_watches.return_value = _WATCH_LIST
 
     await watch_command(update, context)
@@ -82,21 +83,11 @@ async def test_watch_accepts_saq_url(update, context, api):
 
 async def test_watch_accepts_saq_url_with_trailing_slash(update, context, api):
     context.args = ["https://www.saq.com/fr/10327701/"]
-    api.create_watch.return_value = _WATCH_RESPONSE
     api.list_watches.return_value = _WATCH_LIST
 
     await watch_command(update, context)
 
     api.create_watch.assert_called_once_with("tg:42", "10327701")
-
-
-async def test_unwatch_accepts_saq_url(update, context, api):
-    context.args = ["https://www.saq.com/fr/10327701"]
-    api.list_watches.return_value = []
-
-    await unwatch_command(update, context)
-
-    api.delete_watch.assert_called_once_with("tg:42", "10327701")
 
 
 async def test_watch_no_sku(update, context):
@@ -151,37 +142,37 @@ async def test_watch_generic_api_error(update, context, api):
 # ── /unwatch ─────────────────────────────────────────────────
 
 
-async def test_unwatch_deletes_watch(update, context, api):
-    context.args = ["10327701"]
+async def test_unwatch_accepts_saq_url(update, context, api):
+    context.args = ["https://www.saq.com/fr/10327701"]
     api.list_watches.return_value = []
 
     await unwatch_command(update, context)
 
     api.delete_watch.assert_called_once_with("tg:42", "10327701")
-    text = update.message.reply_text.call_args_list[0][0][0]
-    assert "stopped" in text.lower()
 
 
-async def test_unwatch_sends_recap(update, context, api):
+async def test_unwatch_deletes_watch(update, context, api):
     context.args = ["10327701"]
     api.list_watches.return_value = _WATCH_LIST
 
     await unwatch_command(update, context)
 
-    # First reply: confirmation, second: recap
-    assert update.message.reply_text.call_count == 2
-    recap = update.message.reply_text.call_args_list[1][0][0]
-    assert "1 watched wine" in recap
+    api.delete_watch.assert_called_once_with("tg:42", "10327701")
+    # Single reply: updated watch list keyboard (no preamble — symmetric with /watch)
+    assert update.message.reply_text.call_count == 1
+    text = update.message.reply_text.call_args[0][0]
+    assert "1 watched wine" in text
 
 
-async def test_unwatch_no_recap_when_empty(update, context, api):
+async def test_unwatch_shows_empty_state(update, context, api):
     context.args = ["10327701"]
     api.list_watches.return_value = []
 
     await unwatch_command(update, context)
 
-    # Only confirmation, no recap for empty list
     assert update.message.reply_text.call_count == 1
+    text = update.message.reply_text.call_args[0][0]
+    assert "not watching" in text.lower()
 
 
 async def test_unwatch_no_sku(update, context):
@@ -233,8 +224,12 @@ async def test_alerts_shows_watches(update, context, api):
 
     api.list_watches.assert_called_once_with("tg:42")
     text = update.message.reply_text.call_args[0][0]
-    assert "Mouton Cadet" in text
+    assert "👀" in text
     assert "1 watched wine" in text
+    # Product name is in the inline keyboard button, not the message text
+    keyboard = update.message.reply_text.call_args[1]["reply_markup"]
+    assert keyboard is not None
+    assert "Mouton Cadet" in keyboard.inline_keyboard[0][0].text
 
 
 async def test_alerts_empty(update, context, api):
@@ -262,8 +257,10 @@ async def test_alerts_with_delisted_product(update, context, api):
     await alerts_command(update, context)
 
     text = update.message.reply_text.call_args[0][0]
-    assert "GONE123" in text
-    assert "no longer available" in text
+    assert "1 watched wine" in text
+    # Delisted product: button shows SKU as fallback
+    keyboard = update.message.reply_text.call_args[1]["reply_markup"]
+    assert "GONE123" in keyboard.inline_keyboard[0][0].text
 
 
 async def test_alerts_backend_unavailable(update, context, api):
@@ -273,3 +270,60 @@ async def test_alerts_backend_unavailable(update, context, api):
 
     text = update.message.reply_text.call_args[0][0]
     assert "unavailable" in text.lower()
+
+
+# ── watch_remove_callback (#240) ─────────────────────────────
+
+
+async def test_watch_remove_success(callback_update, callback_query, context, api):
+    api.list_watches.return_value = []
+
+    await watch_remove_callback(callback_update, context)
+
+    api.delete_watch.assert_called_once_with("tg:42", "10327701")
+    callback_query.edit_message_text.assert_called_once()
+    text = callback_query.edit_message_text.call_args[0][0]
+    assert "not watching" in text.lower()
+
+
+async def test_watch_remove_already_gone_treated_as_success(
+    callback_update, callback_query, context, api
+):
+    api.delete_watch.side_effect = BackendAPIError(404, "Not Found")
+    api.list_watches.return_value = []
+
+    await watch_remove_callback(callback_update, context)
+
+    # 404 = already removed — treated as success, list still refreshed
+    callback_query.edit_message_text.assert_called_once()
+
+
+async def test_watch_remove_remaining_watches_show_keyboard(
+    callback_update, callback_query, context, api
+):
+    api.list_watches.return_value = _WATCH_LIST
+
+    await watch_remove_callback(callback_update, context)
+
+    text = callback_query.edit_message_text.call_args[0][0]
+    assert "1 watched wine" in text
+    kwargs = callback_query.edit_message_text.call_args[1]
+    assert kwargs["reply_markup"] is not None
+
+
+async def test_watch_remove_backend_error(callback_update, callback_query, context, api):
+    api.delete_watch.side_effect = BackendAPIError(500, "Internal Server Error")
+
+    await watch_remove_callback(callback_update, context)
+
+    callback_query.answer.assert_called_with("Something went wrong.", show_alert=True)
+    callback_query.edit_message_text.assert_not_called()
+
+
+async def test_watch_remove_backend_unavailable(callback_update, callback_query, context, api):
+    api.delete_watch.side_effect = BackendUnavailableError("down")
+
+    await watch_remove_callback(callback_update, context)
+
+    callback_query.answer.assert_called_with("Backend unavailable.", show_alert=True)
+    callback_query.edit_message_text.assert_not_called()
