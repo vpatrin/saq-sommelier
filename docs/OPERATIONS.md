@@ -15,18 +15,21 @@ The scraper is a one-shot batch job, not a long-running service. Each run:
 3. Filters non-product URLs (only numeric SKU paths are scraped)
 4. Compares sitemap `lastmod` dates against DB `updated_at` (incremental — skips unchanged products)
 5. Scrapes only new/updated product pages, upserts to PostgreSQL
-6. Emits stock events when availability changes (restock or destock) for the notification pipeline
-7. Detects delisted products (in DB but not in sitemap) and marks them with `delisted_at`
-8. Relists products that reappear in the sitemap
-9. Exits with a named status code: `EXIT_SUCCESS` (0), `EXIT_PARTIAL` (1), `EXIT_FAILURE` (2)
+6. Detects delisted products (in DB but not in sitemap) and marks them with `delisted_at`
+7. Relists products that reappear in the sitemap
+8. Exits with a named status code: `EXIT_OK` (0), `EXIT_PARTIAL` (1), `EXIT_FATAL` (2)
 
 A typical incremental run scrapes ~50-200 products instead of the full ~38k catalog.
 
-### Store directory bootstrap
+### Store directory
 
-The scraper automatically populates the `stores` table on first run if it is empty. No separate command is needed.
+Store population is an explicit operation, separate from the weekly product scrape:
 
-SAQ stores are physical locations — they rarely change. If a new store opens or closes, clear the `stores` table and run the scraper; the bootstrap will re-fetch all 401 stores before starting the product scrape.
+```bash
+docker compose run --rm scraper python -m src --scrape-stores
+```
+
+SAQ stores are physical locations — they rarely change. Run `--scrape-stores` on first deploy and again whenever a store opens or closes. Upsert is idempotent; safe to re-run without clearing the table.
 
 ### Running manually
 

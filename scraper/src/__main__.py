@@ -20,7 +20,6 @@ from .db import (
     get_delisted_skus,
     get_updated_dates,
     mark_delisted,
-    stores_populated,
     upsert_product,
     upsert_stores,
 )
@@ -54,18 +53,6 @@ def _needs_scrape(entry: SitemapEntry, updated_dates: dict[str, date]) -> bool:
     if entry.sku not in updated_dates:
         return True
     return datetime.fromisoformat(entry.lastmod).date() > updated_dates[entry.sku]
-
-
-async def _bootstrap_stores(client: httpx.AsyncClient) -> None:
-    """Bootstrap store directory on first run. Logs and continues on failure."""
-    if not await stores_populated():
-        logger.info("Stores table empty — bootstrapping store directory...")
-        try:
-            stores = await fetch_stores(client)
-            await upsert_stores(stores)
-            logger.info("Store bootstrap complete: {} stores loaded", len(stores))
-        except (httpx.HTTPError, SQLAlchemyError, ValueError, KeyError) as exc:
-            logger.warning("Store bootstrap failed — continuing without store data: {}", exc)
 
 
 async def _load_and_filter_entries(
@@ -204,10 +191,6 @@ async def main() -> int:
     async with httpx.AsyncClient(
         headers={"User-Agent": settings.USER_AGENT}, timeout=settings.REQUEST_TIMEOUT
     ) as client:
-        # Bootstrap store directory on first run — stores are physical locations,
-        # rarely change. Re-populate by clearing the stores table and re-running.
-        await _bootstrap_stores(client)
-
         entries = await _load_and_filter_entries(client)
         if entries is None:
             return EXIT_FATAL
@@ -298,9 +281,33 @@ async def check_watches() -> int:
     return EXIT_OK
 
 
+async def scrape_stores() -> int:
+    """Fetch and upsert the full SAQ store directory. Returns exit code."""
+    start = time.monotonic()
+
+    async with httpx.AsyncClient(
+        headers={"User-Agent": settings.USER_AGENT}, timeout=settings.REQUEST_TIMEOUT
+    ) as client:
+        try:
+            stores = await fetch_stores(client)
+            await upsert_stores(stores)
+        except (httpx.HTTPError, SQLAlchemyError, ValueError, KeyError) as exc:
+            logger.opt(exception=exc).error("Store scrape failed")
+            return EXIT_FATAL
+
+    elapsed = time.monotonic() - start
+    minutes, seconds = divmod(int(elapsed), 60)
+    logger.info(
+        "Store scrape complete in {}m {}s — {} stores loaded", minutes, seconds, len(stores)
+    )
+    return EXIT_OK
+
+
 if __name__ == "__main__":
-    # Entry point: python -m src [--check-watches]
+    # Entry point: python -m src [--check-watches | --scrape-stores]
     if "--check-watches" in sys.argv:
         sys.exit(asyncio.run(check_watches()))
+    elif "--scrape-stores" in sys.argv:
+        sys.exit(asyncio.run(scrape_stores()))
     else:
         sys.exit(asyncio.run(main()))

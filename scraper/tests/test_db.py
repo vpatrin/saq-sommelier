@@ -104,40 +104,6 @@ class TestClearDelisted:
         mock_session.commit.assert_called_once()
 
 
-class TestStoresPopulated:
-    @pytest.mark.asyncio
-    async def test_returns_true_when_rows_exist(self) -> None:
-        mock_session = AsyncMock()
-        mock_session.execute.return_value = MagicMock(first=lambda: ("23009",))
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        with patch("src.db._SessionLocal", MagicMock(return_value=mock_ctx)):
-            from src.db import stores_populated
-
-            result = await stores_populated()
-
-        assert result is True
-
-    @pytest.mark.asyncio
-    async def test_returns_false_when_table_empty(self) -> None:
-        mock_session = AsyncMock()
-        mock_session.execute.return_value = MagicMock(first=lambda: None)
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        with patch("src.db._SessionLocal", MagicMock(return_value=mock_ctx)):
-            from src.db import stores_populated
-
-            result = await stores_populated()
-
-        assert result is False
-
-
 class TestGetUpdatedDates:
     @pytest.mark.asyncio
     async def test_returns_sku_to_date_mapping(self) -> None:
