@@ -3,17 +3,17 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from backend.config import MAX_ACK_BATCH_SIZE, MAX_SKU_LENGTH, MAX_USER_ID_LENGTH
-from backend.schemas.product import ProductResponse
+from backend.schemas.product import ProductOut
 
 
 # input validation for POST /watches
-class WatchCreate(BaseModel):
+class WatchIn(BaseModel):
     user_id: str = Field(min_length=1, max_length=MAX_USER_ID_LENGTH)
     sku: str = Field(min_length=1, max_length=MAX_SKU_LENGTH)
 
 
 # Output resource validation for a single watch
-class WatchResponse(BaseModel):
+class WatchOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -22,12 +22,12 @@ class WatchResponse(BaseModel):
     created_at: datetime
 
 
-# Wraps a WatchResponse + the joined ProductResponse
+# Wraps a WatchOut + the joined ProductOut
 class WatchWithProduct(BaseModel):
     """Watch with embedded product info — for the GET /watches list."""
 
-    watch: WatchResponse
-    product: ProductResponse | None
+    watch: WatchOut
+    product: ProductOut | None
 
 
 class PendingNotification(BaseModel):
@@ -46,5 +46,5 @@ class PendingNotification(BaseModel):
     online_available: bool | None = None
 
 
-class AckRequest(BaseModel):
+class AckIn(BaseModel):
     event_ids: list[int] = Field(min_length=1, max_length=MAX_ACK_BATCH_SIZE)

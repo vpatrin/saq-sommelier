@@ -18,11 +18,11 @@ from backend.repositories.products import (
     find_random,
     get_distinct_values,
 )
-from backend.schemas.product import ProductResponse
+from backend.schemas.product import ProductOut
 
 NOW = datetime(2025, 1, 1, tzinfo=UTC)
 
-EXPECTED_FIELDS = set(ProductResponse.model_fields.keys())
+EXPECTED_FIELDS = set(ProductOut.model_fields.keys())
 
 # One dummy value per type — used to auto-populate _fake_product defaults
 _DUMMY_VALUES: dict[type, object] = {
@@ -37,7 +37,7 @@ _DUMMY_VALUES: dict[type, object] = {
 def _fake_product(**overrides):
     """Build a fake Product object. Raises AttributeError on unknown attrs."""
     defaults = {}
-    for name, field_info in ProductResponse.model_fields.items():
+    for name, field_info in ProductOut.model_fields.items():
         annotation = field_info.annotation
         # Unwrap Optional (str | None → str)
         if isinstance(annotation, UnionType):
@@ -221,15 +221,15 @@ def test_list_products_per_page_too_large():
 
 
 def test_product_response_fields_exist_on_model():
-    """Every ProductResponse field must map to a Product column.
+    """Every ProductOut field must map to a Product column.
 
     Catches renames in the ORM model that silently break the API
     (from_attributes=True returns None instead of raising).
     """
     model_columns = set(Product.__table__.columns.keys())
-    response_fields = set(ProductResponse.model_fields.keys())
+    response_fields = set(ProductOut.model_fields.keys())
     missing = response_fields - model_columns
-    assert not missing, f"ProductResponse fields not in Product model: {missing}"
+    assert not missing, f"ProductOut fields not in Product model: {missing}"
 
 
 def test_list_products_excludes_sensitive_fields():

@@ -2,6 +2,7 @@ import asyncio
 import sys
 import time
 import urllib.error
+from dataclasses import dataclass
 from datetime import date, datetime
 from http import HTTPStatus
 
@@ -57,6 +58,158 @@ def _needs_scrape(entry: SitemapEntry, updated_dates: dict[str, date]) -> bool:
     return datetime.fromisoformat(entry.lastmod).date() > updated_dates[entry.sku]
 
 
+async def _bootstrap_stores(client: httpx.AsyncClient) -> None:
+    """Bootstrap store directory on first run. Logs and continues on failure."""
+    if not await stores_populated():
+        logger.info("Stores table empty — bootstrapping store directory...")
+        try:
+            stores = await fetch_stores(client)
+            await upsert_stores(stores)
+            logger.info("Store bootstrap complete: {} stores loaded", len(stores))
+        except (httpx.HTTPError, SQLAlchemyError, ValueError, KeyError) as exc:
+            logger.warning("Store bootstrap failed — continuing without store data: {}", exc)
+
+
+async def _load_and_filter_entries(
+    client: httpx.AsyncClient,
+) -> list[SitemapEntry] | None:
+    """Fetch sitemaps, apply robots.txt and product filters.
+
+    Returns filtered entries, or None if robots.txt fetch fails (caller should abort).
+    """
+    logger.info("Fetching sitemap index...")
+    sub_sitemap_urls = await fetch_sitemap_index(client)
+    logger.info("Found {} sub-sitemaps", len(sub_sitemap_urls))
+
+    entries: list[SitemapEntry] = []
+    for j, sub_url in enumerate(sub_sitemap_urls, 1):
+        await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
+        logger.info("[{}/{}] Fetching sub-sitemap...", j, len(sub_sitemap_urls))
+        entries.extend(await fetch_sub_sitemap(client, sub_url))
+
+    # Load robots.txt rules (one sync HTTP call, fail-fast for compliance)
+    try:
+        rp = load_robots(settings.ROBOTS_URL)
+    except urllib.error.URLError as exc:
+        logger.opt(exception=exc).error("Cannot fetch robots.txt — aborting to ensure compliance")
+        return None
+
+    before_robots = len(entries)
+    entries = [e for e in entries if is_allowed(rp, e.url, settings.USER_AGENT)]
+    skipped_robots = before_robots - len(entries)
+
+    # Filter non-product URLs (recipes, accessories have slug SKUs, not numeric)
+    total_sitemap = len(entries)
+    entries = [e for e in entries if e.sku.isdigit()]
+    skipped_non_products = total_sitemap - len(entries)
+
+    logger.info(
+        "Found {} product URLs across {} sub-sitemaps"
+        " ({} blocked by robots.txt, {} non-products skipped)",
+        len(entries),
+        len(sub_sitemap_urls),
+        skipped_robots,
+        skipped_non_products,
+    )
+
+    return entries
+
+
+@dataclass
+class _ScrapeStats:
+    saved: int = 0
+    inserted: int = 0
+    updated: int = 0
+    restocked: int = 0
+    destocked: int = 0
+    not_found: int = 0
+    errors: int = 0
+
+
+async def _scrape_products(
+    client: httpx.AsyncClient,
+    entries: list[SitemapEntry],
+    updated_dates: dict[str, date],
+    availability_map: dict[str, bool],
+) -> _ScrapeStats:
+    """Download, parse, and upsert each product entry. Returns run stats."""
+    stats = _ScrapeStats()
+
+    for i, entry in enumerate(entries, 1):
+        # Ethical rate limiter
+        await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
+
+        try:
+            logger.info("[{}/{}] Fetching {} ...", i, len(entries), entry.url)
+            response = await client.get(entry.url)
+            response.raise_for_status()
+
+            product = parse_product(response.content, url=entry.url)
+            await upsert_product(product)
+            stats.saved += 1
+            if entry.sku in updated_dates:
+                stats.updated += 1
+            else:
+                stats.inserted += 1
+
+            # Detect availability transitions
+            old_avail = availability_map.get(entry.sku)
+            if old_avail is False and product.availability:
+                await emit_stock_event(entry.sku, available=True)
+                stats.restocked += 1
+                logger.info("Restock detected for SKU {}", entry.sku)
+            elif old_avail is True and not product.availability:
+                await emit_stock_event(entry.sku, available=False)
+                stats.destocked += 1
+                logger.info("Destock detected for SKU {}", entry.sku)
+
+            logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == HTTPStatus.NOT_FOUND:
+                stats.not_found += 1
+                logger.warning("Not found (stale sitemap entry): {}", entry.url)
+            else:
+                stats.errors += 1
+                logger.error("HTTP error for {}: {}", entry.url, e)
+        except httpx.HTTPError as e:
+            stats.errors += 1
+            logger.error("HTTP error for {}: {}", entry.url, e)
+        except SQLAlchemyError as exc:
+            stats.errors += 1
+            logger.error("DB error for {}: {}", entry.url, exc)
+        except Exception:
+            stats.errors += 1
+            logger.exception("Unexpected error for {}", entry.url)
+
+    return stats
+
+
+async def _detect_delists(sitemap_skus: set[str], db_skus: set[str]) -> tuple[int, int]:
+    """Compare sitemap vs DB SKUs and mark/clear delisted products.
+
+    Returns (delisted, relisted). Best-effort — logs and returns (0, 0) on error.
+    """
+    # Delist detection: compare sitemap SKUs vs DB SKUs
+    # Best-effort — if it fails, next run catches up
+    try:
+        to_delist = db_skus - sitemap_skus
+        delisted = await mark_delisted(to_delist)
+        if delisted:
+            logger.info("Marked {} products as delisted", delisted)
+
+        currently_delisted = await get_delisted_skus()
+        to_relist = currently_delisted & sitemap_skus
+        relisted = await clear_delisted(to_relist)
+        if relisted:
+            logger.info("Relisted {} products (back in sitemap)", relisted)
+
+        return delisted, relisted
+    except SQLAlchemyError as exc:
+        logger.opt(exception=exc).warning("Delist detection failed, skipping")
+        return 0, 0
+
+
 async def main() -> int:
     """Fetch sitemap, scrape products, write to database. Returns exit code."""
     # monotonic is immune to system clock changes
@@ -69,56 +222,11 @@ async def main() -> int:
     ) as client:
         # Bootstrap store directory on first run — stores are physical locations,
         # rarely change. Re-populate by clearing the stores table and re-running.
-        if not await stores_populated():
-            logger.info("Stores table empty — bootstrapping store directory...")
-            try:
-                stores = await fetch_stores(client)
-                await upsert_stores(stores)
-                logger.info("Store bootstrap complete: {} stores loaded", len(stores))
-            except (httpx.HTTPError, SQLAlchemyError, ValueError, KeyError) as exc:
-                logger.warning("Store bootstrap failed — continuing without store data: {}", exc)
+        await _bootstrap_stores(client)
 
-        logger.info("Fetching sitemap index...")
-        sub_sitemap_urls = await fetch_sitemap_index(client)
-        logger.info("Found {} sub-sitemaps", len(sub_sitemap_urls))
-
-        # Fetch all sub-sitemaps, collecting entries into one list
-        entries = []
-        for j, sub_url in enumerate(sub_sitemap_urls, 1):
-            await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
-            logger.info("[{}/{}] Fetching sub-sitemap...", j, len(sub_sitemap_urls))
-            entries.extend(await fetch_sub_sitemap(client, sub_url))
-
-        # Load robots.txt rules (one sync HTTP call, fail-fast for compliance)
-        try:
-            rp = load_robots(settings.ROBOTS_URL)
-        except urllib.error.URLError as exc:
-            logger.opt(exception=exc).error(
-                "Cannot fetch robots.txt — aborting to ensure compliance"
-            )
+        entries = await _load_and_filter_entries(client)
+        if entries is None:
             return EXIT_FATAL
-
-        # Filter URLs disallowed by robots.txt
-        before_robots = len(entries)
-        entries = [e for e in entries if is_allowed(rp, e.url, settings.USER_AGENT)]
-        skipped_robots = before_robots - len(entries)
-
-        # Filter non-product URLs (recipes, accessories have slug SKUs, not numeric)
-        total_sitemap = len(entries)
-        entries = [e for e in entries if e.sku.isdigit()]
-        skipped_non_products = total_sitemap - len(entries)
-
-        logger.info(
-            "Found {} product URLs across {} sub-sitemaps"
-            " ({} blocked by robots.txt, {} non-products skipped)",
-            len(entries),
-            len(sub_sitemap_urls),
-            skipped_robots,
-            skipped_non_products,
-        )
-
-        limit = settings.SCRAPE_LIMIT
-        products_to_scrape = entries[:limit] if limit else entries
 
         # Loads {sku: last_updated_date} from DB, then O(1) dict lookup per entry
         try:
@@ -129,95 +237,22 @@ async def main() -> int:
             return EXIT_FATAL
 
         # Incremental scraping: skip products unchanged since last scrape
+        limit = settings.SCRAPE_LIMIT
+        products_to_scrape = entries[:limit] if limit else entries
         total_before = len(products_to_scrape)
         products_to_scrape = [e for e in products_to_scrape if _needs_scrape(e, updated_dates)]
         skipped = total_before - len(products_to_scrape)
-
         logger.info(
             "Incremental filter: {} to scrape, {} skipped (unchanged)",
             len(products_to_scrape),
             skipped,
         )
 
-        # Main scrape loop
-        saved = 0
-        inserted = 0
-        updated = 0
-        restocked = 0
-        destocked = 0
-        not_found = 0
-        errors = 0
-        for i, entry in enumerate(products_to_scrape, 1):
-            # Ethical rate limiter
-            await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
+        stats = await _scrape_products(client, products_to_scrape, updated_dates, availability_map)
 
-            try:
-                # Download HTML
-                logger.info("[{}/{}] Fetching {} ...", i, len(products_to_scrape), entry.url)
-                response = await client.get(entry.url)
-                response.raise_for_status()
-
-                # Parse HTML and create a ProductData instance
-                product = parse_product(response.content, url=entry.url)
-
-                # Saves to DB (upsert)
-                await upsert_product(product)
-                saved += 1
-                if entry.sku in updated_dates:
-                    updated += 1
-                else:
-                    inserted += 1
-
-                # Detect availability transitions
-                old_avail = availability_map.get(entry.sku)
-                if old_avail is False and product.availability:
-                    await emit_stock_event(entry.sku, available=True)
-                    restocked += 1
-                    logger.info("Restock detected for SKU {}", entry.sku)
-                elif old_avail is True and not product.availability:
-                    await emit_stock_event(entry.sku, available=False)
-                    destocked += 1
-                    logger.info("Destock detected for SKU {}", entry.sku)
-
-                logger.success("Saved {} - {}", product.sku or "unknown", product.name or "no name")
-
-            except httpx.HTTPStatusError as e:
-                if e.response.status_code == HTTPStatus.NOT_FOUND:
-                    not_found += 1
-                    logger.warning("Not found (stale sitemap entry): {}", entry.url)
-                else:
-                    errors += 1
-                    logger.error("HTTP error for {}: {}", entry.url, e)
-            except httpx.HTTPError as e:
-                errors += 1
-                logger.error("HTTP error for {}: {}", entry.url, e)
-            except SQLAlchemyError as exc:
-                errors += 1
-                logger.error("DB error for {}: {}", entry.url, exc)
-            except Exception:
-                errors += 1
-                logger.exception("Unexpected error for {}", entry.url)
-
-    # Delist detection: compare sitemap SKUs vs DB SKUs
-    # Best-effort — if it fails, next run catches up
-    delisted = 0
-    relisted = 0
     sitemap_skus = {e.sku for e in entries}
     db_skus = set(updated_dates.keys())
-
-    try:
-        to_delist = db_skus - sitemap_skus
-        delisted = await mark_delisted(to_delist)
-        if delisted:
-            logger.info("Marked {} products as delisted", delisted)
-
-        currently_delisted = await get_delisted_skus()
-        to_relist = currently_delisted & sitemap_skus
-        relisted = await clear_delisted(to_relist)
-        if relisted:
-            logger.info("Relisted {} products (back in sitemap)", relisted)
-    except SQLAlchemyError as exc:
-        logger.opt(exception=exc).warning("Delist detection failed, skipping")
+    delisted, relisted = await _detect_delists(sitemap_skus, db_skus)
 
     # Housekeeping: purge old stock events
     await delete_old_stock_events(days=settings.STOCK_EVENT_RETENTION_DAYS)
@@ -231,7 +266,6 @@ async def main() -> int:
         "Scraper run complete:\n"
         "  Duration: {}h {}m {}s\n"
         "  Sitemap URLs: {}\n"
-        "  Skipped (robots.txt): {}\n"
         "  Fetched: {}\n"
         "  Inserted: {}\n"
         "  Updated: {}\n"
@@ -246,20 +280,19 @@ async def main() -> int:
         minutes,
         seconds,
         len(entries),
-        skipped_robots,
-        saved,
-        inserted,
-        updated,
-        restocked,
-        destocked,
-        not_found,
-        errors,
+        stats.saved,
+        stats.inserted,
+        stats.updated,
+        stats.restocked,
+        stats.destocked,
+        stats.not_found,
+        stats.errors,
         skipped,
         delisted,
         relisted,
     )
 
-    return _exit_code(saved, errors)
+    return _exit_code(stats.saved, stats.errors)
 
 
 async def check_watches() -> int:

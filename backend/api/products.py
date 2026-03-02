@@ -12,13 +12,13 @@ from backend.config import (
     MAX_SKU_LENGTH,
 )
 from backend.db import get_db
-from backend.schemas.product import FacetsResponse, PaginatedResponse, ProductResponse
+from backend.schemas.product import FacetsOut, PaginatedOut, ProductOut
 from backend.services.products import get_facets, get_product, get_random_product, list_products
 
 router = APIRouter(prefix="/products", tags=["products"])
 
 
-@router.get("", response_model=PaginatedResponse)
+@router.get("", response_model=PaginatedOut)
 async def get_products(
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
@@ -33,7 +33,7 @@ async def get_products(
     max_price: Decimal | None = Query(default=None, ge=0),
     available: bool | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
-) -> PaginatedResponse:
+) -> PaginatedOut:
     """List products with offset-based pagination and optional filters and sorting options."""
     return await list_products(
         db,
@@ -50,15 +50,15 @@ async def get_products(
     )
 
 
-@router.get("/facets", response_model=FacetsResponse)
+@router.get("/facets", response_model=FacetsOut)
 async def get_product_facets(
     db: AsyncSession = Depends(get_db),
-) -> FacetsResponse:
+) -> FacetsOut:
     """Return distinct filter values and price range for the catalog."""
     return await get_facets(db)
 
 
-@router.get("/random", response_model=ProductResponse)
+@router.get("/random", response_model=ProductOut)
 async def get_random(
     category: list[Annotated[str, Query(max_length=MAX_FILTER_LENGTH)]] | None = Query(
         default=None
@@ -69,7 +69,7 @@ async def get_random(
     max_price: Decimal | None = Query(default=None, ge=0),
     available: bool | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
-) -> ProductResponse:
+) -> ProductOut:
     """Return a single random product matching the given filters."""
     return await get_random_product(
         db,
@@ -82,10 +82,10 @@ async def get_random(
     )
 
 
-@router.get("/{sku}", response_model=ProductResponse)
+@router.get("/{sku}", response_model=ProductOut)
 async def get_product_detail(
     sku: str = Path(max_length=MAX_SKU_LENGTH),
     db: AsyncSession = Depends(get_db),
-) -> ProductResponse:
+) -> ProductOut:
     """Get a single product by SKU."""
     return await get_product(db, sku)

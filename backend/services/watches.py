@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.exceptions import ConflictError, NotFoundError
 from backend.repositories import products as products_repo
 from backend.repositories import watches as repo
-from backend.schemas.product import ProductResponse
-from backend.schemas.watch import PendingNotification, WatchResponse, WatchWithProduct
+from backend.schemas.product import ProductOut
+from backend.schemas.watch import PendingNotification, WatchOut, WatchWithProduct
 
 
 async def create_watch(db: AsyncSession, user_id: str, sku: str) -> WatchWithProduct:
@@ -28,8 +28,8 @@ async def create_watch(db: AsyncSession, user_id: str, sku: str) -> WatchWithPro
         raise NotFoundError("Product", sku) from exc
     product = await products_repo.find_by_sku(db, sku)
     return WatchWithProduct(
-        watch=WatchResponse.model_validate(watch),
-        product=ProductResponse.model_validate(product) if product else None,
+        watch=WatchOut.model_validate(watch),
+        product=ProductOut.model_validate(product) if product else None,
     )
 
 
@@ -38,8 +38,8 @@ async def list_watches(db: AsyncSession, user_id: str) -> list[WatchWithProduct]
     rows = await repo.find_by_user(db, user_id)
     return [
         WatchWithProduct(
-            watch=WatchResponse.model_validate(watch),
-            product=ProductResponse.model_validate(product) if product else None,
+            watch=WatchOut.model_validate(watch),
+            product=ProductOut.model_validate(product) if product else None,
         )
         for watch, product in rows
     ]

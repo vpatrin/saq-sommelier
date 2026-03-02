@@ -19,6 +19,7 @@ _GRAPHQL_URL = "https://www.saq.com/graphql"
 _STORE_AVAILABILITY_URL = "https://www.saq.com/fr/store/locator/ajaxlist"
 _GRAPHQL_BATCH_SIZE = 20  # tested safe; TODO: test upper limit for Phase 6 (12k SKUs)
 _MAX_PAGES = 50  # safety valve: 500 stores max (SAQ has ~400)
+_SAQ_PAGE_SIZE = 10  # server-enforced, not configurable
 
 
 @dataclass
@@ -37,9 +38,8 @@ async def resolve_graphql_products(
         batch = skus[i : i + _GRAPHQL_BATCH_SIZE]
         sku_filter = json.dumps(batch)
         query = (
-            "{ products(filter: { sku: { in: "
-            + sku_filter
-            + " } }) { items { id sku stock_status } }}"
+            f"{{ products(filter: {{ sku: {{ in: {sku_filter} }}"
+            " }) { items { id sku stock_status } }}"
         )
 
         try:
@@ -76,8 +76,6 @@ async def fetch_store_availability(client: httpx.AsyncClient, magento_id: int) -
     offset = 0
     is_last_page = False
     page = 0
-    SAQ_PAGE_SIZE = 10
-
     while not is_last_page and page < _MAX_PAGES:
         page += 1
         params = {
@@ -108,7 +106,7 @@ async def fetch_store_availability(client: httpx.AsyncClient, magento_id: int) -
         is_last_page = data.get("is_last_page", True)
 
         if not is_last_page:
-            offset += SAQ_PAGE_SIZE  # SAQ page size is server-enforced, not configurable
+            offset += _SAQ_PAGE_SIZE
             await asyncio.sleep(settings.RATE_LIMIT_SECONDS)
 
     if page >= _MAX_PAGES:

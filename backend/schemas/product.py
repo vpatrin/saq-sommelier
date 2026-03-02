@@ -4,7 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ProductResponse(BaseModel):
+class ProductOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     sku: str
@@ -30,8 +30,8 @@ class ProductResponse(BaseModel):
     updated_at: datetime
 
 
-class PaginatedResponse(BaseModel):
-    products: list[ProductResponse]
+class PaginatedOut(BaseModel):
+    products: list[ProductOut]
     total: int
     page: int
     per_page: int
@@ -43,7 +43,7 @@ class PriceRange(BaseModel):
     max: Decimal
 
 
-class FacetsResponse(BaseModel):
+class FacetsOut(BaseModel):
     categories: list[str]
     countries: list[str]
     regions: list[str]

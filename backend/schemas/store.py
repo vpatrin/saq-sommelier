@@ -26,7 +26,7 @@ class StoreWithDistance(StoreOut):
     distance_km: float
 
 
-class AddStorePreference(BaseModel):
+class UserStorePreferenceIn(BaseModel):
     saq_store_id: str = Field(min_length=1, max_length=MAX_SAQ_STORE_ID_LENGTH)
 
 

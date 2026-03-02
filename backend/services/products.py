@@ -14,19 +14,19 @@ from backend.repositories.products import (
     get_price_range,
 )
 from backend.schemas.product import (
-    FacetsResponse,
-    PaginatedResponse,
+    FacetsOut,
+    PaginatedOut,
     PriceRange,
-    ProductResponse,
+    ProductOut,
 )
 
 
-async def get_product(db: AsyncSession, sku: str) -> ProductResponse:
+async def get_product(db: AsyncSession, sku: str) -> ProductOut:
     """Fetch a single product by SKU. Raises NotFoundError if not found."""
     product = await find_by_sku(db, sku)
     if product is None:
         raise NotFoundError("Product", sku)
-    return ProductResponse.model_validate(product)
+    return ProductOut.model_validate(product)
 
 
 async def list_products(
@@ -42,7 +42,7 @@ async def list_products(
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
     available: bool | None = None,
-) -> PaginatedResponse:
+) -> PaginatedOut:
     """Fetch a paginated list of products, optionally filtered and sorted."""
     filters = dict(
         q=q,
@@ -58,8 +58,8 @@ async def list_products(
     offset = (page - 1) * per_page
     rows = await find_page(db, offset, per_page, sort=sort, **filters)
 
-    return PaginatedResponse(
-        products=[ProductResponse.model_validate(r) for r in rows],
+    return PaginatedOut(
+        products=[ProductOut.model_validate(r) for r in rows],
         total=total,
         page=page,
         per_page=per_page,
@@ -76,7 +76,7 @@ async def get_random_product(
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
     available: bool | None = None,
-) -> ProductResponse:
+) -> ProductOut:
     """Fetch a single random product matching filters. Raises NotFoundError if none."""
     product = await find_random(
         db,
@@ -89,10 +89,10 @@ async def get_random_product(
     )
     if product is None:
         raise NotFoundError("Product", "no product matches the given filters")
-    return ProductResponse.model_validate(product)
+    return ProductOut.model_validate(product)
 
 
-async def get_facets(db: AsyncSession) -> FacetsResponse:
+async def get_facets(db: AsyncSession) -> FacetsOut:
     """Fetch distinct filter values and price range for active products."""
     categories = await get_distinct_values(db, Product.category)
     countries = await get_distinct_values(db, Product.country)
@@ -100,7 +100,7 @@ async def get_facets(db: AsyncSession) -> FacetsResponse:
     grapes = await get_distinct_values(db, Product.grape)
     price_result = await get_price_range(db)
 
-    return FacetsResponse(
+    return FacetsOut(
         categories=categories,
         countries=countries,
         regions=regions,

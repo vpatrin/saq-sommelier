@@ -141,14 +141,15 @@ async def upsert_product(product_data: ProductData) -> None:
     """
     async with _SessionLocal() as session:
         product_dict = asdict(product_data)
-        product_dict["created_at"] = datetime.now(UTC)
-        product_dict["updated_at"] = datetime.now(UTC)
+        now = datetime.now(UTC)
+        product_dict["created_at"] = now
+        product_dict["updated_at"] = now
 
         stmt = pg_insert(Product).values(product_dict)
 
         # On conflict (SKU already exists), update all fields except sku and created_at
         update_dict = {k: v for k, v in product_dict.items() if k not in ["sku", "created_at"]}
-        update_dict["updated_at"] = datetime.now(UTC)
+        update_dict["updated_at"] = now
 
         stmt = stmt.on_conflict_do_update(
             index_elements=list(Product.__table__.primary_key),

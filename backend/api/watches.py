@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import MAX_SKU_LENGTH, MAX_USER_ID_LENGTH
 from backend.db import get_db
-from backend.schemas.watch import AckRequest, PendingNotification, WatchCreate, WatchWithProduct
+from backend.schemas.watch import AckIn, PendingNotification, WatchIn, WatchWithProduct
 from backend.services.watches import (
     ack_notifications,
     create_watch,
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/watches", tags=["watches"])
 
 @router.post("", response_model=WatchWithProduct, status_code=status.HTTP_201_CREATED)
 async def post_watch(
-    body: WatchCreate,
+    body: WatchIn,
     db: AsyncSession = Depends(get_db),
 ) -> WatchWithProduct:
     """Create a watch on a product for a user."""
@@ -43,7 +43,7 @@ async def get_pending_notifications(
 
 @router.post("/notifications/ack", status_code=status.HTTP_204_NO_CONTENT)
 async def ack_notifications_endpoint(
-    body: AckRequest,
+    body: AckIn,
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """Acknowledge processed notifications (mark as sent)."""

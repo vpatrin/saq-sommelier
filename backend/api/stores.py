@@ -8,7 +8,7 @@ from backend.config import (
     MAX_USER_ID_LENGTH,
 )
 from backend.db import get_db
-from backend.schemas.store import AddStorePreference, StoreWithDistance, UserStorePreferenceOut
+from backend.schemas.store import StoreWithDistance, UserStorePreferenceIn, UserStorePreferenceOut
 from backend.services.stores import (
     add_user_store,
     get_nearby_stores,
@@ -46,7 +46,7 @@ async def list_user_stores(
     status_code=status.HTTP_201_CREATED,
 )
 async def add_store_preference(
-    body: AddStorePreference,
+    body: UserStorePreferenceIn,
     user_id: str = Path(min_length=1, max_length=MAX_USER_ID_LENGTH),
     db: AsyncSession = Depends(get_db),
 ) -> UserStorePreferenceOut:
