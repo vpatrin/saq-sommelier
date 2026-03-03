@@ -28,7 +28,6 @@ class ProductData:
     barcode: str | None = None
     image: str | None = None
     price: float | None = None
-    currency: str | None = None
     availability: bool | None = None
     rating: float | None = None
     review_count: int | None = None
@@ -44,8 +43,6 @@ class ProductData:
     alcohol: str | None = None
     sugar: str | None = None
     producer: str | None = None
-    saq_code: str | None = None
-    cup_code: str | None = None
 
 
 def parse_product(html: str | bytes, url: str) -> ProductData:
@@ -124,9 +121,6 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
                     fields["price"] = float(str(price).replace(",", ""))
                 except (ValueError, TypeError) as exc:
                     logger.warning("Bad price value {!r} on {}: {}", price, url, exc)
-            currency = offers.get("priceCurrency")
-            if currency:
-                fields["currency"] = currency
             availability = offers.get("availability")
             if availability is not None:
                 fields["availability"] = "InStock" in str(availability)
@@ -166,8 +160,6 @@ _LABEL_MAP: dict[str, str] = {
     "alcohol": "Degré d'alcool",
     "sugar": "Taux de sucre",
     "producer": "Producteur",
-    "saq_code": "Code SAQ",
-    "cup_code": "Code CUP",
 }
 
 

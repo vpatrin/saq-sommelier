@@ -8,7 +8,6 @@ class TestParseProductJsonLD:
         assert result.sku == "10327701"
         assert result.category == "Vin rouge"
         assert result.price == 22.50
-        assert result.currency == "CAD"
         assert result.availability is True
 
     def test_extracts_rating(self, product_page_html: str) -> None:
@@ -89,7 +88,6 @@ class TestParseProductHtmlAttrs:
         assert result.grape == "Merlot 60 %, Cabernet sauvignon 40 %"
         assert result.alcohol == "13,5 %"
         assert result.sugar == "2,5 g/L"
-        assert result.saq_code == "10327701"
 
 
 class TestParseProductEdgeCases:

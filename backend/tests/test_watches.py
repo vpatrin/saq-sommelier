@@ -35,7 +35,6 @@ def _fake_product(**overrides):
         color="Rouge",
         size="750 ml",
         price=None,
-        currency=None,
         availability=True,
         rating=None,
         review_count=None,
