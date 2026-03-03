@@ -17,6 +17,7 @@ class BotSettings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str
     BACKEND_URL: str = "http://localhost:8001"
     BACKEND_TIMEOUT: float = 10.0
+    BOT_SECRET: str = ""
     LOG_LEVEL: str = "INFO"
     NOTIFICATION_POLL_INTERVAL: int  # seconds — set in .env (60 dev, 21600 prod)
     ALLOWED_USER_IDS: str = ""  # comma-separated Telegram user IDs, empty = allow all

@@ -54,7 +54,7 @@ from bot.middleware import allowlist_gate, rate_limit_gate
 
 
 async def _post_init(application: Application) -> None:
-    api = BackendClient(settings.BACKEND_URL, settings.BACKEND_TIMEOUT)
+    api = BackendClient(settings.BACKEND_URL, settings.BACKEND_TIMEOUT, settings.BOT_SECRET)
     await api.open()
     application.bot_data["api"] = api
     logger.info("BackendClient initialized ({})", settings.BACKEND_URL)

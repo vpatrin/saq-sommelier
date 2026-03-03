@@ -25,6 +25,10 @@ class BackendSettings(BaseSettings):
         extra="ignore",
     )
 
+    # Shared secret for bot → backend internal calls (X-Bot-Secret header).
+    # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
+    BOT_SECRET: str = ""
+
     # CORS — explicit allowlist, no wildcards.
     # Override in production .env: CORS_ORIGINS=["https://wine.victorpatrin.dev"]
     CORS_ORIGINS: list[str] = ["http://localhost:5173"]

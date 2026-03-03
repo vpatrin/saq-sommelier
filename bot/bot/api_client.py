@@ -28,15 +28,17 @@ class BackendClient:
 
     # ── Lifecycle ───────────────────────────────────────────────
 
-    def __init__(self, base_url: str, timeout: float = 10.0) -> None:
+    def __init__(self, base_url: str, timeout: float = 10.0, bot_secret: str = "") -> None:
         self._base_url = base_url.rstrip("/")  # Prevents double slash in URL
         self._timeout = timeout
+        self._bot_secret = bot_secret
         self._client: httpx.AsyncClient | None = None
 
     async def open(self) -> None:
         self._client = httpx.AsyncClient(
             base_url=f"{self._base_url}/api",
             timeout=self._timeout,
+            headers={"X-Bot-Secret": self._bot_secret} if self._bot_secret else {},
         )
 
     async def close(self) -> None:

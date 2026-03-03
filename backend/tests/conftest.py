@@ -14,3 +14,11 @@ def _mock_db_lifecycle():
     with patch("backend.app.verify_db_connection", new_callable=AsyncMock):
         yield
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def _disable_bot_secret():
+    """Disable bot secret auth by default — tests that need it patch explicitly."""
+    with patch("backend.auth.backend_settings") as mock:
+        mock.BOT_SECRET = ""
+        yield

@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Out-of-stock notifications — watched products now alert users when availability drops (#212)
 - Delist notifications — users watching a product are alerted when SAQ removes it from the catalog (#243)
 
+### Security
+
+- Bot→backend notification endpoints protected with `X-Bot-Secret` shared secret; no-op when unconfigured (dev) (#276)
+
 ### Changed
 
 - Watches auto-removed when a delisted product is acked — no manual cleanup needed, message explains why (#277)
