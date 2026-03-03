@@ -76,6 +76,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Changelog](CHANGELOG.md) — release history
 - [specs/STORE_AVAILABILITY.md](docs/specs/STORE_AVAILABILITY.md) — store availability feature spec
 - [specs/TELEGRAM_BOT.md](docs/specs/TELEGRAM_BOT.md) — Telegram bot design and commands
+- [specs/AI_RAG.md](docs/specs/AI_RAG.md) — Phase 6 RAG + Claude architecture spec
 
 ## Legal
 
