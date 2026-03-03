@@ -49,7 +49,7 @@ Infrastructure-level production targets (VPS hardening, backups, Grafana) tracke
 **Done:** Makefile (per-service and combined targets for install, dev, lint, format, test, coverage, audit, build, run). Docker Compose (dev profile for postgres, production for backend + bot). CI/CD (lint + test + audit per service, Hadolint, coverage enforcement, concurrency cancel-in-progress). Systemd timers for production scheduling. Scoped git hooks (pre-commit lints changed services, pre-push tests changed services + checks lock files + migration coverage).
 
 **Next:**
-- `docs/DEPLOYMENT.md` (#227): deploy flow, migration order, rollback procedure, initial VPS bootstrap — production is live but the process is only in your head
+- ~~`docs/DEPLOYMENT.md`~~: folded into [PRODUCTION.md](PRODUCTION.md#deploying) (#227)
 - CD pipeline: push to main → build image → push to GHCR → SSH deploy to VPS — currently manual and undocumented
 - Image tagging: `:latest` for production, `:YYYYMMDD-HHMMSS` for rollback archive — enables one-command rollback
 - `docker-compose.prod.yml`: explicit resource limits, restart policies, health checks, no debug ports — current compose mixes dev and prod concerns

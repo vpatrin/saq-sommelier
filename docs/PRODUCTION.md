@@ -1,7 +1,6 @@
 # Production
 
-Infrastructure-level state and outstanding work for the production VPS.
-Application deployment process documented in [DEPLOYMENT.md](DEPLOYMENT.md) (#227, not yet written).
+Infrastructure-level state, deployment process, and outstanding work for the production VPS.
 Step-by-step setup instructions live in the infra repo (private).
 
 ---
@@ -18,6 +17,41 @@ Step-by-step setup instructions live in the infra repo (private).
 - **Reverse proxy**: Caddy (SSL + routing via victorpatrin.dev subdomains)
 - **Services**: backend, bot, scraper (systemd timer), shared-postgres
 - **Deployed**: v1.1.0
+
+---
+
+## Deploying
+
+Tag on main first (see [CHANGELOG.md](../CHANGELOG.md)), then deploy the tag on the VPS.
+
+```bash
+git fetch --tags && git checkout vX.Y.Z
+diff .env.example .env            # check for new/changed vars
+make build                        # rebuild service images (including scraper for next scheduled run)
+make migrate                      # apply pending migrations (idempotent, always safe to run)
+docker compose up -d backend bot  # restart services
+```
+
+If `deploy/` unit files changed (or first deploy):
+
+```bash
+sudo cp deploy/saq-scraper.{service,timer} deploy/saq-watches.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now saq-scraper.timer saq-watches.timer
+```
+
+Verify:
+
+```bash
+curl -s localhost:8001/health     # backend responds
+# message the bot on Telegram    # bot responds
+systemctl status saq-scraper.timer   # timer active, next run scheduled
+systemctl status saq-watches.timer   # timer active, next run scheduled
+```
+
+Rollback: `git checkout vX.Y.Z && make build && docker compose up -d backend bot`
+
+Migrations are forward-only — never run `downgrade()` in production. Write a new migration to fix mistakes. See [OPERATIONS.md](OPERATIONS.md#forward-only-in-production).
 
 ---
 
