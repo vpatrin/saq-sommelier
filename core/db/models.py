@@ -113,7 +113,6 @@ class Product(Base):
     size = Column(String, nullable=True, comment="Bottle size (e.g., 750ml)")
     image = Column(String, nullable=True, comment="Product image URL")
     price = Column(Numeric(10, 2), nullable=True, index=True, comment="Price in CAD")
-    currency = Column(String, nullable=True, comment="Currency code (CAD)")
     availability = Column(Boolean, nullable=True, comment="In stock?")
     rating = Column(Float, nullable=True, comment="Aggregate rating (0-5)")
     review_count = Column(Integer, nullable=True, comment="Number of reviews")
@@ -127,8 +126,6 @@ class Product(Base):
     alcohol = Column(String, nullable=True, comment="Alcohol content (e.g., 13.5%)")
     sugar = Column(String, nullable=True, comment="Sugar content")
     producer = Column(String, nullable=True, comment="Producer name")
-    saq_code = Column(String, nullable=True, comment="Code SAQ (internal)")
-    cup_code = Column(String, nullable=True, comment="Code CUP (UPC)")
 
     def __repr__(self) -> str:
         return f"<Product(sku={self.sku!r}, name={self.name!r})>"

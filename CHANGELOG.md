@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Flat wine type filter keyboard (Rouge/Blanc/Rosé/Bulles) replaces two-level family hierarchy (#167)
 - Skip ~1,500 non-product URLs (recipes, accessories) during scrape, saving ~50 min per run (#188)
 
+### Removed
+
+- `currency` field dropped from product API responses — was always `"CAD"`, never meaningful (#223)
+
 ### Fixed
 
 - Weekly scraper no longer emits stock events from CDN-cached HTML, eliminating false restock/destock notifications (#241)
