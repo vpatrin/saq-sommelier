@@ -262,7 +262,7 @@ class TestFormatDelistNotification:
         result = format_delist_notification(notif)
         assert "10327701" in result
 
-    def test_keep_watch_message(self):
+    def test_watch_removed_message(self):
         notif = _notif(available=False, delisted=True)
         result = format_delist_notification(notif)
-        assert "watch" in result.lower()
+        assert "watch has been removed" in result.lower()

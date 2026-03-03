@@ -74,7 +74,10 @@ async def list_pending_notifications(db: AsyncSession) -> list[NotificationOut]:
 
 
 async def ack_notifications(db: AsyncSession, event_ids: list[int]) -> int:
-    """Mark stock events as processed. Returns count acked."""
+    """Mark stock events as processed. Auto-removes watches for delisted products."""
+    removed = await repo.delete_by_delisted_event_ids(db, event_ids)
+    if removed:
+        logger.info("Auto-removed {} watch(es) for delisted product(s)", removed)
     count = await repo.ack_events(db, event_ids)
     if count < len(event_ids):
         logger.warning("Acked {}/{} events (rest already processed)", count, len(event_ids))

@@ -16,8 +16,8 @@
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
     <text x="31.0" y="15" fill="#010101" fill-opacity=".3">coverage</text>
     <text x="31.0" y="14">coverage</text>
-    <text x="103.75" y="15" fill="#010101" fill-opacity=".3">backend 87%</text>
-    <text x="103.75" y="14">backend 87%</text>
+    <text x="103.75" y="15" fill="#010101" fill-opacity=".3">backend 85%</text>
+    <text x="103.75" y="14">backend 85%</text>
     <text x="187.25" y="15" fill="#010101" fill-opacity=".3">scraper 81%</text>
     <text x="187.25" y="14">scraper 81%</text>
     <text x="257.75" y="15" fill="#010101" fill-opacity=".3">bot 94%</text>

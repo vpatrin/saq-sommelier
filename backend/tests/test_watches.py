@@ -374,6 +374,7 @@ def test_pending_notifications_online_event_has_null_store():
 def test_ack_notifications_success():
     """204 — events acknowledged."""
     with patch("backend.services.watches.repo") as mock_repo:
+        mock_repo.delete_by_delisted_event_ids = AsyncMock(return_value=0)
         mock_repo.ack_events = AsyncMock(return_value=2)
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
@@ -384,6 +385,24 @@ def test_ack_notifications_success():
         )
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_ack_notifications_removes_watches_for_delisted_products():
+    """204 — watches for delisted products are auto-removed before ack."""
+    with patch("backend.services.watches.repo") as mock_repo:
+        mock_repo.delete_by_delisted_event_ids = AsyncMock(return_value=1)
+        mock_repo.ack_events = AsyncMock(return_value=1)
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.post(
+            "/api/watches/notifications/ack",
+            json={"event_ids": [5]},
+        )
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+    mock_repo.delete_by_delisted_event_ids.assert_called_once()
+    mock_repo.ack_events.assert_called_once()
 
 
 def test_ack_notifications_empty_list_rejected():
