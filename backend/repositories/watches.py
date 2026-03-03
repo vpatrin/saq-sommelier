@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from core.db.models import Product, StockEvent, Store, UserStorePreference, Watch
 from sqlalchemy import and_, select, update
+from sqlalchemy import delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import MAX_ACK_BATCH_SIZE
@@ -84,6 +85,31 @@ async def find_pending_notifications(
     results.extend(store_rows)
     results.sort(key=lambda r: r[0].detected_at)
     return results[:MAX_ACK_BATCH_SIZE]
+
+
+async def delete_by_delisted_event_ids(db: AsyncSession, event_ids: list[int]) -> int:
+    """Delete watches for any SKU that is delisted and referenced in the given event IDs.
+
+    Deletes across ALL users — a delisted product has no meaningful watch state for anyone.
+    Returns count of watches deleted.
+    """
+    sku_stmt = (
+        select(StockEvent.sku)
+        .join(Product, StockEvent.sku == Product.sku)
+        .where(StockEvent.id.in_(event_ids))
+        .where(Product.delisted_at.isnot(None))
+        .distinct()
+    )
+    result = await db.execute(sku_stmt)
+    delisted_skus = [row[0] for row in result.all()]
+
+    if not delisted_skus:
+        return 0
+
+    stmt = sa_delete(Watch).where(Watch.sku.in_(delisted_skus))
+    result = await db.execute(stmt)
+    await db.flush()
+    return result.rowcount
 
 
 async def ack_events(db: AsyncSession, event_ids: list[int]) -> int:

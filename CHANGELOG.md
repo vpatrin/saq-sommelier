@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Watches auto-removed when a delisted product is acked — no manual cleanup needed, message explains why (#277)
 - `/alerts` shows inline remove buttons per wine — tap to unwatch without typing `/unwatch` (#240)
 - `/watch` and `/unwatch` now show the updated watch list keyboard directly, with no separate confirmation message (#240)
 - Group stock notifications by product — one message per wine listing all affected stores, with online availability hint (#256)

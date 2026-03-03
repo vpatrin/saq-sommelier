@@ -85,7 +85,7 @@ def format_delist_notification(notif: dict[str, Any]) -> str:
     url = f"{SAQ_BASE_URL}/{sku}"
     return (
         f"\U0001f6ab *{name}* has been removed from SAQ's catalog.\n"
-        f"Your watch is kept — /unwatch `{sku}` to remove it.\n"
+        f"Your watch has been removed — this product is no longer listed on SAQ.\n"
         f"\U0001f517 [saq.com/{sku}]({url})"
     )
 
