@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-03
+
 ### Added
 
 - SAQ URL paste — paste a product link in chat to get a one-tap Watch / Skip prompt (#273)
@@ -81,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Compose deployment with Caddy reverse proxy
 - CI pipeline with per-service linting, testing, and coverage thresholds
 
-[Unreleased]: https://github.com/vpatrin/saq-sommelier/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/vpatrin/saq-sommelier/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/vpatrin/saq-sommelier/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/vpatrin/saq-sommelier/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/vpatrin/saq-sommelier/releases/tag/v1.0.0
