@@ -76,6 +76,12 @@ class Product(Base):
             postgresql_using="gin",
             postgresql_ops={"name": "gin_trgm_ops"},
         ),
+        # GIN on store_availability for @> containment queries ("available at store X")
+        Index(
+            "ix_products_store_availability_gin",
+            "store_availability",
+            postgresql_using="gin",
+        ),
     )
 
     # Primary key: SAQ SKU (immutable business identifier)
@@ -108,12 +114,10 @@ class Product(Base):
     description = Column(Text, nullable=True, comment="Product description")
     category = Column(String, nullable=True, index=True, comment="Product category")
     country = Column(String, nullable=True, index=True, comment="Country of origin")
-    barcode = Column(String, nullable=True, comment="GTIN-12 barcode")
-    color = Column(String, nullable=True, comment="Wine color (red/white/rosé)")
     size = Column(String, nullable=True, comment="Bottle size (e.g., 750ml)")
     image = Column(String, nullable=True, comment="Product image URL")
     price = Column(Numeric(10, 2), nullable=True, index=True, comment="Price in CAD")
-    availability = Column(Boolean, nullable=True, comment="In stock?")
+    online_availability = Column(Boolean, nullable=True, comment="Available online?")
     rating = Column(Float, nullable=True, comment="Aggregate rating (0-5)")
     review_count = Column(Integer, nullable=True, comment="Number of reviews")
 
@@ -126,6 +130,35 @@ class Product(Base):
     alcohol = Column(String, nullable=True, comment="Alcohol content (e.g., 13.5%)")
     sugar = Column(String, nullable=True, comment="Sugar content")
     producer = Column(String, nullable=True, comment="Producer name")
+
+    # Wine attributes (writer: --adobe-attrs-sync)
+    pastille_gout = Column(
+        String, nullable=True, comment="SAQ taste profile (e.g. 'Aromatique et souple')"
+    )
+    vintage = Column(String, nullable=True, comment="Millésime (e.g. '2023')")
+    tasting_profile = Column(JSONB, nullable=True, comment="portrait_* attributes from Adobe")
+    cepage_adobe = Column(
+        JSONB,
+        nullable=True,
+        comment='Structured blend: [{"code":"MALB","pct":96},{"code":"SYRA","pct":4}]',
+    )
+
+    # Availability (writer: --availability-check)
+    store_availability = Column(
+        JSONB,
+        nullable=True,
+        comment='Store IDs carrying this product: ["23002","23004",...]',
+    )
+
+    # Embedding support (writer: --embed-sync)
+    attribute_hash = Column(
+        String, nullable=True, comment="Hash of embedding-relevant fields for change detection"
+    )
+    embedded_hash = Column(
+        String,
+        nullable=True,
+        comment="Hash at time of last embedding — embed when != attribute_hash",
+    )
 
     def __repr__(self) -> str:
         return f"<Product(sku={self.sku!r}, name={self.name!r})>"
@@ -196,51 +229,11 @@ class UserStorePreference(Base):
         )
 
 
-class ProductAvailability(Base):
-    """Per-product availability snapshot for watched SKUs.
-
-    Online availability from GraphQL stock_status, store quantities from AJAX.
-    Only contains rows for watched SKUs (not the full catalog).
-    Updated daily by --check-watches.
-    """
-
-    __tablename__ = "product_availability"
-
-    sku = Column(
-        String,
-        ForeignKey("products.sku"),
-        primary_key=True,
-        comment="Watched product SKU",
-    )
-    online_available = Column(
-        Boolean,
-        nullable=True,
-        comment="Online availability from GraphQL stock_status (NULL = not yet checked)",
-    )
-    store_qty = Column(
-        JSONB,
-        nullable=False,
-        default=dict,
-        comment='Store stock map: {"23009": 44, "23132": 12}',
-    )
-    checked_at = Column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(UTC),
-        nullable=False,
-        comment="When availability was last checked",
-    )
-
-    def __repr__(self) -> str:
-        n = len(self.store_qty) if self.store_qty else 0
-        online = self.online_available
-        return f"<ProductAvailability(sku={self.sku!r}, online={online}, stores={n})>"
-
-
 class StockEvent(Base):
     """Records product availability transitions.
 
     saq_store_id is NULL for online events and non-NULL for in-store events.
-    Both are emitted by the daily availability checker (--check-watches).
+    Emitted by the daily availability checker (--availability-check).
     """
 
     __tablename__ = "stock_events"

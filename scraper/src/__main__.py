@@ -11,7 +11,6 @@ from core.logging import setup_logging
 from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 
-from .availability import run_availability_check
 from .config import settings
 from .constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
 from .db import (
@@ -265,30 +264,6 @@ async def main() -> int:
     return _exit_code(stats.saved, stats.errors)
 
 
-async def check_watches() -> int:
-    """Check online + store availability for watched SKUs. Returns exit code."""
-    start = time.monotonic()
-
-    async with httpx.AsyncClient(
-        headers={"User-Agent": settings.USER_AGENT}, timeout=settings.REQUEST_TIMEOUT
-    ) as client:
-        try:
-            events = await run_availability_check(client)
-        except Exception:
-            logger.exception("Watch availability check failed")
-            return EXIT_FATAL
-
-    # Housekeeping: purge old stock events (same as weekly scrape)
-    await delete_old_stock_events(days=settings.STOCK_EVENT_RETENTION_DAYS)
-
-    elapsed = time.monotonic() - start
-    minutes, seconds = divmod(int(elapsed), 60)
-    logger.info(
-        "Watch availability check done in {}m {}s — {} events emitted", minutes, seconds, events
-    )
-    return EXIT_OK
-
-
 async def scrape_stores() -> int:
     """Fetch and upsert the full SAQ store directory. Returns exit code."""
     start = time.monotonic()
@@ -312,10 +287,8 @@ async def scrape_stores() -> int:
 
 
 if __name__ == "__main__":
-    # Entry point: python -m src [--check-watches | --scrape-stores]
-    if "--check-watches" in sys.argv:
-        sys.exit(asyncio.run(check_watches()))
-    elif "--scrape-stores" in sys.argv:
+    # Entry point: python -m src [--scrape-stores]
+    if "--scrape-stores" in sys.argv:
         sys.exit(asyncio.run(scrape_stores()))
     else:
         sys.exit(asyncio.run(main()))

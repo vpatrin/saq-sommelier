@@ -8,7 +8,7 @@ class TestParseProductJsonLD:
         assert result.sku == "10327701"
         assert result.category == "Vin rouge"
         assert result.price == 22.50
-        assert result.availability is True
+        assert result.online_availability is True
 
     def test_extracts_rating(self, product_page_html: str) -> None:
         result = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
@@ -35,7 +35,6 @@ class TestParseProductJsonLD:
         assert result.price == 22.50
         assert result.rating == 4.5
         assert result.review_count == 100
-        assert result.barcode == "00012345678901"
 
     def test_accepts_bytes_input(self, product_page_html_bytes: bytes) -> None:
         """Parser handles raw bytes (response.content) for correct encoding."""
@@ -81,7 +80,6 @@ class TestParseProductHtmlAttrs:
         result = parse_product(product_page_html, url="https://www.saq.com/fr/10327701")
 
         assert result.country == "France"
-        assert result.color == "Rouge"
         assert result.size == "750 ml"
         assert result.region == "Bordeaux"
         assert result.appellation == "Bordeaux AOC"
@@ -96,7 +94,7 @@ class TestParseProductEdgeCases:
 
         assert result.name == "Minimal Wine"
         assert result.sku == "99999999"
-        assert result.availability is False
+        assert result.online_availability is False
         assert result.price is None
         assert result.region is None
         assert result.grape is None

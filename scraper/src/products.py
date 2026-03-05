@@ -25,15 +25,13 @@ class ProductData:
     sku: str | None = None
     description: str | None = None
     category: str | None = None
-    barcode: str | None = None
     image: str | None = None
     price: float | None = None
-    availability: bool | None = None
+    online_availability: bool | None = None
     rating: float | None = None
     review_count: int | None = None
     # HTML attribute fields
     country: str | None = None
-    color: str | None = None
     size: str | None = None
     region: str | None = None
     appellation: str | None = None
@@ -101,7 +99,6 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
             ("sku", "sku"),
             ("description", "description"),
             ("category", "category"),
-            ("barcode", "gtin12"),
         ]:
             value = data.get(jsonld_key)
             if isinstance(value, str) and value:
@@ -123,7 +120,7 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
                     logger.warning("Bad price value {!r} on {}: {}", price, url, exc)
             availability = offers.get("availability")
             if availability is not None:
-                fields["availability"] = "InStock" in str(availability)
+                fields["online_availability"] = "InStock" in str(availability)
 
         # Rating — SAQ uses French decimal commas ("4,4") in block 2
         rating_data = data.get("aggregateRating", {})
@@ -150,7 +147,6 @@ def _parse_jsonld(soup: BeautifulSoup, url: str) -> dict[str, Any]:
 # Maps our English field names to the French labels that SAQ uses in their HTML
 _LABEL_MAP: dict[str, str] = {
     "country": "Pays",
-    "color": "Couleur",
     "size": "Format",
     "region": "Région",
     "appellation": "Appellation d'origine",

@@ -66,7 +66,7 @@ async def list_pending_notifications(db: AsyncSession) -> list[NotificationOut]:
             detected_at=event.detected_at,
             saq_store_id=event.saq_store_id,
             store_name=store.name if store else None,
-            online_available=product.availability if product else None,
+            online_available=product.online_availability if product else None,
             delisted=product.delisted_at is not None if product else False,
         )
         for event, watch, product, store in rows

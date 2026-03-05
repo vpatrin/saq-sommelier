@@ -5,7 +5,6 @@ from typing import Any
 from core.db.base import create_session_factory
 from core.db.models import (
     Product,
-    ProductAvailability,
     StockEvent,
     Store,
     UserStorePreference,
@@ -161,7 +160,7 @@ async def get_watched_skus() -> list[str]:
 
 
 async def get_watchable_skus() -> list[str]:
-    """Get watched SKUs for non-delisted products — for --check-watches availability polling."""
+    """Get watched SKUs for non-delisted products — used by --availability-check (Phase 6)."""
     async with _SessionLocal() as session:
         stmt = (
             select(Watch.sku)
@@ -174,7 +173,7 @@ async def get_watchable_skus() -> list[str]:
 
 
 async def get_watched_store_coords() -> dict[str, tuple[float, float]]:
-    """Get coordinates for all stores in user preferences.
+    """Get coordinates for all stores in user preferences — used by --availability-check (Phase 6).
 
     Returns {saq_store_id: (latitude, longitude)} for stores that have coordinates.
     """
@@ -190,52 +189,6 @@ async def get_watched_store_coords() -> dict[str, tuple[float, float]]:
         )
         result = await session.execute(stmt)
         return {row[0]: (row[1], row[2]) for row in result.all()}
-
-
-async def get_product_availability(sku: str) -> tuple[bool | None, dict[str, int]]:
-    """Get current online_available and store_qty for a SKU.
-
-    Returns (None, {}) if no record exists yet.
-    """
-    async with _SessionLocal() as session:
-        stmt = select(ProductAvailability.online_available, ProductAvailability.store_qty).where(
-            ProductAvailability.sku == sku
-        )
-        result = await session.execute(stmt)
-        row = result.first()
-        if row is None:
-            return None, {}
-        return row[0], row[1] or {}
-
-
-async def upsert_product_availability(
-    sku: str,
-    *,
-    online_available: bool | None = None,
-    store_qty: dict[str, int] | None = None,
-) -> None:
-    """Insert or update the availability snapshot for a watched SKU."""
-    now = datetime.now(UTC)
-    values: dict[str, Any] = {"sku": sku, "checked_at": now}
-    update_set: dict[str, Any] = {"checked_at": now}
-
-    if online_available is not None:
-        values["online_available"] = online_available
-        update_set["online_available"] = online_available
-    if store_qty is not None:
-        values["store_qty"] = store_qty
-        update_set["store_qty"] = store_qty
-
-    async with _SessionLocal() as session:
-        stmt = pg_insert(ProductAvailability).values(**values)
-        stmt = stmt.on_conflict_do_update(index_elements=["sku"], set_=update_set)
-        try:
-            await session.execute(stmt)
-            await session.commit()
-        except SQLAlchemyError as exc:
-            await session.rollback()
-            logger.opt(exception=exc).error("Failed to upsert product availability for SKU {}", sku)
-            raise
 
 
 async def upsert_stores(stores: list[StoreData]) -> None:

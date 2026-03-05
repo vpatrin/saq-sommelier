@@ -26,7 +26,7 @@ def _apply_filters(
     # Always exclude delisted products (page gone from SAQ sitemap)
     stmt = stmt.where(Product.delisted_at.is_(None))
     if available is not None:
-        stmt = stmt.where(Product.availability == available)  # noqa: E712
+        stmt = stmt.where(Product.online_availability == available)  # noqa: E712
     if q is not None:
         stmt = stmt.where(Product.name.ilike(f"%{q}%"))
     if category is not None:

@@ -11,10 +11,9 @@ class ProductOut(BaseModel):
     name: str | None
     category: str | None
     country: str | None
-    color: str | None
     size: str | None
     price: Decimal | None = Field(examples=[24.95])  # For the Swagger example
-    availability: bool | None
+    online_availability: bool | None
     rating: float | None
     review_count: int | None
     region: str | None
