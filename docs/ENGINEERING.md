@@ -84,14 +84,16 @@ Infrastructure-level production targets (VPS hardening, backups, Grafana) tracke
 **Not started.** See [ROADMAP.md](ROADMAP.md) Phase 6.
 
 Key decisions already made:
-- **Embeddings:** sentence-transformers (`all-MiniLM-L6-v2`) via ChromaDB (embedded, no separate service)
-- **LLM:** Claude Haiku 4.5 (`claude-haiku-4-5-20251001`, fast + cheap, ~$0.0001/query)
-- **Pattern:** RAG over fine-tuning — catalog changes weekly, embeddings update incrementally
+- **Vector store:** pgvector (PostgreSQL extension) — hybrid queries (vector + SQL filters) in one statement, no extra service
+- **Embeddings:** `multilingual-e5-large` (1024-d) — handles FR/EN bilingual queries
+- **LLM:** Claude Haiku 4.5 (`claude-haiku-4-5-20251001`, fast + cheap, ~$0.002/query)
+- **Pattern:** RAG context injection over fine-tuning — catalog changes weekly, embeddings update incrementally
 
 **Next:**
-- Write `docs/specs/AI_RAG.md` (#228) before coding — lock in ChromaDB setup, retrieval strategy, guardrails, and prompt design first
-- ChromaDB setup + `scraper/src/embed_sync.py` — post-scrape embedding pipeline for ~38k products
-- Bilingual eval checkpoint: if FR/EN retrieval overlap < 50%, swap `all-MiniLM-L6-v2` → `multilingual-MiniLM`
-- `backend/services/rag_service.py` + `guardrails.py` — Claude integration with hallucination prevention, versioned prompt config
+- See [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md) (#228) for full architecture spec
+- pgvector setup + `--embed-sync` CLI flag — post-scrape embedding pipeline for ~30.9k wine products
+- Bilingual eval checkpoint: if FR/EN retrieval overlap < 50%, re-evaluate model choice
+- `backend/services/rag_service.py` — hybrid retrieval (SQL filter → pgvector → Claude)
+- `backend/services/claude_service.py` — prompt builder + SKU validation guardrails
 - LLM call logging + user feedback loop (`👍👎` → `recommendation_feedback` table) — needed to measure quality
 - HyDE, semantic caching, eval in CI — Phase 7, only after baseline eval data collected

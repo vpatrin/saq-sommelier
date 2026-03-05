@@ -133,6 +133,6 @@ Endpoints the bot needs from the backend:
 
 ## What's NOT in scope (yet)
 
-- **AI recommendations** (`/recommend`) — Phase 6, requires ChromaDB + Claude
-- **In-store availability** — would require scraping store-specific pages, not in sitemap data
+- **AI recommendations** (`/recommend`) — Phase 6, requires pgvector + Claude (see [RECOMMENDATIONS.md](RECOMMENDATIONS.md))
+- ~~**In-store availability**~~ — Done (Phase 5b, see [DATA_PIPELINE.md](DATA_PIPELINE.md))
 - **Auth** — 20 friends, private bot, not needed yet

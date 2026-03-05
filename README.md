@@ -11,9 +11,9 @@ AI-powered wine recommendation engine built on the SAQ (Quebec liquor board) pro
 
 - 🍷 Scrapes ~38k products from the SAQ public sitemap into PostgreSQL
 - 🔍 FastAPI catalog API with search, filtering, and restock alerts
-- 🤖 Telegram bot for browsing, watching, and notifications
-- 📍 In-store availability lookup (planned)
-- 💬 Natural language recommendations via Claude RAG (planned)
+- 🤖 Telegram bot for browsing, watching, and notifications — wine-focused (vin, champagne/mousseux, porto/fortifié, saké)
+- 📍 In-store availability for Montreal stores (daily refresh via Adobe Live Search — planned)
+- 💬 Natural language wine recommendations via Claude RAG + pgvector (planned)
 
 ## Architecture
 
@@ -74,7 +74,8 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Engineering](docs/ENGINEERING.md) — testing, security, observability, SRE, platform, ML/MLOps
 - [Roadmap](docs/ROADMAP.md) — product phases and timeline
 - [Changelog](CHANGELOG.md) — release history
-- [specs/STORE_AVAILABILITY.md](docs/specs/STORE_AVAILABILITY.md) — store availability feature spec
+- [specs/DATA_PIPELINE.md](docs/specs/DATA_PIPELINE.md) — data pipeline spec (Adobe Live Search, HTML scrape)
+- [specs/RECOMMENDATIONS.md](docs/specs/RECOMMENDATIONS.md) — Phase 6 RAG + Claude architecture spec
 - [specs/TELEGRAM_BOT.md](docs/specs/TELEGRAM_BOT.md) — Telegram bot design and commands
 
 ## Legal
