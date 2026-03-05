@@ -114,6 +114,8 @@ The scraper programmatically enforces SAQ's `robots.txt` rules:
 
 Daily job that checks online and in-store availability for watched SKUs. Separate from the weekly product scrape — runs as `python -m src --check-watches`.
 
+> **Phase 6 note:** `--check-watches` will be replaced by `--availability-check`, which uses Adobe Live Search instead of Magento GraphQL + AJAX. See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for the new architecture. The scheduling and systemd setup below remain the same.
+
 ### How it works
 
 1. Loads all watched SKUs (`SELECT DISTINCT sku FROM watches`)
@@ -123,7 +125,7 @@ Daily job that checks online and in-store availability for watched SKUs. Separat
 5. Upserts `product_availability` with the new snapshot
 6. Purges stock events older than 7 days
 
-Exits immediately if no watched SKUs exist. See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API details and routing logic.
+Exits immediately if no watched SKUs exist. See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for API details and routing logic.
 
 ### Scheduling and operations
 

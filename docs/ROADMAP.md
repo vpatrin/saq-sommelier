@@ -78,7 +78,7 @@ Backend endpoints driven by Telegram bot needs. See [specs/TELEGRAM_BOT.md](spec
 
 ### Phase 5b — Store Availability ✅
 
-See [specs/STORE_AVAILABILITY.md](specs/STORE_AVAILABILITY.md) for API reference and engineering plan.
+See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for API reference and data pipeline design.
 
 - [x] Store directory scrape (#128) — one-shot `stores` table (401 rows)
 - [x] Emit destock events when availability flips True → False (#144)
@@ -123,7 +123,18 @@ Fix `/new` and `/random` so they solve real user problems instead of being demo 
 
 ### Phase 6 — AI Layer (RAG + Claude)
 
-- [ ] ChromaDB + embeddings (#154)
+See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for data pipeline design and [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md) for RAG architecture.
+
+**Data pipeline (prerequisite):**
+
+- [ ] Adobe Live Search client — GraphQL wrapper with pagination, partitioning, rate limiting
+- [ ] `--availability-check` — daily Adobe availability refresh + watch transition detection (replaces `--check-watches`)
+- [ ] `--adobe-attrs-sync` — one-time wine attribute backfill from Adobe (tasting profiles, pastille, cepage, vintage)
+- [ ] Schema migration — new columns, `ProductAvailability` drop, `availability` → `online_availability` rename
+
+**RAG + recommendations:**
+
+- [ ] pgvector + embeddings (#154)
 - [ ] Claude API integration (#155)
 - [ ] `/recommend` — natural language recommendations via Telegram (#156)
 - [ ] Weekly digest — LLM-curated summary posted to group chat after scraper run (#120)
