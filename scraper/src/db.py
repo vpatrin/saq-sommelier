@@ -11,7 +11,7 @@ from core.db.models import (
     Watch,
 )
 from loguru import logger
-from sqlalchemy import delete, select, update
+from sqlalchemy import bindparam, delete, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -159,36 +159,88 @@ async def get_watched_skus() -> list[str]:
         return [row[0] for row in result.all()]
 
 
-async def get_watchable_skus() -> list[str]:
-    """Get watched SKUs for non-delisted products — used by --availability-check (Phase 6)."""
+async def get_montreal_store_ids() -> list[str]:
+    """Get consumer-facing Montreal store IDs (excludes SAQ Restauration)."""
     async with _SessionLocal() as session:
         stmt = (
-            select(Watch.sku)
-            .join(Product, Watch.sku == Product.sku)
-            .where(Product.delisted_at.is_(None))
-            .distinct()
+            select(Store.saq_store_id)
+            .where(Store.city == "Montréal")
+            .where(Store.store_type != "SAQ Restauration")
         )
         result = await session.execute(stmt)
         return [row[0] for row in result.all()]
 
 
-async def get_watched_store_coords() -> dict[str, tuple[float, float]]:
-    """Get coordinates for all stores in user preferences — used by --availability-check (Phase 6).
+async def bulk_update_availability(
+    updates: dict[str, tuple[bool, list[str]]],
+) -> int:
+    """Batch-update online_availability and store_availability for multiple SKUs.
 
-    Returns {saq_store_id: (latitude, longitude)} for stores that have coordinates.
+    Uses executemany with a single parameterized UPDATE — one round-trip to the DB
+    instead of N individual statements.
+
+    Args:
+        updates: {sku: (online_availability, store_ids_list)}
+
+    Returns number of SKUs submitted (rowcount unreliable with executemany).
+    """
+    if not updates:
+        return 0
+    params = [
+        {"_sku": sku, "online": online, "stores": stores or None}
+        for sku, (online, stores) in updates.items()
+    ]
+    stmt = (
+        update(Product)
+        .where(Product.sku == bindparam("_sku"))
+        .values(online_availability=bindparam("online"), store_availability=bindparam("stores"))
+    )
+    async with _SessionLocal() as session:
+        try:
+            await session.execute(stmt, params)
+            await session.commit()
+        except SQLAlchemyError as exc:
+            await session.rollback()
+            logger.opt(exception=exc).error(
+                "Failed to bulk-update availability for {} SKUs", len(updates)
+            )
+            raise
+    return len(updates)
+
+
+async def get_watched_product_availability() -> dict[str, tuple[bool | None, list[str] | None]]:
+    """Load current availability for all watched, non-delisted products.
+
+    Returns {sku: (online_availability, store_availability)}.
     """
     async with _SessionLocal() as session:
         stmt = (
-            select(Store.saq_store_id, Store.latitude, Store.longitude)
-            .join(
-                UserStorePreference,
-                Store.saq_store_id == UserStorePreference.saq_store_id,
-            )
-            .where(Store.latitude.isnot(None), Store.longitude.isnot(None))
+            select(Product.sku, Product.online_availability, Product.store_availability)
+            .join(Watch, Product.sku == Watch.sku)
+            .where(Product.delisted_at.is_(None))
             .distinct()
         )
         result = await session.execute(stmt)
         return {row[0]: (row[1], row[2]) for row in result.all()}
+
+
+async def get_preferred_store_ids() -> dict[str, set[str]]:
+    """Load user store preferences grouped by SKU.
+
+    Returns {sku: {store_id, ...}} — only for watched, non-delisted products.
+    """
+    async with _SessionLocal() as session:
+        stmt = (
+            select(Watch.sku, UserStorePreference.saq_store_id)
+            .join(Product, Watch.sku == Product.sku)
+            .join(UserStorePreference, Watch.user_id == UserStorePreference.user_id)
+            .where(Product.delisted_at.is_(None))
+        )
+        result = await session.execute(stmt)
+        prefs: dict[str, set[str]] = {}
+        for sku, store_id in result.all():
+            prefs.setdefault(sku, set()).add(store_id)
+        return prefs
 
 
 async def upsert_stores(stores: list[StoreData]) -> None:

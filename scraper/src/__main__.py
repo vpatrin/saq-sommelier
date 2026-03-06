@@ -11,6 +11,7 @@ from core.logging import setup_logging
 from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 
+from .availability import availability_check
 from .config import settings
 from .constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
 from .db import (
@@ -287,8 +288,10 @@ async def scrape_stores() -> int:
 
 
 if __name__ == "__main__":
-    # Entry point: python -m src [--scrape-stores]
+    # Entry point: python -m src [--scrape-stores | --availability-check]
     if "--scrape-stores" in sys.argv:
         sys.exit(asyncio.run(scrape_stores()))
+    elif "--availability-check" in sys.argv:
+        sys.exit(asyncio.run(availability_check()))
     else:
         sys.exit(asyncio.run(main()))
