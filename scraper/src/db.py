@@ -176,8 +176,8 @@ async def bulk_update_availability(
 ) -> int:
     """Batch-update online_availability and store_availability for multiple SKUs.
 
-    Uses executemany with a single parameterized UPDATE — one round-trip to the DB
-    instead of N individual statements.
+    Uses executemany with a single parameterized UPDATE — one session/connection
+    instead of N individual sessions.
 
     Args:
         updates: {sku: (online_availability, store_ids_list)}
@@ -187,7 +187,7 @@ async def bulk_update_availability(
     if not updates:
         return 0
     params = [
-        {"_sku": sku, "online": online, "stores": stores or None}
+        {"_sku": sku, "online": online, "stores": stores or None}  # [] → NULL in Postgres
         for sku, (online, stores) in updates.items()
     ]
     stmt = (

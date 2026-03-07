@@ -36,7 +36,7 @@ If `deploy/` unit files changed (or first deploy):
 
 ```bash
 sudo cp deploy/saq-scraper.{service,timer} deploy/saq-availability.{service,timer} /etc/systemd/system/
-sudo systemctl  daemon-reload
+sudo systemctl daemon-reload
 sudo systemctl enable --now saq-scraper.timer saq-availability.timer
 ```
 

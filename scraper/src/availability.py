@@ -30,25 +30,23 @@ class _AvailabilityData:
         return set(self.online) | set(self.stores)
 
 
-async def _fetch_in_stock(client: httpx.AsyncClient, data: _AvailabilityData) -> int:
+async def _fetch_in_stock(client: httpx.AsyncClient, data: _AvailabilityData) -> None:
     """Query 1a: inStock=true — all online-purchasable products."""
     filters = build_filters(in_stock=True)
     count = 0
     async for product in search_products(client, filters):
         data.online[product.sku] = True
         store_ids = product.attributes.get("store_availability_list", [])
-        if isinstance(store_ids, list):
-            data.stores[product.sku] = store_ids
+        data.stores[product.sku] = store_ids  # always list (Adobe normalization)
         count += 1
     logger.info("Query 1a (inStock=true): {} products", count)
-    return count
 
 
 async def _fetch_montreal_stores(
     client: httpx.AsyncClient,
     data: _AvailabilityData,
     store_ids: list[str],
-) -> int:
+) -> None:
     """Query 1b: Montreal in filter — En succursale products at Montreal stores."""
     filters = build_filters(store_ids=store_ids)
     count = 0
@@ -61,12 +59,10 @@ async def _fetch_montreal_stores(
         # Use Adobe's inStock value (often false for En succursale-only products)
         data.online[product.sku] = product.in_stock
         store_list = product.attributes.get("store_availability_list", [])
-        if isinstance(store_list, list):
-            data.stores[product.sku] = store_list
+        data.stores[product.sku] = store_list  # always list (Adobe normalization)
     logger.info(
         "Query 1b (Montreal stores): {} products ({} new, {} deduped)", count, new, count - new
     )
-    return new
 
 
 @dataclass
@@ -182,7 +178,11 @@ async def availability_check() -> int:
         return EXIT_FATAL
 
     # Step 2: watch transition detection
-    transitions = await _detect_transitions(data)
+    try:
+        transitions = await _detect_transitions(data)
+    except SQLAlchemyError as exc:
+        logger.opt(exception=exc).error("Transition detection failed")
+        return EXIT_PARTIAL  # availability was already written successfully
 
     # Step 3: housekeeping
     await delete_old_stock_events(days=settings.STOCK_EVENT_RETENTION_DAYS)

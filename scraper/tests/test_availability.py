@@ -41,9 +41,8 @@ class TestFetchInStock:
         data = _AvailabilityData()
         client = AsyncMock(spec=httpx.AsyncClient)
         with patch("src.availability.search_products", side_effect=mock_search):
-            count = await _fetch_in_stock(client, data)
+            await _fetch_in_stock(client, data)
 
-        assert count == 2
         assert data.online == {"111": True, "222": True}
         assert data.stores["111"] == ["23101", "23066"]
         assert data.stores["222"] == ["23101"]
@@ -68,9 +67,8 @@ class TestFetchMontrealStores:
 
         client = AsyncMock(spec=httpx.AsyncClient)
         with patch("src.availability.search_products", side_effect=mock_search):
-            new_count = await _fetch_montreal_stores(client, data, ["23101", "23132"])
+            await _fetch_montreal_stores(client, data, ["23101", "23132"])
 
-        assert new_count == 1
         # 111 unchanged from 1a
         assert data.online["111"] is True
         assert data.stores["111"] == ["23101", "23066"]
@@ -263,8 +261,9 @@ class TestAvailabilityCheck:
     @pytest.mark.asyncio
     async def test_fatal_on_pagination_cap(self) -> None:
         async def mock_search_raises(client, filters, **kwargs):
+            if False:
+                yield  # make this an async generator
             raise PaginationCapError(15000, 10000)
-            yield  # make it a generator  # noqa: RUF027
 
         with (
             patch(
