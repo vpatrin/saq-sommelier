@@ -1,5 +1,5 @@
 [Unit]
-Description=Check watched SKU availability daily
+Description=Daily Adobe availability refresh
 
 [Timer]
 OnCalendar=*-*-* 02:00:00

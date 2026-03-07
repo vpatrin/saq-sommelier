@@ -112,48 +112,47 @@ The scraper programmatically enforces SAQ's `robots.txt` rules:
 
 ## Availability checker
 
-Daily job that checks online and in-store availability for watched SKUs. Separate from the weekly product scrape — runs as `python -m src --check-watches`.
+Daily job that refreshes online and in-store availability from Adobe Live Search, detects transitions for watched products, and emits `StockEvent` alerts. Runs as `python -m src --availability-check`.
 
-> **Phase 6 note:** `--check-watches` will be replaced by `--availability-check`, which uses Adobe Live Search instead of Magento GraphQL + AJAX. See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for the new architecture. The scheduling and systemd setup below remain the same.
+See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) § Availability Check for full architecture.
 
 ### How it works
 
-1. Loads all watched SKUs (`SELECT DISTINCT sku FROM watches`)
-2. Batch-resolves Magento IDs + `stock_status` via GraphQL (batches of 20)
-3. For each SKU: fetches per-store quantities via AJAX, diffs against previous snapshot
-4. Emits `StockEvent` rows on transitions (online restock/destock, per-store restock/destock)
-5. Upserts `product_availability` with the new snapshot
-6. Purges stock events older than 7 days
+1. Queries Adobe `inStock=true` (~4k products) → `online_availability` + `store_availability`
+2. Queries Adobe Montreal stores `in` filter (~9.5k products) → En succursale availability, deduped by SKU
+3. Bulk-updates `online_availability` and `store_availability` on the `products` table
+4. Compares previous vs new availability for watched products → emits `StockEvent` on transitions
+5. Purges stock events older than 7 days
 
-Exits immediately if no watched SKUs exist. Current API details (Magento GraphQL + AJAX store locator) are documented inline above — see [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for the Phase 6 replacement architecture.
+Runtime: ~1 min. Scope: all categories (wine, spirits, beer, cider).
 
 ### Scheduling and operations
 
 Runs daily at 2am via systemd timer, one hour before the DB backup (3am).
 
-Source files: [`deploy/saq-watches.service`](../deploy/saq-watches.service) and [`deploy/saq-watches.timer`](../deploy/saq-watches.timer).
+Source files: [`deploy/saq-availability.service`](../deploy/saq-availability.service) and [`deploy/saq-availability.timer`](../deploy/saq-availability.timer).
 
 ```bash
 # Install
-sudo cp deploy/saq-watches.{service,timer} /etc/systemd/system/
+sudo cp deploy/saq-availability.{service,timer} /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now saq-watches.timer
+sudo systemctl enable --now saq-availability.timer
 
 # Status and logs
-systemctl status saq-watches.timer
-journalctl -u saq-watches.service -n 50 --no-pager
+systemctl status saq-availability.timer
+journalctl -u saq-availability.service -n 50 --no-pager
 
 # Manual trigger
-sudo systemctl start saq-watches.service
+sudo systemctl start saq-availability.service
 ```
 
 ### Running locally
 
 ```bash
-cd scraper && poetry run python -m src --check-watches
+cd scraper && poetry run python -m src --availability-check
 ```
 
-Requires a running PostgreSQL with at least one watch in the `watches` table. Without watched SKUs, it exits immediately.
+Requires a running PostgreSQL with stores populated (`--scrape-stores`).
 
 ### Resilience
 

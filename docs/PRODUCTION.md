@@ -35,9 +35,9 @@ docker compose up -d backend bot  # restart services
 If `deploy/` unit files changed (or first deploy):
 
 ```bash
-sudo cp deploy/saq-scraper.{service,timer} deploy/saq-watches.{service,timer} /etc/systemd/system/
+sudo cp deploy/saq-scraper.{service,timer} deploy/saq-availability.{service,timer} /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now saq-scraper.timer saq-watches.timer
+sudo systemctl enable --now saq-scraper.timer saq-availability.timer
 ```
 
 Verify:
@@ -46,7 +46,7 @@ Verify:
 curl -s localhost:8001/health     # backend responds
 # message the bot on Telegram    # bot responds
 systemctl status saq-scraper.timer   # timer active, next run scheduled
-systemctl status saq-watches.timer   # timer active, next run scheduled
+systemctl status saq-availability.timer   # timer active, next run scheduled
 ```
 
 Rollback: `git checkout vX.Y.Z && make build && docker compose up -d backend bot`

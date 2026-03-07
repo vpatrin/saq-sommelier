@@ -6,4 +6,4 @@ After=docker.service
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/saq-sommelier
-ExecStart=/usr/bin/docker compose run --rm scraper python -m src --check-watches
+ExecStart=/usr/bin/docker compose run --rm scraper python -m src --availability-check

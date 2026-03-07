@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Daily availability refresh via Adobe Live Search (`--availability-check`) — replaces planned `--check-watches` (#289)
+
 ## [1.2.0] - 2026-03-03
 
 ### Added
