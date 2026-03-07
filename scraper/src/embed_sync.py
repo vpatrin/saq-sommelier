@@ -1,12 +1,12 @@
 import time
 
+from core.embedding_client import create_embeddings
 from loguru import logger
 
 from .config import settings
 from .constants import EXIT_FATAL, EXIT_OK
 from .db import bulk_update_embeddings, get_products_needing_embedding
 from .embed import build_embedding_text
-from .embedding_client import create_embeddings
 
 
 async def embed_sync() -> int:

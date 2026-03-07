@@ -16,6 +16,13 @@ pgvector = ">=0.3"
 loguru = ">=0.7"
 pydantic-settings = "^2.13"
 
+[tool.poetry.extras]
+embeddings = ["openai"]
+
+[tool.poetry.dependencies.openai]
+version = ">=1.0"
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.15.4"
 pip-audit = ">=2.7"

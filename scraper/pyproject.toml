@@ -16,9 +16,8 @@ sqlalchemy = "^2.0"
 asyncpg = "^0.31"
 # greenlet: Required by SQLAlchemy for async operations (manages coroutine context switching)
 greenlet = "^3.3.2"
-openai = ">=1.0"
 loguru = ">=0.7"
-saq-core = {path = "../core", develop = true}
+saq-core = {path = "../core", develop = true, extras = ["embeddings"]}
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0"

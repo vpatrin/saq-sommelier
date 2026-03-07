@@ -23,3 +23,9 @@ def create_embeddings(texts: list[str], *, api_key: str) -> list[list[float]]:
         all_vectors.extend([d.embedding for d in response.data])
 
     return all_vectors
+
+
+def embed_query(text: str, *, api_key: str) -> list[float]:
+    """Embed a single text (e.g. a user query) and return the vector."""
+    vectors = create_embeddings([text], api_key=api_key)
+    return vectors[0]

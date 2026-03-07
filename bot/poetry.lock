@@ -1579,6 +1579,9 @@ psycopg2-binary = "^2.9"
 pydantic-settings = "^2.13"
 sqlalchemy = "^2.0"
 
+[package.extras]
+embeddings = ["openai (>=1.0)"]
+
 [package.source]
 type = "directory"
 url = "../core"
