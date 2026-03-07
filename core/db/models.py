@@ -18,8 +18,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 from core.db.base import Base
 
-# Embedding model — change both together if swapping models
-EMBEDDING_MODEL = "text-embedding-3-small"
 EMBEDDING_MODEL_DIMENSIONS = 1536
 
 
