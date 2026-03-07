@@ -25,6 +25,9 @@ class BackendSettings(BaseSettings):
         extra="ignore",
     )
 
+    # Anthropic API key for Claude recommendations.
+    ANTHROPIC_API_KEY: str = ""
+
     # Shared secret for bot → backend internal calls (X-Bot-Secret header).
     # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
     BOT_SECRET: str = ""

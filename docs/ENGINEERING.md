@@ -15,6 +15,7 @@ Infrastructure-level production targets (VPS hardening, backups, Grafana) tracke
 - Add pytest markers (`unit/integration/ml/slow`) — prerequisite for running test subsets and separating fast CI from slow integration runs (#204)
 - Product test factory (`make_red()`, `make_white()`, `make_wines(n)`) — eliminates repeated fixture setup and makes new tests faster to write
 - Integration tests: seeded PostgreSQL fixture, repository layer (search, filter, pagination, upsert idempotency) — currently only SQLite mocks
+- Alembic migration smoke test in CI: run `alembic upgrade head` against a fresh Postgres service container (#316)
 - Contract tests: snapshot API response shapes so bot's assumptions are validated on every PR — catches breaking changes before deploy
 - ML tests: embedding dimensions, retrieval quality, guardrail edge cases (Phase 6)
 
@@ -29,6 +30,7 @@ Infrastructure-level production targets (VPS hardening, backups, Grafana) tracke
 - Docker secrets: move bot token + DB password from `.env` file to Docker secret files — eliminates plaintext credentials on disk
 - API key auth: `X-API-Key` header on bot→backend calls — needed once the React dashboard exposes the API publicly
 - `SECURITY.md`: responsible disclosure policy — one-page file, strong portfolio/interview signal
+- Hardening: URL-encode DB password in connection string, startup guard on empty `BOT_SECRET` in production, pin Poetry version in Dockerfiles (#313)
 
 ---
 
@@ -38,6 +40,7 @@ Infrastructure-level production targets (VPS hardening, backups, Grafana) tracke
 
 **Next:**
 - Scraper failure alert: systemd `OnFailure=` unit sends Telegram DM on `EXIT_FAILURE` — currently silent failures with no visibility
+- Request ID / correlation ID middleware: generate `X-Request-ID` per request, inject into loguru context, forward from bot → backend (#315)
 - API request logging middleware → `api_request_logs` table (path, status, latency, user_id) — baseline for SLO tracking
 - Structured JSON logging: consistent fields (timestamp, level, service, message) across all services — Loki/Grafana-ready without Loki
 - LLM cost tracking: token usage per request, daily budget cap alert (Phase 6)
@@ -61,6 +64,7 @@ Infrastructure-level production targets (VPS hardening, backups, Grafana) tracke
 **Done:** Systemd timer with `Persistent=true` (runs on reboot if missed). Idempotent scraper (safe to re-run at any point). Named exit codes (`EXIT_SUCCESS`/`EXIT_PARTIAL`/`EXIT_FAILURE`) for monitoring. Bot runs 24/7 with PTB's built-in error handler.
 
 **Next:**
+- Explicit DB connection pool limits (`pool_size`, `max_overflow`) on backend + scraper engines; httpx retry transport in scraper HTTP client (#314)
 - Telegram alert on scraper failure: systemd `OnFailure=` → Telegram DM — first SRE win, low effort, high value
 - `/health/detailed` endpoint: Postgres reachability, data freshness (age of newest product), disk space — foundation for everything below
 - Define SLOs: API p95 < 500ms, 99% uptime; scraper completes weekly, data < 8 days stale; bot ack < 2s
