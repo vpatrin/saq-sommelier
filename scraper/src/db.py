@@ -269,6 +269,74 @@ async def bulk_update_wine_attrs(
     return len(updates)
 
 
+async def get_products_needing_embedding() -> list[dict]:
+    """Fetch products where embedding_input_hash != last_embedded_hash (or NULL).
+
+    Returns dicts with all fields needed to build embedding text + compute hash.
+    """
+    async with _SessionLocal() as session:
+        stmt = select(
+            Product.sku,
+            Product.category,
+            Product.taste_tag,
+            Product.tasting_profile,
+            Product.grape_blend,
+            Product.grape,
+            Product.producer,
+            Product.region,
+            Product.appellation,
+            Product.designation,
+            Product.classification,
+            Product.country,
+            Product.vintage,
+            Product.description,
+            Product.embedding_input_hash,
+        ).where(
+            (Product.embedding_input_hash != Product.last_embedded_hash)
+            | (Product.last_embedded_hash.is_(None))
+        )
+        result = await session.execute(stmt)
+        return [row._asdict() for row in result.all()]
+
+
+async def bulk_update_embeddings(
+    updates: list[dict],
+) -> int:
+    """Batch-update embedding vectors and last_embedded_hash.
+
+    Args:
+        updates: list of {sku, embedding, last_embedded_hash}
+    """
+    if not updates:
+        return 0
+    table = Product.__table__
+    stmt = (
+        update(table)
+        .where(table.c.sku == bindparam("_sku"))
+        .values(
+            embedding=bindparam("_embedding"),
+            last_embedded_hash=bindparam("_hash"),
+        )
+    )
+    params = [
+        {"_sku": u["sku"], "_embedding": u["embedding"], "_hash": u["last_embedded_hash"]}
+        for u in updates
+    ]
+    async with _SessionLocal() as session:
+        try:
+            for i in range(0, len(params), _BULK_CHUNK_SIZE):
+                chunk = params[i : i + _BULK_CHUNK_SIZE]
+                await session.execute(stmt, chunk)
+            await session.commit()
+        except SQLAlchemyError as exc:
+            await session.rollback()
+            logger.opt(exception=exc).error(
+                "Failed to bulk-update embeddings for {} SKUs", len(updates)
+            )
+            raise
+    return len(updates)
+
+
 async def get_watched_product_availability() -> dict[str, tuple[bool | None, list[str] | None]]:
     """Load current availability for all watched, non-delisted products.
 
