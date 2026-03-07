@@ -112,7 +112,7 @@ Fix `/new` and `/random` so they solve real user problems instead of being demo 
 
 - [ ] Fix `/new` sort — use `created_at DESC` instead of `updated_at DESC` (current sort shows re-scrape order, not actual new arrivals)
 - [ ] Richer product cards — show grape, region, country below the name/price line
-- [ ] Default `/random` to wine categories only (not whisky, beer, sake, etc.)
+- [x] Default `/random` to wine categories only (not whisky, beer, sake, etc.) (#285)
 - [ ] "🔄 Another" button on `/random` — re-roll without retyping the command
 
 **Phase 2 — Make them useful:**
