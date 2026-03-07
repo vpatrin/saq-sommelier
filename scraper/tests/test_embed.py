@@ -1,4 +1,4 @@
-from src.embed import build_embedding_text, compute_attribute_hash
+from src.embed import build_embedding_text, compute_embedding_input_hash
 
 
 class TestBuildEmbeddingText:
@@ -87,35 +87,35 @@ class TestBuildEmbeddingText:
         assert text == "Champagne et mousseux"
 
 
-class TestComputeAttributeHash:
+class TestComputeEmbeddingInputHash:
     def test_same_input_same_hash(self) -> None:
         attrs = {"taste_tag": "Fruité", "region": "Bordeaux"}
-        assert compute_attribute_hash(attrs) == compute_attribute_hash(attrs)
+        assert compute_embedding_input_hash(attrs) == compute_embedding_input_hash(attrs)
 
     def test_different_input_different_hash(self) -> None:
-        h1 = compute_attribute_hash({"taste_tag": "Fruité"})
-        h2 = compute_attribute_hash({"taste_tag": "Corsé"})
+        h1 = compute_embedding_input_hash({"taste_tag": "Fruité"})
+        h2 = compute_embedding_input_hash({"taste_tag": "Corsé"})
         assert h1 != h2
 
     def test_empty_attrs(self) -> None:
-        h = compute_attribute_hash({})
+        h = compute_embedding_input_hash({})
         assert isinstance(h, str)
         assert len(h) == 64  # SHA256 hex
 
     def test_includes_tasting_profile_subfields(self) -> None:
-        h1 = compute_attribute_hash({"tasting_profile": {"corps": "corsé"}})
-        h2 = compute_attribute_hash({"tasting_profile": {"corps": "léger"}})
+        h1 = compute_embedding_input_hash({"tasting_profile": {"corps": "corsé"}})
+        h2 = compute_embedding_input_hash({"tasting_profile": {"corps": "léger"}})
         assert h1 != h2
 
     def test_ignores_non_hash_fields(self) -> None:
         """Price, availability, rating are NOT in the hash."""
         base = {"taste_tag": "Fruité"}
-        h1 = compute_attribute_hash(base)
-        h2 = compute_attribute_hash({**base, "price": "29.99", "online_availability": True})
+        h1 = compute_embedding_input_hash(base)
+        h2 = compute_embedding_input_hash({**base, "price": "29.99", "online_availability": True})
         assert h1 == h2
 
     def test_order_independent_of_dict_ordering(self) -> None:
         """Hash uses fixed field order, not dict iteration order."""
-        h1 = compute_attribute_hash({"region": "Bordeaux", "taste_tag": "Fruité"})
-        h2 = compute_attribute_hash({"taste_tag": "Fruité", "region": "Bordeaux"})
+        h1 = compute_embedding_input_hash({"region": "Bordeaux", "taste_tag": "Fruité"})
+        h2 = compute_embedding_input_hash({"taste_tag": "Fruité", "region": "Bordeaux"})
         assert h1 == h2

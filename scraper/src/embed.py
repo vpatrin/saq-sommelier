@@ -108,11 +108,11 @@ _HASH_FIELDS = (
 )
 
 
-def compute_attribute_hash(attrs: dict[str, Any]) -> str:
+def compute_embedding_input_hash(attrs: dict[str, Any]) -> str:
     """Compute SHA256 of all embedding-relevant fields.
 
     Returns hex digest. Used for change detection: re-embed when
-    attribute_hash != embedded_hash.
+    embedding_input_hash != last_embedded_hash.
     """
     parts: list[str] = []
     for field in _HASH_FIELDS:
