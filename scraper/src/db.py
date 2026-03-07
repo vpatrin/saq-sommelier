@@ -270,10 +270,10 @@ async def bulk_update_wine_attrs(
 
 
 async def get_products_needing_embedding() -> list[dict]:
-    """Fetch products where embedding_input_hash != last_embedded_hash (or NULL).
+    """Fetch products where embedding is stale or missing.
 
-    Products with NULL embedding_input_hash (not yet enriched) are implicitly
-    excluded — SQL NULL != value evaluates to NULL, not TRUE.
+    Uses IS DISTINCT FROM so NULL embedding_input_hash (not yet enriched)
+    is correctly excluded — NULL IS DISTINCT FROM NULL = FALSE.
 
     Returns dicts with all fields needed to build embedding text + compute hash.
     """
@@ -294,10 +294,7 @@ async def get_products_needing_embedding() -> list[dict]:
             Product.vintage,
             Product.description,
             Product.embedding_input_hash,
-        ).where(
-            (Product.embedding_input_hash != Product.last_embedded_hash)
-            | (Product.last_embedded_hash.is_(None))
-        )
+        ).where(Product.embedding_input_hash.is_distinct_from(Product.last_embedded_hash))
         result = await session.execute(stmt)
         return [row._asdict() for row in result.all()]
 
