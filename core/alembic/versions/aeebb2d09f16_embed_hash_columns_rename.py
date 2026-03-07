@@ -19,19 +19,11 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    op.alter_column(
-        "products", "attribute_hash", new_column_name="embedding_input_hash"
-    )
-    op.alter_column(
-        "products", "embedded_hash", new_column_name="last_embedded_hash"
-    )
+    op.alter_column("products", "attribute_hash", new_column_name="embedding_input_hash")
+    op.alter_column("products", "embedded_hash", new_column_name="last_embedded_hash")
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.alter_column(
-        "products", "embedding_input_hash", new_column_name="attribute_hash"
-    )
-    op.alter_column(
-        "products", "last_embedded_hash", new_column_name="embedded_hash"
-    )
+    op.alter_column("products", "embedding_input_hash", new_column_name="attribute_hash")
+    op.alter_column("products", "last_embedded_hash", new_column_name="embedded_hash")
