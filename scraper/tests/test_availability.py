@@ -8,8 +8,8 @@ from src.adobe import AdobeProduct, PaginationCapError
 from src.availability import (
     _AvailabilityData,
     _detect_transitions,
-    _fetch_in_stock,
     _fetch_montreal_stores,
+    _fetch_online_available,
     availability_check,
 )
 from src.constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
@@ -26,7 +26,7 @@ def _make_product(
     return AdobeProduct(sku=sku, name=f"Wine {sku}", in_stock=in_stock, url=None, attributes=attrs)
 
 
-class TestFetchInStock:
+class TestFetchOnlineAvailable:
     @pytest.mark.asyncio
     async def test_collects_products(self) -> None:
         products = [
@@ -41,7 +41,7 @@ class TestFetchInStock:
         data = _AvailabilityData()
         client = AsyncMock(spec=httpx.AsyncClient)
         with patch("src.availability.search_products", side_effect=mock_search):
-            await _fetch_in_stock(client, data)
+            await _fetch_online_available(client, data)
 
         assert data.online == {"111": True, "222": True}
         assert data.stores["111"] == ["23101", "23066"]
@@ -298,6 +298,11 @@ class TestAvailabilityCheck:
             ),
             patch("src.availability.search_products", side_effect=mock_search),
             patch(
+                "src.availability.get_all_skus",
+                new_callable=AsyncMock,
+                return_value={"111", "222"},
+            ),
+            patch(
                 "src.availability.bulk_update_availability",
                 new_callable=AsyncMock,
                 return_value=2,
@@ -345,6 +350,11 @@ class TestAvailabilityCheck:
                 return_value=["23101"],
             ),
             patch("src.availability.search_products", side_effect=mock_search_once),
+            patch(
+                "src.availability.get_all_skus",
+                new_callable=AsyncMock,
+                return_value={"111"},
+            ),
             patch(
                 "src.availability.bulk_update_availability",
                 new_callable=AsyncMock,

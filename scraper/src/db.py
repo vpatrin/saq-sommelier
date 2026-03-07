@@ -22,6 +22,13 @@ from .stores import StoreData
 _SessionLocal = create_session_factory(settings.database_url, settings.database_echo)
 
 
+async def get_all_skus() -> set[str]:
+    """Return the set of all product SKUs in the DB."""
+    async with _SessionLocal() as session:
+        result = await session.execute(select(Product.sku))
+        return {row[0] for row in result.all()}
+
+
 async def get_updated_dates() -> dict[str, date]:
     """Fetch the last-updated date for every product in the DB."""
     async with _SessionLocal() as session:
@@ -171,33 +178,39 @@ async def get_montreal_store_ids() -> list[str]:
         return [row[0] for row in result.all()]
 
 
+_BULK_CHUNK_SIZE = 1000
+
+
 async def bulk_update_availability(
     updates: dict[str, tuple[bool, list[str]]],
 ) -> int:
     """Batch-update online_availability and store_availability for multiple SKUs.
 
-    Uses executemany with a single parameterized UPDATE — one session/connection
-    instead of N individual sessions.
+    Uses Core-level UPDATE with bindparam, chunked to avoid oversized statements.
+    ORM update() doesn't support bindparam WHERE — Core Table bypasses that.
 
     Args:
         updates: {sku: (online_availability, store_ids_list)}
 
-    Returns number of SKUs submitted (rowcount unreliable with executemany).
+    Returns number of SKUs submitted.
     """
     if not updates:
         return 0
-    params = [
-        {"_sku": sku, "online": online, "stores": stores or None}  # [] → NULL in Postgres
+    all_params = [
+        {"_sku": sku, "online": online, "stores": stores or None}  # [] → NULL
         for sku, (online, stores) in updates.items()
     ]
+    table = Product.__table__
     stmt = (
-        update(Product)
-        .where(Product.sku == bindparam("_sku"))
+        update(table)
+        .where(table.c.sku == bindparam("_sku"))
         .values(online_availability=bindparam("online"), store_availability=bindparam("stores"))
     )
     async with _SessionLocal() as session:
         try:
-            await session.execute(stmt, params)
+            for i in range(0, len(all_params), _BULK_CHUNK_SIZE):
+                chunk = all_params[i : i + _BULK_CHUNK_SIZE]
+                await session.execute(stmt, chunk)
             await session.commit()
         except SQLAlchemyError as exc:
             await session.rollback()

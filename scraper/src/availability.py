@@ -12,6 +12,7 @@ from .db import (
     bulk_update_availability,
     delete_old_stock_events,
     emit_stock_event,
+    get_all_skus,
     get_montreal_store_ids,
     get_preferred_store_ids,
     get_watched_product_availability,
@@ -30,7 +31,7 @@ class _AvailabilityData:
         return set(self.online) | set(self.stores)
 
 
-async def _fetch_in_stock(client: httpx.AsyncClient, data: _AvailabilityData) -> None:
+async def _fetch_online_available(client: httpx.AsyncClient, data: _AvailabilityData) -> None:
     """Query 1a: inStock=true — all online-purchasable products."""
     filters = build_filters(in_stock=True)
     count = 0
@@ -158,7 +159,7 @@ async def availability_check() -> int:
     # Step 1: Adobe queries
     async with httpx.AsyncClient(timeout=settings.REQUEST_TIMEOUT) as client:
         try:
-            await _fetch_in_stock(client, data)
+            await _fetch_online_available(client, data)
             await _fetch_montreal_stores(client, data, montreal_ids)
         except PaginationCapError as exc:
             logger.opt(exception=exc).error("Adobe pagination cap exceeded — aborting")
@@ -169,8 +170,15 @@ async def availability_check() -> int:
 
     logger.info("Step 1 complete: {} unique products collected", len(data.skus))
 
-    # Step 1 write: bulk-update availability columns
-    updates = {sku: (data.online.get(sku, False), data.stores.get(sku, [])) for sku in data.skus}
+    # Step 1 write: bulk-update availability columns (only for SKUs already in DB)
+    try:
+        known_skus = await get_all_skus()
+    except SQLAlchemyError as exc:
+        logger.opt(exception=exc).error("Failed to load product SKUs — aborting")
+        return EXIT_FATAL
+    matching = data.skus & known_skus
+    updates = {sku: (data.online.get(sku, False), data.stores.get(sku, [])) for sku in matching}
+    logger.info("{} of {} collected products exist in DB", len(matching), len(data.skus))
     try:
         updated = await bulk_update_availability(updates)
         logger.info("Updated availability for {} products", updated)
