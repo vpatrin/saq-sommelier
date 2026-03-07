@@ -272,6 +272,9 @@ async def bulk_update_wine_attrs(
 async def get_products_needing_embedding() -> list[dict]:
     """Fetch products where embedding_input_hash != last_embedded_hash (or NULL).
 
+    Products with NULL embedding_input_hash (not yet enriched) are implicitly
+    excluded — SQL NULL != value evaluates to NULL, not TRUE.
+
     Returns dicts with all fields needed to build embedding text + compute hash.
     """
     async with _SessionLocal() as session:

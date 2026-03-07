@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Embedding sync pipeline (`--embed-sync`) — generates semantic vectors via OpenAI text-embedding-3-small
 - Daily availability refresh via Adobe Live Search (`--availability-check`) — replaces planned `--check-watches` (#289)
 - Wine attribute enrichment from Adobe (`--enrich-wines`) — backfills tasting profiles, taste tags, grape blends, and vintages for ~30k wine products
 

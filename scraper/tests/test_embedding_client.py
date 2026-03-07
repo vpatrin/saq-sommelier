@@ -10,7 +10,7 @@ def _mock_response(count: int, offset: int = 0) -> MagicMock:
     return resp
 
 
-class TestGetEmbeddings:
+class TestCreateEmbeddings:
     @patch("src.embedding_client.OpenAI")
     def test_single_batch(self, mock_openai_cls: MagicMock) -> None:
         mock_client = MagicMock()
