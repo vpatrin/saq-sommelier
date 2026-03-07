@@ -221,6 +221,54 @@ async def bulk_update_availability(
     return len(updates)
 
 
+async def bulk_update_wine_attrs(
+    updates: dict[str, dict[str, str | list | dict | None]],
+) -> int:
+    """Batch-update wine attributes (taste_tag, vintage, tasting_profile, grape_blend).
+
+    Args:
+        updates: {sku: {taste_tag, vintage, tasting_profile, grape_blend}}
+
+    Returns number of SKUs submitted.
+    """
+    if not updates:
+        return 0
+    all_params = [
+        {
+            "_sku": sku,
+            "taste_tag": attrs.get("taste_tag"),
+            "vintage": attrs.get("vintage"),
+            "tasting_profile": attrs.get("tasting_profile"),
+            "grape_blend": attrs.get("grape_blend"),
+        }
+        for sku, attrs in updates.items()
+    ]
+    table = Product.__table__
+    stmt = (
+        update(table)
+        .where(table.c.sku == bindparam("_sku"))
+        .values(
+            taste_tag=bindparam("taste_tag"),
+            vintage=bindparam("vintage"),
+            tasting_profile=bindparam("tasting_profile"),
+            grape_blend=bindparam("grape_blend"),
+        )
+    )
+    async with _SessionLocal() as session:
+        try:
+            for i in range(0, len(all_params), _BULK_CHUNK_SIZE):
+                chunk = all_params[i : i + _BULK_CHUNK_SIZE]
+                await session.execute(stmt, chunk)
+            await session.commit()
+        except SQLAlchemyError as exc:
+            await session.rollback()
+            logger.opt(exception=exc).error(
+                "Failed to bulk-update wine attributes for {} SKUs", len(updates)
+            )
+            raise
+    return len(updates)
+
+
 async def get_watched_product_availability() -> dict[str, tuple[bool | None, list[str] | None]]:
     """Load current availability for all watched, non-delisted products.
 
