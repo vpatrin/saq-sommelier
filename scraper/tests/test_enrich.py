@@ -26,7 +26,7 @@ class TestExtractWineAttrs:
             "portrait_potentiel_de_garde": "À boire ou à garder 4 ans",
             "portrait_temp_service_de": "16",
             "portrait_temp_service_a": "18",
-            "cepage_text": '{"MALB":"96","SYRA":"4"}',
+            "cepage_text": "{'MALB':'96','SYRA':'4'}",
         }
         result = extract_wine_attrs(attrs)
 
@@ -99,6 +99,11 @@ class TestParseGrapeBlend:
     def test_single_grape(self) -> None:
         result = _parse_grape_blend('{"PINO":"100"}')
         assert result == [{"code": "PINO", "pct": 100}]
+
+    def test_single_quoted_from_adobe(self) -> None:
+        """Adobe returns single-quoted dicts, not valid JSON."""
+        result = _parse_grape_blend("{'MALB':'96','SYRA':'4'}")
+        assert result == [{"code": "MALB", "pct": 96}, {"code": "SYRA", "pct": 4}]
 
     def test_empty_string(self) -> None:
         assert _parse_grape_blend("") is None

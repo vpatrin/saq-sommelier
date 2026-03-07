@@ -1,4 +1,4 @@
-import json
+import ast
 import time
 from typing import Any
 
@@ -93,8 +93,9 @@ def _parse_grape_blend(raw: str | list[str]) -> list[dict[str, str | int]] | Non
     if not raw or isinstance(raw, list):
         return None
     try:
-        parsed = json.loads(raw)
-    except (json.JSONDecodeError, ValueError):
+        # Adobe returns Python-style dicts with single quotes, not JSON
+        parsed = ast.literal_eval(raw)
+    except (ValueError, SyntaxError):
         return None
     if not isinstance(parsed, dict) or not parsed:
         return None
@@ -135,16 +136,18 @@ async def _collect_subcategory(
     countries = await fetch_facets(client, filters, "pays_origine")
     logger.info("{}: {} countries from facets", subcategory.split("/")[-1], len(countries))
 
-    for country in countries:
+    sub = subcategory.split("/")[-1]
+    for i, country in enumerate(countries, 1):
+        logger.info("{} [{}/{}]: {}", sub, i, len(countries), country)
         country_filters = build_filters(categories=subcategory, country=country)
         try:
             async for product in search_products(client, country_filters):
                 _collect_product(product, collected)
                 count += 1
         except PaginationCapError:
-            # Sub-partition by price range
-            logger.info("{} × {} exceeds 10k — sub-partitioning by price", subcategory, country)
+            logger.info("{} × {} exceeds 10k — sub-partitioning by price", sub, country)
             for lo, hi in _PRICE_RANGES:
+                logger.info("{} × {} × ${}-${}", sub, country, int(lo), int(hi))
                 price_filters = build_filters(
                     categories=subcategory, country=country, price_range=(lo, hi)
                 )
