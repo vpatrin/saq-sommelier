@@ -175,4 +175,3 @@ class TestParseIntent:
         assert result.country is None
         assert result.available_only is True
         assert result.semantic_query == "bold red"
-
