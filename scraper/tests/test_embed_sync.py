@@ -23,7 +23,7 @@ def _make_product(**overrides: object) -> dict:
         "country": "France",
         "vintage": "2021",
         "description": "A fine wine.",
-        "embedding_input_hash": "abc123",
+        "_computed_hash": "abc123",
     }
     defaults.update(overrides)
     return defaults
@@ -112,7 +112,7 @@ class TestEmbedSync:
             "country": None,
             "vintage": None,
             "description": None,
-            "embedding_input_hash": "abc",
+            "_computed_hash": "abc",
         }
         mock_get.return_value = [empty_product]
 

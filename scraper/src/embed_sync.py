@@ -13,7 +13,7 @@ async def embed_sync() -> int:
     """Compute and store embeddings for products with stale or missing vectors.
 
     Workflow:
-    1. Query products where embedding_input_hash != last_embedded_hash
+    1. Query products where computed hash != last_embedded_hash
     2. Build embedding text from product fields
     3. Call OpenAI API in batches
     4. Store vectors + update last_embedded_hash
@@ -58,7 +58,7 @@ async def embed_sync() -> int:
 
         texts.append(text)
         skus.append(p["sku"])
-        hashes.append(p["embedding_input_hash"])
+        hashes.append(p["_computed_hash"])
 
     if not texts:
         logger.info("No products with non-empty embedding text — nothing to sync")

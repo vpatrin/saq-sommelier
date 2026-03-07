@@ -159,13 +159,10 @@ class Product(Base):
         nullable=True,
         comment="Wine semantic embedding (text-embedding-3-small, 1536d)",
     )
-    embedding_input_hash = Column(
-        String, nullable=True, comment="Hash of embedding-relevant fields for change detection"
-    )
     last_embedded_hash = Column(
         String,
         nullable=True,
-        comment="embedding_input_hash at time of last --embed-sync run",
+        comment="Hash of embedding-relevant fields at last --embed-sync run",
     )
 
     def __repr__(self) -> str:
