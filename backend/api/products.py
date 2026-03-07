@@ -32,6 +32,7 @@ async def get_products(
     min_price: Decimal | None = Query(default=None, ge=0),
     max_price: Decimal | None = Query(default=None, ge=0),
     available: bool | None = Query(default=None),
+    scope: Literal["wine", "all"] = Query(default="wine"),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedOut:
     """List products with offset-based pagination and optional filters and sorting options."""
@@ -47,15 +48,17 @@ async def get_products(
         min_price=min_price,
         max_price=max_price,
         available=available,
+        wine_scope=scope == "wine",
     )
 
 
 @router.get("/facets", response_model=FacetsOut)
 async def get_product_facets(
+    scope: Literal["wine", "all"] = Query(default="wine"),
     db: AsyncSession = Depends(get_db),
 ) -> FacetsOut:
     """Return distinct filter values and price range for the catalog."""
-    return await get_facets(db)
+    return await get_facets(db, wine_scope=scope == "wine")
 
 
 @router.get("/random", response_model=ProductOut)
@@ -68,6 +71,7 @@ async def get_random(
     min_price: Decimal | None = Query(default=None, ge=0),
     max_price: Decimal | None = Query(default=None, ge=0),
     available: bool | None = Query(default=None),
+    scope: Literal["wine", "all"] = Query(default="wine"),
     db: AsyncSession = Depends(get_db),
 ) -> ProductOut:
     """Return a single random product matching the given filters."""
@@ -79,6 +83,7 @@ async def get_random(
         min_price=min_price,
         max_price=max_price,
         available=available,
+        wine_scope=scope == "wine",
     )
 
 

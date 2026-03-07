@@ -674,3 +674,79 @@ async def test_random_query_excludes_delisted():
     sql = _compile(stmt)
     assert "delisted_at IS NULL" in sql
     assert "random()" in sql.lower()
+
+
+# ── Wine scope tests ─────────────────────────────────────────
+
+
+def test_wine_scope_adds_prefix_filters():
+    """wine_scope=True adds LIKE clauses for wine category prefixes."""
+    stmt = select(Product)
+    filtered = _apply_filters(stmt, wine_scope=True)
+    sql = _compile(filtered)
+    # SQLAlchemy compiles startswith as: LIKE 'prefix' || '%%'
+    assert "LIKE 'Vin rouge'" in sql
+    assert "LIKE 'Champagne'" in sql
+    assert "LIKE 'Porto'" in sql
+    assert "LIKE 'Saké'" in sql
+    assert sql.count("OR") == 23  # 24 prefixes → 23 ORs
+
+
+def test_wine_scope_inactive_by_default():
+    """Without wine_scope, no prefix filtering is applied."""
+    stmt = select(Product)
+    filtered = _apply_filters(stmt)
+    sql = _compile(filtered)
+    assert "LIKE" not in sql
+
+
+def test_explicit_category_overrides_wine_scope():
+    """Explicit category filter takes precedence over wine_scope."""
+    stmt = select(Product)
+    filtered = _apply_filters(stmt, category=["Whisky"], wine_scope=True)
+    sql = _compile(filtered)
+    assert "IN ('Whisky')" in sql
+    assert "LIKE" not in sql
+
+
+def test_scope_wine_is_default_on_list_endpoint():
+    """Default scope=wine means wine prefix filtering is active."""
+    products = [_fake_product(sku="W1", category="Vin rouge")]
+    session = _mock_db_for_products(products, total=1)
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+
+    resp = client.get("/api/products")
+    assert resp.status_code == status.HTTP_200_OK
+
+
+def test_scope_all_disables_wine_filtering():
+    """scope=all returns products from all categories."""
+    products = [_fake_product(sku="W1", category="Whisky")]
+    session = _mock_db_for_products(products, total=1)
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+
+    resp = client.get("/api/products?scope=all")
+    assert resp.status_code == status.HTTP_200_OK
+
+
+def test_scope_invalid_value_rejected():
+    """Invalid scope value is rejected by FastAPI validation."""
+    session = _mock_db_for_products([], total=0)
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+
+    resp = client.get("/api/products?scope=beer")
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+def test_random_endpoint_scope_default():
+    """Random endpoint defaults to wine scope."""
+    product = _fake_product(sku="R1", category="Vin rouge")
+    session = _mock_db_for_detail(product)
+    app.dependency_overrides[get_db] = lambda: session
+    client = TestClient(app)
+
+    resp = client.get("/api/products/random")
+    assert resp.status_code == status.HTTP_200_OK

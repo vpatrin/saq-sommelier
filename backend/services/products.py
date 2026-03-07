@@ -42,6 +42,7 @@ async def list_products(
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
     available: bool | None = None,
+    wine_scope: bool = False,
 ) -> PaginatedOut:
     """Fetch a paginated list of products, optionally filtered and sorted."""
     filters = dict(
@@ -52,6 +53,7 @@ async def list_products(
         min_price=min_price,
         max_price=max_price,
         available=available,
+        wine_scope=wine_scope,
     )
     total = await count(db, **filters)
 
@@ -76,6 +78,7 @@ async def get_random_product(
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
     available: bool | None = None,
+    wine_scope: bool = False,
 ) -> ProductOut:
     """Fetch a single random product matching filters. Raises NotFoundError if none."""
     product = await find_random(
@@ -86,19 +89,20 @@ async def get_random_product(
         min_price=min_price,
         max_price=max_price,
         available=available,
+        wine_scope=wine_scope,
     )
     if product is None:
         raise NotFoundError("Product", "no product matches the given filters")
     return ProductOut.model_validate(product)
 
 
-async def get_facets(db: AsyncSession) -> FacetsOut:
+async def get_facets(db: AsyncSession, *, wine_scope: bool = False) -> FacetsOut:
     """Fetch distinct filter values and price range for active products."""
-    categories = await get_distinct_values(db, Product.category)
-    countries = await get_distinct_values(db, Product.country)
-    regions = await get_distinct_values(db, Product.region)
-    grapes = await get_distinct_values(db, Product.grape)
-    price_result = await get_price_range(db)
+    categories = await get_distinct_values(db, Product.category, wine_scope=wine_scope)
+    countries = await get_distinct_values(db, Product.country, wine_scope=wine_scope)
+    regions = await get_distinct_values(db, Product.region, wine_scope=wine_scope)
+    grapes = await get_distinct_values(db, Product.grape, wine_scope=wine_scope)
+    price_result = await get_price_range(db, wine_scope=wine_scope)
 
     return FacetsOut(
         categories=categories,
