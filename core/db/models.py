@@ -131,13 +131,13 @@ class Product(Base):
     sugar = Column(String, nullable=True, comment="Sugar content")
     producer = Column(String, nullable=True, comment="Producer name")
 
-    # Wine attributes (writer: --adobe-attrs-sync)
-    pastille_gout = Column(
+    # Wine attributes (writer: --enrich-wines)
+    taste_tag = Column(
         String, nullable=True, comment="SAQ taste profile (e.g. 'Aromatique et souple')"
     )
     vintage = Column(String, nullable=True, comment="Millésime (e.g. '2023')")
     tasting_profile = Column(JSONB, nullable=True, comment="portrait_* attributes from Adobe")
-    cepage_adobe = Column(
+    grape_blend = Column(
         JSONB,
         nullable=True,
         comment='Structured blend: [{"code":"MALB","pct":96},{"code":"SYRA","pct":4}]',

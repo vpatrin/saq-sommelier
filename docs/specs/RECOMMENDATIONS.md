@@ -26,7 +26,7 @@ Detailed data sources, schema changes, and pipeline architecture are in [DATA_PI
 
 **From products table (~30.9k wine products):** `name`, `description` (FR marketing text), `category`, `grape`, `region`, `appellation`, `country`, `producer`, `price`, `alcohol`, `sugar`, `rating`, `review_count`, `classification`, `designation`, `online_availability` (daily refresh via `--availability-check`), `store_availability` (daily refresh for Montreal stores via `--availability-check`). Only wine products are embedded (vin + champagne/mousseux + porto/fortifié + saké); spirits, beer, and cider are excluded. Availability, store presence, and price are query-time filters.
 
-**From Adobe Live Search (`--adobe-attrs-sync`):** `pastille_gout` (SAQ taste profile), `tasting_profile` JSONB (`portrait_*` — body, acidity, aromas, sweetness, wood, serving temp, aging potential), `vintage`, structured `cepage` array with blend percentages.
+**From Adobe Live Search (`--enrich-wines`):** `taste_tag` (SAQ taste profile, from Adobe `pastille_gout`), `tasting_profile` JSONB (`portrait_*` — body, acidity, aromas, sweetness, wood, serving temp, aging potential), `vintage`, `grape_blend` (structured blend with percentages, from Adobe `cepage_text`).
 
 **From watch history:** Implicit taste signal. A user watching 5 Bordeaux reds and 0 whites tells us something. Available for personalization without explicit preference collection.
 
@@ -54,13 +54,13 @@ Full details in [DATA_PIPELINE.md § Embedding Support](DATA_PIPELINE.md#embeddi
 **Composite text per product** — built from merged Adobe + HTML data:
 
 ```
-{pastille_gout} | {portrait_corps}, {portrait_sucre}, {portrait_acidite}
-{cepage} | {region}, {appellation}, {country} | {vintage}
+{taste_tag} | {portrait_corps}, {portrait_sucre}, {portrait_acidite}
+{grape_blend} | {region}, {appellation}, {country} | {vintage}
 Arômes: {portrait_arome}
 {description}
 ```
 
-`pastille_gout` and `portrait_*` are gold — they directly map to how users describe what they want ("bold and dry", "light fruity wine"). `description` provides semantic richness for occasion matching ("hearty stews", "grilled lamb").
+`taste_tag` and `portrait_*` are gold — they directly map to how users describe what they want ("bold and dry", "light fruity wine"). `description` provides semantic richness for occasion matching ("hearty stews", "grilled lamb").
 
 Price, availability, and rating are **not embedded** — they go in WHERE clauses. Embedding price would conflate semantic similarity with price proximity. Availability changes daily; embeddings should be stable.
 
@@ -122,7 +122,7 @@ Respond in the same language as the user's question.
 
 Catalog ({n} wines):
 [1] {name} — {price}$ — {country}, {region} — {grape}
-    {pastille_gout} · {portrait_corps}, {portrait_sucre}
+    {taste_tag} · {portrait_corps}, {portrait_sucre}
     Arômes: {portrait_arome}
     {description_excerpt}
     SKU: {sku}
@@ -256,7 +256,7 @@ Phase 6a is the RAG infrastructure. Phase 6b wires it into the bot.
 
 **Phase 6a — RAG infrastructure:**
 
-Prerequisite: data pipeline work from [DATA_PIPELINE.md](DATA_PIPELINE.md) — Adobe client, `--availability-check`, `--adobe-attrs-sync`, schema migration.
+Prerequisite: data pipeline work from [DATA_PIPELINE.md](DATA_PIPELINE.md) — Adobe client, `--availability-check`, `--enrich-wines`, schema migration.
 
 1. pgvector setup + `--embed-sync` CLI flag — incremental embedding (#154)
 2. Bilingual eval checkpoint — verify FR/EN retrieval quality before wiring Claude

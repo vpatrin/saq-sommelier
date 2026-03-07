@@ -13,7 +13,7 @@ Three CLI flags, each with a single responsibility. `--check-watches` is absorbe
 | Flag | Runs | What it does | Scope |
 | --- | --- | --- | --- |
 | `--availability-check` | Daily (2am) | Refreshes `online_availability` + `store_availability` from Adobe Live Search | All categories — wine + spirits + beer (online: ~4k, Montreal stores: ~9.5k) |
-| `--adobe-attrs-sync` | One-time (re-run manually if needed) | Enriches wine products with tasting profiles, pastille, cepage, vintage from Adobe | Wine only (~30.9k) |
+| `--enrich-wines` | One-time (re-run manually if needed) | Enriches wine products with tasting profiles, pastille, cepage, vintage from Adobe | Wine only (~30.9k) |
 | `--embed-sync` | After monthly scrape | Recomputes pgvector embeddings where `attribute_hash != embedded_hash` | Wine only (~30.9k initial, ~0-20 incremental) |
 
 **Monthly HTML scrape** (existing, modified): sitemap diff → fetch description + static fields for new SKUs only (~0-20 pages). No longer tracks availability.
@@ -110,7 +110,7 @@ query {
 | `pays_origine` | string | `"France"`, `"Italie"`, ... (89 countries) |
 | `region_origine` | string | `"Bourgogne"`, `"Bordeaux"`, ... (198 regions) |
 | `cepage` | string | `"Pinot noir"`, `"Chardonnay"`, ... (100+ grapes) |
-| `pastille_gout` | string | `"Fruité et vif"`, `"Aromatique et charnu"`, ... (28 profiles) |
+| `pastille_gout` | string | `"Fruité et vif"`, `"Aromatique et charnu"`, ... (28 profiles) → stored as `taste_tag` |
 | `millesime_produit` | string | `"2020"`, `"2023"`, ... (75 vintages) |
 | `nouveaute_marketing` | string | `"Nouvel arrivage"` (129), `"Nouveauté"` (23) |
 | `latest_offers` | string | `"Rabais"` (163), `"Points bonis"` (23) |
@@ -126,7 +126,7 @@ query {
 
 | Attribute | Example | Notes |
 |---|---|---|
-| `pastille_gout` | `"Aromatique et souple"` | SAQ's taste classification — 28 profiles |
+| `pastille_gout` | `"Aromatique et souple"` | SAQ's taste classification — 28 profiles; stored as `taste_tag` |
 | `cepage` | `["Malbec", "Syrah"]` | Array for blends |
 | `cepage_text` | `{"MALB":"96","SYRA":"4"}` | Blend percentages |
 | `pays_origine` | `"Chili"` | |
@@ -218,7 +218,7 @@ Tested against live Adobe Live Search API. These are hard numbers, not estimates
 | `produits/spiritueux` | 4,415 | — (not embedded) |
 | `produits/biere` | 352 | — (not embedded) |
 
-The bot and future React app are wine-scoped. Only wine + saké products (~30.9k) are enriched via `--adobe-attrs-sync` and embedded. Spirits, beer, cider, etc. stay in the DB (scraper already has them) but are excluded from recommendations.
+The bot and future React app are wine-scoped. Only wine + saké products (~30.9k) are enriched via `--enrich-wines` and embedded. Spirits, beer, cider, etc. stay in the DB (scraper already has them) but are excluded from recommendations.
 
 Subcategory paths match the bot's `CATEGORY_GROUPS` (rouge, blanc, rosé, bulles, fortifié, saké). `vin-nature` (2,081) and orange wine (~321) are cross-tagged within rouge/blanc/rosé — not separate partitions, captured automatically by the parent subcategory queries.
 
@@ -250,7 +250,7 @@ Filters compose correctly (AND logic). Every partition below stays under 10k:
 
 **For `--availability-check`:** `inStock=true` (9 pages) + Montreal `in` query (19 pages). Two queries.
 
-**For `--adobe-attrs-sync`:** Wine-only, partitioned by subcategory + `pays_origine` (facet-discovered). Vin-blanc (9,410), vin-rosé (518), champagne/mousseux (1,659), porto/fortifié (313), and saké (140) each fit in a single query — no partitioning needed. Vin-rouge (18,885) partitions by country — France (10,807) sub-partitions by price range ($0-20: 427, $20-50: 2,415, $50-100: 2,590, $100-500: 4,285, $500+: 1,088). All partitions verified under 10k.
+**For `--enrich-wines`:** Wine-only, partitioned by subcategory + `pays_origine` (facet-discovered). Vin-blanc (9,410), vin-rosé (518), champagne/mousseux (1,659), porto/fortifié (313), and saké (140) each fit in a single query — no partitioning needed. Vin-rouge (18,885) partitions by country — France (10,807) sub-partitions by price range ($0-20: 427, $20-50: 2,415, $50-100: 2,590, $100-500: 4,285, $500+: 1,088). All partitions verified under 10k.
 
 ### Performance verified
 
@@ -288,7 +288,7 @@ Two separate scraper modes, both running in production:
 **Limitations for Phase 6:**
 - `Product.availability` is CDN-cached HTML — unreliable for real-time status
 - `ProductAvailability` only covers watched SKUs (~tens of products) — RAG needs the full catalog
-- No tasting profiles (`portrait_*`), no `pastille_gout`, no structured `cepage` array
+- No tasting profiles (`portrait_*`), no `taste_tag`, no structured grape blend
 - No `store_availability_list` per product (which stores carry it)
 - Magento GraphQL + AJAX dependency adds complexity for marginal value (exact shelf qty vs boolean presence)
 
@@ -303,9 +303,9 @@ Two separate scraper modes, both running in production:
 | Online availability | Weekly HTML (CDN-cached, stale) | `--availability-check` (Adobe `inStock`) |
 | Store presence | AJAX per watched SKU only (exact qty) | `--availability-check` (Adobe per-store `store_availability_list`, preferred stores) |
 | Price | Weekly HTML | Monthly HTML (unchanged — SAQ prices are regulated, rarely change) |
-| Tasting profiles | Not captured | `--adobe-attrs-sync` (`portrait_*` attributes) |
-| Pastille de goût | Not captured | `--adobe-attrs-sync` (`pastille_gout`) |
-| Cepage | HTML string `"Cabernet Sauvignon / Merlot"` | `--adobe-attrs-sync` (Adobe array) + HTML string kept |
+| Tasting profiles | Not captured | `--enrich-wines` (`portrait_*` → `tasting_profile`) |
+| Taste tag | Not captured | `--enrich-wines` (`pastille_gout` → `taste_tag`) |
+| Grape blend | HTML string `"Cabernet Sauvignon / Merlot"` | `--enrich-wines` (Adobe `cepage_text` → `grape_blend`) + HTML `grape` string kept |
 | Monthly scrape scope | All ~38k sitemap entries | New SKUs only (description + static fields) |
 | `ProductAvailability` table | Exists (watched SKUs only) | **Dropped** — columns merged into `Product` |
 | Magento GraphQL + AJAX | Used for `magento_id` + per-store qty | **Dropped** — Adobe covers availability + store presence |
@@ -316,7 +316,7 @@ Two separate scraper modes, both running in production:
 ```
 One-time setup:
   1. Full HTML scrape     → ensure all products have description          (existing scraper)
-  2. --adobe-attrs-sync   → partitioned Adobe fetch for wine products     (~90 queries, ~2 min)
+  2. --enrich-wines   → partitioned Adobe fetch for wine products     (~90 queries, ~2 min)
   3. --embed-sync         → initial embedding of ~30.9k wine products
 
 --availability-check (~1 min, daily at 2am):
@@ -339,10 +339,10 @@ Two external dependencies: Adobe Live Search (daily) and SAQ HTML (monthly). No 
 
 ```mermaid
 flowchart TB
-    subgraph onetime ["--adobe-attrs-sync (one-time, ~2 min)"]
+    subgraph onetime ["--enrich-wines (one-time, ~2 min)"]
         direction TB
         FACET[Facet discovery<br/>countries per subcategory] --> PART[Partitioned fetch<br/>~90 queries]
-        PART --> |pastille_gout, tasting_profile,<br/>cepage_adobe, vintage| DB
+        PART --> |taste_tag, tasting_profile,<br/>grape_blend, vintage| DB
     end
 
     subgraph daily ["--availability-check (~1 min, daily)"]
@@ -394,7 +394,7 @@ Covers all online-purchasable products. For each product, extract availability o
 - `inStock` → `Product.online_availability`
 - `store_availability_list` → `Product.store_availability` JSONB array (all store IDs carrying this product)
 
-Wine attributes (`pastille_gout`, `portrait_*`, `cepage`, `vintage`) are in the Adobe response but **ignored** — `--adobe-attrs-sync` owns those columns.
+Wine attributes (`pastille_gout`, `portrait_*`, `cepage`, `vintage`) are in the Adobe response but **ignored** — `--enrich-wines` owns those columns.
 
 **1b. Montreal stores — single `in` query (~9.5k products, ~19 pages, ~30s)**
 
@@ -410,7 +410,7 @@ Covers En succursale products (store-only, not online) at Montreal stores. Same 
 
 **No embedding work here.** `--availability-check` writes availability only — neither column is embedded. `attribute_hash` and `embedded_hash` are managed by `--embed-sync` (run after monthly scrape).
 
-**Products outside both query sets** (not online AND not at any preferred store) keep stale availability. Their store data may drift but is irrelevant for recommendations since no user has those stores. Their attributes (from `--adobe-attrs-sync`) are stable — wine identity doesn't change.
+**Products outside both query sets** (not online AND not at any preferred store) keep stale availability. Their store data may drift but is irrelevant for recommendations since no user has those stores. Their attributes (from `--enrich-wines`) are stable — wine identity doesn't change.
 
 ### Step 2 — Watch Transition Detection
 
@@ -439,13 +439,13 @@ No network calls — purely in-DB comparison using data from Step 1.
 
 ## One-time Adobe Backfill
 
-`python -m src --adobe-attrs-sync` — run once to populate Adobe attributes for wine products.
+`python -m src --enrich-wines` — run once to populate Adobe attributes for wine products.
 
 **Purpose:** Enrich ~30.9k wine products with Adobe-only attributes for embedding quality. `--availability-check` only reaches `inStock=true` (~4k) + Montreal store products. The rest of the wine catalog has `portrait_*`, `pastille_gout`, `cepage`, `vintage` data in Adobe but won't be reached by the daily query. Since all wine products are embedded, they need these attributes for rich semantic profiles.
 
 **Wine-only scope.** Bot and future React app are wine-focused. Non-wine products (spirits, beer, cider — ~6k) stay in DB but are not enriched or embedded.
 
-**Not for availability.** `--availability-check` owns all availability data (online + store). `--adobe-attrs-sync` only writes wine attributes — not `online_availability` or `store_availability`.
+**Not for availability.** `--availability-check` owns all availability data (online + store). `--enrich-wines` only writes wine attributes — not `online_availability` or `store_availability`.
 
 **Strategy: facet-driven country discovery + price range fallback.** Country lists are discovered dynamically via Adobe facets (no hardcoded lists). When a country partition exceeds 10k, price ranges sub-partition it deterministically.
 
@@ -539,11 +539,11 @@ Adobe gives us numeric equivalents for some (`pourcentage_alcool_par_volume`, `t
 ### New columns on `Product`
 
 ```python
-# Wine attributes — writer: --adobe-attrs-sync
-pastille_gout        = Column(String, nullable=True, comment="SAQ taste profile (e.g. 'Aromatique et souple')")
+# Wine attributes — writer: --enrich-wines
+taste_tag            = Column(String, nullable=True, comment="SAQ taste profile (e.g. 'Aromatique et souple')")
 vintage              = Column(String, nullable=True, comment="Millésime (e.g. '2023')")
 tasting_profile      = Column(JSONB, nullable=True, comment="portrait_* attributes from Adobe")
-cepage_adobe         = Column(JSONB, nullable=True, comment='Structured blend: [{"code":"MALB","pct":96},{"code":"SYRA","pct":4}]')
+grape_blend          = Column(JSONB, nullable=True, comment='Structured blend: [{"code":"MALB","pct":96},{"code":"SYRA","pct":4}]')
 # Example tasting_profile: {"acidite": "présente", "arome": ["cassis", "prune"], "corps": "mi-corsé",
 #           "sucre": "sec", "bois": "équilibré", "bouche": "généreuse",
 #           "temp_service": [16, 18], "potentiel_garde": "À boire ou à garder 4 ans"}
@@ -603,7 +603,7 @@ One less table, one less JOIN, no sync problem.
 | Column(s) | Writer | Notes |
 | --- | --- | --- |
 | `online_availability`, `store_availability` | `--availability-check` | Daily. Adobe `inStock` + `store_availability_list` |
-| `pastille_gout`, `tasting_profile`, `cepage_adobe`, `vintage` | `--adobe-attrs-sync` | One-time (re-run manually if needed) |
+| `taste_tag`, `tasting_profile`, `grape_blend`, `vintage` | `--enrich-wines` | One-time (re-run manually if needed) |
 | `attribute_hash`, `embedded_hash`, embedding vector | `--embed-sync` | After monthly scrape |
 | `description`, `alcohol`, `sugar`, `producer`, `classification`, `size` | Monthly HTML scrape | New SKUs only |
 | `price` | Monthly HTML scrape | First scrape only (SAQ prices are regulated) |
@@ -619,11 +619,11 @@ This pipeline feeds the recommendation engine. Embedding strategy, pgvector setu
 
 **What this pipeline provides for embeddings:**
 
-- `attribute_hash` on Product — SHA256 of all wine-identity fields: `pastille_gout`, `cepage`, `region`, `appellation`, `country`, `category`, `grape`, `designation`, `classification`, `portrait_arome`, `portrait_corps`, `portrait_sucre`, `description`. Excludes transient data: `online_availability`, `store_availability`, `price`, `rating`, `review_count`.
+- `attribute_hash` on Product — SHA256 of all wine-identity fields: `taste_tag`, `grape_blend`, `region`, `appellation`, `country`, `category`, `grape`, `designation`, `classification`, `portrait_arome`, `portrait_corps`, `portrait_sucre`, `description`. Excludes transient data: `online_availability`, `store_availability`, `price`, `rating`, `review_count`.
 - `embedded_hash` — the `attribute_hash` value at time of last embedding. Embed when `attribute_hash != embedded_hash` or `embedded_hash IS NULL`.
 - **Embeddable = has Adobe attributes OR description.** Either source provides enough semantic signal. Both is ideal but not required — don't block on the monthly HTML scrape.
 - **Wine products only are embedded** (~30.9k), not the full catalog. Non-wine (spirits, beer, cider) are excluded. Availability and price are query-time filters, not embedding inputs. A wine's semantic identity doesn't change when it sells out.
-- **Attribute sparsity:** Not all wine products have `pastille_gout` or `portrait_*` populated in Adobe — many return empty strings. Products without tasting profiles rely on `description` from HTML for semantic signal. Both sources contribute to `attribute_hash`; either alone is sufficient for embedding.
+- **Attribute sparsity:** Not all wine products have `taste_tag` or `portrait_*` populated in Adobe — many return empty strings. Products without tasting profiles rely on `description` from HTML for semantic signal. Both sources contribute to `attribute_hash`; either alone is sufficient for embedding.
 - `--embed-sync` owns all embedding logic: computes `attribute_hash`, compares against `embedded_hash`, recomputes pgvector embeddings for changed/new rows, then sets `embedded_hash = attribute_hash`. Run after the monthly scrape only — `--availability-check` doesn't touch embeddings or attributes.
 - Typical run: ~0-20 new products after monthly scrape. Initial bulk: ~30.9k (wine catalog).
 
@@ -652,12 +652,12 @@ This pipeline feeds the recommendation engine. Embedding strategy, pgvector setu
 - **`in` operator works on `store_availability_list`.** Returns the union of products at any listed store. Verified with 1, 5, 20, and 64 Montreal stores. Diminishing returns from product overlap across stores.
 - **64 consumer Montreal stores = 9,487 products** (under 10k with ~500 headroom). Excludes 2 B2B "restaurateurs" stores (23385, 23390). MVP scoped to Montreal — expand by metro area when needed.
 - **`categories` filter supports path prefix matching.** `produits/vin` captures all wine subcategories. Wine catalog: 28,813 (vin) + 1,659 (champagne/mousseux) + 313 (porto/fortifié) = ~30,785.
-- **France = 19,054 products** (all statuses, not just wine). Wine subset (vin-rouge: 10,807) needs sub-partitioning by price range for `--adobe-attrs-sync`.
+- **France = 19,054 products** (all statuses, not just wine). Wine subset (vin-rouge: 10,807) needs sub-partitioning by price range for `--enrich-wines`.
 - **Italy = 5,308** — fits in one query.
 - **`identite_produit` is NOT filterable** — can't be used for server-side wine filtering. `categories` path is the correct approach.
-- **Attribute sparsity:** `pastille_gout` and `portrait_*` are often empty strings — not all products have tasting profiles in Adobe. Products without profiles rely on HTML `description` for embedding quality.
+- **Attribute sparsity:** `taste_tag` (Adobe `pastille_gout`) and `portrait_*` are often empty strings — not all products have tasting profiles in Adobe. Products without profiles rely on HTML `description` for embedding quality.
 
-### Answered by testing — partitioning for `--adobe-attrs-sync` (2026-03-04)
+### Answered by testing — partitioning for `--enrich-wines` (2026-03-04)
 
 **Facets work for dynamic discovery.** `productSearch.facets` returns all non-empty values for any filterable attribute within the current filter context. `Bucket` only has `title` (no count), but we can query each value individually to get counts.
 
