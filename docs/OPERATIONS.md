@@ -26,10 +26,10 @@ A typical incremental run scrapes ~50-200 products instead of the full ~38k cata
 Store population is an explicit operation, separate from the weekly product scrape:
 
 ```bash
-docker compose run --rm scraper python -m src --scrape-stores
+docker compose run --rm scraper python -m scraper stores
 ```
 
-SAQ stores are physical locations — they rarely change. Run `--scrape-stores` on first deploy and again whenever a store opens or closes. Upsert is idempotent; safe to re-run without clearing the table.
+SAQ stores are physical locations — they rarely change. Run `stores` on first deploy and again whenever a store opens or closes. Upsert is idempotent; safe to re-run without clearing the table.
 
 ### Running manually
 
@@ -112,7 +112,7 @@ The scraper programmatically enforces SAQ's `robots.txt` rules:
 
 ## Availability checker
 
-Daily job that refreshes online and in-store availability from Adobe Live Search, detects transitions for watched products, and emits `StockEvent` alerts. Runs as `python -m src --availability-check`.
+Daily job that refreshes online and in-store availability from Adobe Live Search, detects transitions for watched products, and emits `StockEvent` alerts. Runs as `python -m scraper availability`.
 
 See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) § Availability Check for full architecture.
 
@@ -149,10 +149,10 @@ sudo systemctl start saq-availability.service
 ### Running locally
 
 ```bash
-cd scraper && poetry run python -m src --availability-check
+cd scraper && poetry run python -m scraper availability
 ```
 
-Requires a running PostgreSQL with stores populated (`--scrape-stores`).
+Requires a running PostgreSQL with stores populated (`python -m scraper stores`).
 
 ### Resilience
 

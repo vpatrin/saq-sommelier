@@ -134,7 +134,7 @@ class Product(Base):
     sugar = Column(String, nullable=True, comment="Sugar content")
     producer = Column(String, nullable=True, comment="Producer name")
 
-    # Wine attributes (writer: --enrich-wines)
+    # Wine attributes (writer: enrich subcommand)
     taste_tag = Column(
         String, nullable=True, comment="SAQ taste profile (e.g. 'Aromatique et souple')"
     )
@@ -146,14 +146,14 @@ class Product(Base):
         comment='Structured blend: [{"code":"MALB","pct":96},{"code":"SYRA","pct":4}]',
     )
 
-    # Availability (writer: --availability-check)
+    # Availability (writer: availability subcommand)
     store_availability = Column(
         JSONB,
         nullable=True,
         comment='Store IDs carrying this product: ["23002","23004",...]',
     )
 
-    # Embedding support (writer: --embed-sync)
+    # Embedding support (writer: embed subcommand)
     embedding = Column(
         Vector(EMBEDDING_MODEL_DIMENSIONS),
         nullable=True,
@@ -162,7 +162,7 @@ class Product(Base):
     last_embedded_hash = Column(
         String,
         nullable=True,
-        comment="Hash of embedding-relevant fields at last --embed-sync run",
+        comment="Hash of embedding-relevant fields at last embed sync",
     )
 
     def __repr__(self) -> str:
@@ -238,7 +238,7 @@ class StockEvent(Base):
     """Records product availability transitions.
 
     saq_store_id is NULL for online events and non-NULL for in-store events.
-    Emitted by the daily availability checker (--availability-check).
+    Emitted by the daily availability checker (availability subcommand).
     """
 
     __tablename__ = "stock_events"

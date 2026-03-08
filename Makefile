@@ -4,7 +4,7 @@
 -include .env
 export
 
-.PHONY: install dev-backend dev-bot dev-scraper availability-check migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit build-backend build-scraper build-bot build run run-db run-scraper down clean
+.PHONY: install dev-backend dev-bot dev-scraper availability-check enrich-wines embed-sync scrape-stores migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit build-backend build-scraper build-bot build run run-db run-scraper down clean
 
 install:
 	git config core.hooksPath .githooks
@@ -20,16 +20,19 @@ dev-bot:
 	cd bot && poetry run python -m bot
 
 dev-scraper:
-	cd scraper && poetry run python -m src
+	cd scraper && poetry run python -m scraper
 
 availability-check:
-	cd scraper && poetry run python -m src --availability-check
+	cd scraper && poetry run python -m scraper availability
 
 enrich-wines:
-	cd scraper && poetry run python -m src --enrich-wines
+	cd scraper && poetry run python -m scraper enrich
 
 embed-sync:
-	cd scraper && poetry run python -m src --embed-sync
+	cd scraper && poetry run python -m scraper embed
+
+scrape-stores:
+	cd scraper && poetry run python -m scraper stores
 
 # Database migrations
 migrate:
