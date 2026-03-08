@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wine attribute enrichment from Adobe (`--enrich-wines`) — backfills tasting profiles, taste tags, grape blends, and vintages for ~30k wine products
 - Intent parser — Claude Haiku extracts structured filters (category, price, country) from natural language wine queries (#155)
 - `POST /api/recommendations` — natural language wine recommendations via intent parsing + embedding similarity search (#309, #310, #311)
+- `/recommend` bot command — ask for wine recommendations in natural language via Telegram (#156)
 
 ## [1.2.0] - 2026-03-03
 

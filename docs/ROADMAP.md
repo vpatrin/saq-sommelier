@@ -136,7 +136,7 @@ See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for data pipeline design an
 
 - [x] pgvector + embeddings (#154)
 - [x] Claude API integration (#155)
-- [ ] `/recommend` — natural language recommendations via Telegram (#156)
+- [x] `/recommend` — natural language recommendations via Telegram (#156)
 - [ ] Availability-aware intent parsing — distinguish online vs in-store vs both; tie in-store to user's preferred stores
 - [ ] Weekly digest — LLM-curated summary posted to group chat after scraper run (#120)
 
