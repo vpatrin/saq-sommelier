@@ -73,6 +73,22 @@ services:
         condition: service_healthy
         required: false
 
+  migrate:
+    profiles: ["migrate"]
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      DB_HOST: postgres
+    command: ["alembic", "-c", "core/alembic.ini", "upgrade", "head"]
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+
 volumes:
   pgdata:
 

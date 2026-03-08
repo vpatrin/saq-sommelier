@@ -130,6 +130,42 @@ See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for data pipeline design an
 - [ ] Availability-aware intent parsing — distinguish online vs in-store vs both; tie in-store to user's preferred stores
 - [ ] Weekly digest — LLM-curated summary posted to group chat after scraper run (#120)
 
+### DevOps & CD Pipeline
+
+**Production safety (prerequisite):**
+
+- [ ] Automated DB backups — daily pg_dump + 7-day retention via systemd timer
+- [ ] Scraper failure alerts — systemd OnFailure= notification to Telegram
+- [x] Include alembic config in backend Docker image for in-container migrations (#227)
+
+**CI hardening:**
+
+- [ ] Container security scan — Trivy on built images (catches OS-level CVEs that pip-audit misses)
+- [ ] Alembic migration smoke test — `upgrade head && check` against test DB (part of integration tests)
+
+**CD pipeline:**
+
+- [ ] ghcr.io image registry — CI builds and pushes images on merge to main, tagged by git SHA
+- [ ] Deploy workflow — tag push triggers: build → push → SSH → pre-deploy backup → migrate → restart → health check
+- [ ] Health check gate + auto-rollback — deploy fails gracefully if /health doesn't respond
+- [ ] docker-compose.prod.yml — resource limits, restart policies, no dev volumes
+- [ ] Deploy key — dedicated SSH key for CI → VPS access (not personal key)
+
+**Observability:**
+
+- [ ] Request correlation — X-Request-ID middleware across bot → backend → DB
+
+**Secrets management:**
+
+- [ ] Docker secrets — move credentials out of plaintext .env in production and CI
+
+**Learning backlog (future):**
+
+- [ ] Staging environment — same VPS, separate port + DB, environment promotion pattern
+- [ ] Kubernetes — container orchestration (when multi-node scaling is needed)
+- [ ] ArgoCD / Flux — GitOps-style continuous delivery
+- [ ] Terraform — infrastructure as code for VPS provisioning
+
 ### Ideas (unscoped)
 
 - [ ] `/occasion` — context-aware suggestions ("wine for a BBQ", "gift for belle-mère") via Claude

@@ -30,6 +30,10 @@ COPY --from=builder /usr/local /usr/local
 # Copy backend code
 COPY backend/ backend/
 
+# Alembic config + migration scripts (run: alembic -c core/alembic.ini upgrade head)
+COPY core/alembic.ini core/alembic.ini
+COPY core/alembic/ core/alembic/
+
 # Run as non-root user
 RUN useradd --create-home appuser
 USER appuser

@@ -16,7 +16,7 @@ Step-by-step setup instructions live in the infra repo (private).
 - **Swap**: 2G at `/swapfile`, swappiness=10
 - **Reverse proxy**: Caddy (SSL + routing via victorpatrin.dev subdomains)
 - **Services**: backend, bot, scraper (systemd timer), shared-postgres
-- **Deployed**: v1.1.0
+- **Deployed**: v1.2.0
 
 ---
 
@@ -26,10 +26,7 @@ Tag on main first (see [CHANGELOG.md](../CHANGELOG.md)), then deploy the tag on 
 
 ```bash
 git fetch --tags && git checkout vX.Y.Z
-diff .env.example .env            # check for new/changed vars
-make build                        # rebuild service images (including scraper for next scheduled run)
-make migrate                      # apply pending migrations (idempotent, always safe to run)
-docker compose up -d backend bot  # restart services
+./deploy/deploy.sh               # env check → build → migrate → restart → health check
 ```
 
 If `deploy/` unit files changed (or first deploy):
