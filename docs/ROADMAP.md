@@ -59,9 +59,9 @@ Backend endpoints driven by Telegram bot needs. See [specs/TELEGRAM_BOT.md](spec
 
 - [x] Bot scaffold (`bot/` service, python-telegram-bot) (#115)
 - [x] Bot API client — typed httpx wrapper for backend endpoints (#116)
-- [x] Inline keyboard filters — shared formatters, keyboards, filter callbacks (#118, #161)
-- [x] `/new` — recently added/updated wines with filters (#118)
-- [x] `/random` — random wine with filters (#118)
+- ~~Inline keyboard filters — shared formatters, keyboards, filter callbacks (#118, #161)~~ — removed, browse UX belongs in web frontend
+- ~~`/new` — recently added/updated wines with filters (#118)~~ — removed, browse UX belongs in web frontend
+- ~~`/random` — random wine with filters (#118)~~ — removed, browse UX belongs in web frontend
 - [x] `/watch`, `/unwatch`, `/alerts` — passive watch list + on-demand status check (#119)
 - [x] Post-scrape restock notifications — proactive alerts when watched products come back (#138)
 - [x] Destock notifications — alert users when watched products go out of stock (#212)
@@ -69,11 +69,11 @@ Backend endpoints driven by Telegram bot needs. See [specs/TELEGRAM_BOT.md](spec
 
 ### Phase 5a — Bot UX Polish ✅
 
-- [x] Improve category selection UX (#162)
+- ~~Improve category selection UX (#162)~~ — removed with browse commands
 - [x] "Back" button to return to previous results (#163) — resolved by persistent reply keyboard
 - [x] Main menu with navigation buttons (#164)
-- [x] Disable link preview for multi-result messages (#165)
-- [x] Paginated results with next/previous buttons (#167)
+- ~~Disable link preview for multi-result messages (#165)~~ — removed with browse commands
+- ~~Paginated results with next/previous buttons (#167)~~ — removed with browse commands
 - [x] Auto-recap watch list after /watch and /unwatch (#183)
 
 ### Phase 5b — Store Availability ✅
@@ -90,7 +90,7 @@ See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for API reference and data 
 - [x] Targeted store fetch — lat/lng proximity sorting replaces full pagination (#254)
 - ~~Filter by store availability (#150)~~ — out of scope, SAQ.com does this natively
 
-### Phase 5c — Watch UX
+### Phase 5c — Watch UX ✅
 
 - [x] Auto-detect pasted SAQ URLs — prompt "Watch this?" without `/watch` command (#273)
 - [x] Inline unwatch buttons on `/alerts` list (#240)
@@ -104,22 +104,12 @@ See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for API reference and data 
 - [ ] Bilingual bot responses, button labels, and help text (#152)
 - [ ] Bilingual formatters (#153)
 
-### Phase 5e — Discovery Rework (`/new` + `/random`)
+### ~~Phase 5e — Discovery Rework~~ — frozen
 
-Fix `/new` and `/random` so they solve real user problems instead of being demo placeholders.
+`/new` and `/random` are demo-quality discovery features. The bot's core value is **passive alerting** (watch/alerts/notifications), not browsing. Discovery belongs in a future web frontend. No further investment here.
 
-**Phase 1 — Fix the basics:**
-
-- [ ] Fix `/new` sort — use `created_at DESC` instead of `updated_at DESC` (current sort shows re-scrape order, not actual new arrivals)
-- [ ] Richer product cards — show grape, region, country below the name/price line
-- [x] Default `/random` to wine categories only (not whisky, beer, sake, etc.) (#285)
-- [ ] "🔄 Another" button on `/random` — re-roll without retyping the command
-
-**Phase 2 — Make them useful:**
-
-- [ ] Timeframe filter on `/new` — 7j / 30j / 90j buttons to scope "new since when"
-- [ ] Inline "👁 Watch" button on product cards — one tap to watch from `/new` or `/random`
-- [ ] Budget-aware defaults — remember last-used price filter per user
+- [x] Default `/random` to wine categories only (#285)
+- ~~Remaining items~~ — descoped, discovery moves to web frontend
 
 ### Phase 6 — AI Layer (RAG + Claude)
 
@@ -172,7 +162,7 @@ Deploy to production            ~2 days
   + Platform 2-3: prod Docker, CI/CD pipeline         ~2 days
   + Env Seg 4-5: staging environment, prod hardening  ~2 days
 
-Phase 6 (AI Layer)              ~10 days
+Phase 6 (AI Layer)              ~10 days    ✅ core shipped
   + ML/MLOps 6a-6d: embeddings, Claude, RAG, eval
   + Observability 1: request/LLM/RAG logging
   + SRE 1-2: SLOs, health checks, alerting

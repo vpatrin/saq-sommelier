@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from decimal import Decimal
 from types import SimpleNamespace, UnionType
+from typing import get_origin
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -31,6 +32,7 @@ _DUMMY_VALUES: dict[type, object] = {
     float: 1.0,
     int: 0,
     bool: True,
+    list: [],
 }
 
 
@@ -43,7 +45,8 @@ def _fake_product(**overrides):
         if isinstance(annotation, UnionType):
             args = [a for a in annotation.__args__ if a is not type(None)]
             annotation = args[0] if args else annotation
-        defaults[name] = _DUMMY_VALUES.get(annotation, NOW)
+        origin = get_origin(annotation)
+        defaults[name] = _DUMMY_VALUES.get(origin or annotation, NOW)
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 

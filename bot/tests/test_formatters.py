@@ -1,7 +1,6 @@
 from bot.formatters import (
     format_delist_notification,
     format_product_line,
-    format_product_list,
     format_recommendations,
     format_stock_notification,
     format_watch_list,
@@ -13,7 +12,7 @@ class TestFormatProductLine:
         product = {
             "name": "Mouton Cadet 2022",
             "price": "16.95",
-            "availability": True,
+            "online_availability": True,
             "sku": "10327701",
         }
         result = format_product_line(product, 1)
@@ -22,75 +21,24 @@ class TestFormatProductLine:
         assert "\u2705" in result
 
     def test_unavailable_product(self):
-        product = {"name": "Opus One", "price": "499.00", "availability": False, "sku": "999"}
+        product = {
+            "name": "Opus One",
+            "price": "499.00",
+            "online_availability": False,
+            "sku": "999",
+        }
         result = format_product_line(product, 2)
         assert "\u274c" in result
 
     def test_missing_price(self):
-        product = {"name": "Mystery Wine", "price": None, "availability": True, "sku": "000"}
+        product = {"name": "Mystery Wine", "price": None, "online_availability": True, "sku": "000"}
         result = format_product_line(product, 1)
         assert "N/A" in result
 
     def test_missing_name(self):
-        product = {"name": None, "price": "10.00", "availability": True, "sku": "111"}
+        product = {"name": None, "price": "10.00", "online_availability": True, "sku": "111"}
         result = format_product_line(product, 1)
         assert "Unknown" in result
-
-
-class TestFormatProductList:
-    def test_empty_results(self):
-        data = {"products": [], "total": 0, "page": 1, "per_page": 5, "pages": 0}
-        assert format_product_list(data) == "No results found."
-
-    def test_single_result(self):
-        data = {
-            "products": [{"name": "Wine", "price": "10.00", "availability": True, "sku": "A"}],
-            "total": 1,
-            "page": 1,
-            "per_page": 5,
-            "pages": 1,
-        }
-        result = format_product_list(data)
-        assert "*1 result*" in result
-        assert "showing" not in result
-
-    def test_multiple_results_all_shown(self):
-        products = [
-            {"name": f"Wine {i}", "price": "10.00", "availability": True, "sku": f"S{i}"}
-            for i in range(3)
-        ]
-        data = {"products": products, "total": 3, "page": 1, "per_page": 5, "pages": 1}
-        result = format_product_list(data)
-        assert "*3 results*" in result
-        assert "showing" not in result
-
-    def test_more_results_than_shown(self):
-        products = [
-            {"name": f"Wine {i}", "price": "10.00", "availability": True, "sku": f"S{i}"}
-            for i in range(5)
-        ]
-        data = {"products": products, "total": 42, "page": 1, "per_page": 5, "pages": 9}
-        result = format_product_list(data)
-        assert "*42 results*" in result
-        assert "page 1/9" in result
-
-    def test_page_indicator_hidden_for_single_page(self):
-        products = [
-            {"name": f"Wine {i}", "price": "10.00", "availability": True, "sku": f"S{i}"}
-            for i in range(3)
-        ]
-        data = {"products": products, "total": 3, "page": 1, "per_page": 5, "pages": 1}
-        result = format_product_list(data)
-        assert "page" not in result
-
-    def test_page_indicator_middle_page(self):
-        products = [
-            {"name": f"Wine {i}", "price": "10.00", "availability": True, "sku": f"S{i}"}
-            for i in range(5)
-        ]
-        data = {"products": products, "total": 20, "page": 3, "per_page": 5, "pages": 4}
-        result = format_product_list(data)
-        assert "page 3/4" in result
 
 
 class TestFormatRecommendations:
@@ -105,10 +53,13 @@ class TestFormatRecommendations:
                 {
                     "name": "Château Margaux",
                     "price": "89.00",
+                    "online_availability": True,
                     "sku": "12345",
                     "grape": "Merlot",
                     "region": "Bordeaux",
                     "country": "France",
+                    "taste_tag": "Aromatique et souple",
+                    "vintage": "2021",
                 }
             ],
             "intent": {"semantic_query": "bold red"},
@@ -116,8 +67,11 @@ class TestFormatRecommendations:
         result = format_recommendations(data)
         assert "[Château Margaux](https://www.saq.com/fr/12345)" in result
         assert "89.00$" in result
+        assert "\u2705" in result
         assert "Merlot" in result
-        assert "Bordeaux" in result
+        assert "Bordeaux, France" in result
+        assert "Aromatique et souple" in result
+        assert "2021" in result
 
     def test_country_fallback_when_no_region(self):
         data = {
@@ -125,6 +79,7 @@ class TestFormatRecommendations:
                 {
                     "name": "Some Wine",
                     "price": "20.00",
+                    "online_availability": True,
                     "sku": "999",
                     "grape": None,
                     "region": None,
@@ -142,17 +97,81 @@ class TestFormatRecommendations:
                 {
                     "name": "Mystery",
                     "price": "10.00",
+                    "online_availability": True,
                     "sku": "000",
                     "grape": None,
                     "region": None,
                     "country": None,
+                    "taste_tag": None,
+                    "vintage": None,
                 }
             ],
             "intent": {"semantic_query": "anything"},
         }
         result = format_recommendations(data)
         assert "Mystery" in result
-        assert "_" not in result  # No italics detail line
+        lines = result.strip().split("\n")
+        # Only the product line, no detail lines
+        assert len(lines) == 1
+
+    def test_flat_grape_used_over_grape_blend(self):
+        data = {
+            "products": [
+                {
+                    "name": "Blend Wine",
+                    "price": "30.00",
+                    "online_availability": True,
+                    "sku": "555",
+                    "grape": "Malbec",
+                    "grape_blend": [{"code": "MALB", "pct": 80}, {"code": "MERL", "pct": 20}],
+                    "region": "Mendoza",
+                    "country": "Argentine",
+                }
+            ],
+            "intent": {"semantic_query": "blend"},
+        }
+        result = format_recommendations(data)
+        assert "Malbec" in result
+        assert "MALB" not in result
+
+    def test_region_dedup_when_same_as_country(self):
+        data = {
+            "products": [
+                {
+                    "name": "Cretan Wine",
+                    "price": "19.00",
+                    "online_availability": True,
+                    "sku": "777",
+                    "grape": "Assyrtiko",
+                    "region": "Grèce",
+                    "country": "Grèce",
+                }
+            ],
+            "intent": {"semantic_query": "greek"},
+        }
+        result = format_recommendations(data)
+        assert "Grèce, Grèce" not in result
+        assert "Grèce" in result
+
+    def test_region_internal_dedup(self):
+        """SAQ stores 'Bourgogne, Bourgogne' when sub-region = parent."""
+        data = {
+            "products": [
+                {
+                    "name": "Aligoté",
+                    "price": "19.00",
+                    "online_availability": True,
+                    "sku": "888",
+                    "grape": "Aligoté",
+                    "region": "Bourgogne, Bourgogne",
+                    "country": "France",
+                }
+            ],
+            "intent": {"semantic_query": "white burgundy"},
+        }
+        result = format_recommendations(data)
+        assert "Bourgogne, Bourgogne" not in result
+        assert "Bourgogne, France" in result
 
 
 class TestFormatWatchList:
@@ -173,7 +192,7 @@ class TestFormatWatchList:
                 "product": {
                     "name": "Mouton Cadet",
                     "price": "16.95",
-                    "availability": True,
+                    "online_availability": True,
                     "sku": "10327701",
                 },
             },
@@ -189,11 +208,21 @@ class TestFormatWatchList:
         watches = [
             {
                 "watch": {"id": 1, "user_id": "tg:42", "sku": "A", "created_at": "2026-01-01"},
-                "product": {"name": "Wine A", "price": "10.00", "availability": True, "sku": "A"},
+                "product": {
+                    "name": "Wine A",
+                    "price": "10.00",
+                    "online_availability": True,
+                    "sku": "A",
+                },
             },
             {
                 "watch": {"id": 2, "user_id": "tg:42", "sku": "B", "created_at": "2026-01-01"},
-                "product": {"name": "Wine B", "price": "20.00", "availability": False, "sku": "B"},
+                "product": {
+                    "name": "Wine B",
+                    "price": "20.00",
+                    "online_availability": False,
+                    "sku": "B",
+                },
             },
         ]
         result = format_watch_list(watches)

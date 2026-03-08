@@ -31,28 +31,6 @@ def client() -> BackendClient:
     return bc
 
 
-# ── Products: list ──────────────────────────────────────────────
-
-
-async def test_list_products_success(client: BackendClient) -> None:
-    data = {"products": [{"sku": "A"}], "total": 1, "page": 1, "per_page": 20, "pages": 1}
-    client._client.request.return_value = _response(json_data=data)
-
-    result = await client.list_products()
-
-    assert result == data
-
-
-async def test_list_products_passes_params(client: BackendClient) -> None:
-    client._client.request.return_value = _response(json_data={"products": []})
-
-    await client.list_products(q="merlot", category="red")
-
-    client._client.request.assert_called_once_with(
-        "GET", "/products", params={"q": "merlot", "category": "red"}
-    )
-
-
 # ── Products: detail ────────────────────────────────────────────
 
 
@@ -73,40 +51,6 @@ async def test_get_product_not_found(client: BackendClient) -> None:
     result = await client.get_product("NOPE")
 
     assert result is None
-
-
-# ── Products: random ────────────────────────────────────────────
-
-
-async def test_get_random_product_found(client: BackendClient) -> None:
-    data = {"sku": "RND", "name": "Surprise"}
-    client._client.request.return_value = _response(json_data=data)
-
-    result = await client.get_random_product(category="red")
-
-    assert result == data
-
-
-async def test_get_random_product_empty_catalog(client: BackendClient) -> None:
-    client._client.request.return_value = _response(
-        status_code=HTTPStatus.NOT_FOUND, json_data={"detail": "No products found"}
-    )
-
-    result = await client.get_random_product()
-
-    assert result is None
-
-
-# ── Products: facets ────────────────────────────────────────────
-
-
-async def test_get_facets_success(client: BackendClient) -> None:
-    data = {"categories": ["red"], "countries": ["France"]}
-    client._client.request.return_value = _response(json_data=data)
-
-    result = await client.get_facets()
-
-    assert result == data
 
 
 # ── Watches: create ─────────────────────────────────────────────
@@ -231,14 +175,14 @@ async def test_backend_unreachable(client: BackendClient) -> None:
     client._client.request.side_effect = httpx.ConnectError("Connection refused")
 
     with pytest.raises(BackendUnavailableError):
-        await client.list_products()
+        await client.get_product("ABC")
 
 
 async def test_backend_timeout(client: BackendClient) -> None:
     client._client.request.side_effect = httpx.TimeoutException("Timed out")
 
     with pytest.raises(BackendUnavailableError):
-        await client.list_products()
+        await client.get_product("ABC")
 
 
 async def test_server_error(client: BackendClient) -> None:
@@ -247,7 +191,7 @@ async def test_server_error(client: BackendClient) -> None:
     )
 
     with pytest.raises(BackendAPIError) as exc_info:
-        await client.list_products()
+        await client.get_product("ABC")
 
     assert exc_info.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert "Internal server error" in exc_info.value.detail
@@ -279,4 +223,4 @@ async def test_request_without_open_fails() -> None:
     bc = BackendClient(base_url="http://test:8001")
 
     with pytest.raises(AssertionError, match="Client not open"):
-        await bc.list_products()
+        await bc.get_product("ABC")

@@ -51,7 +51,7 @@ _WATCH_LIST = [
         "product": {
             "name": "Mouton Cadet",
             "price": "16.95",
-            "availability": True,
+            "online_availability": True,
             "sku": "10327701",
         },
     },

@@ -25,6 +25,9 @@ dev-scraper:
 availability-check:
 	cd scraper && poetry run python -m src --availability-check
 
+enrich-wines:
+	cd scraper && poetry run python -m src --enrich-wines
+
 # Database migrations
 migrate:
 	cd core && poetry run alembic upgrade head

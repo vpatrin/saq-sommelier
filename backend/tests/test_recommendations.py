@@ -25,9 +25,12 @@ def _fake_product() -> MagicMock:
     p.designation = None
     p.classification = None
     p.grape = "Merlot"
+    p.grape_blend = None
     p.alcohol = "13.5%"
     p.sugar = None
     p.producer = "Test Producer"
+    p.vintage = "2020"
+    p.taste_tag = "Fruité et généreux"
     p.created_at = "2026-01-01T00:00:00Z"
     p.updated_at = "2026-01-01T00:00:00Z"
     return p

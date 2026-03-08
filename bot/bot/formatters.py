@@ -5,8 +5,7 @@ from bot.config import SAQ_BASE_URL
 
 
 def format_product_line(product: dict[str, Any], index: int) -> str:
-    """
-    Format a single product for Telegram Markdown display.
+    """Format a single product for Telegram Markdown display.
     Output example:
     1. Château Margaux — 89$ ✅
     Where "Château Margaux" links to https://www.saq.com/fr/15483332
@@ -14,7 +13,7 @@ def format_product_line(product: dict[str, Any], index: int) -> str:
 
     name = product.get("name") or "Unknown"
     price = product.get("price")
-    available = product.get("availability")
+    available = product.get("online_availability")
     sku = product.get("sku", "")
 
     price_str = f"{price}$" if price is not None else "N/A"
@@ -24,34 +23,8 @@ def format_product_line(product: dict[str, Any], index: int) -> str:
     return f"{index}. [{name}]({url}) \u2014 {price_str} {status}"
 
 
-def format_product_list(data: dict[str, Any]) -> str:
-    """Format a paginated product response for Telegram.
-    Output example:
-    *12 results* (showing 5)
-    1. Château Margaux — 89$ ✅
-    2. Mouton Rothschild — 250$ ✅
-    3. Some Cheap Wine — 15$ ❌
-    """
-    products = data.get("products", [])
-    total = data.get("total", 0)
-
-    if not products:
-        return "No results found."
-
-    lines = [format_product_line(p, i + 1) for i, p in enumerate(products)]
-    body = "\n\n".join(lines)
-
-    header = f"*{total} result{'s' if total != 1 else ''}*"
-    current_page = data["page"]
-    total_pages = data["pages"]
-    if total_pages > 1:
-        header += f" — page {current_page}/{total_pages}"
-
-    return f"{header}\n\n{body}"
-
-
 def format_recommendations(data: dict[str, Any]) -> str:
-    """Format recommendation results for Telegram — richer than browse listings."""
+    """Format recommendation results for Telegram — rich cards for curated results."""
     products = data.get("products", [])
 
     if not products:
@@ -63,23 +36,51 @@ def format_recommendations(data: dict[str, Any]) -> str:
         sku = p.get("sku", "")
         price = p.get("price")
         price_str = f"{price}$" if price is not None else "N/A"
+        available = p.get("online_availability")
+        status = "\u2705" if available else "\u274c"
         url = f"{SAQ_BASE_URL}/{sku}"
 
-        line = f"{i}. [{name}]({url}) — {price_str}"
+        line = f"{i}. [{name}]({url}) \u2014 {price_str} {status}"
 
-        details = []
-        if p.get("grape"):
-            details.append(p["grape"])
-        if p.get("region"):
-            details.append(p["region"])
-        elif p.get("country"):
-            details.append(p["country"])
-        if details:
-            line += f"\n    _{', '.join(details)}_"
+        # Line 2: grape · region, country (deduplicated)
+        origin_parts: list[str] = []
+        grape = p.get("grape") or ""
+        if grape:
+            origin_parts.append(grape)
+        region = p.get("region")
+        country = p.get("country")
+        location = _format_origin(region, country)
+        if location:
+            origin_parts.append(location)
+        if origin_parts:
+            line += f"\n    _{' · '.join(origin_parts)}_"
+
+        # Line 3: taste_tag · vintage
+        detail_parts: list[str] = []
+        if p.get("taste_tag"):
+            detail_parts.append(p["taste_tag"])
+        if p.get("vintage"):
+            detail_parts.append(str(p["vintage"]))
+        if detail_parts:
+            line += f"\n    _{' · '.join(detail_parts)}_"
 
         lines.append(line)
 
     return "\n\n".join(lines)
+
+
+def _format_origin(region: str | None, country: str | None) -> str:
+    """Deduplicate region/country — handles SAQ's 'Parent, Sub' region format."""
+    if region:
+        # Dedup "Bourgogne, Bourgogne" → "Bourgogne" (SAQ quirk: sub-region = parent)
+        parts = [p.strip() for p in region.split(",")]
+        if len(parts) == 2 and parts[0].lower() == parts[1].lower():
+            region = parts[0]
+    if region and country:
+        if region.lower() == country.lower():
+            return country
+        return f"{region}, {country}"
+    return region or country or ""
 
 
 def _format_watch_line(entry: dict[str, Any], index: int) -> str:

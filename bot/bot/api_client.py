@@ -48,21 +48,9 @@ class BackendClient:
 
     # ── Products ────────────────────────────────────────────────
 
-    async def list_products(self, **params: Any) -> dict[str, Any]:
-        """GET /api/products with optional query params."""
-        return await self._get("/products", params=params)
-
     async def get_product(self, sku: str) -> dict[str, Any] | None:
         """GET /api/products/{sku}. Returns None if 404."""
         return await self._get_or_none(f"/products/{sku}")
-
-    async def get_random_product(self, **params: Any) -> dict[str, Any] | None:
-        """GET /api/products/random. Returns None if 404 (empty catalog)."""
-        return await self._get_or_none("/products/random", params=params)
-
-    async def get_facets(self) -> dict[str, Any]:
-        """GET /api/products/facets — fetch all categories for keyboard grouping."""
-        return await self._get("/products/facets", params={"scope": "all"})
 
     # ── Recommendations ──────────────────────────────────────────
 

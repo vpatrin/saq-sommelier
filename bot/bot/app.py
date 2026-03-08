@@ -1,4 +1,3 @@
-from core.categories import group_facets
 from loguru import logger
 from telegram import Update
 from telegram.ext import (
@@ -12,9 +11,8 @@ from telegram.ext import (
     filters,
 )
 
-from bot.api_client import BackendAPIError, BackendClient, BackendUnavailableError
+from bot.api_client import BackendClient
 from bot.config import (
-    CALLBACK_PREFIX,
     CALLBACK_STORE_DONE,
     CALLBACK_STORE_PREFIX,
     CALLBACK_WATCH_CONFIRM,
@@ -23,20 +21,16 @@ from bot.config import (
     CMD_ALERTS,
     CMD_HELP,
     CMD_MYSTORES,
-    CMD_NEW,
-    CMD_RANDOM,
     CMD_RECOMMEND,
     CMD_START,
     CMD_UNWATCH,
     CMD_WATCH,
     MENU_ALERTS,
     MENU_HELP,
-    MENU_NEW,
-    MENU_RANDOM,
+    MENU_RECOMMEND,
     MENU_STORES,
     settings,
 )
-from bot.handlers.filters import filter_callback
 from bot.handlers.mystores import (
     back_handler,
     location_handler,
@@ -45,9 +39,7 @@ from bot.handlers.mystores import (
     store_remove_callback,
     store_toggle_callback,
 )
-from bot.handlers.new import new_command
 from bot.handlers.notifications import poll_notifications
-from bot.handlers.random import random_command
 from bot.handlers.recommend import recommend_command
 from bot.handlers.start import help_command, start
 from bot.handlers.url_paste import url_paste_handler, watch_confirm_callback, watch_skip_callback
@@ -60,16 +52,6 @@ async def _post_init(application: Application) -> None:
     await api.open()
     application.bot_data["api"] = api
     logger.info("BackendClient initialized ({})", settings.BACKEND_URL)
-
-    # Fetch product facets and cache grouped categories for filter keyboard
-    try:
-        facets = await api.get_facets()
-        application.bot_data["category_groups"] = group_facets(facets["categories"])
-        group_count = len(application.bot_data["category_groups"])
-        logger.info("Category groups loaded ({} active groups)", group_count)
-    except (BackendUnavailableError, BackendAPIError, KeyError, TypeError) as exc:
-        logger.warning("Failed to fetch facets — category filters will use fallback: {}", exc)
-        application.bot_data["category_groups"] = {}
 
 
 async def _error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -106,8 +88,6 @@ def create_app() -> Application:
     # Command handlers (group=0, default)
     app.add_handler(CommandHandler(CMD_START, start))
     app.add_handler(CommandHandler(CMD_HELP, help_command))
-    app.add_handler(CommandHandler(CMD_NEW, new_command))
-    app.add_handler(CommandHandler(CMD_RANDOM, random_command))
     app.add_handler(CommandHandler(CMD_WATCH, watch_command))
     app.add_handler(CommandHandler(CMD_UNWATCH, unwatch_command))
     app.add_handler(CommandHandler(CMD_ALERTS, alerts_command))
@@ -116,8 +96,7 @@ def create_app() -> Application:
     # Location messages — triggers nearby store lookup
     app.add_handler(MessageHandler(filters.LOCATION, location_handler))
     # Reply keyboard menu — text messages from persistent bottom buttons
-    app.add_handler(MessageHandler(filters.Text([MENU_NEW]), new_command))
-    app.add_handler(MessageHandler(filters.Text([MENU_RANDOM]), random_command))
+    app.add_handler(MessageHandler(filters.Text([MENU_RECOMMEND]), recommend_command))
     app.add_handler(MessageHandler(filters.Text([MENU_ALERTS]), alerts_command))
     app.add_handler(MessageHandler(filters.Text([MENU_STORES]), mystores_command))
     app.add_handler(MessageHandler(filters.Text([MENU_HELP]), help_command))
@@ -131,7 +110,7 @@ def create_app() -> Application:
             url_paste_handler,
         )
     )
-    # Inline button callbacks — watch removal ("w:"), store selection ("s:"), product filters ("f:")
+    # Inline button callbacks — watch removal ("w:"), store selection ("s:")
     app.add_handler(
         CallbackQueryHandler(watch_remove_callback, pattern=rf"^{CALLBACK_WATCH_PREFIX}rm:")
     )
@@ -146,7 +125,6 @@ def create_app() -> Application:
         CallbackQueryHandler(store_remove_callback, pattern=rf"^{CALLBACK_STORE_PREFIX}rm:")
     )
     app.add_handler(CallbackQueryHandler(store_done_callback, pattern=rf"^{CALLBACK_STORE_DONE}$"))
-    app.add_handler(CallbackQueryHandler(filter_callback, pattern=rf"^{CALLBACK_PREFIX}"))
     # Poll backend for restock notifications on a timer
     app.job_queue.run_repeating(
         poll_notifications,

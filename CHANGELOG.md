@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `POST /api/recommendations` — natural language wine recommendations via intent parsing + embedding similarity search (#309, #310, #311)
 - `/recommend` bot command — ask for wine recommendations in natural language via Telegram (#156)
 
+### Changed
+
+- Enriched `/recommend` cards — now show grape, region/country (deduplicated), taste tag, vintage, and availability status
+
+### Removed
+
+- `/new` and `/random` bot commands — browse UX belongs in web frontend, bot focuses on alerts and recommendations
+
 ## [1.2.0] - 2026-03-03
 
 ### Added

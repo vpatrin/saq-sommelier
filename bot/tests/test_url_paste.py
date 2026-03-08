@@ -55,7 +55,12 @@ def update():
     return mock
 
 
-_PRODUCT = {"name": "Mouton Cadet", "price": "16.95", "availability": True, "sku": "12345678"}
+_PRODUCT = {
+    "name": "Mouton Cadet",
+    "price": "16.95",
+    "online_availability": True,
+    "sku": "12345678",
+}
 
 
 async def test_url_paste_sends_card_with_keyboard(update, context, api):
