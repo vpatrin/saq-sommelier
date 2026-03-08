@@ -21,6 +21,8 @@ setup_logging(SERVICE_NAME, level=settings.LOG_LEVEL)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    if settings.ENVIRONMENT == "production" and not backend_settings.BOT_SECRET:
+        raise RuntimeError("BOT_SECRET must be set in production")
     await verify_db_connection()
     logger.info("Database connection verified")
     yield  # When uvicorn shuts down, it runs the code after yield

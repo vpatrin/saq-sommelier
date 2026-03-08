@@ -1,9 +1,7 @@
 FROM python:3.12-slim AS builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && curl -sSL https://install.python-poetry.org | python3 - \
-    && apt-get purge -y curl && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
-ENV PATH="/root/.local/bin:$PATH"
+ARG POETRY_VERSION=2.3.2
+RUN pip install --no-cache-dir poetry==${POETRY_VERSION}
 WORKDIR /build
 
 # Copy core package (path dependency of scraper)

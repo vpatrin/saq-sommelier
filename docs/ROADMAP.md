@@ -118,8 +118,8 @@ See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for data pipeline design an
 **Data pipeline (prerequisite):**
 
 - [x] Adobe Live Search client — GraphQL wrapper with pagination, partitioning, rate limiting (#287)
-- [x] `--availability-check` — daily Adobe availability refresh + watch transition detection (replaces `--check-watches`) (#289)
-- [x] `--enrich-wines` — one-time wine attribute backfill from Adobe (tasting profiles, taste tag, grape blend, vintage)
+- [x] `availability` subcommand — daily Adobe availability refresh + watch transition detection (replaces `--check-watches`) (#289)
+- [x] `enrich` subcommand — one-time wine attribute backfill from Adobe (tasting profiles, taste tag, grape blend, vintage)
 - [x] Schema migration — new columns, `ProductAvailability` drop, `availability` → `online_availability` rename (#288)
 
 **RAG + recommendations:**
