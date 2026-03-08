@@ -6,4 +6,6 @@ After=docker.service
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/saq-sommelier
-ExecStart=/usr/bin/docker compose up scraper --abort-on-container-exit --exit-code-from scraper
+ExecStart=/usr/bin/docker compose run --rm scraper python -m scraper scrape
+ExecStart=/usr/bin/docker compose run --rm scraper python -m scraper enrich
+ExecStart=/usr/bin/docker compose run --rm scraper python -m scraper embed
