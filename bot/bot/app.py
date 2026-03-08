@@ -25,6 +25,7 @@ from bot.config import (
     CMD_MYSTORES,
     CMD_NEW,
     CMD_RANDOM,
+    CMD_RECOMMEND,
     CMD_START,
     CMD_UNWATCH,
     CMD_WATCH,
@@ -47,6 +48,7 @@ from bot.handlers.mystores import (
 from bot.handlers.new import new_command
 from bot.handlers.notifications import poll_notifications
 from bot.handlers.random import random_command
+from bot.handlers.recommend import recommend_command
 from bot.handlers.start import help_command, start
 from bot.handlers.url_paste import url_paste_handler, watch_confirm_callback, watch_skip_callback
 from bot.handlers.watch import alerts_command, unwatch_command, watch_command, watch_remove_callback
@@ -110,6 +112,7 @@ def create_app() -> Application:
     app.add_handler(CommandHandler(CMD_UNWATCH, unwatch_command))
     app.add_handler(CommandHandler(CMD_ALERTS, alerts_command))
     app.add_handler(CommandHandler(CMD_MYSTORES, mystores_command))
+    app.add_handler(CommandHandler(CMD_RECOMMEND, recommend_command))
     # Location messages — triggers nearby store lookup
     app.add_handler(MessageHandler(filters.LOCATION, location_handler))
     # Reply keyboard menu — text messages from persistent bottom buttons

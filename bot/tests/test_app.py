@@ -10,5 +10,5 @@ def test_create_app_returns_application() -> None:
 
 def test_create_app_registers_handlers() -> None:
     app = create_app()
-    # 8 commands + 1 location + 7 message handlers + 7 callbacks = 23
-    assert len(app.handlers[0]) == 23
+    # 9 commands + 1 location + 7 message handlers + 7 callbacks = 24
+    assert len(app.handlers[0]) == 24

@@ -64,6 +64,12 @@ class BackendClient:
         """GET /api/products/facets — fetch all categories for keyboard grouping."""
         return await self._get("/products/facets", params={"scope": "all"})
 
+    # ── Recommendations ──────────────────────────────────────────
+
+    async def recommend(self, query: str) -> dict[str, Any]:
+        """POST /api/recommendations — natural language wine recommendations."""
+        return await self._post("/recommendations", json={"query": query})
+
     # ── Watches ─────────────────────────────────────────────────
 
     async def create_watch(self, user_id: str, sku: str) -> dict[str, Any]:

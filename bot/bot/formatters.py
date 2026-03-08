@@ -50,6 +50,38 @@ def format_product_list(data: dict[str, Any]) -> str:
     return f"{header}\n\n{body}"
 
 
+def format_recommendations(data: dict[str, Any]) -> str:
+    """Format recommendation results for Telegram — richer than browse listings."""
+    products = data.get("products", [])
+
+    if not products:
+        return "No recommendations found for this query. Try rephrasing?"
+
+    lines = []
+    for i, p in enumerate(products, 1):
+        name = p.get("name") or "Unknown"
+        sku = p.get("sku", "")
+        price = p.get("price")
+        price_str = f"{price}$" if price is not None else "N/A"
+        url = f"{SAQ_BASE_URL}/{sku}"
+
+        line = f"{i}. [{name}]({url}) — {price_str}"
+
+        details = []
+        if p.get("grape"):
+            details.append(p["grape"])
+        if p.get("region"):
+            details.append(p["region"])
+        elif p.get("country"):
+            details.append(p["country"])
+        if details:
+            line += f"\n    _{', '.join(details)}_"
+
+        lines.append(line)
+
+    return "\n\n".join(lines)
+
+
 def _format_watch_line(entry: dict[str, Any], index: int) -> str:
     """Format a single watch entry (WatchWithProduct) for Telegram."""
     watch = entry["watch"]

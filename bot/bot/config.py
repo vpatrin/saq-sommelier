@@ -57,6 +57,7 @@ CMD_WATCH = "watch"
 CMD_UNWATCH = "unwatch"
 CMD_ALERTS = "alerts"
 CMD_MYSTORES = "mystores"
+CMD_RECOMMEND = "recommend"
 
 # Reply keyboard menu labels — matched in app.py MessageHandlers
 MENU_NEW = "🆕 New wines"

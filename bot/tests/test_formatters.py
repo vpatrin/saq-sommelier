@@ -2,6 +2,7 @@ from bot.formatters import (
     format_delist_notification,
     format_product_line,
     format_product_list,
+    format_recommendations,
     format_stock_notification,
     format_watch_list,
 )
@@ -90,6 +91,68 @@ class TestFormatProductList:
         data = {"products": products, "total": 20, "page": 3, "per_page": 5, "pages": 4}
         result = format_product_list(data)
         assert "page 3/4" in result
+
+
+class TestFormatRecommendations:
+    def test_empty_results(self):
+        data = {"products": [], "intent": {"semantic_query": "rare"}}
+        result = format_recommendations(data)
+        assert "no recommendations" in result.lower()
+
+    def test_single_product_with_details(self):
+        data = {
+            "products": [
+                {
+                    "name": "Château Margaux",
+                    "price": "89.00",
+                    "sku": "12345",
+                    "grape": "Merlot",
+                    "region": "Bordeaux",
+                    "country": "France",
+                }
+            ],
+            "intent": {"semantic_query": "bold red"},
+        }
+        result = format_recommendations(data)
+        assert "[Château Margaux](https://www.saq.com/fr/12345)" in result
+        assert "89.00$" in result
+        assert "Merlot" in result
+        assert "Bordeaux" in result
+
+    def test_country_fallback_when_no_region(self):
+        data = {
+            "products": [
+                {
+                    "name": "Some Wine",
+                    "price": "20.00",
+                    "sku": "999",
+                    "grape": None,
+                    "region": None,
+                    "country": "Italy",
+                }
+            ],
+            "intent": {"semantic_query": "italian"},
+        }
+        result = format_recommendations(data)
+        assert "Italy" in result
+
+    def test_no_details_line_when_all_none(self):
+        data = {
+            "products": [
+                {
+                    "name": "Mystery",
+                    "price": "10.00",
+                    "sku": "000",
+                    "grape": None,
+                    "region": None,
+                    "country": None,
+                }
+            ],
+            "intent": {"semantic_query": "anything"},
+        }
+        result = format_recommendations(data)
+        assert "Mystery" in result
+        assert "_" not in result  # No italics detail line
 
 
 class TestFormatWatchList:
