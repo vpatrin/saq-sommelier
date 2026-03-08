@@ -1,6 +1,9 @@
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from backend.config import MAX_SEARCH_LENGTH
+from backend.schemas.product import ProductOut
 
 
 class IntentResult(BaseModel):
@@ -12,3 +15,12 @@ class IntentResult(BaseModel):
     country: str | None = None
     available_only: bool = True
     semantic_query: str = ""
+
+
+class RecommendationIn(BaseModel):
+    query: str = Field(min_length=1, max_length=MAX_SEARCH_LENGTH)
+
+
+class RecommendationOut(BaseModel):
+    products: list[ProductOut]
+    intent: IntentResult

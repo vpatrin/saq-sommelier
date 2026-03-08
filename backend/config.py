@@ -15,6 +15,8 @@ DEFAULT_NEARBY_LIMIT = 5
 MAX_NEARBY_LIMIT = 20
 MAX_SAQ_STORE_ID_LENGTH = 20
 
+DEFAULT_RECOMMENDATION_LIMIT = 5
+
 
 class BackendSettings(BaseSettings):
     """Backend-specific configuration (CORS, auth, etc.)."""
@@ -25,8 +27,11 @@ class BackendSettings(BaseSettings):
         extra="ignore",
     )
 
-    # Anthropic API key for Claude recommendations.
+    # Anthropic API key for Claude intent parsing.
     ANTHROPIC_API_KEY: str = ""
+
+    # OpenAI API key for embedding queries.
+    OPENAI_API_KEY: str = ""
 
     # Shared secret for bot → backend internal calls (X-Bot-Secret header).
     # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
