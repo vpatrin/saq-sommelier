@@ -10,15 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Wine scope default — API endpoints now return wine-only results by default; use `scope=all` for full catalog (#285)
-- Embedding sync pipeline (`--embed-sync`) — generates semantic vectors via OpenAI text-embedding-3-small
-- Daily availability refresh via Adobe Live Search (`--availability-check`) — replaces planned `--check-watches` (#289)
-- Wine attribute enrichment from Adobe (`--enrich-wines`) — backfills tasting profiles, taste tags, grape blends, and vintages for ~30k wine products
+- Embedding sync pipeline (`python -m scraper embed`) — generates semantic vectors via OpenAI text-embedding-3-small
+- Daily availability refresh via Adobe Live Search (`python -m scraper availability`) — replaces planned `--check-watches` (#289)
+- Wine attribute enrichment from Adobe (`python -m scraper enrich`) — backfills tasting profiles, taste tags, grape blends, and vintages for ~30k wine products
 - Intent parser — Claude Haiku extracts structured filters (category, price, country) from natural language wine queries (#155)
 - `POST /api/recommendations` — natural language wine recommendations via intent parsing + embedding similarity search (#309, #310, #311)
 - `/recommend` bot command — ask for wine recommendations in natural language via Telegram (#156)
 
 ### Changed
 
+- Scraper CLI: replaced `--flag` dispatch with argparse subcommands (`python -m scraper scrape|stores|enrich|embed|availability`) (#302)
+- Weekly scraper pipeline now chains scrape → enrich → embed in a single systemd service
 - Enriched `/recommend` cards — now show grape, region/country (deduplicated), taste tag, vintage, and availability status
 - `/recommend` defaults to wine categories when intent parser extracts no category filter
 
