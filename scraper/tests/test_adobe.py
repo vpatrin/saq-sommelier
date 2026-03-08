@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
-from src.adobe import (
+from scraper.adobe import (
     AdobeAPIError,
     AdobeProduct,
     PaginationCapError,
@@ -256,7 +256,7 @@ class TestSearchProducts:
         client = AsyncMock(spec=httpx.AsyncClient)
         client.post.side_effect = [_make_response(resp1), _make_response(resp2)]
 
-        with patch("src.adobe.asyncio.sleep"):
+        with patch("scraper.adobe.asyncio.sleep"):
             products = [p async for p in search_products(client, [])]
 
         assert len(products) == 2
@@ -275,7 +275,7 @@ class TestSearchProducts:
         client = AsyncMock(spec=httpx.AsyncClient)
         client.post.side_effect = [_make_response(resp1), _make_response(resp2)]
 
-        with patch("src.adobe.asyncio.sleep") as mock_sleep:
+        with patch("scraper.adobe.asyncio.sleep") as mock_sleep:
             _ = [p async for p in search_products(client, [])]
 
         # Sleep called once between page 1 and page 2
@@ -289,7 +289,7 @@ class TestSearchProducts:
         client = AsyncMock(spec=httpx.AsyncClient)
         client.post.return_value = _make_response(response)
 
-        with patch("src.adobe.asyncio.sleep") as mock_sleep:
+        with patch("scraper.adobe.asyncio.sleep") as mock_sleep:
             _ = [p async for p in search_products(client, [])]
 
         mock_sleep.assert_not_called()

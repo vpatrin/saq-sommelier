@@ -5,10 +5,10 @@ import httpx
 from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 
-from .adobe import PaginationCapError, build_filters, search_products
-from .config import settings
-from .constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
-from .db import (
+from ..adobe import PaginationCapError, build_filters, search_products
+from ..config import settings
+from ..constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
+from ..db import (
     bulk_update_availability,
     delete_old_stock_events,
     emit_stock_event,
@@ -150,7 +150,7 @@ async def availability_check() -> int:
         logger.opt(exception=exc).error("Failed to load Montreal store IDs — aborting")
         return EXIT_FATAL
     if not montreal_ids:
-        logger.error("No Montreal stores found in DB — run --scrape-stores first")
+        logger.error("No Montreal stores found in DB — run `python -m scraper stores` first")
         return EXIT_FATAL
     logger.info("Loaded {} Montreal consumer stores", len(montreal_ids))
 

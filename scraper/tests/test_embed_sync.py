@@ -2,8 +2,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.constants import EXIT_FATAL, EXIT_OK
-from src.embed_sync import embed_sync
+from scraper.commands.embed import embed_sync
+from scraper.constants import EXIT_FATAL, EXIT_OK
 
 
 def _make_product(**overrides: object) -> dict:
@@ -31,24 +31,24 @@ def _make_product(**overrides: object) -> dict:
 
 @pytest.mark.asyncio
 class TestEmbedSync:
-    @patch("src.embed_sync.settings")
+    @patch("scraper.commands.embed.settings")
     async def test_no_api_key(self, mock_settings: MagicMock) -> None:
         mock_settings.OPENAI_API_KEY = ""
         result = await embed_sync()
         assert result == EXIT_FATAL
 
-    @patch("src.embed_sync.settings")
-    @patch("src.embed_sync.get_products_needing_embedding", new_callable=AsyncMock)
+    @patch("scraper.commands.embed.settings")
+    @patch("scraper.commands.embed.get_products_needing_embedding", new_callable=AsyncMock)
     async def test_nothing_to_sync(self, mock_get: AsyncMock, mock_settings: MagicMock) -> None:
         mock_settings.OPENAI_API_KEY = "sk-test"
         mock_get.return_value = []
         result = await embed_sync()
         assert result == EXIT_OK
 
-    @patch("src.embed_sync.settings")
-    @patch("src.embed_sync.get_products_needing_embedding", new_callable=AsyncMock)
-    @patch("src.embed_sync.create_embeddings")
-    @patch("src.embed_sync.bulk_update_embeddings", new_callable=AsyncMock)
+    @patch("scraper.commands.embed.settings")
+    @patch("scraper.commands.embed.get_products_needing_embedding", new_callable=AsyncMock)
+    @patch("scraper.commands.embed.create_embeddings")
+    @patch("scraper.commands.embed.bulk_update_embeddings", new_callable=AsyncMock)
     async def test_full_sync(
         self,
         mock_bulk: AsyncMock,
@@ -73,9 +73,9 @@ class TestEmbedSync:
         assert updates[1]["sku"] == "222"
         assert len(updates[0]["embedding"]) == 1536
 
-    @patch("src.embed_sync.settings")
-    @patch("src.embed_sync.get_products_needing_embedding", new_callable=AsyncMock)
-    @patch("src.embed_sync.create_embeddings")
+    @patch("scraper.commands.embed.settings")
+    @patch("scraper.commands.embed.get_products_needing_embedding", new_callable=AsyncMock)
+    @patch("scraper.commands.embed.create_embeddings")
     async def test_api_failure(
         self,
         mock_embed: MagicMock,
@@ -89,8 +89,8 @@ class TestEmbedSync:
         result = await embed_sync()
         assert result == EXIT_FATAL
 
-    @patch("src.embed_sync.settings")
-    @patch("src.embed_sync.get_products_needing_embedding", new_callable=AsyncMock)
+    @patch("scraper.commands.embed.settings")
+    @patch("scraper.commands.embed.get_products_needing_embedding", new_callable=AsyncMock)
     async def test_skips_empty_text_products(
         self, mock_get: AsyncMock, mock_settings: MagicMock
     ) -> None:

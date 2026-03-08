@@ -3,10 +3,10 @@ import time
 from core.embedding_client import create_embeddings
 from loguru import logger
 
-from .config import settings
-from .constants import EXIT_FATAL, EXIT_OK
-from .db import bulk_update_embeddings, get_products_needing_embedding
-from .embed import build_embedding_text
+from ..config import settings
+from ..constants import EXIT_FATAL, EXIT_OK
+from ..db import bulk_update_embeddings, get_products_needing_embedding
+from ..embed import build_embedding_text
 
 
 async def embed_sync() -> int:
@@ -19,7 +19,7 @@ async def embed_sync() -> int:
     4. Store vectors + update last_embedded_hash
     """
     if not settings.OPENAI_API_KEY:
-        logger.error("OPENAI_API_KEY not set — cannot run --embed-sync")
+        logger.error("OPENAI_API_KEY not set — cannot run `python -m scraper embed`")
         return EXIT_FATAL
 
     start = time.monotonic()

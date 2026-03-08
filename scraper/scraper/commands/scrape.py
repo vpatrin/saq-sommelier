@@ -1,5 +1,4 @@
 import asyncio
-import sys
 import time
 import urllib.error
 from dataclasses import dataclass
@@ -7,14 +6,12 @@ from datetime import date, datetime
 from http import HTTPStatus
 
 import httpx
-from core.logging import setup_logging
 from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 
-from .availability import availability_check
-from .config import settings
-from .constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
-from .db import (
+from ..config import settings
+from ..constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
+from ..db import (
     clear_delisted,
     delete_old_stock_events,
     emit_stock_event,
@@ -23,14 +20,10 @@ from .db import (
     get_watched_skus,
     mark_delisted,
     upsert_product,
-    upsert_stores,
 )
-from .products import parse_product
-from .robots import is_allowed, load_robots
-from .sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
-from .stores import fetch_stores
-
-setup_logging(settings.SERVICE_NAME, level=settings.LOG_LEVEL)
+from ..products import parse_product
+from ..robots import is_allowed, load_robots
+from ..sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
 
 
 def _exit_code(saved: int, errors: int) -> int:
@@ -189,7 +182,7 @@ async def _detect_delists(sitemap_skus: set[str], db_skus: set[str]) -> tuple[in
         return 0, 0
 
 
-async def main() -> int:
+async def scrape_products() -> int:
     """Fetch sitemap, scrape products, write to database. Returns exit code."""
     # monotonic is immune to system clock changes
     start = time.monotonic()
@@ -263,43 +256,3 @@ async def main() -> int:
     )
 
     return _exit_code(stats.saved, stats.errors)
-
-
-async def scrape_stores() -> int:
-    """Fetch and upsert the full SAQ store directory. Returns exit code."""
-    start = time.monotonic()
-
-    async with httpx.AsyncClient(
-        headers={"User-Agent": settings.USER_AGENT}, timeout=settings.REQUEST_TIMEOUT
-    ) as client:
-        try:
-            stores = await fetch_stores(client)
-            await upsert_stores(stores)
-        except (httpx.HTTPError, SQLAlchemyError, ValueError, KeyError) as exc:
-            logger.opt(exception=exc).error("Store scrape failed")
-            return EXIT_FATAL
-
-    elapsed = time.monotonic() - start
-    minutes, seconds = divmod(int(elapsed), 60)
-    logger.info(
-        "Store scrape complete in {}m {}s — {} stores loaded", minutes, seconds, len(stores)
-    )
-    return EXIT_OK
-
-
-if __name__ == "__main__":
-    # Entry point: python -m src [--scrape-stores | ... | --embed-sync]
-    if "--scrape-stores" in sys.argv:
-        sys.exit(asyncio.run(scrape_stores()))
-    elif "--enrich-wines" in sys.argv:
-        from .enrich import enrich_wines
-
-        sys.exit(asyncio.run(enrich_wines()))
-    elif "--embed-sync" in sys.argv:
-        from .embed_sync import embed_sync
-
-        sys.exit(asyncio.run(embed_sync()))
-    elif "--availability-check" in sys.argv:
-        sys.exit(asyncio.run(availability_check()))
-    else:
-        sys.exit(asyncio.run(main()))

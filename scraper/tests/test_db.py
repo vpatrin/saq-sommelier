@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.products import ProductData
-from src.stores import StoreData
+from scraper.products import ProductData
+from scraper.stores import StoreData
 
 
 class TestGetDelistedSkus:
@@ -20,8 +20,8 @@ class TestGetDelistedSkus:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import get_delisted_skus
+        with patch("scraper.db.products.SessionLocal", mock_factory):
+            from scraper.db import get_delisted_skus
 
             result = await get_delisted_skus()
 
@@ -38,8 +38,8 @@ class TestGetDelistedSkus:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import get_delisted_skus
+        with patch("scraper.db.products.SessionLocal", mock_factory):
+            from scraper.db import get_delisted_skus
 
             result = await get_delisted_skus()
 
@@ -49,7 +49,7 @@ class TestGetDelistedSkus:
 class TestMarkDelisted:
     @pytest.mark.asyncio
     async def test_returns_zero_for_empty_set(self) -> None:
-        from src.db import mark_delisted
+        from scraper.db import mark_delisted
 
         result = await mark_delisted(set())
         assert result == 0
@@ -65,8 +65,8 @@ class TestMarkDelisted:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import mark_delisted
+        with patch("scraper.db.products.SessionLocal", mock_factory):
+            from scraper.db import mark_delisted
 
             result = await mark_delisted({"111", "222", "333"})
 
@@ -78,7 +78,7 @@ class TestMarkDelisted:
 class TestClearDelisted:
     @pytest.mark.asyncio
     async def test_returns_zero_for_empty_set(self) -> None:
-        from src.db import clear_delisted
+        from scraper.db import clear_delisted
 
         result = await clear_delisted(set())
         assert result == 0
@@ -94,8 +94,8 @@ class TestClearDelisted:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import clear_delisted
+        with patch("scraper.db.products.SessionLocal", mock_factory):
+            from scraper.db import clear_delisted
 
             result = await clear_delisted({"111", "222"})
 
@@ -121,8 +121,8 @@ class TestGetUpdatedDates:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import get_updated_dates
+        with patch("scraper.db.products.SessionLocal", mock_factory):
+            from scraper.db import get_updated_dates
 
             result = await get_updated_dates()
 
@@ -142,8 +142,8 @@ class TestGetUpdatedDates:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import get_updated_dates
+        with patch("scraper.db.products.SessionLocal", mock_factory):
+            from scraper.db import get_updated_dates
 
             result = await get_updated_dates()
 
@@ -161,8 +161,8 @@ class TestEmitStockEvent:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import emit_stock_event
+        with patch("scraper.db.events.SessionLocal", mock_factory):
+            from scraper.db import emit_stock_event
 
             await emit_stock_event("10327701", available=True)
 
@@ -180,8 +180,8 @@ class TestEmitStockEvent:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import emit_stock_event
+        with patch("scraper.db.events.SessionLocal", mock_factory):
+            from scraper.db import emit_stock_event
 
             with pytest.raises(SQLAlchemyError):
                 await emit_stock_event("10327701", available=True)
@@ -202,8 +202,8 @@ class TestDeleteOldStockEvents:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import delete_old_stock_events
+        with patch("scraper.db.events.SessionLocal", mock_factory):
+            from scraper.db import delete_old_stock_events
 
             await delete_old_stock_events(days=90)
 
@@ -221,8 +221,8 @@ class TestDeleteOldStockEvents:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import delete_old_stock_events
+        with patch("scraper.db.events.SessionLocal", mock_factory):
+            from scraper.db import delete_old_stock_events
 
             # Should NOT raise
             await delete_old_stock_events(days=90)
@@ -244,8 +244,8 @@ class TestUpsertProduct:
 
         product = ProductData(sku="12345678", name="Test Wine")
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import upsert_product
+        with patch("scraper.db.products.SessionLocal", mock_factory):
+            from scraper.db import upsert_product
 
             await upsert_product(product)
 
@@ -259,7 +259,6 @@ class TestUpsertProduct:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = SQLAlchemyError("connection lost")
 
-        # _SessionLocal() is a sync call that returns an async context manager
         mock_ctx = MagicMock()
         mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
         mock_ctx.__aexit__ = AsyncMock(return_value=False)
@@ -268,8 +267,8 @@ class TestUpsertProduct:
 
         product = ProductData(sku="12345678", name="Test Wine")
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import upsert_product
+        with patch("scraper.db.products.SessionLocal", mock_factory):
+            from scraper.db import upsert_product
 
             with pytest.raises(SQLAlchemyError):
                 await upsert_product(product)
@@ -295,7 +294,7 @@ class TestUpsertStores:
 
     @pytest.mark.asyncio
     async def test_skips_empty_list(self) -> None:
-        from src.db import upsert_stores
+        from scraper.db import upsert_stores
 
         # Should return None without touching the DB
         result = await upsert_stores([])
@@ -313,8 +312,8 @@ class TestUpsertStores:
 
         stores = [self._make_store("23009"), self._make_store("23132")]
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import upsert_stores
+        with patch("scraper.db.stores.SessionLocal", mock_factory):
+            from scraper.db import upsert_stores
 
             await upsert_stores(stores)
 
@@ -333,8 +332,8 @@ class TestUpsertStores:
 
         mock_factory = MagicMock(return_value=mock_ctx)
 
-        with patch("src.db._SessionLocal", mock_factory):
-            from src.db import upsert_stores
+        with patch("scraper.db.stores.SessionLocal", mock_factory):
+            from scraper.db import upsert_stores
 
             with pytest.raises(SQLAlchemyError):
                 await upsert_stores([self._make_store()])

@@ -4,15 +4,15 @@ import httpx
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.adobe import AdobeProduct, PaginationCapError
-from src.availability import (
+from scraper.adobe import AdobeProduct, PaginationCapError
+from scraper.commands.availability import (
     _AvailabilityData,
     _detect_transitions,
     _fetch_montreal_stores,
     _fetch_online_available,
     availability_check,
 )
-from src.constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
+from scraper.constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
 
 
 def _make_product(
@@ -40,7 +40,7 @@ class TestFetchOnlineAvailable:
 
         data = _AvailabilityData()
         client = AsyncMock(spec=httpx.AsyncClient)
-        with patch("src.availability.search_products", side_effect=mock_search):
+        with patch("scraper.commands.availability.search_products", side_effect=mock_search):
             await _fetch_online_available(client, data)
 
         assert data.online == {"111": True, "222": True}
@@ -66,7 +66,7 @@ class TestFetchMontrealStores:
         data.stores["111"] = ["23101", "23066"]
 
         client = AsyncMock(spec=httpx.AsyncClient)
-        with patch("src.availability.search_products", side_effect=mock_search):
+        with patch("scraper.commands.availability.search_products", side_effect=mock_search):
             await _fetch_montreal_stores(client, data, ["23101", "23132"])
 
         # 111 unchanged from 1a
@@ -86,16 +86,18 @@ class TestDetectTransitions:
 
         with (
             patch(
-                "src.availability.get_watched_product_availability",
+                "scraper.commands.availability.get_watched_product_availability",
                 new_callable=AsyncMock,
                 return_value={"111": (False, [])},  # was offline
             ),
             patch(
-                "src.availability.get_preferred_store_ids",
+                "scraper.commands.availability.get_preferred_store_ids",
                 new_callable=AsyncMock,
                 return_value={},
             ),
-            patch("src.availability.emit_stock_event", new_callable=AsyncMock) as mock_emit,
+            patch(
+                "scraper.commands.availability.emit_stock_event", new_callable=AsyncMock
+            ) as mock_emit,
         ):
             stats = await _detect_transitions(data)
 
@@ -110,16 +112,18 @@ class TestDetectTransitions:
 
         with (
             patch(
-                "src.availability.get_watched_product_availability",
+                "scraper.commands.availability.get_watched_product_availability",
                 new_callable=AsyncMock,
                 return_value={"111": (True, [])},  # was online
             ),
             patch(
-                "src.availability.get_preferred_store_ids",
+                "scraper.commands.availability.get_preferred_store_ids",
                 new_callable=AsyncMock,
                 return_value={},
             ),
-            patch("src.availability.emit_stock_event", new_callable=AsyncMock) as mock_emit,
+            patch(
+                "scraper.commands.availability.emit_stock_event", new_callable=AsyncMock
+            ) as mock_emit,
         ):
             stats = await _detect_transitions(data)
 
@@ -134,16 +138,18 @@ class TestDetectTransitions:
 
         with (
             patch(
-                "src.availability.get_watched_product_availability",
+                "scraper.commands.availability.get_watched_product_availability",
                 new_callable=AsyncMock,
                 return_value={"111": (True, ["23101"])},
             ),
             patch(
-                "src.availability.get_preferred_store_ids",
+                "scraper.commands.availability.get_preferred_store_ids",
                 new_callable=AsyncMock,
                 return_value={},
             ),
-            patch("src.availability.emit_stock_event", new_callable=AsyncMock) as mock_emit,
+            patch(
+                "scraper.commands.availability.emit_stock_event", new_callable=AsyncMock
+            ) as mock_emit,
         ):
             stats = await _detect_transitions(data)
 
@@ -160,16 +166,18 @@ class TestDetectTransitions:
 
         with (
             patch(
-                "src.availability.get_watched_product_availability",
+                "scraper.commands.availability.get_watched_product_availability",
                 new_callable=AsyncMock,
                 return_value={"111": (True, ["23101"])},
             ),
             patch(
-                "src.availability.get_preferred_store_ids",
+                "scraper.commands.availability.get_preferred_store_ids",
                 new_callable=AsyncMock,
                 return_value={"111": {"23101"}},  # user prefers 23101
             ),
-            patch("src.availability.emit_stock_event", new_callable=AsyncMock) as mock_emit,
+            patch(
+                "scraper.commands.availability.emit_stock_event", new_callable=AsyncMock
+            ) as mock_emit,
         ):
             stats = await _detect_transitions(data)
 
@@ -187,16 +195,18 @@ class TestDetectTransitions:
 
         with (
             patch(
-                "src.availability.get_watched_product_availability",
+                "scraper.commands.availability.get_watched_product_availability",
                 new_callable=AsyncMock,
                 return_value={"111": (True, ["23101", "23066"])},  # was at both
             ),
             patch(
-                "src.availability.get_preferred_store_ids",
+                "scraper.commands.availability.get_preferred_store_ids",
                 new_callable=AsyncMock,
                 return_value={"111": {"23066"}},  # user prefers 23066
             ),
-            patch("src.availability.emit_stock_event", new_callable=AsyncMock) as mock_emit,
+            patch(
+                "scraper.commands.availability.emit_stock_event", new_callable=AsyncMock
+            ) as mock_emit,
         ):
             stats = await _detect_transitions(data)
 
@@ -210,7 +220,7 @@ class TestDetectTransitions:
         data = _AvailabilityData()
 
         with patch(
-            "src.availability.get_watched_product_availability",
+            "scraper.commands.availability.get_watched_product_availability",
             new_callable=AsyncMock,
             return_value={},
         ):
@@ -226,17 +236,17 @@ class TestDetectTransitions:
 
         with (
             patch(
-                "src.availability.get_watched_product_availability",
+                "scraper.commands.availability.get_watched_product_availability",
                 new_callable=AsyncMock,
                 return_value={"111": (False, [])},
             ),
             patch(
-                "src.availability.get_preferred_store_ids",
+                "scraper.commands.availability.get_preferred_store_ids",
                 new_callable=AsyncMock,
                 return_value={},
             ),
             patch(
-                "src.availability.emit_stock_event",
+                "scraper.commands.availability.emit_stock_event",
                 new_callable=AsyncMock,
                 side_effect=SQLAlchemyError("connection lost"),
             ),
@@ -251,7 +261,7 @@ class TestAvailabilityCheck:
     @pytest.mark.asyncio
     async def test_fatal_when_no_montreal_stores(self) -> None:
         with patch(
-            "src.availability.get_montreal_store_ids",
+            "scraper.commands.availability.get_montreal_store_ids",
             new_callable=AsyncMock,
             return_value=[],
         ):
@@ -267,11 +277,11 @@ class TestAvailabilityCheck:
 
         with (
             patch(
-                "src.availability.get_montreal_store_ids",
+                "scraper.commands.availability.get_montreal_store_ids",
                 new_callable=AsyncMock,
                 return_value=["23101"],
             ),
-            patch("src.availability.search_products", side_effect=mock_search_raises),
+            patch("scraper.commands.availability.search_products", side_effect=mock_search_raises),
         ):
             result = await availability_check()
         assert result == EXIT_FATAL
@@ -292,28 +302,28 @@ class TestAvailabilityCheck:
 
         with (
             patch(
-                "src.availability.get_montreal_store_ids",
+                "scraper.commands.availability.get_montreal_store_ids",
                 new_callable=AsyncMock,
                 return_value=["23101"],
             ),
-            patch("src.availability.search_products", side_effect=mock_search),
+            patch("scraper.commands.availability.search_products", side_effect=mock_search),
             patch(
-                "src.availability.get_all_skus",
+                "scraper.commands.availability.get_all_skus",
                 new_callable=AsyncMock,
                 return_value={"111", "222"},
             ),
             patch(
-                "src.availability.bulk_update_availability",
+                "scraper.commands.availability.bulk_update_availability",
                 new_callable=AsyncMock,
                 return_value=2,
             ) as mock_bulk,
             patch(
-                "src.availability.get_watched_product_availability",
+                "scraper.commands.availability.get_watched_product_availability",
                 new_callable=AsyncMock,
                 return_value={},
             ),
             patch(
-                "src.availability.delete_old_stock_events",
+                "scraper.commands.availability.delete_old_stock_events",
                 new_callable=AsyncMock,
             ) as mock_cleanup,
         ):
@@ -345,37 +355,37 @@ class TestAvailabilityCheck:
 
         with (
             patch(
-                "src.availability.get_montreal_store_ids",
+                "scraper.commands.availability.get_montreal_store_ids",
                 new_callable=AsyncMock,
                 return_value=["23101"],
             ),
-            patch("src.availability.search_products", side_effect=mock_search_once),
+            patch("scraper.commands.availability.search_products", side_effect=mock_search_once),
             patch(
-                "src.availability.get_all_skus",
+                "scraper.commands.availability.get_all_skus",
                 new_callable=AsyncMock,
                 return_value={"111"},
             ),
             patch(
-                "src.availability.bulk_update_availability",
+                "scraper.commands.availability.bulk_update_availability",
                 new_callable=AsyncMock,
                 return_value=1,
             ),
             patch(
-                "src.availability.get_watched_product_availability",
+                "scraper.commands.availability.get_watched_product_availability",
                 new_callable=AsyncMock,
                 return_value={"111": (False, [])},  # was offline, now online → restock
             ),
             patch(
-                "src.availability.get_preferred_store_ids",
+                "scraper.commands.availability.get_preferred_store_ids",
                 new_callable=AsyncMock,
                 return_value={},
             ),
             patch(
-                "src.availability.emit_stock_event",
+                "scraper.commands.availability.emit_stock_event",
                 new_callable=AsyncMock,
                 side_effect=SQLAlchemyError("fail"),
             ),
-            patch("src.availability.delete_old_stock_events", new_callable=AsyncMock),
+            patch("scraper.commands.availability.delete_old_stock_events", new_callable=AsyncMock),
         ):
             result = await availability_check()
 

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.config import ScraperSettings
+from scraper.config import ScraperSettings
 
 
 class TestScraperSettingsValidators:

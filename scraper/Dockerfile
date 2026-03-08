@@ -32,7 +32,7 @@ WORKDIR /app
 COPY --from=builder /usr/local /usr/local
 
 # Copy scraper code
-COPY scraper/src/ scraper/src/
+COPY scraper/scraper/ scraper/scraper/
 
 # Run as non-root user
 RUN useradd --create-home appuser
@@ -40,4 +40,4 @@ USER appuser
 
 WORKDIR /app/scraper
 
-CMD ["python", "-m", "src"]
+CMD ["python", "-m", "scraper"]

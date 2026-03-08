@@ -31,7 +31,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["scraper"]
 omit = ["tests/*"]
 
 [tool.coverage.report]

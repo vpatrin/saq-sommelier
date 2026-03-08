@@ -1,8 +1,8 @@
 from datetime import date
 
-from src.__main__ import _exit_code, _needs_scrape
-from src.constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
-from src.sitemap import SitemapEntry
+from scraper.commands.scrape import _exit_code, _needs_scrape
+from scraper.constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
+from scraper.sitemap import SitemapEntry
 
 
 class TestNeedsScrape:

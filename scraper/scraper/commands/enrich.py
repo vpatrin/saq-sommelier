@@ -6,10 +6,10 @@ import httpx
 from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
 
-from .adobe import AdobeProduct, PaginationCapError, build_filters, fetch_facets, search_products
-from .config import settings
-from .constants import EXIT_FATAL, EXIT_OK
-from .db import bulk_update_wine_attrs, get_all_skus
+from ..adobe import AdobeProduct, PaginationCapError, build_filters, fetch_facets, search_products
+from ..config import settings
+from ..constants import EXIT_FATAL, EXIT_OK
+from ..db import bulk_update_wine_attrs, get_all_skus
 
 # Wine subcategory paths in SAQ's Adobe catalog
 _WINE_SUBCATEGORIES = [

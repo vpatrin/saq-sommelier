@@ -3,8 +3,8 @@ from urllib.robotparser import RobotFileParser
 
 import pytest
 
-from src.config import settings
-from src.robots import is_allowed, load_robots
+from scraper.config import settings
+from scraper.robots import is_allowed, load_robots
 
 # SAQ-like robots.txt rules for testing (no network needed)
 _SAQ_RULES = [

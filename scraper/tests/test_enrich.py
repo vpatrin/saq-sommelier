@@ -3,13 +3,13 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.adobe import AdobeProduct, PaginationCapError
-from src.constants import EXIT_FATAL, EXIT_OK
-from src.enrich import (
+from scraper.adobe import AdobeProduct, PaginationCapError
+from scraper.commands.enrich import (
     _parse_grape_blend,
     enrich_wines,
     extract_wine_attrs,
 )
+from scraper.constants import EXIT_FATAL, EXIT_OK
 
 
 class TestExtractWineAttrs:
@@ -136,7 +136,7 @@ class TestEnrichWines:
     @pytest.mark.asyncio
     async def test_fatal_when_no_products_in_db(self) -> None:
         with patch(
-            "src.enrich.get_all_skus",
+            "scraper.commands.enrich.get_all_skus",
             new_callable=AsyncMock,
             return_value=set(),
         ):
@@ -146,7 +146,7 @@ class TestEnrichWines:
     @pytest.mark.asyncio
     async def test_fatal_on_db_error(self) -> None:
         with patch(
-            "src.enrich.get_all_skus",
+            "scraper.commands.enrich.get_all_skus",
             new_callable=AsyncMock,
             side_effect=SQLAlchemyError("connection lost"),
         ):
@@ -162,11 +162,11 @@ class TestEnrichWines:
 
         with (
             patch(
-                "src.enrich.get_all_skus",
+                "scraper.commands.enrich.get_all_skus",
                 new_callable=AsyncMock,
                 return_value={"111"},
             ),
-            patch("src.enrich.search_products", side_effect=mock_search_raises),
+            patch("scraper.commands.enrich.search_products", side_effect=mock_search_raises),
         ):
             result = await enrich_wines()
         assert result == EXIT_FATAL
@@ -188,14 +188,14 @@ class TestEnrichWines:
 
         with (
             patch(
-                "src.enrich.get_all_skus",
+                "scraper.commands.enrich.get_all_skus",
                 new_callable=AsyncMock,
                 return_value={"111", "222", "333"},
             ),
-            patch("src.enrich.search_products", side_effect=mock_search),
-            patch("src.enrich.fetch_facets", new_callable=AsyncMock),
+            patch("scraper.commands.enrich.search_products", side_effect=mock_search),
+            patch("scraper.commands.enrich.fetch_facets", new_callable=AsyncMock),
             patch(
-                "src.enrich.bulk_update_wine_attrs",
+                "scraper.commands.enrich.bulk_update_wine_attrs",
                 new_callable=AsyncMock,
                 return_value=2,
             ) as mock_bulk,
@@ -223,14 +223,14 @@ class TestEnrichWines:
 
         with (
             patch(
-                "src.enrich.get_all_skus",
+                "scraper.commands.enrich.get_all_skus",
                 new_callable=AsyncMock,
                 return_value={"111"},
             ),
-            patch("src.enrich.search_products", side_effect=mock_search),
-            patch("src.enrich.fetch_facets", new_callable=AsyncMock),
+            patch("scraper.commands.enrich.search_products", side_effect=mock_search),
+            patch("scraper.commands.enrich.fetch_facets", new_callable=AsyncMock),
             patch(
-                "src.enrich.bulk_update_wine_attrs",
+                "scraper.commands.enrich.bulk_update_wine_attrs",
                 new_callable=AsyncMock,
                 return_value=0,
             ) as mock_bulk,
@@ -259,18 +259,18 @@ class TestEnrichWines:
 
         with (
             patch(
-                "src.enrich.get_all_skus",
+                "scraper.commands.enrich.get_all_skus",
                 new_callable=AsyncMock,
                 return_value={"111"},
             ),
-            patch("src.enrich.search_products", side_effect=mock_search),
+            patch("scraper.commands.enrich.search_products", side_effect=mock_search),
             patch(
-                "src.enrich.fetch_facets",
+                "scraper.commands.enrich.fetch_facets",
                 new_callable=AsyncMock,
                 return_value=["France", "Italie"],
             ),
             patch(
-                "src.enrich.bulk_update_wine_attrs",
+                "scraper.commands.enrich.bulk_update_wine_attrs",
                 new_callable=AsyncMock,
                 return_value=1,
             ) as mock_bulk,

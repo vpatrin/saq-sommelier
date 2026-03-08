@@ -1,4 +1,4 @@
-from src.embed import build_embedding_text, compute_embedding_hash
+from scraper.embed import build_embedding_text, compute_embedding_hash
 
 
 class TestBuildEmbeddingText:

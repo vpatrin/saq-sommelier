@@ -4,7 +4,7 @@ from xml.etree.ElementTree import ParseError
 import httpx
 import pytest
 
-from src.sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
+from scraper.sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
 
 
 def _make_response(content: bytes, status_code: int = 200) -> httpx.Response:

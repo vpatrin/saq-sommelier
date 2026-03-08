@@ -1,4 +1,4 @@
-from src.products import ProductData, parse_product
+from scraper.products import ProductData, parse_product
 
 
 class TestParseProductJsonLD:

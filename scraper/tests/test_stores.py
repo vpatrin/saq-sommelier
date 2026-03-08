@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
-from src.stores import StoreData, fetch_stores, parse_store
+from scraper.stores import StoreData, fetch_stores, parse_store
 
 
 def _raw_store(
@@ -107,7 +107,7 @@ class TestFetchStores:
         client = AsyncMock(spec=httpx.AsyncClient)
         client.get.return_value = _make_response(page)
 
-        with patch("src.stores.asyncio.sleep"):
+        with patch("scraper.stores.asyncio.sleep"):
             result = await fetch_stores(client)
 
         assert len(result) == 1
@@ -125,7 +125,7 @@ class TestFetchStores:
             _make_response(page2),
         ]
 
-        with patch("src.stores.asyncio.sleep"):
+        with patch("scraper.stores.asyncio.sleep"):
             result = await fetch_stores(client)
 
         assert len(result) == 2
@@ -147,7 +147,7 @@ class TestFetchStores:
         client = AsyncMock(spec=httpx.AsyncClient)
         client.get.side_effect = [_make_response(page1), _make_response(page2)]
 
-        with patch("src.stores.asyncio.sleep") as mock_sleep:
+        with patch("scraper.stores.asyncio.sleep") as mock_sleep:
             await fetch_stores(client)
 
         # Sleep called once between page 1 and page 2 (not after last page)
