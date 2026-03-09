@@ -45,13 +45,14 @@ def update():
     mock = AsyncMock()
     mock.message.reply_text = AsyncMock()
     mock.message.chat.send_action = AsyncMock()
+    mock.effective_user.id = 12345
     return mock
 
 
 async def test_recommend_sends_results(update, context, api):
     await recommend_command(update, context)
 
-    api.recommend.assert_called_once_with("un rouge corsé")
+    api.recommend.assert_called_once_with("un rouge corsé", user_id="tg:12345")
     update.message.chat.send_action.assert_called_once()
     reply_text = update.message.reply_text.call_args[0][0]
     assert "Château Margaux" in reply_text

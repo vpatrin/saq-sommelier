@@ -52,6 +52,7 @@ def _fake_product(
 
 class TestRecommend:
     @pytest.mark.asyncio
+    @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
     @patch("backend.services.recommendations.explain_recommendations")
     @patch("backend.services.recommendations.find_similar")
     @patch("backend.services.recommendations.embed_query")
@@ -64,6 +65,7 @@ class TestRecommend:
         mock_embed: MagicMock,
         mock_find: AsyncMock,
         mock_explain: MagicMock,
+        mock_write_log: AsyncMock,
     ) -> None:
         mock_settings.OPENAI_API_KEY = "sk-test"
         mock_parse.return_value = IntentResult(categories=["Vin rouge"], semantic_query="fruité")
@@ -72,9 +74,10 @@ class TestRecommend:
         mock_explain.return_value = ExplanationResult(
             reasons=["Great fruity red"], summary="A fruity selection"
         )
+        mock_write_log.return_value = 42
 
         db = AsyncMock()
-        result = await recommend(db, "un rouge fruité")
+        result = await recommend(db, "un rouge fruité", user_id="tg:123")
 
         assert isinstance(result, RecommendationOut)
         assert len(result.products) == 1
@@ -82,8 +85,17 @@ class TestRecommend:
         assert result.products[0].reason == "Great fruity red"
         assert result.summary == "A fruity selection"
         assert result.intent.categories == ["Vin rouge"]
+        assert result.log_id == 42
+        mock_write_log.assert_called_once()
+        log_kwargs = mock_write_log.call_args.kwargs
+        assert log_kwargs["user_id"] == "tg:123"
+        assert log_kwargs["query"] == "un rouge fruité"
+        assert log_kwargs["returned_skus"] == ["123456"]
+        assert "intent" in log_kwargs["latency_ms"]
+        assert "total" in log_kwargs["latency_ms"]
 
     @pytest.mark.asyncio
+    @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
     @patch("backend.services.recommendations.explain_recommendations")
     @patch("backend.services.recommendations.find_similar")
     @patch("backend.services.recommendations.embed_query")
@@ -96,12 +108,14 @@ class TestRecommend:
         mock_embed: MagicMock,
         mock_find: AsyncMock,
         mock_explain: MagicMock,
+        mock_write_log: AsyncMock,
     ) -> None:
         mock_settings.OPENAI_API_KEY = "sk-test"
         mock_parse.return_value = IntentResult(semantic_query="rare wine")
         mock_embed.return_value = [0.1] * EMBEDDING_DIMENSIONS
         mock_find.return_value = []
         mock_explain.return_value = ExplanationResult(reasons=[], summary="")
+        mock_write_log.return_value = 1
 
         db = AsyncMock()
         result = await recommend(db, "rare wine")
@@ -109,6 +123,35 @@ class TestRecommend:
         assert result.products == []
         assert result.summary == ""
         assert result.intent.semantic_query == "rare wine"
+
+    @pytest.mark.asyncio
+    @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
+    @patch("backend.services.recommendations.parse_intent")
+    async def test_non_wine_returns_early_without_logging(
+        self,
+        mock_parse: MagicMock,
+        mock_write_log: AsyncMock,
+    ) -> None:
+        mock_parse.return_value = IntentResult(is_wine=False, semantic_query="beer")
+
+        db = AsyncMock()
+        result = await recommend(db, "give me a beer")
+
+        assert result.products == []
+        assert result.log_id is None
+        mock_write_log.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("backend.services.recommendations.parse_intent")
+    async def test_pipeline_failure_does_not_log(
+        self,
+        mock_parse: MagicMock,
+    ) -> None:
+        mock_parse.side_effect = RuntimeError("API down")
+
+        db = AsyncMock()
+        with pytest.raises(RuntimeError, match="API down"):
+            await recommend(db, "red wine")
 
 
 def _fake_embedding() -> list[float]:
