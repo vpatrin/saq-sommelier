@@ -25,7 +25,7 @@ async def _run_single(
 ) -> tuple[ParsedIntentSummary, list[ProductSummary]]:
     """Run the real recommendation pipeline for one query."""
     async with session_factory() as db:
-        result = await recommend(db, test_query.query)
+        result = await recommend(db, test_query.query, available_only=False)
 
     intent = ParsedIntentSummary(
         categories=result.intent.categories,
