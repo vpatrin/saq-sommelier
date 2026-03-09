@@ -54,9 +54,12 @@ class BackendClient:
 
     # ── Recommendations ──────────────────────────────────────────
 
-    async def recommend(self, query: str) -> dict[str, Any]:
+    async def recommend(self, query: str, *, user_id: str | None = None) -> dict[str, Any]:
         """POST /api/recommendations — natural language wine recommendations."""
-        return await self._post("/recommendations", json={"query": query})
+        payload: dict[str, Any] = {"query": query}
+        if user_id is not None:
+            payload["user_id"] = user_id
+        return await self._post("/recommendations", json=payload)
 
     # ── Watches ─────────────────────────────────────────────────
 

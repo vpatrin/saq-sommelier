@@ -57,7 +57,6 @@ def upgrade() -> None:
         sa.Column(
             "feedback", sa.String(), nullable=True, comment="User feedback: positive or negative"
         ),
-        sa.Column("error", sa.Text(), nullable=True, comment="Error type if pipeline failed"),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

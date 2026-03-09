@@ -19,8 +19,10 @@ async def recommend_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     # Typing indicator while the pipeline runs (intent + embedding + search)
     await update.message.chat.send_action(ChatAction.TYPING)
 
+    user_id = f"tg:{update.effective_user.id}" if update.effective_user else None
+
     try:
-        data = await api.recommend(query)
+        data = await api.recommend(query, user_id=user_id)
     except (BackendUnavailableError, BackendAPIError) as exc:
         logger.warning("Backend unavailable during /recommend: {}", exc)
         await update.message.reply_text("Backend is currently unavailable. Try again later.")

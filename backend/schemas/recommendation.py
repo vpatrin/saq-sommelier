@@ -21,6 +21,7 @@ class IntentResult(BaseModel):
 
 class RecommendationIn(BaseModel):
     query: str = Field(min_length=1, max_length=MAX_SEARCH_LENGTH)
+    user_id: str | None = None
 
 
 class RecommendationProductOut(BaseModel):
@@ -32,3 +33,4 @@ class RecommendationOut(BaseModel):
     products: list[RecommendationProductOut]
     intent: IntentResult
     summary: str
+    log_id: int | None = None

@@ -306,7 +306,6 @@ class RecommendationLog(Base):
     product_count = Column(Integer, nullable=False, default=0, comment="Number of results returned")
     latency_ms = Column(JSONB, nullable=True, comment="Per-stage timing breakdown")
     feedback = Column(String, nullable=True, comment="User feedback: positive or negative")
-    error = Column(Text, nullable=True, comment="Error type if pipeline failed")
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
