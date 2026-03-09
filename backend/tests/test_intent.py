@@ -53,7 +53,6 @@ class TestParseIntent:
                 "min_price": 20,
                 "max_price": 30,
                 "country": None,
-                "available_only": True,
                 "semantic_query": "fruité",
             }
         )
@@ -64,7 +63,6 @@ class TestParseIntent:
         assert result.min_price == Decimal("20")
         assert result.max_price == Decimal("30")
         assert result.country is None
-        assert result.available_only is True
         assert result.semantic_query == "fruité"
 
     @patch("backend.services.intent.backend_settings")
@@ -173,5 +171,4 @@ class TestParseIntent:
         assert result.min_price is None
         assert result.max_price is None
         assert result.country is None
-        assert result.available_only is True
         assert result.semantic_query == "bold red"

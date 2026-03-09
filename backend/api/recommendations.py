@@ -13,4 +13,10 @@ async def post_recommendations(
     body: RecommendationIn,
     db: AsyncSession = Depends(get_db),
 ) -> RecommendationOut:
-    return await recommend(db, body.query, user_id=body.user_id)
+    return await recommend(
+        db,
+        body.query,
+        user_id=body.user_id,
+        available_online=body.available_online,
+        in_store=body.in_store,
+    )

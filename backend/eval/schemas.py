@@ -57,7 +57,7 @@ class ParsedIntentSummary(BaseModel):
     min_price: Decimal | None = None
     max_price: Decimal | None = None
     country: str | None = None
-    available_only: bool = True
+    available_online: bool = True
     semantic_query: str = ""
 
 

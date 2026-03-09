@@ -14,7 +14,6 @@ class IntentResult(BaseModel):
     min_price: Decimal | None = None
     max_price: Decimal | None = None
     country: str | None = None
-    available_only: bool = True
     semantic_query: str = ""
     exclude_grapes: list[str] = []
 
@@ -22,6 +21,8 @@ class IntentResult(BaseModel):
 class RecommendationIn(BaseModel):
     query: str = Field(min_length=1, max_length=MAX_SEARCH_LENGTH)
     user_id: str | None = None
+    available_online: bool = True
+    in_store: str | None = None
 
 
 class RecommendationProductOut(BaseModel):

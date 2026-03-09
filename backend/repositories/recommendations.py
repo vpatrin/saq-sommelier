@@ -18,6 +18,8 @@ async def find_similar(
     intent: IntentResult,
     query_embedding: list[float],
     *,
+    available_online: bool = True,
+    in_store: str | None = None,
     limit: int = DEFAULT_RECOMMENDATION_LIMIT,
 ) -> list[Product]:
     """Return products matching structured filters, ranked by embedding similarity."""
@@ -40,8 +42,10 @@ async def find_similar(
         for grape in intent.exclude_grapes:
             # Exclude wines whose grape or grape_blend contains the unwanted variety
             stmt = stmt.where(~Product.grape.ilike(f"%{grape}%") | Product.grape.is_(None))
-    if intent.available_only:
+    if available_online:
         stmt = stmt.where(Product.online_availability.is_(True))
+    if in_store is not None:
+        stmt = stmt.where(Product.store_availability.contains([in_store]))
     # Over-fetch for producer diversity, then deduplicate
     stmt = stmt.order_by(Product.embedding.cosine_distance(query_embedding)).limit(
         limit * _DIVERSITY_POOL

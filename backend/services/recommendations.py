@@ -63,7 +63,8 @@ async def recommend(
     query: str,
     *,
     user_id: str | None = None,
-    available_only: bool | None = None,
+    available_online: bool = True,
+    in_store: str | None = None,
 ) -> RecommendationOut:
     """Full recommendation pipeline: parse intent → embed → retrieve → explain."""
     t_start = time.monotonic()
@@ -80,15 +81,14 @@ async def recommend(
             result = RecommendationOut(products=[], intent=intent, summary=_NON_WINE_MESSAGE)
             return result
 
-        if available_only is not None:
-            intent.available_only = available_only
-
         t0 = time.monotonic()
         vector = embed_query(intent.semantic_query, api_key=backend_settings.OPENAI_API_KEY)
         latency["embed"] = _time_ms(t0)
 
         t0 = time.monotonic()
-        products = await find_similar(db, intent, vector)
+        products = await find_similar(
+            db, intent, vector, available_online=available_online, in_store=in_store
+        )
         latency["search"] = _time_ms(t0)
 
         t0 = time.monotonic()
