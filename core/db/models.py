@@ -286,3 +286,34 @@ class StockEvent(Base):
             f"<StockEvent(sku={self.sku!r}, available={self.available!r}, "
             f"saq_store_id={self.saq_store_id!r})>"
         )
+
+
+class RecommendationLog(Base):
+    """Captures each /recommend request for ML observability and feedback tracking."""
+
+    __tablename__ = "recommendation_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(
+        String,
+        nullable=True,
+        index=True,
+        comment="Channel-prefixed user ID (e.g. tg:123456)",
+    )
+    query = Column(Text, nullable=False, comment="Raw user input")
+    parsed_intent = Column(JSONB, nullable=True, comment="Structured intent from Claude")
+    returned_skus = Column(JSONB, nullable=True, comment="Ordered list of recommended SKUs")
+    product_count = Column(Integer, nullable=False, default=0, comment="Number of results returned")
+    latency_ms = Column(JSONB, nullable=True, comment="Per-stage timing breakdown")
+    feedback = Column(String, nullable=True, comment="User feedback: positive or negative")
+    error = Column(Text, nullable=True, comment="Error type if pipeline failed")
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        index=True,
+        comment="When the recommendation was requested",
+    )
+
+    def __repr__(self) -> str:
+        return f"<RecommendationLog(id={self.id!r}, query={self.query!r})>"
