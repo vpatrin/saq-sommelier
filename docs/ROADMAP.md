@@ -171,7 +171,7 @@ See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for data pipeline design an
 See [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md) for pipeline architecture.
 
 - [ ] Eval framework — LLM-as-judge scoring with configurable rubric (#327)
-- [ ] Automated pipeline iteration — Claude Code reads eval results + levers.md, tweaks pipeline, re-runs
+- [ ] Automated pipeline iteration — Claude Code reads eval results + levers.md, tweaks pipeline, re-runs (#327)
 - [ ] Eval tracing — pipeline version (git SHA), dataset hash, rubric hash per run
 - [ ] Baseline file — committed `baseline.json` for CI quality gates
 - [ ] Human override file — manual score corrections for judge disagreements
