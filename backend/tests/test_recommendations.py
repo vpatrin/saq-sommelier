@@ -189,10 +189,11 @@ class TestRedundancyPenalty:
         candidate = _fake_product()
         assert _redundancy_penalty(candidate, []) == 0.0
 
-    def test_identical_wine_returns_max_penalty(self) -> None:
+    def test_identical_wine_returns_boosted_penalty(self) -> None:
         wine = _fake_product()
         penalty = _redundancy_penalty(wine, [wine])
-        assert penalty == 1.0
+        # 1.0 base * (1.0 + 0.2 * 1 similar) = 1.2
+        assert penalty == pytest.approx(1.2)
 
     def test_different_attributes_returns_zero_penalty(self) -> None:
         candidate = _fake_product(
