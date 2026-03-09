@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/recommend` bot command — ask for wine recommendations in natural language via Telegram (#156)
 - RAG eval framework (`make eval`) — LLM-as-judge scoring with configurable rubric, diff mode, and MW-quality benchmark queries (#327)
 - Per-product reasoning and summary in recommendations — Claude Haiku explains why each wine was selected (#328)
+- Non-wine graceful decline — asking for beer, spirits, etc. returns a bilingual "I'm a wine assistant" message instead of unrelated results
+- Availability filter — recommendations now exclude products not available online
+- Eval: multi-pipeline-run mode (`PIPELINE_RUNS=N`) reports mean ± std across N runs
 
 ### Security
 
