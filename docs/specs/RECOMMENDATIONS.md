@@ -275,7 +275,7 @@ Prerequisite: data pipeline work from [DATA_PIPELINE.md](DATA_PIPELINE.md) — A
 
 ## Eval + MLOps (Phase 6e)
 
-Automated pipeline improvement via offline evaluation with LLM-as-judge scoring agains a rubric-based benchmark.
+Automated pipeline improvement via offline evaluation with LLM-as-judge scoring against a rubric-based benchmark.
 
 ### Architecture
 
