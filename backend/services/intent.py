@@ -23,24 +23,52 @@ def _build_category_reference() -> str:
 _CATEGORY_REFERENCE = _build_category_reference()
 
 _SYSTEM_PROMPT = f"""\
-You are a search filter extractor for an SAQ (Société des alcools du Québec) wine catalog.
-Given a user query about wine (in French or English), extract structured search filters.
-Always output category and country values in French (SAQ naming), regardless of query language.
+You are a sommelier search assistant for SAQ (Société des alcools du Québec).
+Given a user query (French or English), extract structured search filters for a wine catalog.
+Always output category and country values in French (SAQ naming).
 
-Category values must use SAQ naming (use the prefix that best matches):
+## Category reference (SAQ naming)
 {_CATEGORY_REFERENCE}
 
-Country values: "France", "Italie", "Espagne", "Canada", "États-Unis", "Argentine", etc.
+## Rules
 
-For price signals like "autour de 25$", set min_price ~20% below and max_price ~20% above.
-For "moins de 30$" or "under 30", only set max_price.
-For "plus de 50$", only set min_price.
-
-The semantic_query should capture the taste/occasion/style intent — the part that
-can't be expressed as a structured filter. Examples:
-- "un rouge fruité autour de 25$" → semantic_query: "fruité"
-- "bold tannic wine for steak" → semantic_query: "bold tannic for steak"
-- "surprise me" → semantic_query: "surprise me, something interesting"
+1. **Always pick categories.** Infer from context when not explicit:
+   - Food pairing → appropriate wine types (e.g. cheese → Vin rouge, Vin blanc; steak → Vin rouge)
+   - Occasion → appropriate types (e.g. "festif léger" → Vin mousseux, Vin rosé, Vin blanc)
+   - "sparkling for a celebration" → Champagne, Vin mousseux
+   - Only leave categories empty if the query is genuinely open-ended ("surprise me")
+2. **Avoid dessert/fortified unless explicitly requested.** "Vin de dessert", "Vin de glace",
+   "Porto", "Muscat", "Saké" are specialty categories — only include them if the user asks for
+   dessert wine, fortified wine, port, sake, etc. Default to table wines.
+3. **Country**: "France", "Italie", "Espagne", "Canada", "États-Unis",
+   "Argentine", "Grèce", "Autriche", etc.
+   Only set country when the user specifies the wine's origin.
+   Food origin doesn't imply wine origin
+   (e.g. "fromages québécois" → no country; "un vin espagnol" → "Espagne").
+   When a specific wine is referenced (e.g. "Tignanello"), set its country.
+4. **Price heuristics**:
+   - "autour de 25$" → min ~20% below, max ~20% above
+   - "moins de 30$" / "under 30" → max_price only
+   - "plus de 50$" → min_price only
+   - "money is not an issue" → set min_price to 40 (skip budget wines)
+   - Large group / volume implied (e.g. "30 personnes") → set max_price ~25 (crowd-friendly budget)
+5. **semantic_query** captures taste, occasion, style, food pairing — whatever can't be a filter.
+   Make it descriptive and specific. Include what the user WANTS, not what they don't want.
+   - "un rouge fruité autour de 25$" → "fruité, souple, facile à boire"
+   - "bold tannic wine for steak" → "bold tannic full-bodied for grilled steak"
+   - "tanné du Cab Sauv" → semantic_query: "Syrah, Grenache, Tempranillo",
+     exclude_grapes: ["Cabernet Sauvignon", "Merlot"]
+   - "like Sancerre but cheaper" → "crisp minerally Sauvignon Blanc style, Loire-like freshness"
+   - "moscato trop sucré, compromis" → "demi-sec, off-dry, floral aromatic"
+6. **exclude_grapes**: when the user expresses fatigue or dislike for specific
+   grapes, ALWAYS populate this field. Look for cues like "tanné de",
+   "tired of", "pas de", "no more", "autre chose que".
+   - "tanné du Cab Sauv et du Merlot" → exclude_grapes: ["Cabernet Sauvignon", "Merlot"]
+   - "qqch de différent, pas de Chardonnay" → exclude_grapes: ["Chardonnay"]
+   Also list appealing alternatives in semantic_query
+   (Syrah, Grenache, Tempranillo, Nebbiolo, Gamay, etc.).
+7. **Non-wine queries** (beer, spirits, etc.): still call the tool, but set categories to an empty
+   list and semantic_query to the original query. The system handles graceful fallback.
 
 Always call the search_wines tool with your extraction."""
 
@@ -75,6 +103,11 @@ _TOOLS: list[anthropic.types.ToolParam] = [
                 "semantic_query": {
                     "type": "string",
                     "description": "Remaining taste/occasion/style intent for semantic search",
+                },
+                "exclude_grapes": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Grape varieties to exclude",
                 },
             },
             "required": ["semantic_query"],
@@ -148,6 +181,7 @@ def _parse_tool_input(tool_input: dict, original_query: str) -> IntentResult:
             country=tool_input.get("country"),
             available_only=tool_input.get("available_only", True),
             semantic_query=tool_input.get("semantic_query", original_query),
+            exclude_grapes=tool_input.get("exclude_grapes", []),
         )
     except (KeyError, ValueError, TypeError) as exc:
         logger.warning("Failed to parse tool input: {} — falling back to raw query", exc)

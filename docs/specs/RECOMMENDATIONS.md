@@ -273,6 +273,106 @@ Prerequisite: data pipeline work from [DATA_PIPELINE.md](DATA_PIPELINE.md) — A
 
 ---
 
+## Eval + MLOps (Phase 6e)
+
+Automated pipeline improvement via offline evaluation with LLM-as-judge scoring against a rubric-based benchmark.
+
+### Architecture
+
+Standard RAG evaluation pipeline: fixed benchmark → production pipeline → LLM judge → scored report.
+
+```mermaid
+graph TB
+    subgraph "Benchmark (static)"
+        QJ[queries.json<br/>20 MW-quality queries]
+        RJ[rubric.json<br/>5 weighted dimensions]
+    end
+
+    subgraph "RAG Pipeline (under test)"
+        HAIKU[Claude Haiku<br/>intent parsing]
+        OAI[OpenAI<br/>query embedding]
+        PGV[(pgvector<br/>similarity search)]
+        HAIKU --> OAI --> PGV
+    end
+
+    subgraph "Judge"
+        SONNET[Claude Sonnet<br/>LLM-as-judge]
+    end
+
+    subgraph "Output"
+        REPORT[Scorecard<br/>per-query + averages + diff]
+        JSON[eval_timestamp.json<br/>full results archive]
+    end
+
+    QJ -->|"20 queries"| HAIKU
+    PGV -->|"5 wines per query"| SONNET
+    RJ -->|"scoring criteria"| SONNET
+    QJ -->|"expected signals + notes"| SONNET
+    SONNET -->|"1-5 scores × 5 dimensions"| REPORT
+    SONNET --> JSON
+    JSON -.->|"previous run"| REPORT
+
+    style QJ fill:#e8f5e9
+    style RJ fill:#e8f5e9
+    style SONNET fill:#fff3e0
+    style REPORT fill:#e3f2fd
+```
+
+Key pattern: a **stronger model** (Sonnet) evaluates a **weaker model's** (Haiku) output against a configurable rubric. This is offline evaluation — no real users, fixed test set, reproducible scores.
+
+### Eval Framework
+
+See `backend/eval/` for implementation.
+
+- **Rubric** (`backend/eval/data/rubric.json`) — scoring dimensions with weights, changeable without code
+- **Benchmark queries** (`backend/eval/data/queries.json`) — fixed test set, MW-quality queries
+- **Judge** — Sonnet evaluates each query's results on all rubric dimensions (1-5 scale)
+- **Report** — per-query scores, weighted averages, diff vs previous run
+- **Levers** (`backend/eval/levers.md`) — documents which files to change and their impact/risk
+
+### Automated Pipeline Iteration
+
+Claude Code workflow (not a feature to build — it's a prompt pattern):
+
+1. Run `make eval` → read scored JSON output
+2. Read `backend/eval/levers.md` to understand available levers
+3. Identify worst-scoring queries, read judge justifications for root cause
+4. Change ONE lever (intent prompt, retrieval query, embedding composition, etc.)
+5. Re-run `make eval`, compare scores via built-in diff mode
+6. Keep if improved, revert if regressed
+7. Repeat
+
+### Eval Tracing (v2)
+
+Not yet built. Enables comparing runs across code versions:
+
+- **pipeline_version** — git commit SHA (which code produced these results)
+- **dataset_version** — SHA256 of `queries.json` (which test set was used)
+- **rubric_version** — SHA256 of `rubric.json` (which scoring criteria were applied)
+- **cost_tracking** — Haiku tokens + OpenAI embed tokens + Sonnet judge tokens per run
+- **baseline.json** — committed baseline that CI compares against (quality gate)
+
+### Human Feedback
+
+Override file (`backend/eval/data/overrides.json`) for manual score corrections:
+
+- Map `query_id` → human scores + justification
+- Eval report shows both judge and human scores when they differ
+- Pipeline optimization prioritizes human scores over judge scores
+- Builds a human-labeled dataset over time for judge calibration
+
+### Relationship to Phase 7
+
+The eval framework becomes unnecessary when the MCP server (Phase 7) replaces the pipeline. Claude's own wine knowledge replaces the rubric-scored pipeline. The eval work is valuable as:
+
+1. Portfolio evidence of MLOps thinking
+2. Comparison data: "Phase 6 scored X, Phase 7 (same queries, human-judged) scored Y"
+3. The iteration workflow transfers to any RAG system
+
+See [specs/MCP_SERVER.md](MCP_SERVER.md) for the Phase 7 architecture.
+
+---
+
 ## Constraints
 
 - **4GB RAM VPS** — pgvector index (~126 MB for ~30.9k wine products) in existing PostgreSQL. No additional service.

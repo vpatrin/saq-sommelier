@@ -33,7 +33,7 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 source = ["backend"]
-omit = ["tests/*"]
+omit = ["tests/*", "eval/*"]
 
 [tool.coverage.report]
 show_missing = true

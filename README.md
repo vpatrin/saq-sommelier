@@ -80,6 +80,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [specs/DATA_PIPELINE.md](docs/specs/DATA_PIPELINE.md) — data pipeline spec (Adobe Live Search, HTML scrape)
 - [specs/RECOMMENDATIONS.md](docs/specs/RECOMMENDATIONS.md) — Phase 6 RAG + Claude architecture spec
 - [specs/TELEGRAM_BOT.md](docs/specs/TELEGRAM_BOT.md) — Telegram bot design and commands
+- [specs/MCP_SERVER.md](docs/specs/MCP_SERVER.md) — Phase 7 MCP server + Claude-as-backend architecture
 
 ## Legal
 

@@ -1,0 +1,141 @@
+[
+  {
+    "id": 1,
+    "query": "j'ai un souper de filles vendredi, quelque chose de léger et festif",
+    "tags": ["occasion", "social"],
+    "notes": "Social occasion, implicit: light, fun, approachable. A sommelier would suggest prosecco, crémant, or a fruity rosé — not a heavy Barolo."
+  },
+  {
+    "id": 2,
+    "query": "my father-in-law is a Bordeaux snob, I want to impress him without spending 80$",
+    "tags": ["social", "price", "style"],
+    "expected_price_max": 80,
+    "notes": "Budget constraint with quality signal. Tests if pipeline can find Left Bank style (Cab-dominant blends, structured tannins) at a price that impresses."
+  },
+  {
+    "id": 3,
+    "query": "on fait un méchoui samedi, faut du rouge qui a du punch pour 30 personnes",
+    "tags": ["occasion", "pairing", "volume"],
+    "notes": "Lamb roast for 30 — needs bold, crowd-pleasing reds at volume-friendly prices. Côtes-du-Rhône, Malbec, GSM blends territory."
+  },
+  {
+    "id": 4,
+    "query": "I had a Grüner Veltliner in Vienna and I can't stop thinking about it",
+    "tags": ["grape", "taste-memory"],
+    "split": "holdout",
+    "expected_country": "Autriche",
+    "notes": "Taste memory query. Tests semantic understanding of a specific grape experience. Should return Austrian whites, possibly Riesling or Grüner."
+  },
+  {
+    "id": 5,
+    "query": "un vin pour accompagner un plateau de fromages québécois",
+    "tags": ["pairing", "local"],
+    "notes": "Quebec cheese board pairing. A sommelier knows this means varied textures — needs versatile wines (Gamay, Chenin, Pinot Noir, light Syrah)."
+  },
+  {
+    "id": 6,
+    "query": "je veux découvrir les vins grecs",
+    "tags": ["discovery", "country"],
+    "expected_country": "Grèce",
+    "notes": "Exploration query. Tests if pipeline surfaces interesting Greek wines (Assyrtiko, Xinomavro, Agiorgitiko) vs generic Mediterranean reds."
+  },
+  {
+    "id": 7,
+    "query": "something crisp and minerally, like Sancerre but cheaper",
+    "tags": ["style", "price", "reference"],
+    "expected_categories": ["Vin blanc"],
+    "notes": "Reference-based query. Sancerre = Sauvignon Blanc, high acid, mineral. Should return Touraine, Quincy, or New Zealand Sauv Blanc at lower price."
+  },
+  {
+    "id": 8,
+    "query": "un rouge pour boire sur le deck avec des burgers, pas compliqué",
+    "tags": ["occasion", "pairing", "casual"],
+    "expected_categories": ["Vin rouge"],
+    "notes": "Casual summer red + burgers. Wants easy-drinking: Gamay, light Grenache, unoaked blends. 'Pas compliqué' = no tannin monsters."
+  },
+  {
+    "id": 9,
+    "query": "ma blonde aime le moscato, moi je trouve ça trop sucré — un compromis?",
+    "tags": ["taste", "negotiation"],
+    "split": "holdout",
+    "notes": "Taste negotiation between two people. Tests sommelier creativity: Gewürztraminer, off-dry Riesling, Vouvray demi-sec bridge the gap."
+  },
+  {
+    "id": 10,
+    "query": "je fais une blanquette de veau ce soir",
+    "tags": ["pairing", "specific-dish"],
+    "notes": "Classic French dish pairing. Blanquette = creamy veal stew. Textbook answer: white Burgundy, Côtes-du-Rhône blanc, or a rich Chenin."
+  },
+  {
+    "id": 11,
+    "query": "organic or biodynamic red under 25$, no headaches please",
+    "tags": ["natural", "price", "health"],
+    "split": "holdout",
+    "expected_categories": ["Vin rouge"],
+    "expected_price_max": 25,
+    "notes": "Natural wine request with pseudo-health framing. Tests if pipeline can filter for organic/bio wines and stay under budget."
+  },
+  {
+    "id": 12,
+    "query": "j'ai bu un Tignanello une fois et j'ai jamais retrouvé ça",
+    "tags": ["taste-memory", "reference", "premium"],
+    "expected_country": "Italie",
+    "notes": "Reference to a Super Tuscan icon. Tests if pipeline understands: Sangiovese-Cab blend, Tuscan, structured. Should suggest similar Super Tuscans or quality Chianti Classico Riserva."
+  },
+  {
+    "id": 13,
+    "query": "un vin de dessert pour accompagner une tarte tatin",
+    "tags": ["pairing", "dessert"],
+    "notes": "Dessert pairing with apple tart. Sommelier territory: Sauternes, Coteaux du Layon, late-harvest Riesling, Jurançon moelleux."
+  },
+  {
+    "id": 14,
+    "query": "I'm bringing wine to a dinner party, budget is 30-40$ and I want to look like I know what I'm doing",
+    "tags": ["social", "price", "impression"],
+    "split": "holdout",
+    "expected_price_max": 40,
+    "notes": "Social signaling query. Needs recognizable-but-interesting: Barolo entry-level, Côte-Rôtie, good Chablis, or a respected producer name."
+  },
+  {
+    "id": 15,
+    "query": "qqch de différent, je suis tanné du Cab Sauv et du Merlot",
+    "tags": ["discovery", "fatigue"],
+    "notes": "Palate fatigue, wants novelty. Tests if pipeline can pivot away from mainstream: Nero d'Avola, Tannat, Blaufränkisch, Mourvèdre."
+  },
+  {
+    "id": 16,
+    "query": "sparkling wine for a proposal, money is not an issue",
+    "tags": ["occasion", "premium", "sparkling"],
+    "notes": "High-emotion occasion with no budget ceiling. Should return Champagne (prestige cuvées), not Prosecco. Tests if pipeline reads 'money is not an issue' correctly."
+  },
+  {
+    "id": 17,
+    "query": "un rouge espagnol pour la paella de demain",
+    "tags": ["pairing", "country"],
+    "split": "holdout",
+    "expected_categories": ["Vin rouge"],
+    "expected_country": "Espagne",
+    "notes": "Spanish wine + paella. Garnacha, Tempranillo, Monastrell territory. Tests country + food pairing intersection."
+  },
+  {
+    "id": 18,
+    "query": "do you have beer?",
+    "tags": ["adversarial", "non-wine"],
+    "should_return_results": false,
+    "notes": "Non-wine query, pipeline should handle gracefully. Kept as edge case sanity check."
+  },
+  {
+    "id": 19,
+    "query": "un rosé pis un blanc pour le chalet ce weekend, max 20$ chaque",
+    "tags": ["multi-intent", "occasion", "price"],
+    "expected_price_max": 20,
+    "notes": "Multi-intent (rosé AND white) with cottage weekend context. Tests parser flexibility and casual Quebec French ('pis')."
+  },
+  {
+    "id": 20,
+    "query": "j'connais rien au vin mais je veux pas avoir l'air cave au resto",
+    "tags": ["beginner", "social"],
+    "split": "holdout",
+    "notes": "Beginner with social anxiety. A great sommelier picks safe-but-interesting bottles. Tests if recommendations are approachable yet not embarrassing."
+  }
+]

@@ -39,7 +39,12 @@ node_modules/
 
 # Claude
 CLAUDE.md
-.claude/
+.claude/*
+!.claude/commands/
+
+# Eval results (generated, not versioned)
+backend/eval/results/
+!backend/eval/results/.gitkeep
 
 # Scraper HTML samples (local exploration only)
 *.html

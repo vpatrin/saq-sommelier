@@ -1,0 +1,29 @@
+{
+  "dimensions": [
+    {
+      "name": "relevance",
+      "description": "Do the results match the user's intent? Right category, price range, country, grape variety, taste profile. If the user asked for 'bold red for steak', are these actually tannic, full-bodied wines — not just any red? If a specific grape or region is named, are the results accurate? Score 1 if filters are clearly wrong (e.g. white wines when user asked for red), 5 if every product precisely matches the query constraints.",
+      "weight": 1.5
+    },
+    {
+      "name": "curation",
+      "description": "Does this list feel like a sommelier picked it? A great recommendation balances safe choices with interesting discoveries. One crowd-pleaser, one surprise, one educational pick is better than 5 safe mainstream wines. High SAQ rating and review count signals mainstream popularity, NOT quality — a 4.5-star wine with 200 reviews is a bestseller, not necessarily a good recommendation. Score 1 if the list is generic mass-market picks, 5 if it shows genuine curatorial judgment.",
+      "weight": 1.0
+    },
+    {
+      "name": "coherence",
+      "description": "Do the wines make sense together as a curated list? They should explore different angles of the user's request while telling a coherent story. For 'BBQ wine' — a rosé, a Malbec, and a Zinfandel exploring different BBQ pairing styles is coherent. Five random reds from different contexts is not. Score 1 if the list feels random, 5 if it reads like a thoughtful flight.",
+      "weight": 1.0
+    },
+    {
+      "name": "value",
+      "description": "Price-to-quality ratio across the selection. Are these wines that deliver above their price point? A $15 Côtes-du-Rhône that drinks like a $25 wine is great value. An overpriced mass-market label is not. When no price constraint is given, the list should span a reasonable range. Score 1 if the selection ignores value entirely, 5 if every bottle is a smart buy.",
+      "weight": 0.75
+    },
+    {
+      "name": "overall",
+      "description": "Would a knowledgeable wine enthusiast trust this sommelier based on this list? Consider: does it answer the question, does it teach something new, would you actually buy one of these bottles? Score 1 for completely unhelpful, 5 for genuinely impressive — the kind of list you'd screenshot and bring to the SAQ.",
+      "weight": 1.0
+    }
+  ]
+}

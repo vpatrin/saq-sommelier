@@ -8,9 +8,16 @@ from backend.schemas.recommendation import RecommendationOut
 from backend.services.intent import parse_intent
 
 
-async def recommend(db: AsyncSession, query: str) -> RecommendationOut:
+async def recommend(
+    db: AsyncSession,
+    query: str,
+    *,
+    available_only: bool | None = None,
+) -> RecommendationOut:
     """Full recommendation pipeline: parse intent → embed → retrieve → respond."""
     intent = parse_intent(query)
+    if available_only is not None:
+        intent.available_only = available_only
     vector = embed_query(intent.semantic_query, api_key=backend_settings.OPENAI_API_KEY)
     products = await find_similar(db, intent, vector)
 

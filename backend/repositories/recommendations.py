@@ -9,6 +9,9 @@ from backend.schemas.recommendation import IntentResult
 # Default to wine categories when intent has no category filter
 _WINE_PREFIXES: list[str] = expand_family("vins", None)
 
+# Over-fetch multiplier — fetch more candidates than needed, then rerank for diversity
+_DIVERSITY_POOL = 4
+
 
 async def find_similar(
     db: AsyncSession,
@@ -31,11 +34,108 @@ async def find_similar(
         stmt = stmt.where(Product.price >= intent.min_price)
     if intent.max_price is not None:
         stmt = stmt.where(Product.price <= intent.max_price)
+    # Always exclude products with no price — $0 items drag down value scores
+    stmt = stmt.where(Product.price > 0)
+    if intent.exclude_grapes:
+        for grape in intent.exclude_grapes:
+            # Exclude wines whose grape or grape_blend contains the unwanted variety
+            stmt = stmt.where(~Product.grape.ilike(f"%{grape}%") | Product.grape.is_(None))
     if intent.available_only:
         stmt = stmt.where(Product.online_availability.is_(True))
 
-    # Similarity ranking
-    stmt = stmt.order_by(Product.embedding.cosine_distance(query_embedding)).limit(limit)
+    # Over-fetch for producer diversity, then deduplicate
+    stmt = stmt.order_by(Product.embedding.cosine_distance(query_embedding)).limit(
+        limit * _DIVERSITY_POOL
+    )
 
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    candidates = list(result.scalars().all())
+
+    return _rerank(candidates, limit)
+
+
+# Redundancy penalty weight — higher = more diversity, lower = more relevance
+_DIVERSITY_LAMBDA = 0.5
+
+
+def _rerank(candidates: list[Product], limit: int) -> list[Product]:
+    """Greedy MMR-style selection: balance relevance (embedding rank) with diversity.
+
+    Each candidate gets a score = relevance_score - λ * redundancy_penalty.
+    Relevance score decays with position (1st candidate = 1.0, last = ~0.0).
+    Redundancy penalty increases when a candidate shares attributes with already-selected wines.
+    """
+    if len(candidates) <= limit:
+        return candidates
+
+    n = len(candidates)
+    selected: list[Product] = []
+    remaining = list(range(n))
+
+    # Always pick the top-ranked candidate first (highest embedding similarity)
+    selected_idx = remaining.pop(0)
+    selected.append(candidates[selected_idx])
+
+    while len(selected) < limit and remaining:
+        best_score = -float("inf")
+        best_idx_pos = 0
+
+        for pos, idx in enumerate(remaining):
+            candidate = candidates[idx]
+            relevance = 1.0 - (idx / n)
+            redundancy = _redundancy_penalty(candidate, selected)
+            score = relevance - _DIVERSITY_LAMBDA * redundancy
+            if score > best_score:
+                best_score = score
+                best_idx_pos = pos
+
+        chosen = remaining.pop(best_idx_pos)
+        selected.append(candidates[chosen])
+
+    return selected
+
+
+def _redundancy_penalty(candidate: Product, selected: list[Product]) -> float:
+    """Score 0-1 measuring how redundant this candidate is with already-selected wines."""
+    if not selected:
+        return 0.0
+
+    penalties: list[float] = []
+    for s in selected:
+        overlap = 0.0
+        checks = 0.0
+
+        # Same producer is a strong signal of redundancy
+        if candidate.producer and s.producer:
+            checks += 1.5
+            if candidate.producer == s.producer:
+                overlap += 1.5
+
+        # Same taste profile tag = similar flavor experience
+        if candidate.taste_tag and s.taste_tag:
+            checks += 1.0
+            if candidate.taste_tag == s.taste_tag:
+                overlap += 1.0
+
+        # Same country = less geographic diversity
+        if candidate.country and s.country:
+            checks += 0.5
+            if candidate.country == s.country:
+                overlap += 0.5
+
+        # Same grape = less varietal diversity
+        if candidate.grape and s.grape:
+            checks += 1.0
+            if candidate.grape == s.grape:
+                overlap += 1.0
+
+        # Same region = very similar terroir
+        if candidate.region and s.region:
+            checks += 0.5
+            if candidate.region == s.region:
+                overlap += 0.5
+
+        penalties.append(overlap / checks if checks > 0 else 0.0)
+
+    # Return max penalty (worst overlap with any already-selected wine)
+    return max(penalties)

@@ -15,6 +15,7 @@ class IntentResult(BaseModel):
     country: str | None = None
     available_only: bool = True
     semantic_query: str = ""
+    exclude_grapes: list[str] = []
 
 
 class RecommendationIn(BaseModel):

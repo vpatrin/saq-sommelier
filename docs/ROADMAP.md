@@ -166,6 +166,27 @@ See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) for data pipeline design an
 - [ ] ArgoCD / Flux — GitOps-style continuous delivery
 - [ ] Terraform — infrastructure as code for VPS provisioning
 
+### Phase 6e — RAG Eval + MLOps
+
+See [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md) for pipeline architecture.
+
+- [ ] Eval framework — LLM-as-judge scoring with configurable rubric (#327)
+- [ ] Automated pipeline iteration — Claude Code reads eval results + levers.md, tweaks pipeline, re-runs (#327)
+- [ ] Eval tracing — pipeline version (git SHA), dataset hash, rubric hash per run
+- [ ] Baseline file — committed `baseline.json` for CI quality gates
+- [ ] Human override file — manual score corrections for judge disagreements
+- [ ] Cost tracking — Haiku + OpenAI embed + Sonnet judge tokens per eval run
+
+### Phase 7 — MCP Server + Claude-as-Backend
+
+See [specs/MCP_SERVER.md](specs/MCP_SERVER.md) for full architecture.
+
+- [ ] MCP server — `search_wines()`, `get_product()`, `list_categories()`, `get_catalog_stats()` tools
+- [ ] Validate MCP via Claude Code/Desktop — compare quality vs Phase 6 pipeline
+- [ ] `/chat` endpoint — Claude API + tool use, replaces recommendation service for web app
+- [ ] React frontend with chat interface
+- [ ] Deprecate intent parsing + recommendation service
+
 ### Ideas (unscoped)
 
 - [ ] `/occasion` — context-aware suggestions ("wine for a BBQ", "gift for belle-mère") via Claude
