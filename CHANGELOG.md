@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `POST /api/recommendations` — natural language wine recommendations via intent parsing + embedding similarity search (#309, #310, #311)
 - `/recommend` bot command — ask for wine recommendations in natural language via Telegram (#156)
 - Per-product reasoning and summary in recommendations — Claude Haiku explains why each wine was selected (#328)
+- Explicit availability filters on recommendations — `available_online` and `in_store` on request body, decoupled from intent parsing (#345)
 
 ### Changed
 
