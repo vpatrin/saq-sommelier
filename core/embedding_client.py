@@ -1,8 +1,8 @@
 from openai import OpenAI
 
-# Must match EMBEDDING_MODEL_DIMENSIONS in core/db/models.py
-_MODEL = "text-embedding-3-large"
-_DIMENSIONS = 1536  # Matryoshka truncation — same column size, better quality
+# Imported by core/db/models.py for Vector column size
+EMBEDDING_MODEL = "text-embedding-3-large"
+EMBEDDING_DIMENSIONS = 1536  # Matryoshka truncation — same column size, better quality
 
 # OpenAI batch limit: max 2048 texts per request.
 # We use a smaller batch to keep memory and request size reasonable.
@@ -20,7 +20,9 @@ def create_embeddings(texts: list[str], *, api_key: str) -> list[list[float]]:
 
     for i in range(0, len(texts), _BATCH_SIZE):
         batch = texts[i : i + _BATCH_SIZE]
-        response = client.embeddings.create(model=_MODEL, input=batch, dimensions=_DIMENSIONS)
+        response = client.embeddings.create(
+            model=EMBEDDING_MODEL, input=batch, dimensions=EMBEDDING_DIMENSIONS
+        )
         all_vectors.extend([d.embedding for d in response.data])
 
     return all_vectors

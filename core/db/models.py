@@ -17,8 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 
 from core.db.base import Base
-
-EMBEDDING_MODEL_DIMENSIONS = 1536
+from core.embedding_client import EMBEDDING_DIMENSIONS
 
 
 class Store(Base):
@@ -160,9 +159,9 @@ class Product(Base):
 
     # Embedding support (writer: embed subcommand)
     embedding = Column(
-        Vector(EMBEDDING_MODEL_DIMENSIONS),
+        Vector(EMBEDDING_DIMENSIONS),
         nullable=True,
-        comment="Wine semantic embedding (text-embedding-3-small, 1536d)",
+        comment="Wine semantic embedding (text-embedding-3-large, 1536d)",
     )
     last_embedded_hash = Column(
         String,
