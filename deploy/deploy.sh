@@ -9,6 +9,9 @@ diff -u .env.example .env || true
 echo "==> Building images..."
 make build
 
+echo "==> Pre-deploy database backup..."
+/home/victor/infra/backup/backup.sh saq_sommelier
+
 echo "==> Running migrations..."
 docker compose run --rm migrate
 
