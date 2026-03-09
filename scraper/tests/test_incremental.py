@@ -2,7 +2,12 @@ from datetime import date
 
 from scraper.commands.scrape import _exit_code, _needs_scrape
 from scraper.constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
+from scraper.db import ProductState
 from scraper.sitemap import SitemapEntry
+
+
+def _state(d: date, content_hash: str | None = None) -> ProductState:
+    return ProductState(updated_date=d, content_hash=content_hash)
 
 
 class TestNeedsScrape:
@@ -12,37 +17,37 @@ class TestNeedsScrape:
 
     def test_no_lastmod_needs_scrape(self) -> None:
         entry = SitemapEntry(url="https://www.saq.com/fr/10327701")
-        updated_dates = {"10327701": date(2026, 2, 1)}
-        assert _needs_scrape(entry, updated_dates) is True
+        states = {"10327701": _state(date(2026, 2, 1))}
+        assert _needs_scrape(entry, states) is True
 
     def test_newer_lastmod_needs_scrape(self) -> None:
         entry = SitemapEntry(url="https://www.saq.com/fr/10327701", lastmod="2026-02-15")
-        updated_dates = {"10327701": date(2026, 2, 1)}
-        assert _needs_scrape(entry, updated_dates) is True
+        states = {"10327701": _state(date(2026, 2, 1))}
+        assert _needs_scrape(entry, states) is True
 
     def test_same_date_skips(self) -> None:
         entry = SitemapEntry(url="https://www.saq.com/fr/10327701", lastmod="2026-02-01")
-        updated_dates = {"10327701": date(2026, 2, 1)}
-        assert _needs_scrape(entry, updated_dates) is False
+        states = {"10327701": _state(date(2026, 2, 1))}
+        assert _needs_scrape(entry, states) is False
 
     def test_older_lastmod_skips(self) -> None:
         entry = SitemapEntry(url="https://www.saq.com/fr/10327701", lastmod="2026-01-15")
-        updated_dates = {"10327701": date(2026, 2, 1)}
-        assert _needs_scrape(entry, updated_dates) is False
+        states = {"10327701": _state(date(2026, 2, 1))}
+        assert _needs_scrape(entry, states) is False
 
     def test_datetime_lastmod_with_timezone(self) -> None:
         entry = SitemapEntry(
             url="https://www.saq.com/fr/10327701", lastmod="2026-02-18T15:21:49+00:00"
         )
-        updated_dates = {"10327701": date(2026, 2, 1)}
-        assert _needs_scrape(entry, updated_dates) is True
+        states = {"10327701": _state(date(2026, 2, 1))}
+        assert _needs_scrape(entry, states) is True
 
     def test_datetime_lastmod_same_day_skips(self) -> None:
         entry = SitemapEntry(
             url="https://www.saq.com/fr/10327701", lastmod="2026-02-01T10:30:00+00:00"
         )
-        updated_dates = {"10327701": date(2026, 2, 1)}
-        assert _needs_scrape(entry, updated_dates) is False
+        states = {"10327701": _state(date(2026, 2, 1))}
+        assert _needs_scrape(entry, states) is False
 
 
 class TestSkuValidation:

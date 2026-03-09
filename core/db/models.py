@@ -111,6 +111,11 @@ class Product(Base):
         nullable=True,
         comment="When removed from SAQ sitemap (NULL = active)",
     )
+    last_scraped_hash = Column(
+        String,
+        nullable=True,
+        comment="SHA256 of scraped ProductData fields — skip write when unchanged",
+    )
 
     # JSON-LD fields (from <script type="application/ld+json">)
     name = Column(String, nullable=True, index=True, comment="Product name")

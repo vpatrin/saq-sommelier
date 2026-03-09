@@ -12,16 +12,18 @@ from .embeddings import (
 )
 from .events import delete_old_stock_events, emit_stock_event, get_watched_skus
 from .products import (
+    ProductState,
     clear_delisted,
     get_all_skus,
     get_delisted_skus,
-    get_updated_dates,
+    get_product_states,
     mark_delisted,
     upsert_product,
 )
 from .stores import get_montreal_store_ids, upsert_stores
 
 __all__ = [
+    "ProductState",
     "bulk_update_availability",
     "bulk_update_embeddings",
     "bulk_update_wine_attrs",
@@ -33,7 +35,7 @@ __all__ = [
     "get_montreal_store_ids",
     "get_preferred_store_ids",
     "get_products_needing_embedding",
-    "get_updated_dates",
+    "get_product_states",
     "get_watched_product_availability",
     "get_watched_skus",
     "mark_delisted",

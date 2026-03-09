@@ -2,7 +2,7 @@ import asyncio
 import time
 import urllib.error
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import datetime
 from http import HTTPStatus
 
 import httpx
@@ -12,16 +12,17 @@ from sqlalchemy.exc import SQLAlchemyError
 from ..config import settings
 from ..constants import EXIT_FATAL, EXIT_OK, EXIT_PARTIAL
 from ..db import (
+    ProductState,
     clear_delisted,
     delete_old_stock_events,
     emit_stock_event,
     get_delisted_skus,
-    get_updated_dates,
+    get_product_states,
     get_watched_skus,
     mark_delisted,
     upsert_product,
 )
-from ..products import parse_product
+from ..products import compute_content_hash, parse_product
 from ..robots import is_allowed, load_robots
 from ..sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
 
@@ -35,7 +36,7 @@ def _exit_code(saved: int, errors: int) -> int:
     return EXIT_FATAL
 
 
-def _needs_scrape(entry: SitemapEntry, updated_dates: dict[str, date]) -> bool:
+def _needs_scrape(entry: SitemapEntry, product_states: dict[str, ProductState]) -> bool:
     """Check if a sitemap entry needs to be scraped.
 
     Returns True (scrape) when:
@@ -45,9 +46,9 @@ def _needs_scrape(entry: SitemapEntry, updated_dates: dict[str, date]) -> bool:
     """
     if not entry.lastmod:
         return True
-    if entry.sku not in updated_dates:
+    if entry.sku not in product_states:
         return True
-    return datetime.fromisoformat(entry.lastmod).date() > updated_dates[entry.sku]
+    return datetime.fromisoformat(entry.lastmod).date() > product_states[entry.sku].updated_date
 
 
 async def _load_and_filter_entries(
@@ -100,6 +101,7 @@ class _ScrapeStats:
     saved: int = 0
     inserted: int = 0
     updated: int = 0
+    unchanged: int = 0
     not_found: int = 0
     errors: int = 0
 
@@ -107,7 +109,7 @@ class _ScrapeStats:
 async def _scrape_products(
     client: httpx.AsyncClient,
     entries: list[SitemapEntry],
-    updated_dates: dict[str, date],
+    product_states: dict[str, ProductState],
 ) -> _ScrapeStats:
     """Download, parse, and upsert each product entry. Returns run stats."""
     stats = _ScrapeStats()
@@ -122,9 +124,18 @@ async def _scrape_products(
             response.raise_for_status()
 
             product = parse_product(response.content, url=entry.url)
-            await upsert_product(product)
+            content_hash = compute_content_hash(product)
+
+            # Skip DB write if content hasn't changed
+            existing = product_states.get(entry.sku)
+            if existing and existing.content_hash == content_hash:
+                stats.unchanged += 1
+                logger.debug("Unchanged {}", product.sku or "unknown")
+                continue
+
+            await upsert_product(product, content_hash)
             stats.saved += 1
-            if entry.sku in updated_dates:
+            if entry.sku in product_states:
                 stats.updated += 1
             else:
                 stats.inserted += 1
@@ -196,9 +207,9 @@ async def scrape_products() -> int:
         if entries is None:
             return EXIT_FATAL
 
-        # Loads {sku: last_updated_date} from DB, then O(1) dict lookup per entry
+        # Loads {sku: ProductState} from DB, then O(1) dict lookup per entry
         try:
-            updated_dates = await get_updated_dates()
+            product_states = await get_product_states()
         except SQLAlchemyError as exc:
             logger.opt(exception=exc).error("DB error loading product data — aborting")
             return EXIT_FATAL
@@ -207,18 +218,18 @@ async def scrape_products() -> int:
         limit = settings.SCRAPE_LIMIT
         products_to_scrape = entries[:limit] if limit else entries
         total_before = len(products_to_scrape)
-        products_to_scrape = [e for e in products_to_scrape if _needs_scrape(e, updated_dates)]
+        products_to_scrape = [e for e in products_to_scrape if _needs_scrape(e, product_states)]
         skipped = total_before - len(products_to_scrape)
         logger.info(
-            "Incremental filter: {} to scrape, {} skipped (unchanged)",
+            "Incremental filter: {} to scrape, {} skipped (unchanged lastmod)",
             len(products_to_scrape),
             skipped,
         )
 
-        stats = await _scrape_products(client, products_to_scrape, updated_dates)
+        stats = await _scrape_products(client, products_to_scrape, product_states)
 
     sitemap_skus = {e.sku for e in entries}
-    db_skus = set(updated_dates.keys())
+    db_skus = set(product_states.keys())
     delisted, relisted = await _detect_delists(sitemap_skus, db_skus)
 
     # Housekeeping: purge old stock events
@@ -236,18 +247,20 @@ async def scrape_products() -> int:
         "  Fetched: {}\n"
         "  Inserted: {}\n"
         "  Updated: {}\n"
+        "  Unchanged (hash match): {}\n"
         "  Not found: {}\n"
         "  Failed: {}\n"
-        "  Skipped (up-to-date): {}\n"
+        "  Skipped (up-to-date lastmod): {}\n"
         "  Delisted: {}\n"
         "  Relisted: {}",
         hours,
         minutes,
         seconds,
         len(entries),
-        stats.saved,
+        stats.saved + stats.unchanged + stats.not_found + stats.errors,
         stats.inserted,
         stats.updated,
+        stats.unchanged,
         stats.not_found,
         stats.errors,
         skipped,

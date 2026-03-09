@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
 
 from core.db.models import Product
@@ -18,12 +18,23 @@ async def get_all_skus() -> set[str]:
         return {row[0] for row in result.all()}
 
 
-async def get_updated_dates() -> dict[str, date]:
-    """Fetch the last-updated date for every product in the DB."""
+@dataclass
+class ProductState:
+    """Lightweight snapshot of a product's scraper-relevant state."""
+
+    updated_date: date
+    content_hash: str | None
+
+
+async def get_product_states() -> dict[str, ProductState]:
+    """Fetch updated_at date and content hash for every product in the DB."""
     async with SessionLocal() as session:
-        stmt = select(Product.sku, Product.updated_at)
+        stmt = select(Product.sku, Product.updated_at, Product.last_scraped_hash)
         result = await session.execute(stmt)
-        return {sku: updated_at.date() for sku, updated_at in result.all()}
+        return {
+            sku: ProductState(updated_date=updated_at.date(), content_hash=content_hash)
+            for sku, updated_at, content_hash in result.all()
+        }
 
 
 async def get_delisted_skus() -> set[str]:
@@ -66,13 +77,14 @@ async def clear_delisted(skus: set[str]) -> int:
         return result.rowcount
 
 
-async def upsert_product(product_data: ProductData) -> None:
+async def upsert_product(product_data: ProductData, content_hash: str) -> bool:
     """Insert or update a product in the database.
 
     Uses PostgreSQL's INSERT ON CONFLICT DO UPDATE (upsert).
     """
     async with SessionLocal() as session:
         product_dict = asdict(product_data)
+        product_dict["last_scraped_hash"] = content_hash
         now = datetime.now(UTC)
         product_dict["created_at"] = now
         product_dict["updated_at"] = now
@@ -91,6 +103,7 @@ async def upsert_product(product_data: ProductData) -> None:
         try:
             await session.execute(stmt)
             await session.commit()
+            return True
         except SQLAlchemyError as exc:
             await session.rollback()
             logger.opt(exception=exc).error(
