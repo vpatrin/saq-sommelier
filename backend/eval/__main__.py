@@ -18,6 +18,24 @@ def _parse_args() -> argparse.Namespace:
         "--query",
         help="Run a single query by ID (integer) or text (string match)",
     )
+    parser.add_argument(
+        "--split",
+        choices=["train", "holdout", "all"],
+        default="train",
+        help="Which query split to run (default: train)",
+    )
+    parser.add_argument(
+        "--judge-runs",
+        type=int,
+        default=1,
+        help="Number of judge runs to average (default: 1)",
+    )
+    parser.add_argument(
+        "--judge-temp",
+        type=float,
+        default=0.0,
+        help="Judge temperature (default: 0.0 for deterministic)",
+    )
     return parser.parse_args()
 
 
@@ -55,12 +73,20 @@ async def main() -> int:
 
     queries = load_queries()
     queries = _filter_queries(queries, args.query)
+
+    # Apply split filter (skip when --query targets a specific query)
+    if args.query is None and args.split != "all":
+        queries = [q for q in queries if q.split == args.split]
+
     dimensions = load_rubric()
 
     logger.info(
-        "Running eval: {} queries, {} dimensions",
+        "Running eval: {} queries ({} split), {} dimensions, {} judge run(s) @ temp={}",
         len(queries),
+        args.split,
         len(dimensions),
+        args.judge_runs,
+        args.judge_temp,
     )
 
     report = await run_eval(
@@ -68,6 +94,8 @@ async def main() -> int:
         anthropic_api_key=backend_settings.ANTHROPIC_API_KEY,
         queries=queries,
         dimensions=dimensions,
+        judge_runs=args.judge_runs,
+        judge_temperature=args.judge_temp,
     )
 
     print_report(report)

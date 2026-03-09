@@ -13,6 +13,7 @@ class TestQuery(BaseModel):
     id: int
     query: str
     tags: list[str] = []
+    split: str = "train"
     expected_categories: list[str] = []
     expected_country: str | None = None
     expected_price_max: float | None = None
@@ -71,10 +72,13 @@ class QueryScore(BaseModel):
 class EvalReport(BaseModel):
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat(timespec="seconds"))
     judge_model: str
+    judge_runs: int = 1
+    judge_temperature: float = 0.0
     rubric: list[RubricDimension]
     total_queries: int
     query_scores: list[QueryScore]
     averages: dict[str, float]
+    tag_averages: dict[str, float] = {}
     weighted_average: float
 
 

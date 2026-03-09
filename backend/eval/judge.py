@@ -126,12 +126,51 @@ def _parse_judge_response(
     return scores
 
 
+async def _single_judge_call(
+    client: anthropic.AsyncAnthropic,
+    system_prompt: str,
+    user_message: str,
+    dimensions: list[RubricDimension],
+    temperature: float,
+) -> dict[str, DimensionScore]:
+    """Run one judge call and return parsed scores."""
+    response = await client.messages.create(
+        model=JUDGE_MODEL,
+        max_tokens=JUDGE_MAX_TOKENS,
+        temperature=temperature,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
+    )
+    return _parse_judge_response(response.content[0].text, dimensions)
+
+
+def _average_scores(
+    runs: list[dict[str, DimensionScore]],
+    dimensions: list[RubricDimension],
+) -> dict[str, DimensionScore]:
+    """Average scores across runs, keeping justification closest to mean."""
+    result: dict[str, DimensionScore] = {}
+    for d in dimensions:
+        dim_scores = [r[d.name] for r in runs]
+        mean = sum(s.score for s in dim_scores) / len(dim_scores)
+        # Pick the justification from the run whose score is closest to the mean
+        closest = min(dim_scores, key=lambda s: abs(s.score - mean))
+        result[d.name] = DimensionScore(
+            score=round(mean),
+            justification=closest.justification,
+        )
+    return result
+
+
 async def judge_query(
     client: anthropic.AsyncAnthropic,
     test_query: TestQuery,
     intent: ParsedIntentSummary,
     products: list[ProductSummary],
     dimensions: list[RubricDimension],
+    *,
+    judge_runs: int = 1,
+    judge_temperature: float = 0.0,
 ) -> QueryScore:
     """Score a single query's results using Claude Sonnet as judge."""
     system_prompt = _build_system_prompt(dimensions)
@@ -139,14 +178,17 @@ async def judge_query(
 
     async with _semaphore:
         try:
-            response = await client.messages.create(
-                model=JUDGE_MODEL,
-                max_tokens=JUDGE_MAX_TOKENS,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_message}],
-            )
-            raw_text = response.content[0].text
-            scores = _parse_judge_response(raw_text, dimensions)
+            runs: list[dict[str, DimensionScore]] = []
+            for _ in range(judge_runs):
+                run_scores = await _single_judge_call(
+                    client,
+                    system_prompt,
+                    user_message,
+                    dimensions,
+                    judge_temperature,
+                )
+                runs.append(run_scores)
+            scores = _average_scores(runs, dimensions) if len(runs) > 1 else runs[0]
         except anthropic.APIError as exc:
             logger.opt(exception=exc).warning("Judge API call failed for query {}", test_query.id)
             scores = {

@@ -78,6 +78,9 @@ async def run_eval(
     anthropic_api_key: str,
     queries: list[TestQuery],
     dimensions: list[RubricDimension],
+    *,
+    judge_runs: int = 1,
+    judge_temperature: float = 0.0,
 ) -> EvalReport:
     """Run the full eval: pipeline -> judge -> report."""
     session_factory = create_session_factory(database_url)
@@ -111,7 +114,17 @@ async def run_eval(
         if error:
             error_scores[test_query.id] = _make_error_score(test_query, dimensions, error)
         else:
-            judge_tasks.append(judge_query(judge_client, test_query, intent, products, dimensions))
+            judge_tasks.append(
+                judge_query(
+                    judge_client,
+                    test_query,
+                    intent,
+                    products,
+                    dimensions,
+                    judge_runs=judge_runs,
+                    judge_temperature=judge_temperature,
+                )
+            )
 
     judged = await asyncio.gather(*judge_tasks) if judge_tasks else []
 
@@ -137,11 +150,29 @@ async def run_eval(
         else 0.0
     )
 
+    # Phase 4: Tag-stratified averages (weighted avg per tag)
+    tag_averages: dict[str, float] = {}
+    tag_scores: dict[str, list[float]] = {}
+    for qs, tq in zip(query_scores, queries):
+        qs_weighted = (
+            sum(qs.scores[d.name].score * d.weight for d in dimensions if d.name in qs.scores)
+            / total_weight
+            if total_weight > 0
+            else 0.0
+        )
+        for tag in tq.tags:
+            tag_scores.setdefault(tag, []).append(qs_weighted)
+    for tag, scores in sorted(tag_scores.items()):
+        tag_averages[tag] = round(sum(scores) / len(scores), 2)
+
     return EvalReport(
         judge_model=JUDGE_MODEL,
+        judge_runs=judge_runs,
+        judge_temperature=judge_temperature,
         rubric=dimensions,
         total_queries=len(queries),
         query_scores=query_scores,
         averages=averages,
+        tag_averages=tag_averages,
         weighted_average=round(weighted_avg, 2),
     )

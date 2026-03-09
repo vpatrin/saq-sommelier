@@ -22,6 +22,7 @@
     "id": 4,
     "query": "I had a Grüner Veltliner in Vienna and I can't stop thinking about it",
     "tags": ["grape", "taste-memory"],
+    "split": "holdout",
     "expected_country": "Autriche",
     "notes": "Taste memory query. Tests semantic understanding of a specific grape experience. Should return Austrian whites, possibly Riesling or Grüner."
   },
@@ -56,6 +57,7 @@
     "id": 9,
     "query": "ma blonde aime le moscato, moi je trouve ça trop sucré — un compromis?",
     "tags": ["taste", "negotiation"],
+    "split": "holdout",
     "notes": "Taste negotiation between two people. Tests sommelier creativity: Gewürztraminer, off-dry Riesling, Vouvray demi-sec bridge the gap."
   },
   {
@@ -68,6 +70,7 @@
     "id": 11,
     "query": "organic or biodynamic red under 25$, no headaches please",
     "tags": ["natural", "price", "health"],
+    "split": "holdout",
     "expected_categories": ["Vin rouge"],
     "expected_price_max": 25,
     "notes": "Natural wine request with pseudo-health framing. Tests if pipeline can filter for organic/bio wines and stay under budget."
@@ -89,6 +92,7 @@
     "id": 14,
     "query": "I'm bringing wine to a dinner party, budget is 30-40$ and I want to look like I know what I'm doing",
     "tags": ["social", "price", "impression"],
+    "split": "holdout",
     "expected_price_max": 40,
     "notes": "Social signaling query. Needs recognizable-but-interesting: Barolo entry-level, Côte-Rôtie, good Chablis, or a respected producer name."
   },
@@ -108,6 +112,7 @@
     "id": 17,
     "query": "un rouge espagnol pour la paella de demain",
     "tags": ["pairing", "country"],
+    "split": "holdout",
     "expected_categories": ["Vin rouge"],
     "expected_country": "Espagne",
     "notes": "Spanish wine + paella. Garnacha, Tempranillo, Monastrell territory. Tests country + food pairing intersection."
@@ -130,6 +135,7 @@
     "id": 20,
     "query": "j'connais rien au vin mais je veux pas avoir l'air cave au resto",
     "tags": ["beginner", "social"],
+    "split": "holdout",
     "notes": "Beginner with social anxiety. A great sommelier picks safe-but-interesting bottles. Tests if recommendations are approachable yet not embarrassing."
   }
 ]

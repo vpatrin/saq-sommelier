@@ -35,12 +35,15 @@ and parameters you can change. Each lever has different impact and risk.
 **When to change:** Correct intent + good embeddings but wrong products returned
 **Risk:** Low — query changes are instant, no re-embedding needed
 
-## 5. Re-ranking (does not exist yet)
+## 5. Re-ranking
 
-**Where it would go:** `backend/services/recommendations.py` after `find_similar()` returns
-**What:** Post-retrieval scoring that factors in quality signals beyond vector distance
-**Impact:** Could improve curation/coherence scores without changing embeddings
-**When to add:** When relevance is good but curation/value scores are low
+**File:** `backend/repositories/recommendations.py`
+**What:** `_rerank()` — MMR-style greedy selection balancing relevance (embedding rank) with
+diversity (penalizes same producer, taste_tag, grape, region, country)
+**Parameters:** `_DIVERSITY_LAMBDA` (0.5), `_DIVERSITY_POOL` (4x over-fetch)
+**Impact:** Broke the curation ceiling (3.1→3.5) by ensuring diverse selections
+**When to change:** When curation or coherence scores stagnate despite good relevance
+**Risk:** Low — only reorders existing candidates, doesn't change what gets fetched
 
 ## 6. Result Count
 
@@ -57,13 +60,106 @@ and parameters you can change. Each lever has different impact and risk.
 **When to change:** When you realize a dimension matters more/less than expected
 **Risk:** None — doesn't change the pipeline, only the measurement
 
-## Optimization Strategy
+## Eval CLI
 
-1. Read eval results JSON — sort queries by overall score, focus on bottom quartile
-2. Read judge justifications to identify root cause
-3. Change ONE lever at a time
-4. Re-run eval (full or `--query` for specific failures)
-5. Compare scores — keep if improved, revert if regressed
+```bash
+make eval                                    # train split, 1 run, temp=0 (default)
+make eval SPLIT=holdout                      # holdout split only
+make eval SPLIT=all                          # all 20 queries
+make eval QUERY=4                            # single query (ignores split)
+make eval JUDGE_RUNS=2 JUDGE_TEMP=1.0        # multi-run with variance
+```
+
+### Query splits
+
+20 queries split into 14 train / 6 holdout (set in `queries.json` via `"split"` field).
+Holdout IDs: 4, 9, 11, 14, 17, 20 — chosen to cover diverse tags.
+
+### Judge settings
+
+- **temp=0** (default): near-deterministic scoring. Score changes = your changes, not noise.
+- **temp=1.0**: realistic variance. Use for final validation.
+- **judge_runs=1** (default): single judge call. Fast.
+- **judge_runs=2**: two calls, scores averaged per dimension. Justification kept from the run closest to the mean.
+
+### Output
+
+- Console: scorecard with per-dimension averages, tag-stratified averages, low-score details
+- JSON: `backend/eval/results/eval_<timestamp>.json` — summary fields at top, bulky query_scores last
+- Diff mode: auto-compares with the most recent previous result file
+
+## `/eval-pipeline` flow
+
+The `/eval-pipeline` skill automates the optimize → measure → decide loop:
+
+1. Run `make eval` (train split, temp=0, 1 run) — baseline
+2. Analyze: bottom-quartile queries, tag averages, judge justifications
+3. Pick ONE lever from this doc, change it
+4. Re-run `make eval`, compare scores
+5. If improved → keep. If regressed → revert
+6. Repeat for up to **5 iterations** (or until target reached / plateau detected)
+7. **Holdout validation**: `make eval SPLIT=holdout JUDGE_RUNS=2 JUDGE_TEMP=1.0`
+   - If holdout is >0.5 below train → likely overfit, flag it
+
+### Overfitting guardrails
+
+- **Train/holdout split**: iterate on train only, validate on holdout at the end
+- **Deterministic judging**: temp=0 during iteration prevents score noise from masking overfitting
+- **Tag-stratified scores**: catch improvements concentrated in 1 tag while others regress
+- **Distributed improvements**: if a score jump comes from 1 query while 3 others dropped, that's a red flag
+- **No surgical rules**: prompt changes should help 3+ unseen queries, not map 1:1 to a test query
+
+## Lessons learned
+
+Structural insights from past `/eval-pipeline` cycles. Read these before iterating to avoid
+repeating dead ends. Only record strategy-level patterns, never query-specific fixes.
+
+### Cycle 1 (2026-03-08) — baseline 3.37 → 3.51
+
+- **exclude_grapes rule worked** (+0.14): adding rule 6 to the intent prompt with explicit cues
+  ("tanné de", "tired of") and examples made Haiku populate the field. Broad improvement across
+  fatigue, style, and reference tags.
+- **Multi-intent instruction ignored**: adding "include ALL mentioned categories" for dual requests
+  ("rosé pis un blanc") had zero effect — Haiku still returns only one type. This is also an
+  architectural limitation: single result set can't split two wine types meaningfully.
+- **max_per_producer=1 is too aggressive**: forcing unique producers pushes worse-matching wines
+  into results, hurting coherence and curation. Keep at 2.
+- **Prompt instability**: even small prompt changes cause unpredictable regressions in unrelated
+  queries (e.g. adding food-pairing examples caused country='null' string bug on Q7). Keep
+  prompt changes minimal and targeted.
+- **Curation is bottlenecked by re-ranking**: embedding similarity returns semantically close wines
+  but not diverse/curated ones. Re-ranking (Lever 5) is the next high-impact lever to build.
+- **Adversarial queries are structurally capped**: categories=[] falls back to wine scope, so
+  beer→sake is expected. Needs a "graceful decline" path, not prompt tuning.
+- **Holdout gap was 0.41** (train 3.51 vs holdout 3.10) — under 0.5 threshold, no overfitting.
+
+### Cycle 2 (2026-03-08) — baseline 3.45 → 3.63
+
+- **Excluding price=0 products worked** (+0.18): products with no price were a systemic drag across
+  many queries — judge consistently penalized "unavailable" or "missing pricing". Filtering them
+  unconditionally in `find_similar()` lifted value (+0.3) and curation (+0.3).
+- **Diversity pool 5x hurts**: increasing `_DIVERSITY_POOL` from 3 to 5 pulls worse-matching wines
+  from further in the embedding space. More candidates ≠ better diversity. Keep at 3.
+- **Judge variance at temp=0**: same code scored 3.51 (Cycle 1) and 3.45 (Cycle 2). ~0.06 is the
+  noise floor — don't chase improvements smaller than this.
+- **Pipeline at local optimum for prompt/retrieval**: remaining weak queries (méchoui→Bordeaux,
+  fromages→Quebec, beer→sake, multi-intent) are structural. Next high-impact lever is re-ranking
+  (Lever 5) or embedding text (Lever 3, expensive).
+- **Holdout gap was 0.20** (train 3.63 vs holdout 3.43) — strong generalization.
+
+### Cycle 3 (2026-03-08) — baseline 3.50 → 3.63
+
+- **MMR-style re-ranking worked** (+0.13): replaced `_diversify_by_producer` with greedy
+  relevance-vs-redundancy selection. λ=0.5 is the sweet spot. Broke the curation ceiling
+  (3.1→3.5) by penalizing same taste_tag/grape/region/producer/country overlap.
+- **λ=0.3 is too weak**: top embedding results dominate, re-ranker barely changes order.
+- **λ=0.5 is optimal**: good balance between relevance and diversity.
+- **Pool=6 doesn't help over pool=4**: more candidates ≠ better re-ranking. Keep at 4.
+- **taste_tag weight=2.0 over-penalizes**: pushes less relevant wines in. Keep taste_tag at 1.0.
+- **Pipeline ceiling at ~3.63**: prompt, retrieval, and re-ranking levers exhausted. Next
+  step requires embedding text changes (Lever 3, expensive) or architectural changes
+  (multi-shot intent, graceful non-wine decline).
+- **Holdout gap was 0.29** (train 3.63 vs holdout 3.34) — no overfitting.
 
 ## Future: Eval Tracing (v2)
 

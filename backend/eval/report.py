@@ -65,6 +65,16 @@ def print_report(report: EvalReport) -> None:
     prev_weighted = previous.weighted_average if previous else None
     weighted_delta = _delta_str(report.weighted_average, prev_weighted)
     print(f"  Weighted average: {report.weighted_average:.2f}{weighted_delta}")
+
+    # Tag-stratified averages
+    if report.tag_averages:
+        prev_tag_avgs = previous.tag_averages if previous else {}
+        print()
+        print("  BY TAG:")
+        for tag, avg in sorted(report.tag_averages.items(), key=lambda x: x[1]):
+            delta = _delta_str(avg, prev_tag_avgs.get(tag))
+            print(f"    {tag:<20} {avg:.2f}{delta}")
+
     print("=" * 70)
 
     # Low scores detail
@@ -88,9 +98,25 @@ def save_report(report: EvalReport) -> Path:
     RESULTS_DIR.mkdir(exist_ok=True)
     timestamp = report.timestamp.replace(":", "-")
     path = RESULTS_DIR / f"eval_{timestamp}.json"
+
+    # Summary fields first for readability — bulky query_scores last
+    data = report.model_dump()
+    ordered = {
+        "timestamp": data["timestamp"],
+        "judge_model": data["judge_model"],
+        "judge_runs": data["judge_runs"],
+        "judge_temperature": data["judge_temperature"],
+        "weighted_average": data["weighted_average"],
+        "averages": data["averages"],
+        "tag_averages": data["tag_averages"],
+        "total_queries": data["total_queries"],
+        "rubric": data["rubric"],
+        "query_scores": data["query_scores"],
+    }
+
     path.write_text(
         json.dumps(
-            report.model_dump(),
+            ordered,
             indent=2,
             default=to_serializable,
             ensure_ascii=False,
