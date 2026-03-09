@@ -1,5 +1,6 @@
+import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from html import unescape
 from typing import Any
 
@@ -41,6 +42,12 @@ class ProductData:
     alcohol: str | None = None
     sugar: str | None = None
     producer: str | None = None
+
+
+def compute_content_hash(product: ProductData) -> str:
+    """SHA256 of all ProductData fields. Used to skip DB writes when content is unchanged."""
+    parts = [f"{k}={v}" for k, v in sorted(asdict(product).items()) if v is not None]
+    return hashlib.sha256("|".join(parts).encode()).hexdigest()
 
 
 def parse_product(html: str | bytes, url: str) -> ProductData:

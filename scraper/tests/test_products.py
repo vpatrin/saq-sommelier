@@ -1,4 +1,4 @@
-from scraper.products import ProductData, parse_product
+from scraper.products import ProductData, compute_content_hash, parse_product
 
 
 class TestParseProductJsonLD:
@@ -117,6 +117,29 @@ class TestParseProductEdgeCases:
         assert result.name is None
         assert result.price is None
         assert isinstance(result, ProductData)
+
+
+class TestComputeContentHash:
+    def test_same_product_same_hash(self) -> None:
+        p = ProductData(sku="123", name="Wine", price=20.0)
+        assert compute_content_hash(p) == compute_content_hash(p)
+
+    def test_different_products_different_hash(self) -> None:
+        p1 = ProductData(sku="123", name="Wine A", price=20.0)
+        p2 = ProductData(sku="123", name="Wine B", price=20.0)
+        assert compute_content_hash(p1) != compute_content_hash(p2)
+
+    def test_none_fields_excluded(self) -> None:
+        """Hash should be stable regardless of which fields are None."""
+        p1 = ProductData(sku="123", name="Wine")
+        p2 = ProductData(sku="123", name="Wine", price=None)
+        assert compute_content_hash(p1) == compute_content_hash(p2)
+
+    def test_returns_hex_string(self) -> None:
+        p = ProductData(sku="123")
+        h = compute_content_hash(p)
+        assert len(h) == 64  # SHA256 hex digest
+        assert all(c in "0123456789abcdef" for c in h)
 
 
 class TestProductDataAlignment:

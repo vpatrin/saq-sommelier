@@ -104,14 +104,14 @@ class TestClearDelisted:
         mock_session.commit.assert_called_once()
 
 
-class TestGetUpdatedDates:
+class TestGetProductStates:
     @pytest.mark.asyncio
-    async def test_returns_sku_to_date_mapping(self) -> None:
+    async def test_returns_sku_to_state_mapping(self) -> None:
         mock_session = AsyncMock()
         mock_session.execute.return_value = MagicMock(
             all=lambda: [
-                ("10327701", datetime(2026, 2, 1, 12, 0, tzinfo=UTC)),
-                ("99999999", datetime(2026, 1, 15, 8, 30, tzinfo=UTC)),
+                ("10327701", datetime(2026, 2, 1, 12, 0, tzinfo=UTC), "abc123"),
+                ("99999999", datetime(2026, 1, 15, 8, 30, tzinfo=UTC), None),
             ]
         )
 
@@ -122,14 +122,14 @@ class TestGetUpdatedDates:
         mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
-            from scraper.db import get_updated_dates
+            from scraper.db import get_product_states
 
-            result = await get_updated_dates()
+            result = await get_product_states()
 
-        assert result == {
-            "10327701": date(2026, 2, 1),
-            "99999999": date(2026, 1, 15),
-        }
+        assert result["10327701"].updated_date == date(2026, 2, 1)
+        assert result["10327701"].content_hash == "abc123"
+        assert result["99999999"].updated_date == date(2026, 1, 15)
+        assert result["99999999"].content_hash is None
 
     @pytest.mark.asyncio
     async def test_returns_empty_dict_for_empty_db(self) -> None:
@@ -143,9 +143,9 @@ class TestGetUpdatedDates:
         mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
-            from scraper.db import get_updated_dates
+            from scraper.db import get_product_states
 
-            result = await get_updated_dates()
+            result = await get_product_states()
 
         assert result == {}
 
@@ -247,8 +247,9 @@ class TestUpsertProduct:
         with patch("scraper.db.products.SessionLocal", mock_factory):
             from scraper.db import upsert_product
 
-            await upsert_product(product)
+            result = await upsert_product(product, content_hash="abc123")
 
+        assert result is True
         mock_session.execute.assert_called_once()
         mock_session.commit.assert_called_once()
         mock_session.rollback.assert_not_called()
@@ -271,7 +272,7 @@ class TestUpsertProduct:
             from scraper.db import upsert_product
 
             with pytest.raises(SQLAlchemyError):
-                await upsert_product(product)
+                await upsert_product(product, content_hash="abc123")
 
         mock_session.rollback.assert_called_once()
         mock_session.commit.assert_not_called()
