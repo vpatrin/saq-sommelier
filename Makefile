@@ -34,9 +34,9 @@ embed-sync:
 scrape-stores:
 	cd scraper && poetry run python -m scraper stores
 
-# Eval
+# Eval — HAIKU_TEMPERATURE=0 forces deterministic intent/curation for reproducible scores.
 eval:
-	cd backend && poetry run python -m backend.eval $(if $(QUERY),--query "$(QUERY)",) $(if $(SPLIT),--split $(SPLIT),) $(if $(JUDGE_RUNS),--judge-runs $(JUDGE_RUNS),) $(if $(JUDGE_TEMP),--judge-temp $(JUDGE_TEMP),)
+	cd backend && HAIKU_TEMPERATURE=0 poetry run python -m backend.eval $(if $(QUERY),--query "$(QUERY)",) $(if $(SPLIT),--split $(SPLIT),) $(if $(JUDGE_RUNS),--judge-runs $(JUDGE_RUNS),) $(if $(JUDGE_TEMP),--judge-temp $(JUDGE_TEMP),) $(if $(PIPELINE_RUNS),--pipeline-runs $(PIPELINE_RUNS),)
 
 # Database migrations
 migrate:

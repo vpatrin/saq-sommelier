@@ -304,7 +304,7 @@ graph TB
         JSON[eval_timestamp.json<br/>full results archive]
     end
 
-    QJ -->|"20 queries"| HAIKU
+    QJ -->|"19 queries"| HAIKU
     PGV -->|"5 wines per query"| SONNET
     RJ -->|"scoring criteria"| SONNET
     QJ -->|"expected signals + notes"| SONNET

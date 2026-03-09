@@ -33,6 +33,9 @@ class BackendSettings(BaseSettings):
     # OpenAI API key for embedding queries.
     OPENAI_API_KEY: str = ""
 
+    # Haiku temperature: 0.0 for deterministic eval, 0.3 for production variety.
+    HAIKU_TEMPERATURE: float = 0.3
+
     # Shared secret for bot → backend internal calls (X-Bot-Secret header).
     # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
     BOT_SECRET: str = ""

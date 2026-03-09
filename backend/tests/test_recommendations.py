@@ -21,12 +21,13 @@ def _fake_product(
     grape: str = "Merlot",
     region: str = "Bordeaux",
     taste_tag: str = "Fruité et généreux",
+    category: str = "Vin rouge",
 ) -> MagicMock:
     """Minimal mock that passes ProductOut.model_validate."""
     p = MagicMock()
     p.sku = sku
     p.name = "Test Wine"
-    p.category = "Vin rouge"
+    p.category = category
     p.country = country
     p.size = "750 ml"
     p.price = 25.00
@@ -193,12 +194,22 @@ class TestRedundancyPenalty:
         penalty = _redundancy_penalty(wine, [wine])
         assert penalty == 1.0
 
-    def test_different_attributes_returns_low_penalty(self) -> None:
+    def test_different_attributes_returns_zero_penalty(self) -> None:
         candidate = _fake_product(
-            producer="A", grape="Syrah", country="Italie", region="Toscana", taste_tag="Corsé"
+            producer="A",
+            grape="Syrah",
+            country="Italie",
+            region="Toscana",
+            taste_tag="Corsé",
+            category="Vin blanc",
         )
         selected = _fake_product(
-            producer="B", grape="Merlot", country="France", region="Bordeaux", taste_tag="Fruité"
+            producer="B",
+            grape="Merlot",
+            country="France",
+            region="Bordeaux",
+            taste_tag="Fruité",
+            category="Vin rouge",
         )
         penalty = _redundancy_penalty(candidate, [selected])
         assert penalty == 0.0

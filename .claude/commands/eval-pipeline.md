@@ -54,7 +54,7 @@ Default target: weighted average ≥ 4 (or as specified by the user via $ARGUMEN
 ```
 make eval                                    # train split, temp=0, 1 judge run (default)
 make eval SPLIT=holdout                      # holdout split only
-make eval SPLIT=all                          # all 20 queries
+make eval SPLIT=all                          # all 19 queries
 make eval JUDGE_RUNS=2 JUDGE_TEMP=1.0        # multi-run with variance
 make eval QUERY=4                            # single query (ignores split)
 ```

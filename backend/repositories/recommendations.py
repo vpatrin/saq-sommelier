@@ -42,7 +42,6 @@ async def find_similar(
             stmt = stmt.where(~Product.grape.ilike(f"%{grape}%") | Product.grape.is_(None))
     if intent.available_only:
         stmt = stmt.where(Product.online_availability.is_(True))
-
     # Over-fetch for producer diversity, then deduplicate
     stmt = stmt.order_by(Product.embedding.cosine_distance(query_embedding)).limit(
         limit * _DIVERSITY_POOL
@@ -131,9 +130,15 @@ def _redundancy_penalty(candidate: Product, selected: list[Product]) -> float:
 
         # Same region = very similar terroir
         if candidate.region and s.region:
-            checks += 0.5
+            checks += 1.0
             if candidate.region == s.region:
-                overlap += 0.5
+                overlap += 1.0
+
+        # Same category (e.g. all whites) = less type diversity
+        if candidate.category and s.category:
+            checks += 0.75
+            if candidate.category == s.category:
+                overlap += 0.75
 
         penalties.append(overlap / checks if checks > 0 else 0.0)
 

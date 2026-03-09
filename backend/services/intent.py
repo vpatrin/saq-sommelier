@@ -23,7 +23,7 @@ def _build_category_reference() -> str:
 _CATEGORY_REFERENCE = _build_category_reference()
 
 _SYSTEM_PROMPT = f"""\
-You are a sommelier search assistant for SAQ (Société des alcools du Québec).
+You are a wine recommendation assistant that helps users find wines from the SAQ catalog.
 Given a user query (French or English), extract structured search filters for a wine catalog.
 Always output category and country values in French (SAQ naming).
 
@@ -60,6 +60,9 @@ Always output category and country values in French (SAQ naming).
      exclude_grapes: ["Cabernet Sauvignon", "Merlot"]
    - "like Sancerre but cheaper" → "crisp minerally Sauvignon Blanc style, Loire-like freshness"
    - "moscato trop sucré, compromis" → "demi-sec, off-dry, floral aromatic"
+   - When food has a regional identity, mention regional pairing in semantic_query
+     ("what grows together goes together"). Do NOT set country — let embedding handle it.
+     Example: "fromages québécois" → include "accord régional, vin local" in semantic_query
 6. **exclude_grapes**: when the user expresses fatigue or dislike for specific
    grapes, ALWAYS populate this field. Look for cues like "tanné de",
    "tired of", "pas de", "no more", "autre chose que".
@@ -67,8 +70,11 @@ Always output category and country values in French (SAQ naming).
    - "qqch de différent, pas de Chardonnay" → exclude_grapes: ["Chardonnay"]
    Also list appealing alternatives in semantic_query
    (Syrah, Grenache, Tempranillo, Nebbiolo, Gamay, etc.).
-7. **Non-wine queries** (beer, spirits, etc.): still call the tool, but set categories to an empty
-   list and semantic_query to the original query. The system handles graceful fallback.
+7. **Non-wine queries**: if the user asks for something SAQ doesn't sell as wine (beer, cider,
+   spirits like whisky/vodka/gin/rum, coffee, food, etc.), you MUST set `is_wine` to **false**.
+   Do NOT try to find a substitute — just set is_wine=false and categories=[].
+   Examples: "do you have beer?" → is_wine=false. "I want a gin" → is_wine=false.
+   "un scotch" → is_wine=false. "avez-vous de la bière?" → is_wine=false.
 
 Always call the search_wines tool with your extraction."""
 
@@ -79,6 +85,10 @@ _TOOLS: list[anthropic.types.ToolParam] = [
         "input_schema": {
             "type": "object",
             "properties": {
+                "is_wine": {
+                    "type": "boolean",
+                    "description": "False for non-wine queries (beer, spirits, etc.)",
+                },
                 "categories": {
                     "type": "array",
                     "items": {"type": "string"},
@@ -95,10 +105,6 @@ _TOOLS: list[anthropic.types.ToolParam] = [
                 "country": {
                     "type": "string",
                     "description": "Country of origin, or null",
-                },
-                "available_only": {
-                    "type": "boolean",
-                    "description": "Whether to only show available products (default true)",
                 },
                 "semantic_query": {
                     "type": "string",
@@ -142,6 +148,7 @@ def parse_intent(query: str) -> IntentResult:
         response = client.messages.create(
             model=_MODEL,
             max_tokens=128,
+            temperature=backend_settings.HAIKU_TEMPERATURE,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": query}],
             tools=_TOOLS,
@@ -167,6 +174,7 @@ def _parse_tool_input(tool_input: dict, original_query: str) -> IntentResult:
     """Convert Claude's tool_use input dict into an IntentResult."""
     try:
         return IntentResult(
+            is_wine=tool_input.get("is_wine", True),
             categories=tool_input.get("categories", []),
             min_price=(
                 Decimal(str(tool_input["min_price"]))
@@ -179,7 +187,6 @@ def _parse_tool_input(tool_input: dict, original_query: str) -> IntentResult:
                 else None
             ),
             country=tool_input.get("country"),
-            available_only=tool_input.get("available_only", True),
             semantic_query=tool_input.get("semantic_query", original_query),
             exclude_grapes=tool_input.get("exclude_grapes", []),
         )

@@ -9,6 +9,7 @@ from backend.schemas.product import ProductOut
 class IntentResult(BaseModel):
     """Structured filters extracted from a natural language wine query."""
 
+    is_wine: bool = True
     categories: list[str] = []
     min_price: Decimal | None = None
     max_price: Decimal | None = None

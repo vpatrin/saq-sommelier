@@ -36,6 +36,12 @@ def _parse_args() -> argparse.Namespace:
         default=0.0,
         help="Judge temperature (default: 0.0 for deterministic)",
     )
+    parser.add_argument(
+        "--pipeline-runs",
+        type=int,
+        default=1,
+        help="Repeat the full pipeline N times and report mean ± std (default: 1)",
+    )
     return parser.parse_args()
 
 
@@ -89,7 +95,8 @@ async def main() -> int:
         args.judge_temp,
     )
 
-    report = await run_eval(
+    pipeline_runs = args.pipeline_runs
+    run_kwargs = dict(
         database_url=settings.database_url,
         anthropic_api_key=backend_settings.ANTHROPIC_API_KEY,
         queries=queries,
@@ -98,14 +105,31 @@ async def main() -> int:
         judge_temperature=args.judge_temp,
     )
 
-    print_report(report)
-    save_report(report)
+    if pipeline_runs == 1:
+        report = await run_eval(**run_kwargs)
+        print_report(report)
+        save_report(report)
+        final_score = report.weighted_average
+    else:
+        scores: list[float] = []
+        for i in range(pipeline_runs):
+            logger.info("Pipeline run {}/{}", i + 1, pipeline_runs)
+            report = await run_eval(**run_kwargs)
+            save_report(report)
+            scores.append(report.weighted_average)
+            logger.info("  -> weighted avg: {:.2f}", report.weighted_average)
 
-    if report.weighted_average < 3.0:
-        logger.warning(
-            "Weighted average {:.2f} is below threshold (3.0)",
-            report.weighted_average,
-        )
+        # Print full scorecard for the last run + aggregate summary
+        print_report(report)
+        avg = sum(scores) / len(scores)
+        std = (sum((s - avg) ** 2 for s in scores) / len(scores)) ** 0.5
+        runs_str = ", ".join(f"{s:.2f}" for s in scores)
+        print(f"\n  PIPELINE RUNS ({pipeline_runs}x): [{runs_str}]")
+        print(f"  Mean: {avg:.2f}  Std: {std:.2f}\n")
+        final_score = avg
+
+    if final_score < 3.0:
+        logger.warning("Weighted average {:.2f} is below threshold (3.0)", final_score)
         return 1
     return 0
 

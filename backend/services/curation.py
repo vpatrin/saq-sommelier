@@ -8,7 +8,7 @@ from backend.schemas.recommendation import IntentResult
 _MODEL = "claude-haiku-4-5-20251001"
 
 _SYSTEM_PROMPT = """\
-You are a sommelier assistant for SAQ (Société des alcools du Québec).
+You are a wine sommelier assistant helping users discover wines from the SAQ catalog.
 Given a user's wine query and a list of recommended wines, explain why each wine
 was selected and write a short summary of the selection.
 
@@ -103,6 +103,7 @@ def explain_recommendations(
         response = client.messages.create(
             model=_MODEL,
             max_tokens=512,
+            temperature=backend_settings.HAIKU_TEMPERATURE,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_msg}],
             tools=_TOOLS,
