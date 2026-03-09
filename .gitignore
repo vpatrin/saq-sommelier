@@ -39,7 +39,8 @@ node_modules/
 
 # Claude
 CLAUDE.md
-.claude/
+.claude/*
+!.claude/commands/
 
 # Eval results (generated, not versioned)
 backend/eval/results/

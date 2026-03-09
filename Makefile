@@ -36,7 +36,7 @@ scrape-stores:
 
 # Eval
 eval:
-	cd backend && poetry run python -m backend.eval $(if $(QUERY),--query "$(QUERY)",)
+	cd backend && poetry run python -m backend.eval $(if $(QUERY),--query "$(QUERY)",) $(if $(SPLIT),--split $(SPLIT),) $(if $(JUDGE_RUNS),--judge-runs $(JUDGE_RUNS),) $(if $(JUDGE_TEMP),--judge-temp $(JUDGE_TEMP),)
 
 # Database migrations
 migrate:
