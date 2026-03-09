@@ -1,6 +1,12 @@
 from unittest.mock import MagicMock, patch
 
-from core.embedding_client import _BATCH_SIZE, create_embeddings, embed_query
+from core.embedding_client import (
+    _BATCH_SIZE,
+    EMBEDDING_DIMENSIONS,
+    EMBEDDING_MODEL,
+    create_embeddings,
+    embed_query,
+)
 
 
 def _mock_response(count: int, offset: int = 0) -> MagicMock:
@@ -60,5 +66,5 @@ class TestEmbedQuery:
         assert isinstance(vector, list)
         assert len(vector) == 3
         mock_client.embeddings.create.assert_called_once_with(
-            model="text-embedding-3-small", input=["bold red wine"]
+            model=EMBEDDING_MODEL, input=["bold red wine"], dimensions=EMBEDDING_DIMENSIONS
         )

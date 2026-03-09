@@ -1744,4 +1744,4 @@ embeddings = ["openai"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "eaeed6d3662c7f57344d4b18216932f7cbb09a63c235c447ecf91ea2e2f43d91"
+content-hash = "7d420499f2af660f10226f1c8d5d6f05992a870a7c20856d0a4922bd87026101"

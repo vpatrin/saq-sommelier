@@ -1,6 +1,8 @@
 import hashlib
 from typing import Any
 
+from core.embedding_client import EMBEDDING_DIMENSIONS, EMBEDDING_MODEL
+
 
 def build_embedding_text(
     *,
@@ -115,7 +117,7 @@ def compute_embedding_hash(attrs: dict[str, Any]) -> str:
     Returns hex digest. Used for change detection: re-embed when
     computed hash != last_embedded_hash.
     """
-    parts: list[str] = []
+    parts: list[str] = [f"model={EMBEDDING_MODEL}:dim={EMBEDDING_DIMENSIONS}"]
     for field in _HASH_FIELDS:
         val = attrs.get(field)
         if val is not None:

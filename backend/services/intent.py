@@ -53,6 +53,8 @@ Always output category and country values in French (SAQ naming).
    - "money is not an issue" → set min_price to 40 (skip budget wines)
    - Large group / volume implied (e.g. "BBQ 20 personnes") →
      set max_price ~25 (crowd-friendly budget)
+   - Beginner / "I don't know wine" / restaurant context with no price cue →
+     set min_price to 15, max_price to 35 (safe, respectable range)
 5. **semantic_query** captures taste, occasion, style, food pairing — whatever can't be a filter.
    Make it descriptive and specific. Include what the user WANTS, not what they don't want.
    Always include concrete grape variety names that match the desired style — embeddings

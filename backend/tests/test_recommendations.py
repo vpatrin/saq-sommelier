@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from core.db.models import EMBEDDING_MODEL_DIMENSIONS
+from core.embedding_client import EMBEDDING_DIMENSIONS
 
 from backend.repositories.recommendations import (
     _redundancy_penalty,
@@ -67,7 +67,7 @@ class TestRecommend:
     ) -> None:
         mock_settings.OPENAI_API_KEY = "sk-test"
         mock_parse.return_value = IntentResult(categories=["Vin rouge"], semantic_query="fruité")
-        mock_embed.return_value = [0.1] * EMBEDDING_MODEL_DIMENSIONS
+        mock_embed.return_value = [0.1] * EMBEDDING_DIMENSIONS
         mock_find.return_value = [_fake_product()]
         mock_explain.return_value = ExplanationResult(
             reasons=["Great fruity red"], summary="A fruity selection"
@@ -99,7 +99,7 @@ class TestRecommend:
     ) -> None:
         mock_settings.OPENAI_API_KEY = "sk-test"
         mock_parse.return_value = IntentResult(semantic_query="rare wine")
-        mock_embed.return_value = [0.1] * EMBEDDING_MODEL_DIMENSIONS
+        mock_embed.return_value = [0.1] * EMBEDDING_DIMENSIONS
         mock_find.return_value = []
         mock_explain.return_value = ExplanationResult(reasons=[], summary="")
 
@@ -112,7 +112,7 @@ class TestRecommend:
 
 
 def _fake_embedding() -> list[float]:
-    return [0.1] * EMBEDDING_MODEL_DIMENSIONS
+    return [0.1] * EMBEDDING_DIMENSIONS
 
 
 class TestFindSimilar:
