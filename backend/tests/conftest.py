@@ -7,7 +7,7 @@ from core.db.models import User
 configure_test_db_env()
 
 from backend.app import app  # noqa: E402
-from backend.auth import get_current_active_user, verify_auth  # noqa: E402
+from backend.auth import verify_auth  # noqa: E402
 from backend.config import ROLE_USER  # noqa: E402
 
 
@@ -39,6 +39,5 @@ def _disable_bot_secret():
 @pytest.fixture(autouse=True)
 def _bypass_auth():
     """Bypass auth by default — tests that need real auth override this."""
-    app.dependency_overrides[verify_auth] = lambda: None
-    app.dependency_overrides[get_current_active_user] = _mock_authenticated_user
+    app.dependency_overrides[verify_auth] = _mock_authenticated_user
     yield

@@ -1,11 +1,15 @@
-from unittest.mock import AsyncMock, patch
+from datetime import UTC, datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import jwt as pyjwt
 import pytest
+from core.db.models import User
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from backend.app import app
-from backend.auth import get_current_active_user, verify_auth
+from backend.auth import verify_auth
+from backend.config import ROLE_USER
 from backend.db import get_db
 
 SECRET = "test-secret-abc123"
@@ -17,7 +21,6 @@ def unauthenticated_client():
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session
     app.dependency_overrides.pop(verify_auth, None)
-    app.dependency_overrides.pop(get_current_active_user, None)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -79,6 +82,37 @@ def test_unconfigured_secret_falls_through_to_jwt(_real_auth_client):
 
     # No bot secret configured AND no JWT → 401
     assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_inactive_user_jwt_returns_403(_real_auth_client):
+    """403 — valid JWT but user.is_active is False."""
+    jwt_secret = "test-jwt-secret-key-for-unit-tests-32b"
+    now = datetime.now(UTC)
+    payload = {
+        "sub": "1",
+        "telegram_id": 12345,
+        "role": ROLE_USER,
+        "exp": now + timedelta(days=7),
+        "iat": now,
+    }
+    token = pyjwt.encode(payload, jwt_secret, algorithm="HS256")
+    inactive_user = MagicMock(spec=User)
+    inactive_user.id = 1
+    inactive_user.is_active = False
+
+    with (
+        patch("backend.auth.backend_settings") as mock_settings,
+        patch("backend.auth.users_repo") as mock_repo,
+    ):
+        mock_settings.BOT_SECRET = ""
+        mock_settings.JWT_SECRET_KEY = jwt_secret
+        mock_repo.find_by_id = AsyncMock(return_value=inactive_user)
+        resp = _real_auth_client.get(
+            "/api/watches/notifications",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
 # ── Route guard: JWT required on protected routes ────────────

@@ -8,7 +8,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from backend.app import app
-from backend.auth import get_current_active_user, verify_admin
+from backend.auth import verify_admin, verify_auth
 from backend.config import ROLE_ADMIN, ROLE_USER
 from backend.db import get_db
 
@@ -45,7 +45,7 @@ def _fake_invite(**overrides):
 def admin_client():
     """Client authenticated as admin."""
     admin = _mock_admin()
-    app.dependency_overrides[get_current_active_user] = lambda: admin
+    app.dependency_overrides[verify_auth] = lambda: admin
     app.dependency_overrides[verify_admin] = lambda: admin
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session
@@ -57,7 +57,7 @@ def admin_client():
 def user_client():
     """Client authenticated as regular user (non-admin)."""
     user = _mock_regular_user()
-    app.dependency_overrides[get_current_active_user] = lambda: user
+    app.dependency_overrides[verify_auth] = lambda: user
     # Don't override verify_admin — let it run and reject
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session

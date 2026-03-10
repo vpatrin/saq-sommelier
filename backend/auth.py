@@ -12,17 +12,17 @@ from backend.repositories import users as users_repo
 _bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def verify_bot_secret(x_bot_secret: str | None = Header(default=None)) -> None:
+def require_bot_secret(x_bot_secret: str | None = Header(default=None)) -> None:
     """Require X-Bot-Secret header when BOT_SECRET is configured. No-op when unconfigured (dev)."""
     if backend_settings.BOT_SECRET and x_bot_secret != backend_settings.BOT_SECRET:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid bot secret")
 
 
-async def get_current_user(
+async def get_current_active_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    """Decode JWT from Authorization header and return the user."""
+    """Decode JWT, look up user, reject if inactive."""
     if credentials is None:
         raise InvalidCredentialsError("Missing authentication token")
 
@@ -45,6 +45,9 @@ async def get_current_user(
     if user is None:
         raise InvalidCredentialsError("User not found")
 
+    if not user.is_active:
+        raise ForbiddenError("Account is deactivated")
+
     return user
 
 
@@ -52,27 +55,27 @@ async def verify_auth(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
     x_bot_secret: str | None = Header(default=None),
     db: AsyncSession = Depends(get_db),
-) -> None:
-    """Accept either a valid JWT or a valid bot secret. Used as the global route guard."""
+) -> User | None:
+    """Accept either a valid JWT or a valid bot secret. Used as the global route guard.
+
+    Returns the User for JWT callers, None for bot-secret callers.
+    """
     #! Bot secret takes priority — bot doesn't send JWT
     if x_bot_secret and backend_settings.BOT_SECRET:
         if x_bot_secret == backend_settings.BOT_SECRET:
-            return
+            return None
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid bot secret")
 
-    # Fall through to JWT validation
-    await get_current_user(credentials, db)
+    return await get_current_active_user(credentials, db)
 
 
-async def get_current_active_user(user: User = Depends(get_current_user)) -> User:
-    """Require that the authenticated user is active."""
-    if not user.is_active:
-        raise ForbiddenError("Account is deactivated")
-    return user
+async def verify_admin(user: User | None = Depends(verify_auth)) -> User:
+    """Require that the authenticated user is an active admin.
 
-
-async def verify_admin(user: User = Depends(get_current_active_user)) -> User:
-    """Require that the authenticated user has the admin role."""
+    Bot-secret callers (user=None) are rejected — admin endpoints are JWT-only.
+    """
+    if user is None:
+        raise ForbiddenError("Admin access requires user authentication")
     if user.role != ROLE_ADMIN:
         raise ForbiddenError("Admin access required")
     return user

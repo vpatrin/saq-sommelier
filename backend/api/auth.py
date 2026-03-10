@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.auth import verify_bot_secret
+from backend.auth import require_bot_secret
 from backend.db import get_db
 from backend.exceptions import ForbiddenError, NotFoundError
 from backend.repositories import users as users_repo
@@ -22,7 +22,7 @@ async def login_telegram(
 @router.get(
     "/telegram/check",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(verify_bot_secret)],
+    dependencies=[Depends(require_bot_secret)],
 )
 async def check_user(
     telegram_id: int = Query(),
