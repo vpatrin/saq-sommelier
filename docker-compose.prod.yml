@@ -1,8 +1,19 @@
 # Production overrides — used explicitly:
 # docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Set IMAGE_TAG to the version being deployed:
+# IMAGE_TAG=v1.3.0 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 services:
   backend:
+    image: ghcr.io/vpatrin/saq-sommelier-backend:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
     restart: unless-stopped
 
   bot:
+    image: ghcr.io/vpatrin/saq-sommelier-bot:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
     restart: unless-stopped
+
+  scraper:
+    image: ghcr.io/vpatrin/saq-sommelier-scraper:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
+
+  migrate:
+    image: ghcr.io/vpatrin/saq-sommelier-backend:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
