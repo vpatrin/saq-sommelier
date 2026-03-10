@@ -1,4 +1,115 @@
+# Base configuration — hardened by default (prod-safe).
+# Dev: auto-loads docker-compose.override.yml (volume mounts, hot reload).
+# Prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: saq-backend
+    env_file: .env
+    environment:
+      # Override localhost → Compose service name for container-to-container networking.
+      DB_HOST: postgres
+    ports:
+      - "127.0.0.1:8001:8001"
+    # Filesystem is immutable — prevents writes if the container is compromised.
+    read_only: true
+    # Blocks privilege escalation (e.g. setuid binaries).
+    security_opt: [no-new-privileges:true]
+    # Drop ALL Linux capabilities — app needs none
+    cap_drop: [ALL]
+    mem_limit: 512m
+    # Rotate logs so they don't fill the disk (3 × 50 MB = 150 MB max per service).
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+        # Not required so prod works without the dev postgres service.
+        required: false
+
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    env_file: .env
+    environment:
+      # Override localhost → Compose service name for container-to-container networking.
+      BACKEND_URL: http://backend:8001
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - internal
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  scraper:
+    build:
+      context: .
+      dockerfile: scraper/Dockerfile
+    env_file: .env
+    environment:
+      DB_HOST: postgres
+    # One-shot job — don't restart after exit. Systemd timer handles scheduling.
+    restart: "no"
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+
+  # --- Profiled services (not started by default) ---
+
+  migrate:
+    profiles: ["migrate"]
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      DB_HOST: postgres
+    command: ["alembic", "-c", "core/alembic.ini", "upgrade", "head"]
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 256m
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+
   postgres:
     profiles: ["dev"]
     image: pgvector/pgvector:pg16
@@ -18,105 +129,12 @@ services:
       timeout: 3s
       retries: 5
     security_opt: [no-new-privileges:true]
+    # Drop everything, then re-add only what Postgres needs to init its data dir.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE, FOWNER]
     mem_limit: 1g
     networks:
       - internal
-
-  backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    container_name: saq-backend
-    env_file: .env
-    environment:
-      # Override localhost → Compose service name for container-to-container networking.
-      DB_HOST: postgres
-    ports:
-      - "127.0.0.1:8001:8001"
-    volumes:
-      - ./backend:/app/backend
-    command: ["uvicorn", "backend.app:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
-    read_only: true
-    security_opt: [no-new-privileges:true]
-    mem_limit: 512m
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "3"
-    networks:
-      - internal
-    depends_on:
-      postgres:
-        condition: service_healthy
-        # Not required so prod works without the dev postgres service.
-        required: false
-
-  bot:
-    build:
-      context: .
-      dockerfile: bot/Dockerfile
-    env_file: .env
-    environment:
-      # Override localhost → Compose service name for container-to-container networking.
-      BACKEND_URL: http://backend:8001
-    volumes:
-      - ./bot/bot:/app/bot/bot
-    read_only: true
-    security_opt: [no-new-privileges:true]
-    mem_limit: 256m
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "3"
-    networks:
-      - internal
-    depends_on:
-      - backend
-
-  scraper:
-    build:
-      context: .
-      dockerfile: scraper/Dockerfile
-    env_file: .env
-    environment:
-      DB_HOST: postgres
-    # One-shot job — don't restart after exit. Systemd timer handles scheduling.
-    restart: "no"
-    read_only: true
-    security_opt: [no-new-privileges:true]
-    mem_limit: 512m
-    logging:
-      driver: json-file
-      options:
-        max-size: "50m"
-        max-file: "3"
-    networks:
-      - internal
-    depends_on:
-      postgres:
-        condition: service_healthy
-        required: false
-
-  migrate:
-    profiles: ["migrate"]
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    env_file: .env
-    environment:
-      DB_HOST: postgres
-    command: ["alembic", "-c", "core/alembic.ini", "upgrade", "head"]
-    read_only: true
-    security_opt: [no-new-privileges:true]
-    mem_limit: 256m
-    networks:
-      - internal
-    depends_on:
-      postgres:
-        condition: service_healthy
-        required: false
 
 volumes:
   pgdata:

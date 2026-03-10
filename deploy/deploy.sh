@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail # Standard bash strict mode
 
-cd "$(dirname "$0")/.." # Works regardless of where you run the script from 
+cd "$(dirname "$0")/.." # Works regardless of where you run the script from
+
+COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
 
 echo "==> Env diff (.env.example vs .env):"
 diff -u .env.example .env || true
 
 echo "==> Building images..."
-make build
+$COMPOSE build
 
 echo "==> Pre-deploy database backup..."
 /home/victor/infra/backup/backup.sh saq_sommelier
 
 echo "==> Running migrations..."
-docker compose run --rm migrate
+$COMPOSE run --rm migrate
 
 echo "==> Restarting services..."
-docker compose up -d backend bot
+$COMPOSE up -d backend bot
 
 echo "==> Health check..."
 for i in 1 2 3 4 5; do

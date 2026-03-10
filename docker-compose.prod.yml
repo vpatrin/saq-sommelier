@@ -1,0 +1,8 @@
+# Production overrides — used explicitly:
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  backend:
+    restart: unless-stopped
+
+  bot:
+    restart: unless-stopped

@@ -1,0 +1,11 @@
+# Dev overrides — auto-loaded by `docker compose up`.
+#! Adds volume mounts for hot reload and uvicorn --reload.
+services:
+  backend:
+    volumes:
+      - ./backend:/app/backend
+    command: ["uvicorn", "backend.app:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
+
+  bot:
+    volumes:
+      - ./bot/bot:/app/bot/bot
