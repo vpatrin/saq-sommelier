@@ -8,6 +8,12 @@ inputs:
   trivy-severity:
     description: Comma-separated Trivy severity levels to fail on
     default: LOW,MEDIUM,HIGH,CRITICAL
+  push:
+    description: Push image to registry after scan
+    default: "false"
+  tags:
+    description: Registry tag to push (e.g. ghcr.io/org/image:v1.0.0). Required when push is true.
+    default: ""
 
 runs:
   using: composite
@@ -27,3 +33,9 @@ runs:
         severity: ${{ inputs.trivy-severity }}
         exit-code: 1
         ignore-unfixed: true
+    # Tag + push the already-built local image (CD only)
+    - if: inputs.push == 'true'
+      shell: bash
+      run: |
+        docker tag saq-${{ inputs.service }}:ci ${{ inputs.tags }}
+        docker push ${{ inputs.tags }}
