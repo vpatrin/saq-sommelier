@@ -13,7 +13,7 @@ VPS-level infrastructure (firewall, SSH, TLS, networking) is documented in the [
 Tag on main first (see [CHANGELOG.md](../CHANGELOG.md)), then deploy the tag on the VPS.
 
 ```bash
-./deploy/deploy.sh vX.Y.Z        # pull → backup → migrate → restart → health check
+./deploy/deploy.sh vX.Y.Z        # pull → backup → migrate → bootstrap admin → restart → health check
 ```
 
 If `deploy/` unit files changed (or first deploy):

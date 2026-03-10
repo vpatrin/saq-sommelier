@@ -44,6 +44,7 @@ Prerequisite for web app and protecting expensive endpoints.
 - [x] Guard all routes behind JWT except `/health` (#356)
 - [x] Invite code access gate — admin-only `/api/admin/invites` endpoint, `invite_codes` table (#357)
 - [x] Migrate bot allowlist from .env to users table (#358)
+- [x] Admin bootstrap + user management — `make create-admin`, startup guard, list/deactivate endpoints
 
 ### Phase 8 — Chat Endpoint
 

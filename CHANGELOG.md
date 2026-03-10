@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Telegram Login Widget authentication — `POST /api/auth/telegram` verifies HMAC, upserts user, returns JWT (#353)
 - JWT route guards — all API routes require authentication except `/health` and `/api/auth` (#356)
 - Invite code access gate — new users must present a single-use invite code at first login (#357)
+- Admin bootstrap — `make create-admin` seeds admin user from `ADMIN_TELEGRAM_ID`, backend startup verifies admin exists
+- Admin user management — `GET /api/admin/users` lists all users, `POST /api/admin/users/{id}/deactivate` deactivates non-admin users
 
 ### Fixed
 

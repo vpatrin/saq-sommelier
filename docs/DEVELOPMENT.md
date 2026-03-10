@@ -10,9 +10,10 @@
 
 ```bash
 make install              # install all dependencies
-cp .env.example .env      # defaults work as-is
+cp .env.example .env      # set ADMIN_TELEGRAM_ID (your Telegram user ID)
 make run-db               # start PostgreSQL (localhost:5432)
 make migrate              # create database tables
+make create-admin         # seed admin user (required — backend won't start without it)
 make dev-scraper          # populate the database (~38k products)
 make dev-backend          # start the backend (localhost:8001)
 ```
@@ -20,9 +21,10 @@ make dev-backend          # start the backend (localhost:8001)
 Or skip Poetry entirely and run everything in Docker:
 
 ```bash
-cp .env.example .env      # defaults work as-is
+cp .env.example .env      # set ADMIN_TELEGRAM_ID (your Telegram user ID)
 make run                  # postgres + backend + bot (with hot reload)
 make migrate              # create database tables
+make create-admin         # seed admin user (required — backend won't start without it)
 make run-scraper          # populate the database
 ```
 
