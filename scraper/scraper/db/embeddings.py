@@ -1,7 +1,8 @@
-from core.db.models import Product
 from loguru import logger
 from sqlalchemy import bindparam, select, update
 from sqlalchemy.exc import SQLAlchemyError
+
+from core.db.models import Product
 
 from ..embed import compute_embedding_hash
 from .session import SessionLocal

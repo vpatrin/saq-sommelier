@@ -25,6 +25,7 @@ class Settings(BaseSettings):
         # This only helps if someone runs `python` directly from the project root.
         env_file=".env",
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     # Environment

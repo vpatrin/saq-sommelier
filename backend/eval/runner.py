@@ -1,11 +1,11 @@
 import asyncio
 
 import anthropic
-from core.db.base import create_session_factory
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from backend.services.recommendations import recommend
+from core.db.base import create_session_factory
 
 from .judge import JUDGE_CONCURRENCY, JUDGE_MODEL, judge_query
 from .schemas import (
@@ -139,10 +139,7 @@ async def run_eval(
     judged_iter = iter(judged)
     query_scores: list[QueryScore] = []
     for test_query, *_ in collected:
-        if test_query.id in error_scores:
-            qs = error_scores[test_query.id]
-        else:
-            qs = next(judged_iter)
+        qs = error_scores[test_query.id] if test_query.id in error_scores else next(judged_iter)
         qs.summary = summaries.get(test_query.id, "")
         query_scores.append(qs)
 
@@ -162,7 +159,7 @@ async def run_eval(
     # Phase 4: Tag-stratified averages (weighted avg per tag)
     tag_averages: dict[str, float] = {}
     tag_scores: dict[str, list[float]] = {}
-    for qs, tq in zip(query_scores, queries):
+    for qs, tq in zip(query_scores, queries, strict=True):
         qs_weighted = (
             sum(qs.scores[d.name].score * d.weight for d in dimensions if d.name in qs.scores)
             / total_weight

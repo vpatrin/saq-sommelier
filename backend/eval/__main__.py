@@ -2,10 +2,10 @@ import argparse
 import asyncio
 import sys
 
-from core.config.settings import settings
 from loguru import logger
 
 from backend.config import backend_settings
+from core.config.settings import settings
 
 from .report import print_report, save_report
 from .runner import run_eval

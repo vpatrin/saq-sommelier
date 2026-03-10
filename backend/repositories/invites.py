@@ -1,9 +1,10 @@
 import secrets
 from datetime import UTC, datetime
 
-from core.db.models import InviteCode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.db.models import InviteCode
 
 _CODE_BYTE_LENGTH = 16
 

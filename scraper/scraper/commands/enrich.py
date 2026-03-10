@@ -145,9 +145,9 @@ async def _collect_subcategory(
                 _collect_product(product, collected)
                 count += 1
         except PaginationCapError:
-            logger.info("{} × {} exceeds 10k — sub-partitioning by price", sub, country)
+            logger.info("{} x {} exceeds 10k -- sub-partitioning by price", sub, country)
             for lo, hi in _PRICE_RANGES:
-                logger.info("{} × {} × ${}-${}", sub, country, int(lo), int(hi))
+                logger.info("{} x {} x ${}-${}", sub, country, int(lo), int(hi))
                 price_filters = build_filters(
                     categories=subcategory, country=country, price_range=(lo, hi)
                 )

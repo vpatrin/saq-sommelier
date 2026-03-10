@@ -1,11 +1,12 @@
 from dataclasses import asdict
 from datetime import UTC, datetime
 
-from core.db.models import Store
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
+
+from core.db.models import Store
 
 from ..stores import StoreData
 from .session import SessionLocal

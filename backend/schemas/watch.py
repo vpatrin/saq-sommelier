@@ -31,7 +31,7 @@ class WatchWithProduct(BaseModel):
 
 
 class NotificationOut(BaseModel):
-    """One user×event pair — grouped by (user, sku) on the bot side for sending."""
+    """One user x event pair -- grouped by (user, sku) on the bot side for sending."""
 
     event_id: int
     sku: str

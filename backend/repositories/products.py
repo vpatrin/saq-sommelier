@@ -1,9 +1,10 @@
 from decimal import Decimal
 
-from core.categories import expand_family
-from core.db.models import Product
 from sqlalchemy import Column, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.categories import expand_family
+from core.db.models import Product
 
 # Prefixes for wine scope — resolved once from core taxonomy
 _WINE_PREFIXES: list[str] = expand_family("vins", None)
@@ -31,7 +32,7 @@ def _apply_filters(
     # Always exclude delisted products (page gone from SAQ sitemap)
     stmt = stmt.where(Product.delisted_at.is_(None))
     if available is not None:
-        stmt = stmt.where(Product.online_availability == available)  # noqa: E712
+        stmt = stmt.where(Product.online_availability == available)
     if q is not None:
         stmt = stmt.where(Product.name.ilike(f"%{q}%"))
     if category is not None:

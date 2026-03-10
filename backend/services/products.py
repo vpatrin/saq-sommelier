@@ -1,7 +1,6 @@
 import math
 from decimal import Decimal
 
-from core.db.models import Product
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.exceptions import NotFoundError
@@ -19,6 +18,7 @@ from backend.schemas.product import (
     PriceRange,
     ProductOut,
 )
+from core.db.models import Product
 
 
 async def get_product(db: AsyncSession, sku: str) -> ProductOut:

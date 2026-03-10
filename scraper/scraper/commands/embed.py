@@ -1,7 +1,8 @@
 import time
 
-from core.embedding_client import create_embeddings
 from loguru import logger
+
+from core.embedding_client import create_embeddings
 
 from ..config import settings
 from ..constants import EXIT_FATAL, EXIT_OK
@@ -74,7 +75,7 @@ async def embed_sync() -> int:
     # Build update payloads
     updates = [
         {"sku": sku, "embedding": vector, "last_embedded_hash": h}
-        for sku, vector, h in zip(skus, vectors, hashes)
+        for sku, vector, h in zip(skus, vectors, hashes, strict=True)
     ]
 
     try:

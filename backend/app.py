@@ -1,8 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from core.config.settings import settings
-from core.logging import setup_logging
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
@@ -19,6 +17,8 @@ from backend.config import SERVICE_NAME, backend_settings
 from backend.db import SessionLocal, engine, verify_db_connection
 from backend.errors import register_exception_handlers
 from backend.repositories import users as users_repo
+from core.config.settings import settings
+from core.logging import setup_logging
 
 setup_logging(SERVICE_NAME, level=settings.LOG_LEVEL)
 

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, NoReturn
 
 import httpx
 from loguru import logger
@@ -126,7 +126,8 @@ class BackendClient:
     # ── Transport ──────────────────────────────────────────────
 
     async def _request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
-        assert self._client is not None, "Client not open — call open() first"
+        if self._client is None:
+            raise RuntimeError("Client not open — call open() first")
         try:
             return await self._client.request(method, path, **kwargs)
         except httpx.ConnectError as exc:
@@ -165,8 +166,9 @@ class BackendClient:
                 return None
             return response.json()
         self._raise_api_error(response)
+        return None  # unreachable — _raise_api_error always raises
 
-    def _raise_api_error(self, response: httpx.Response) -> None:
+    def _raise_api_error(self, response: httpx.Response) -> NoReturn:
         detail = response.reason_phrase
         if response.content:
             try:

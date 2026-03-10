@@ -1,10 +1,10 @@
-from core.categories import expand_family
-from core.db.models import Product
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import DEFAULT_RECOMMENDATION_LIMIT
 from backend.schemas.recommendation import IntentResult
+from core.categories import expand_family
+from core.db.models import Product
 
 # Default to wine categories when intent has no category filter
 _WINE_PREFIXES: list[str] = expand_family("vins", None)

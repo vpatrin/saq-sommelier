@@ -1,5 +1,4 @@
 import jwt
-from core.db.models import User
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +7,7 @@ from backend.config import ROLE_ADMIN, backend_settings
 from backend.db import get_db
 from backend.exceptions import ForbiddenError, InvalidCredentialsError
 from backend.repositories import users as users_repo
+from core.db.models import User
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -32,10 +32,10 @@ async def get_current_active_user(
             backend_settings.JWT_SECRET_KEY,
             algorithms=["HS256"],
         )
-    except jwt.ExpiredSignatureError:
-        raise InvalidCredentialsError("Token has expired")
-    except jwt.InvalidTokenError:
-        raise InvalidCredentialsError("Invalid token")
+    except jwt.ExpiredSignatureError as exc:
+        raise InvalidCredentialsError("Token has expired") from exc
+    except jwt.InvalidTokenError as exc:
+        raise InvalidCredentialsError("Invalid token") from exc
 
     user_id = payload.get("sub")
     if user_id is None:

@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from core.config.settings import settings as core_settings
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from core.config.settings import settings as core_settings
 
 
 class ScraperSettings(BaseSettings):

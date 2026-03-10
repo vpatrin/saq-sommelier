@@ -1,11 +1,12 @@
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
 
-from core.db.models import Product
 from loguru import logger
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
+
+from core.db.models import Product
 
 from ..products import ProductData
 from .session import SessionLocal

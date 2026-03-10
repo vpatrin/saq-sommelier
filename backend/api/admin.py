@@ -1,4 +1,3 @@
-from core.db.models import User
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +9,7 @@ from backend.repositories import invites as invites_repo
 from backend.repositories import users as users_repo
 from backend.schemas.invite import InviteCodeOut
 from backend.schemas.user import UserOut
+from core.db.models import User
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 

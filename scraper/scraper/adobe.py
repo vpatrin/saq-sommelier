@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ from .config import settings
 
 _ADOBE_URL = "https://catalog-service.adobe.io/graphql"
 _PAGE_SIZE = 500
-_MAX_PAGE = 20  # 10k cap: 500 × 20 = 10,000
+_MAX_PAGE = 20  # 10k cap: 500 x 20 = 10,000
 
 # Adobe attributes that return a plain string for 1 value but a JSON array for multiple.
 # Normalized to always-list during parsing.
@@ -73,10 +74,8 @@ def _normalize_attributes(raw_attrs: list[dict]) -> dict[str, str | list[str]]:
 
         # Parse JSON arrays — Adobe returns stringified JSON for array values
         if isinstance(value, str) and value.startswith("["):
-            try:
+            with contextlib.suppress(json.JSONDecodeError, ValueError):
                 value = json.loads(value)
-            except (json.JSONDecodeError, ValueError):
-                pass
 
         # Normalize known polymorphic fields to always-list
         if name in _ALWAYS_LIST_ATTRS and isinstance(value, str):

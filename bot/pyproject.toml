@@ -16,16 +16,17 @@ loguru = ">=0.7"
 saq-core = {path = "../core", develop = true}
 
 [tool.poetry.group.dev.dependencies]
+pip-audit = ">=2.7"
 pytest = ">=8.0"
 pytest-asyncio = ">=0.25"
 pytest-cov = ">=6.0"
 ruff = "^0.15.5"
-pip-audit = ">=2.7"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["."]
+filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.coverage.run]
 source = ["bot"]
@@ -40,7 +41,13 @@ target-version = "py312"
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP"]
+select = ["B", "E", "F", "I", "N", "RET", "RUF", "S", "SIM", "TCH", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["bot", "core"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105"]
 
 [build-system]
 requires = ["poetry-core"]

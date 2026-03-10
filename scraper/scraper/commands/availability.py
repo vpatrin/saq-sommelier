@@ -129,7 +129,7 @@ async def _detect_transitions(data: _AvailabilityData) -> _TransitionStats:
                     stats.errors += 1
 
     logger.info(
-        "Transitions: online +{}/−{}, store +{}/−{}, errors {}",
+        "Transitions: online +{}/-{}, store +{}/-{}, errors {}",
         stats.online_restock,
         stats.online_destock,
         stats.store_restock,

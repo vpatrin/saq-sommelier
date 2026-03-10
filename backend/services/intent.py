@@ -1,11 +1,11 @@
 from decimal import Decimal
 
 import anthropic
-from core.categories import CATEGORY_FAMILIES, CATEGORY_GROUPS
 from loguru import logger
 
 from backend.config import backend_settings
 from backend.schemas.recommendation import IntentResult
+from core.categories import CATEGORY_FAMILIES, CATEGORY_GROUPS
 
 _MODEL = "claude-haiku-4-5-20251001"
 

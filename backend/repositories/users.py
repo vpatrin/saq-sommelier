@@ -1,10 +1,10 @@
 from datetime import UTC, datetime
 
-from core.db.models import User
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import ROLE_ADMIN
+from core.db.models import User
 
 
 async def find_by_id(db: AsyncSession, user_id: int) -> User | None:

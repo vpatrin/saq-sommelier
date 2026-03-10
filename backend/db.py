@@ -1,8 +1,9 @@
 from collections.abc import AsyncGenerator
 
-from core.config.settings import settings
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from core.config.settings import settings
 
 engine = create_async_engine(settings.database_url, echo=settings.DATABASE_ECHO)
 SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

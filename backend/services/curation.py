@@ -1,9 +1,9 @@
 import anthropic
-from core.db.models import Product
 from loguru import logger
 
 from backend.config import backend_settings
 from backend.schemas.recommendation import IntentResult
+from core.db.models import Product
 
 _MODEL = "claude-haiku-4-5-20251001"
 

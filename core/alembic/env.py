@@ -4,12 +4,12 @@
 
 from logging.config import fileConfig
 
-from core.config.settings import settings
-from core.db import models  # noqa: F401 - Import models to register with Base.metadata
-from core.db.base import Base
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+from core.config.settings import settings
+from core.db import models  # noqa: F401 - Import models to register with Base.metadata
+from core.db.base import Base
 
 # ============================================================================
 # SECTION 2: CONFIGURATION

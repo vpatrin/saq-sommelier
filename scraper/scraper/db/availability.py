@@ -1,7 +1,8 @@
-from core.db.models import Product, UserStorePreference, Watch
 from loguru import logger
 from sqlalchemy import bindparam, select, update
 from sqlalchemy.exc import SQLAlchemyError
+
+from core.db.models import Product, UserStorePreference, Watch
 
 from .session import SessionLocal
 

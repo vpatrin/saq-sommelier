@@ -1,11 +1,12 @@
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from core.db.models import StockEvent, Watch
 from loguru import logger
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import SQLAlchemyError
+
+from core.db.models import StockEvent, Watch
 
 from .session import SessionLocal
 

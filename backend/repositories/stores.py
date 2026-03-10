@@ -1,6 +1,7 @@
-from core.db.models import Store, UserStorePreference
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.db.models import Store, UserStorePreference
 
 
 async def get_all_stores(db: AsyncSession) -> list[Store]:

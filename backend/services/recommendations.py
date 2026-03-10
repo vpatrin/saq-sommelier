@@ -1,7 +1,5 @@
 import time
 
-from core.db.models import RecommendationLog
-from core.embedding_client import embed_query
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +12,8 @@ from backend.schemas.recommendation import (
 )
 from backend.services.curation import explain_recommendations
 from backend.services.intent import parse_intent
+from core.db.models import RecommendationLog
+from core.embedding_client import embed_query
 
 _NON_WINE_MESSAGE = (
     "Je suis un assistant de recommandation de vins — je ne peux pas vous aider avec ça. "
@@ -78,8 +78,7 @@ async def recommend(
         latency["intent"] = _time_ms(t0)
 
         if not intent.is_wine:
-            result = RecommendationOut(products=[], intent=intent, summary=_NON_WINE_MESSAGE)
-            return result
+            return RecommendationOut(products=[], intent=intent, summary=_NON_WINE_MESSAGE)
 
         t0 = time.monotonic()
         vector = embed_query(intent.semantic_query, api_key=backend_settings.OPENAI_API_KEY)
