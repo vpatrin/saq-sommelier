@@ -48,6 +48,22 @@ async def get_current_user(
     return user
 
 
+async def verify_auth(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+    x_bot_secret: str | None = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Accept either a valid JWT or a valid bot secret. Used as the global route guard."""
+    #! Bot secret takes priority — bot doesn't send JWT
+    if x_bot_secret and backend_settings.BOT_SECRET:
+        if x_bot_secret == backend_settings.BOT_SECRET:
+            return
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid bot secret")
+
+    # Fall through to JWT validation
+    await get_current_user(credentials, db)
+
+
 async def get_current_active_user(user: User = Depends(get_current_user)) -> User:
     """Require that the authenticated user is active."""
     if not user.is_active:

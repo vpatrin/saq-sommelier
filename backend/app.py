@@ -14,14 +14,14 @@ from backend.api.products import router as products_router
 from backend.api.recommendations import router as recommendations_router
 from backend.api.stores import stores_router, users_router
 from backend.api.watches import router as watches_router
-from backend.auth import get_current_active_user, verify_admin
+from backend.auth import verify_admin, verify_auth
 from backend.config import SERVICE_NAME, backend_settings
 from backend.db import engine, verify_db_connection
 from backend.errors import register_exception_handlers
 
 setup_logging(SERVICE_NAME, level=settings.LOG_LEVEL)
 
-_auth = [Depends(get_current_active_user)]
+_auth = [Depends(verify_auth)]
 
 
 @asynccontextmanager
