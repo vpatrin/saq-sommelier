@@ -1,4 +1,5 @@
-import json
+from functools import partial
+from http import HTTPStatus
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -16,13 +17,9 @@ from scraper.adobe import (
     search_products,
 )
 
+from .conftest import make_json_response
 
-def _make_response(data: dict, status_code: int = 200) -> httpx.Response:
-    return httpx.Response(
-        status_code,
-        content=json.dumps(data).encode(),
-        request=httpx.Request("POST", "https://test"),
-    )
+_make_response = partial(make_json_response, method="POST")
 
 
 def _product_view(
@@ -310,7 +307,7 @@ class TestSearchProducts:
     @pytest.mark.asyncio
     async def test_401_raises_with_warning(self) -> None:
         client = AsyncMock(spec=httpx.AsyncClient)
-        client.post.return_value = _make_response({}, status_code=401)
+        client.post.return_value = _make_response({}, status_code=HTTPStatus.UNAUTHORIZED)
 
         with pytest.raises(httpx.HTTPStatusError):
             _ = [p async for p in search_products(client, [])]

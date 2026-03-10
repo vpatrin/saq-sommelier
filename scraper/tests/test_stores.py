@@ -1,10 +1,12 @@
-import json
+from http import HTTPStatus
 from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
 
 from scraper.stores import StoreData, fetch_stores, parse_store
+
+from .conftest import make_json_response as _make_response
 
 
 def _raw_store(
@@ -33,14 +35,6 @@ def _raw_store(
         "additional_attributes": {"type": {"label": store_type_label}} if store_type_label else {},
     }
     return d
-
-
-def _make_response(data: dict, status_code: int = 200) -> httpx.Response:
-    return httpx.Response(
-        status_code,
-        content=json.dumps(data).encode(),
-        request=httpx.Request("GET", "https://test"),
-    )
 
 
 def _store_page(stores: list[dict], total: int, is_last_page: bool) -> dict:
@@ -134,7 +128,7 @@ class TestFetchStores:
     @pytest.mark.asyncio
     async def test_raises_on_http_error(self) -> None:
         client = AsyncMock(spec=httpx.AsyncClient)
-        client.get.return_value = _make_response({}, status_code=503)
+        client.get.return_value = _make_response({}, status_code=HTTPStatus.SERVICE_UNAVAILABLE)
 
         with pytest.raises(httpx.HTTPStatusError):
             await fetch_stores(client)

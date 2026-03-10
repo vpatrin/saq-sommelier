@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from unittest.mock import AsyncMock
 
 import pytest
@@ -8,6 +9,7 @@ from bot.handlers.recommend import recommend_command
 
 @pytest.fixture
 def api():
+    """Override conftest api with recommend return_value."""
     mock = AsyncMock()
     mock.recommend.return_value = {
         "products": [
@@ -34,6 +36,7 @@ def api():
 
 @pytest.fixture
 def context(api):
+    """Override conftest context with recommend-specific args."""
     ctx = AsyncMock()
     ctx.bot_data = {"api": api}
     ctx.args = ["un", "rouge", "corsé"]
@@ -42,6 +45,7 @@ def context(api):
 
 @pytest.fixture
 def update():
+    """Override conftest update with send_action and different user_id."""
     mock = AsyncMock()
     mock.message.reply_text = AsyncMock()
     mock.message.chat.send_action = AsyncMock()
@@ -89,7 +93,9 @@ async def test_recommend_backend_unavailable(update, context, api):
 
 
 async def test_recommend_backend_api_error(update, context, api):
-    api.recommend.side_effect = BackendAPIError(500, "Internal Server Error")
+    api.recommend.side_effect = BackendAPIError(
+        HTTPStatus.INTERNAL_SERVER_ERROR, "Internal Server Error"
+    )
     await recommend_command(update, context)
 
     text = update.message.reply_text.call_args[0][0]

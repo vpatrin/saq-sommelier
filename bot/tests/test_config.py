@@ -1,7 +1,9 @@
+import pytest
+
 from bot.config import BotSettings
 
 
-def test_settings_reads_token_from_env(monkeypatch: object) -> None:
+def test_settings_reads_token_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "fake-token-123")
     s = BotSettings()
     assert s.TELEGRAM_BOT_TOKEN == "fake-token-123"

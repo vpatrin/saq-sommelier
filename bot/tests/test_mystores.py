@@ -1,6 +1,4 @@
-from unittest.mock import AsyncMock
-
-import pytest
+from http import HTTPStatus
 
 from bot.api_client import BackendAPIError, BackendUnavailableError
 from bot.handlers.mystores import (
@@ -12,40 +10,9 @@ from bot.handlers.mystores import (
     store_toggle_callback,
 )
 
-# ── Fixtures ──────────────────────────────────────────────────
+from .conftest import TEST_USER_ID
 
-
-@pytest.fixture
-def api():
-    return AsyncMock()
-
-
-@pytest.fixture
-def context(api):
-    ctx = AsyncMock()
-    ctx.bot_data = {"api": api}
-    ctx.user_data = {}
-    return ctx
-
-
-@pytest.fixture
-def update():
-    mock = AsyncMock()
-    mock.effective_user.id = 42
-    mock.message.reply_text = AsyncMock()
-    return mock
-
-
-@pytest.fixture
-def callback_update():
-    mock = AsyncMock()
-    mock.effective_user.id = 42
-    mock.callback_query.answer = AsyncMock()
-    mock.callback_query.edit_message_reply_markup = AsyncMock()
-    mock.callback_query.edit_message_text = AsyncMock()
-    mock.callback_query.message.reply_text = AsyncMock()
-    return mock
-
+_USER_ID_STR = f"tg:{TEST_USER_ID}"
 
 _STORE_A = {
     "saq_store_id": "23009",
@@ -94,7 +61,7 @@ async def test_mystores_shows_saved_stores(update, context, api):
 
     await mystores_command(update, context)
 
-    api.list_user_stores.assert_called_once_with("tg:42")
+    api.list_user_stores.assert_called_once_with(_USER_ID_STR)
     # First message: header + inline remove buttons, second: location prompt
     assert update.message.reply_text.call_count == 2
     header = update.message.reply_text.call_args_list[0][0][0]
@@ -175,7 +142,7 @@ async def test_toggle_adds_store(callback_update, context, api):
 
     await store_toggle_callback(callback_update, context)
 
-    api.add_user_store.assert_called_once_with("tg:42", "23010")
+    api.add_user_store.assert_called_once_with(_USER_ID_STR, "23010")
     callback_update.callback_query.edit_message_reply_markup.assert_called_once()
 
 
@@ -186,7 +153,7 @@ async def test_toggle_removes_store(callback_update, context, api):
 
     await store_toggle_callback(callback_update, context)
 
-    api.remove_user_store.assert_called_once_with("tg:42", "23009")
+    api.remove_user_store.assert_called_once_with(_USER_ID_STR, "23009")
     callback_update.callback_query.edit_message_reply_markup.assert_called_once()
 
 
@@ -202,7 +169,7 @@ async def test_toggle_backend_unavailable(callback_update, context, api):
 async def test_toggle_store_not_found(callback_update, context, api):
     callback_update.callback_query.data = "s:toggle:99999"
     api.list_user_stores.return_value = []
-    api.add_user_store.side_effect = BackendAPIError(404, "Not Found")
+    api.add_user_store.side_effect = BackendAPIError(HTTPStatus.NOT_FOUND, "Not Found")
 
     await store_toggle_callback(callback_update, context)
 
@@ -218,7 +185,7 @@ async def test_remove_deletes_store(callback_update, context, api):
 
     await store_remove_callback(callback_update, context)
 
-    api.remove_user_store.assert_called_once_with("tg:42", "23009")
+    api.remove_user_store.assert_called_once_with(_USER_ID_STR, "23009")
     text = callback_update.callback_query.edit_message_text.call_args[0][0]
     assert "0 saved" in text
 

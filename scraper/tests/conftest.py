@@ -1,7 +1,48 @@
+import json
+from unittest.mock import AsyncMock, MagicMock
+
+import httpx
 import pytest
+
 from core.config.test_utils import configure_test_db_env
 
 configure_test_db_env()
+
+
+def make_bytes_response(content: bytes, status_code: int = 200) -> httpx.Response:
+    """Build an httpx.Response from raw bytes (sitemap XML, etc.)."""
+    return httpx.Response(
+        status_code,
+        content=content,
+        request=httpx.Request("GET", "https://test"),
+    )
+
+
+def make_json_response(data: dict, status_code: int = 200, method: str = "GET") -> httpx.Response:
+    """Build an httpx.Response from a JSON-serializable dict."""
+    return httpx.Response(
+        status_code,
+        content=json.dumps(data).encode(),
+        request=httpx.Request(method, "https://test"),
+    )
+
+
+@pytest.fixture
+def mock_db_session():
+    """Mock async session factory for scraper DB tests.
+
+    Returns (mock_session, mock_factory) where mock_factory is a callable
+    that produces async context managers yielding mock_session.
+    """
+    mock_session = AsyncMock()
+
+    mock_ctx = MagicMock()
+    mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_ctx.__aexit__ = AsyncMock(return_value=False)
+
+    mock_factory = MagicMock(return_value=mock_ctx)
+
+    return mock_session, mock_factory
 
 
 @pytest.fixture

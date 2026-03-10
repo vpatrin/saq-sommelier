@@ -12,6 +12,10 @@ from bot.handlers.url_paste import (
     watch_skip_callback,
 )
 
+from .conftest import TEST_USER_ID
+
+_USER_ID_STR = f"tg:{TEST_USER_ID}"
+
 # ── _extract_sku ─────────────────────────────────────────────
 
 
@@ -35,21 +39,10 @@ def test_extract_sku(text: str, expected: str | None) -> None:
 
 
 @pytest.fixture
-def api():
-    return AsyncMock()
-
-
-@pytest.fixture
-def context(api):
-    ctx = AsyncMock()
-    ctx.bot_data = {"api": api}
-    return ctx
-
-
-@pytest.fixture
 def update():
+    """Override conftest update with SAQ URL in message.text."""
     mock = AsyncMock()
-    mock.effective_user.id = 42
+    mock.effective_user.id = TEST_USER_ID
     mock.message.reply_text = AsyncMock()
     mock.message.text = "https://www.saq.com/fr/12345678"
     return mock
@@ -104,7 +97,7 @@ def confirm_query():
 @pytest.fixture
 def confirm_update(confirm_query):
     mock = AsyncMock()
-    mock.effective_user.id = 42
+    mock.effective_user.id = TEST_USER_ID
     mock.callback_query = confirm_query
     return mock
 
@@ -112,7 +105,7 @@ def confirm_update(confirm_query):
 async def test_watch_confirm_success(confirm_update, context, api):
     api.create_watch.return_value = {}
     await watch_confirm_callback(confirm_update, context)
-    api.create_watch.assert_called_once_with("tg:42", "12345678")
+    api.create_watch.assert_called_once_with(_USER_ID_STR, "12345678")
     confirm_update.callback_query.edit_message_text.assert_called_once()
     text = confirm_update.callback_query.edit_message_text.call_args[0][0]
     assert "12345678" in text
@@ -126,7 +119,7 @@ async def test_watch_confirm_conflict(confirm_update, context, api):
 
 
 async def test_watch_confirm_generic_api_error(confirm_update, context, api):
-    api.create_watch.side_effect = BackendAPIError(500, "server error")
+    api.create_watch.side_effect = BackendAPIError(HTTPStatus.INTERNAL_SERVER_ERROR, "server error")
     await watch_confirm_callback(confirm_update, context)
     text = confirm_update.callback_query.edit_message_text.call_args[0][0]
     assert "Something went wrong" in text

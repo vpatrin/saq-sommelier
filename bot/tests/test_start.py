@@ -1,30 +1,6 @@
-from unittest.mock import AsyncMock
-
-import pytest
 from telegram import ReplyKeyboardMarkup
 
 from bot.handlers.start import HELP_TEXT, help_command, start
-
-
-@pytest.fixture
-def api():
-    return AsyncMock()
-
-
-@pytest.fixture
-def update():
-    mock = AsyncMock()
-    mock.effective_user.id = 42
-    mock.message.reply_text = AsyncMock()
-    return mock
-
-
-@pytest.fixture
-def context(api):
-    ctx = AsyncMock()
-    ctx.bot_data = {"api": api}
-    ctx.args = []
-    return ctx
 
 
 async def test_start_sends_help_text(update, context):

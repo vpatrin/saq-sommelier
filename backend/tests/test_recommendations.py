@@ -1,7 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from core.embedding_client import EMBEDDING_DIMENSIONS
 
 from backend.repositories.recommendations import (
     _redundancy_penalty,
@@ -11,6 +10,7 @@ from backend.repositories.recommendations import (
 from backend.schemas.recommendation import IntentResult, RecommendationOut
 from backend.services.curation import ExplanationResult
 from backend.services.recommendations import recommend
+from core.embedding_client import EMBEDDING_DIMENSIONS
 
 
 def _fake_product(

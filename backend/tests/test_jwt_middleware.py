@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import jwt
 import pytest
-from core.db.models import User
 from fastapi import Depends, status
 from fastapi.testclient import TestClient
 
@@ -11,8 +10,9 @@ from backend.app import app
 from backend.auth import verify_auth
 from backend.config import ROLE_USER
 from backend.db import get_db
+from core.db.models import User
 
-JWT_SECRET = "test-jwt-secret-key-for-unit-tests-32b"
+from .conftest import JWT_SECRET
 
 
 def _make_token(

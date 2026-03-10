@@ -1,5 +1,5 @@
 from datetime import UTC, date, datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,15 +10,9 @@ from scraper.stores import StoreData
 
 class TestGetDelistedSkus:
     @pytest.mark.asyncio
-    async def test_returns_delisted_skus(self) -> None:
-        mock_session = AsyncMock()
+    async def test_returns_delisted_skus(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.return_value = MagicMock(all=lambda: [("10327701",), ("99999999",)])
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
             from scraper.db import get_delisted_skus
@@ -28,15 +22,9 @@ class TestGetDelistedSkus:
         assert result == {"10327701", "99999999"}
 
     @pytest.mark.asyncio
-    async def test_returns_empty_set_when_none_delisted(self) -> None:
-        mock_session = AsyncMock()
+    async def test_returns_empty_set_when_none_delisted(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.return_value = MagicMock(all=lambda: [])
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
             from scraper.db import get_delisted_skus
@@ -55,15 +43,9 @@ class TestMarkDelisted:
         assert result == 0
 
     @pytest.mark.asyncio
-    async def test_executes_and_commits(self) -> None:
-        mock_session = AsyncMock()
+    async def test_executes_and_commits(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.return_value = MagicMock(rowcount=3)
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
             from scraper.db import mark_delisted
@@ -84,15 +66,9 @@ class TestClearDelisted:
         assert result == 0
 
     @pytest.mark.asyncio
-    async def test_executes_and_commits(self) -> None:
-        mock_session = AsyncMock()
+    async def test_executes_and_commits(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.return_value = MagicMock(rowcount=2)
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
             from scraper.db import clear_delisted
@@ -106,20 +82,14 @@ class TestClearDelisted:
 
 class TestGetProductStates:
     @pytest.mark.asyncio
-    async def test_returns_sku_to_state_mapping(self) -> None:
-        mock_session = AsyncMock()
+    async def test_returns_sku_to_state_mapping(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.return_value = MagicMock(
             all=lambda: [
                 ("10327701", datetime(2026, 2, 1, 12, 0, tzinfo=UTC), "abc123"),
                 ("99999999", datetime(2026, 1, 15, 8, 30, tzinfo=UTC), None),
             ]
         )
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
             from scraper.db import get_product_states
@@ -132,15 +102,9 @@ class TestGetProductStates:
         assert result["99999999"].content_hash is None
 
     @pytest.mark.asyncio
-    async def test_returns_empty_dict_for_empty_db(self) -> None:
-        mock_session = AsyncMock()
+    async def test_returns_empty_dict_for_empty_db(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.return_value = MagicMock(all=lambda: [])
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
             from scraper.db import get_product_states
@@ -152,14 +116,8 @@ class TestGetProductStates:
 
 class TestEmitStockEvent:
     @pytest.mark.asyncio
-    async def test_executes_and_commits(self) -> None:
-        mock_session = AsyncMock()
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
+    async def test_executes_and_commits(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
 
         with patch("scraper.db.events.SessionLocal", mock_factory):
             from scraper.db import emit_stock_event
@@ -170,15 +128,9 @@ class TestEmitStockEvent:
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_rolls_back_and_raises_on_db_failure(self) -> None:
-        mock_session = AsyncMock()
+    async def test_rolls_back_and_raises_on_db_failure(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.side_effect = SQLAlchemyError("connection lost")
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.events.SessionLocal", mock_factory):
             from scraper.db import emit_stock_event
@@ -192,15 +144,9 @@ class TestEmitStockEvent:
 
 class TestDeleteOldStockEvents:
     @pytest.mark.asyncio
-    async def test_executes_and_commits(self) -> None:
-        mock_session = AsyncMock()
+    async def test_executes_and_commits(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.return_value = MagicMock(rowcount=5)
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.events.SessionLocal", mock_factory):
             from scraper.db import delete_old_stock_events
@@ -211,15 +157,9 @@ class TestDeleteOldStockEvents:
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_swallows_error_on_db_failure(self) -> None:
-        mock_session = AsyncMock()
+    async def test_swallows_error_on_db_failure(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.side_effect = SQLAlchemyError("connection lost")
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.events.SessionLocal", mock_factory):
             from scraper.db import delete_old_stock_events
@@ -232,16 +172,9 @@ class TestDeleteOldStockEvents:
 
 class TestUpsertProduct:
     @pytest.mark.asyncio
-    async def test_commits_on_successful_upsert(self) -> None:
+    async def test_commits_on_successful_upsert(self, mock_db_session) -> None:
         """Happy path: execute succeeds → commit called, no rollback."""
-        mock_session = AsyncMock()
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
-
+        mock_session, mock_factory = mock_db_session
         product = ProductData(sku="12345678", name="Test Wine")
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
@@ -255,17 +188,10 @@ class TestUpsertProduct:
         mock_session.rollback.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_rolls_back_and_raises_on_db_error(self) -> None:
+    async def test_rolls_back_and_raises_on_db_error(self, mock_db_session) -> None:
         """When session.execute() raises SQLAlchemyError, upsert should rollback and re-raise."""
-        mock_session = AsyncMock()
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.side_effect = SQLAlchemyError("connection lost")
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
-
         product = ProductData(sku="12345678", name="Test Wine")
 
         with patch("scraper.db.products.SessionLocal", mock_factory):
@@ -302,15 +228,8 @@ class TestUpsertStores:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_executes_and_commits(self) -> None:
-        mock_session = AsyncMock()
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
-
+    async def test_executes_and_commits(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         stores = [self._make_store("23009"), self._make_store("23132")]
 
         with patch("scraper.db.stores.SessionLocal", mock_factory):
@@ -323,15 +242,9 @@ class TestUpsertStores:
         mock_session.rollback.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_rolls_back_and_raises_on_db_error(self) -> None:
-        mock_session = AsyncMock()
+    async def test_rolls_back_and_raises_on_db_error(self, mock_db_session) -> None:
+        mock_session, mock_factory = mock_db_session
         mock_session.execute.side_effect = SQLAlchemyError("connection lost")
-
-        mock_ctx = MagicMock()
-        mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
-        mock_ctx.__aexit__ = AsyncMock(return_value=False)
-
-        mock_factory = MagicMock(return_value=mock_ctx)
 
         with patch("scraper.db.stores.SessionLocal", mock_factory):
             from scraper.db import upsert_stores

@@ -168,6 +168,135 @@ async def test_ack_notifications_success(client: BackendClient) -> None:
     )
 
 
+# ── Recommendations ────────────────────────────────────────────
+
+
+async def test_recommend_success(client: BackendClient) -> None:
+    data = {"wines": [{"sku": "ABC", "name": "Bordeaux"}], "explanation": "Great pick."}
+    client._client.request.return_value = _response(json_data=data)
+
+    result = await client.recommend("a nice red wine", user_id="tg:42")
+
+    assert result == data
+    client._client.request.assert_called_once_with(
+        "POST",
+        "/recommendations",
+        json={"query": "a nice red wine", "available_online": True, "user_id": "tg:42"},
+    )
+
+
+async def test_recommend_with_store_filter(client: BackendClient) -> None:
+    client._client.request.return_value = _response(json_data={"wines": []})
+
+    await client.recommend("red wine", in_store="23009", available_online=False)
+
+    call_kwargs = client._client.request.call_args
+    assert call_kwargs[1]["json"]["in_store"] == "23009"
+    assert call_kwargs[1]["json"]["available_online"] is False
+
+
+# ── Auth ────────────────────────────────────────────────────────
+
+
+async def test_check_user_active(client: BackendClient) -> None:
+    client._client.request.return_value = _response(status_code=HTTPStatus.NO_CONTENT)
+
+    result = await client.check_user(12345)
+
+    assert result is True
+    client._client.request.assert_called_once_with(
+        "GET", "/auth/telegram/check", params={"telegram_id": 12345}
+    )
+
+
+async def test_check_user_not_found(client: BackendClient) -> None:
+    client._client.request.return_value = _response(
+        status_code=HTTPStatus.NOT_FOUND, json_data={"detail": "Not found"}
+    )
+
+    result = await client.check_user(99999)
+
+    assert result is False
+
+
+async def test_check_user_forbidden(client: BackendClient) -> None:
+    client._client.request.return_value = _response(
+        status_code=HTTPStatus.FORBIDDEN, json_data={"detail": "Inactive"}
+    )
+
+    result = await client.check_user(12345)
+
+    assert result is False
+
+
+async def test_check_user_server_error_raises(client: BackendClient) -> None:
+    client._client.request.return_value = _response(
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+        json_data={"detail": "Internal server error"},
+    )
+
+    with pytest.raises(BackendAPIError) as exc_info:
+        await client.check_user(12345)
+
+    assert exc_info.value.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+# ── Stores ──────────────────────────────────────────────────────
+
+
+async def test_get_nearby_stores_success(client: BackendClient) -> None:
+    data = [{"saq_store_id": "23009", "name": "Du Parc", "distance_km": 1.2}]
+    client._client.request.return_value = _response(json_data=data)
+
+    result = await client.get_nearby_stores(45.52, -73.60)
+
+    assert result == data
+    client._client.request.assert_called_once_with(
+        "GET", "/stores/nearby", params={"lat": 45.52, "lng": -73.60}
+    )
+
+
+async def test_list_user_stores_success(client: BackendClient) -> None:
+    data = [{"saq_store_id": "23009", "created_at": "2026-01-01"}]
+    client._client.request.return_value = _response(json_data=data)
+
+    result = await client.list_user_stores("tg:42")
+
+    assert result == data
+    client._client.request.assert_called_once_with("GET", "/users/tg:42/stores")
+
+
+async def test_add_user_store_success(client: BackendClient) -> None:
+    data = {"saq_store_id": "23009"}
+    client._client.request.return_value = _response(status_code=HTTPStatus.CREATED, json_data=data)
+
+    result = await client.add_user_store("tg:42", "23009")
+
+    assert result == data
+    client._client.request.assert_called_once_with(
+        "POST", "/users/tg:42/stores", json={"saq_store_id": "23009"}
+    )
+
+
+async def test_remove_user_store_success(client: BackendClient) -> None:
+    client._client.request.return_value = _response(status_code=HTTPStatus.NO_CONTENT)
+
+    await client.remove_user_store("tg:42", "23009")
+
+    client._client.request.assert_called_once_with("DELETE", "/users/tg:42/stores/23009")
+
+
+async def test_remove_user_store_not_found(client: BackendClient) -> None:
+    client._client.request.return_value = _response(
+        status_code=HTTPStatus.NOT_FOUND, json_data={"detail": "Not found"}
+    )
+
+    with pytest.raises(BackendAPIError) as exc_info:
+        await client.remove_user_store("tg:42", "99999")
+
+    assert exc_info.value.status_code == HTTPStatus.NOT_FOUND
+
+
 # ── Error handling ──────────────────────────────────────────────
 
 
@@ -222,5 +351,5 @@ async def test_close_cleans_up() -> None:
 async def test_request_without_open_fails() -> None:
     bc = BackendClient(base_url="http://test:8001")
 
-    with pytest.raises(AssertionError, match="Client not open"):
+    with pytest.raises(RuntimeError, match="Client not open"):
         await bc.get_product("ABC")

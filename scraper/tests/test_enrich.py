@@ -92,31 +92,27 @@ class TestExtractWineAttrs:
 
 
 class TestParseGrapeBlend:
-    def test_valid_blend(self) -> None:
-        result = _parse_grape_blend('{"MALB":"96","SYRA":"4"}')
-        assert result == [{"code": "MALB", "pct": 96}, {"code": "SYRA", "pct": 4}]
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ('{"MALB":"96","SYRA":"4"}', [{"code": "MALB", "pct": 96}, {"code": "SYRA", "pct": 4}]),
+            ('{"PINO":"100"}', [{"code": "PINO", "pct": 100}]),
+            # Adobe returns single-quoted dicts, not valid JSON
+            ("{'MALB':'96','SYRA':'4'}", [{"code": "MALB", "pct": 96}, {"code": "SYRA", "pct": 4}]),
+            ('{"MALB":"abc"}', [{"code": "MALB", "pct": 0}]),
+        ],
+        ids=["valid_blend", "single_grape", "single_quoted_adobe", "non_numeric_pct"],
+    )
+    def test_parses_blend(self, raw: str, expected: list) -> None:
+        assert _parse_grape_blend(raw) == expected
 
-    def test_single_grape(self) -> None:
-        result = _parse_grape_blend('{"PINO":"100"}')
-        assert result == [{"code": "PINO", "pct": 100}]
-
-    def test_single_quoted_from_adobe(self) -> None:
-        """Adobe returns single-quoted dicts, not valid JSON."""
-        result = _parse_grape_blend("{'MALB':'96','SYRA':'4'}")
-        assert result == [{"code": "MALB", "pct": 96}, {"code": "SYRA", "pct": 4}]
-
-    def test_empty_string(self) -> None:
-        assert _parse_grape_blend("") is None
-
-    def test_invalid_json(self) -> None:
-        assert _parse_grape_blend("not json") is None
-
-    def test_empty_dict(self) -> None:
-        assert _parse_grape_blend("{}") is None
-
-    def test_non_numeric_pct(self) -> None:
-        result = _parse_grape_blend('{"MALB":"abc"}')
-        assert result == [{"code": "MALB", "pct": 0}]
+    @pytest.mark.parametrize(
+        "raw",
+        ["", "not json", "{}"],
+        ids=["empty_string", "invalid_json", "empty_dict"],
+    )
+    def test_returns_none(self, raw: str) -> None:
+        assert _parse_grape_blend(raw) is None
 
 
 def _make_product(

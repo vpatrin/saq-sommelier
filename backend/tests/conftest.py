@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
 from core.config.test_utils import configure_test_db_env
 from core.db.models import User
 
@@ -9,6 +10,10 @@ configure_test_db_env()
 from backend.app import app  # noqa: E402
 from backend.auth import verify_auth  # noqa: E402
 from backend.config import ROLE_USER  # noqa: E402
+
+# Shared test constants — used across test_auth, test_jwt_middleware, test_telegram_auth
+JWT_SECRET = "test-jwt-secret-key-for-unit-tests-32b"
+BOT_SECRET = "test-bot-secret-abc123"
 
 
 def _mock_authenticated_user() -> MagicMock:

@@ -12,8 +12,9 @@ from backend.app import app
 from backend.config import ROLE_USER
 from backend.db import get_db
 
+from .conftest import JWT_SECRET
+
 BOT_TOKEN = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
-JWT_SECRET = "test-jwt-secret-key-for-unit-tests"
 
 
 def _make_telegram_payload(

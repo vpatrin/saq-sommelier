@@ -25,12 +25,8 @@ def _notif(**overrides):
 
 
 @pytest.fixture
-def api():
-    return AsyncMock()
-
-
-@pytest.fixture
 def context(api):
+    """Override conftest context with bot.send_message for notification tests."""
     ctx = AsyncMock()
     ctx.bot_data = {"api": api}
     ctx.bot.send_message = AsyncMock()

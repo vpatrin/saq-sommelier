@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from core.db.models import User
 from fastapi import status
 from fastapi.testclient import TestClient
 
@@ -11,6 +10,7 @@ from backend.app import app
 from backend.auth import verify_admin, verify_auth
 from backend.config import ROLE_ADMIN, ROLE_USER
 from backend.db import get_db
+from core.db.models import User
 
 NOW = datetime(2025, 1, 1, tzinfo=UTC)
 

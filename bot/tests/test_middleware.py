@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from time import monotonic, time
 from unittest.mock import AsyncMock, MagicMock
 
@@ -7,8 +8,10 @@ from telegram.ext import ApplicationHandlerStop
 
 from bot.middleware import RateLimiter, _limiter, access_gate, rate_limit_gate
 
+from .conftest import TEST_USER_ID
 
-def _update(user_id: int = 42) -> Update:
+
+def _update(user_id: int = TEST_USER_ID) -> Update:
     """Build a minimal Update with a user and message."""
     update = AsyncMock(spec=Update)
     update.effective_user = User(id=user_id, is_bot=False, first_name="Test")
@@ -45,7 +48,7 @@ def _clear_rate_limiter():
 
 
 async def test_authorized_user_passes():
-    update = _update(user_id=42)
+    update = _update()
     ctx = _context()
     ctx.application.bot_data["api"].check_user = AsyncMock(return_value=True)
 
@@ -69,7 +72,7 @@ async def test_unregistered_user_rejected():
 
 
 async def test_cached_auth_skips_api_call():
-    update = _update(user_id=42)
+    update = _update()
     ctx = _context(authorized=True, checked_at=time())
     api = ctx.application.bot_data["api"]
 
@@ -79,19 +82,19 @@ async def test_cached_auth_skips_api_call():
 
 
 async def test_expired_cache_rechecks():
-    update = _update(user_id=42)
+    update = _update()
     ctx = _context(authorized=True, checked_at=time() - 7200)  # 2h ago
     ctx.application.bot_data["api"].check_user = AsyncMock(return_value=True)
 
     await access_gate(update, ctx)
 
-    ctx.application.bot_data["api"].check_user.assert_called_once_with(42)
+    ctx.application.bot_data["api"].check_user.assert_called_once_with(TEST_USER_ID)
 
 
 async def test_backend_down_fails_open():
     from bot.api_client import BackendUnavailableError
 
-    update = _update(user_id=42)
+    update = _update()
     ctx = _context()
     ctx.application.bot_data["api"].check_user = AsyncMock(
         side_effect=BackendUnavailableError("timeout")
@@ -105,10 +108,10 @@ async def test_backend_down_fails_open():
 async def test_backend_500_fails_open():
     from bot.api_client import BackendAPIError
 
-    update = _update(user_id=42)
+    update = _update()
     ctx = _context()
     ctx.application.bot_data["api"].check_user = AsyncMock(
-        side_effect=BackendAPIError(500, "Internal Server Error")
+        side_effect=BackendAPIError(HTTPStatus.INTERNAL_SERVER_ERROR, "Internal Server Error")
     )
 
     await access_gate(update, ctx)
@@ -127,7 +130,7 @@ async def test_no_user_passes_through():
 
 
 async def test_under_rate_limit_passes():
-    update = _update(user_id=42)
+    update = _update()
     context = AsyncMock()
 
     await rate_limit_gate(update, context)
@@ -138,7 +141,7 @@ async def test_under_rate_limit_passes():
 
 
 async def test_over_rate_limit_blocked():
-    update = _update(user_id=42)
+    update = _update()
     context = AsyncMock()
 
     await rate_limit_gate(update, context)
@@ -151,7 +154,7 @@ async def test_over_rate_limit_blocked():
 
 async def test_rate_limit_per_user():
     """Different users have independent rate limits."""
-    update_a = _update(user_id=42)
+    update_a = _update()
     update_b = _update(user_id=99)
     context = AsyncMock()
 
@@ -159,7 +162,7 @@ async def test_rate_limit_per_user():
     await rate_limit_gate(update_a, context)
     await rate_limit_gate(update_a, context)
 
-    # User 42 is at the limit, but user 99 is fresh
+    # User A is at the limit, but user B is fresh
     await rate_limit_gate(update_b, context)
     update_b.message.reply_text.assert_not_called()
 
@@ -176,8 +179,8 @@ async def test_rate_limit_no_user_passes_through():
 
 def test_rate_limiter_basic():
     rl = RateLimiter(max_calls=1, window=0.5)
-    assert not rl.is_limited(42)  # first call OK
-    assert rl.is_limited(42)  # second call blocked (limit=1)
+    assert not rl.is_limited(TEST_USER_ID)  # first call OK
+    assert rl.is_limited(TEST_USER_ID)  # second call blocked (limit=1)
 
 
 def test_rate_limiter_window_expires():
@@ -185,13 +188,13 @@ def test_rate_limiter_window_expires():
     rl = RateLimiter(max_calls=2, window=1.0)
     from collections import deque
 
-    rl._calls[42] = deque([monotonic() - 2.0, monotonic() - 2.0])
+    rl._calls[TEST_USER_ID] = deque([monotonic() - 2.0, monotonic() - 2.0])
 
-    assert not rl.is_limited(42)
+    assert not rl.is_limited(TEST_USER_ID)
 
 
 def test_rate_limiter_per_user_isolation():
     rl = RateLimiter(max_calls=1, window=1.0)
-    assert not rl.is_limited(42)
-    assert rl.is_limited(42)  # user 42 blocked
-    assert not rl.is_limited(99)  # user 99 independent
+    assert not rl.is_limited(TEST_USER_ID)
+    assert rl.is_limited(TEST_USER_ID)  # user A blocked
+    assert not rl.is_limited(99)  # user B independent

@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from unittest.mock import AsyncMock
 from xml.etree.ElementTree import ParseError
 
@@ -6,14 +7,7 @@ import pytest
 
 from scraper.sitemap import SitemapEntry, fetch_sitemap_index, fetch_sub_sitemap
 
-
-def _make_response(content: bytes, status_code: int = 200) -> httpx.Response:
-    """Build an httpx.Response with a dummy request (required for raise_for_status)."""
-    return httpx.Response(
-        status_code,
-        content=content,
-        request=httpx.Request("GET", "https://test"),
-    )
+from .conftest import make_bytes_response as _make_response
 
 
 class TestSitemapEntrySku:
@@ -52,7 +46,7 @@ class TestFetchSitemapIndex:
     @pytest.mark.asyncio
     async def test_raises_on_http_error(self) -> None:
         client = AsyncMock(spec=httpx.AsyncClient)
-        client.get.return_value = _make_response(b"", status_code=404)
+        client.get.return_value = _make_response(b"", status_code=HTTPStatus.NOT_FOUND)
 
         with pytest.raises(httpx.HTTPStatusError):
             await fetch_sitemap_index(client)
@@ -105,7 +99,7 @@ class TestFetchSubSitemap:
     @pytest.mark.asyncio
     async def test_raises_on_http_error(self) -> None:
         client = AsyncMock(spec=httpx.AsyncClient)
-        client.get.return_value = _make_response(b"", status_code=500)
+        client.get.return_value = _make_response(b"", status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
         with pytest.raises(httpx.HTTPStatusError):
             await fetch_sub_sitemap(client, "https://example.com/sitemap.xml")

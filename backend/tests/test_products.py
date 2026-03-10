@@ -5,7 +5,6 @@ from typing import get_origin
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from core.db.models import Product
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -20,6 +19,7 @@ from backend.repositories.products import (
     get_distinct_values,
 )
 from backend.schemas.product import ProductOut
+from core.db.models import Product
 
 NOW = datetime(2025, 1, 1, tzinfo=UTC)
 
@@ -203,23 +203,20 @@ def test_list_products_empty():
     assert data["products"] == []
 
 
-def test_list_products_invalid_page():
-    """page=0 should return 422 (FastAPI validation)."""
+@pytest.mark.parametrize(
+    "qs",
+    [
+        "page=0",
+        "per_page=101",
+    ],
+    ids=["page_zero", "per_page_too_large"],
+)
+def test_pagination_validation_rejected(qs):
+    """Invalid pagination params return 422."""
     session = _mock_db_for_products([], total=0)
-
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/products?page=0")
-    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-
-def test_list_products_per_page_too_large():
-    """per_page=101 should return 422."""
-    session = _mock_db_for_products([], total=0)
-
-    app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?per_page=101")
+    resp = client.get(f"/api/products?{qs}")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -281,16 +278,6 @@ def test_filter_by_category():
     assert resp.json()["total"] == 1
 
 
-def test_filter_by_multiple_categories():
-    """Multiple categories produce an IN clause."""
-    stmt = select(Product)
-    filtered = _apply_filters(stmt, category=["Vin mousseux", "Champagne"])
-    sql = _compile(filtered)
-    assert "IN" in sql
-    assert "Vin mousseux" in sql
-    assert "Champagne" in sql
-
-
 def test_filter_by_price_range():
     products = [_fake_product(sku="MID1", price=Decimal("25.00"))]
     session = _mock_db_for_products(products, total=1)
@@ -329,53 +316,23 @@ def test_filter_no_results():
     assert resp.json()["products"] == []
 
 
-def test_search_q_empty_string_rejected():
-    """Empty q= should be rejected (min_length=1)."""
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/products?q=",
+        "/api/products?min_price=-5",
+        f"/api/products?q={'x' * (MAX_SEARCH_LENGTH + 1)}",
+        f"/api/products?category={'x' * (MAX_FILTER_LENGTH + 1)}",
+        f"/api/products/{'x' * (MAX_SKU_LENGTH + 1)}",
+    ],
+    ids=["empty_q", "negative_price", "q_too_long", "category_too_long", "sku_too_long"],
+)
+def test_input_validation_rejected(path):
+    """Invalid filter/search inputs return 422."""
     session = _mock_db_for_products([], total=0)
-
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/products?q=")
-    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-
-def test_filter_negative_price_rejected():
-    """Negative price should be rejected (ge=0)."""
-    session = _mock_db_for_products([], total=0)
-
-    app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?min_price=-5")
-    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-
-def test_search_q_too_long_rejected():
-    """q exceeding max_length should be rejected."""
-    session = _mock_db_for_products([], total=0)
-
-    app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get(f"/api/products?q={'x' * (MAX_SEARCH_LENGTH + 1)}")
-    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-
-def test_filter_category_too_long_rejected():
-    """A category element exceeding max_length should be rejected."""
-    session = _mock_db_for_products([], total=0)
-
-    app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get(f"/api/products?category={'x' * (MAX_FILTER_LENGTH + 1)}")
-    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-
-def test_sku_too_long_rejected():
-    """SKU exceeding max_length should be rejected."""
-    session = _mock_db_for_detail(None)
-
-    app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get(f"/api/products/{'x' * (MAX_SKU_LENGTH + 1)}")
+    resp = client.get(path)
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -573,58 +530,16 @@ def test_sort_invalid_rejected():
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
-def test_sort_recent_query_order():
-    """sort=recent produces ORDER BY updated_at DESC in SQL."""
-    stmt = select(Product).order_by(Product.updated_at.desc()).offset(0).limit(20)
-    stmt = _apply_filters(stmt)
-    sql = _compile(stmt)
-    assert "updated_at DESC" in sql
-
-
-def test_sort_default_query_order():
-    """Without sort, products are ordered by name."""
-    stmt = select(Product).order_by(Product.name).offset(0).limit(20)
-    stmt = _apply_filters(stmt)
-    sql = _compile(stmt)
-    assert "ORDER BY products.name" in sql
-
-
-def test_sort_price_asc_returns_200():
-    """?sort=price_asc returns 200."""
-    products = [_fake_product(sku="CHEAP1")]
+@pytest.mark.parametrize("sort_value", ["price_asc", "price_desc"])
+def test_sort_by_price_returns_200(sort_value):
+    """Price sort options return 200."""
+    products = [_fake_product(sku="S1")]
     session = _mock_db_for_products(products, total=1)
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/products?sort=price_asc")
+    resp = client.get(f"/api/products?sort={sort_value}")
     assert resp.status_code == status.HTTP_200_OK
-
-
-def test_sort_price_desc_returns_200():
-    """?sort=price_desc returns 200."""
-    products = [_fake_product(sku="PRICEY1")]
-    session = _mock_db_for_products(products, total=1)
-
-    app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?sort=price_desc")
-    assert resp.status_code == status.HTTP_200_OK
-
-
-def test_sort_price_asc_query_order():
-    """sort=price_asc produces ORDER BY price ASC in SQL."""
-    stmt = select(Product).order_by(Product.price.asc()).offset(0).limit(20)
-    stmt = _apply_filters(stmt)
-    sql = _compile(stmt)
-    assert "price ASC" in sql
-
-
-def test_sort_price_desc_query_order():
-    """sort=price_desc produces ORDER BY price DESC in SQL."""
-    stmt = select(Product).order_by(Product.price.desc()).offset(0).limit(20)
-    stmt = _apply_filters(stmt)
-    sql = _compile(stmt)
-    assert "price DESC" in sql
 
 
 # ── Random endpoint ───────────────────────────────────────────
@@ -692,7 +607,9 @@ def test_wine_scope_adds_prefix_filters():
     assert "LIKE 'Champagne'" in sql
     assert "LIKE 'Porto'" in sql
     assert "LIKE 'Saké'" in sql
-    assert sql.count("OR") == 23  # 24 prefixes → 23 ORs
+    from backend.repositories.products import _WINE_PREFIXES
+
+    assert sql.count("OR") == len(_WINE_PREFIXES) - 1
 
 
 def test_wine_scope_inactive_by_default():
