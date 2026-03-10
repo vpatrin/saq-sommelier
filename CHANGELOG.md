@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bot access gate now checks user registration in database instead of env var allowlist (#358)
+
+### Changed
+
 - Improved recommendation diversity and relevance (grape-aware retrieval, accumulating reranker)
 - Non-wine graceful decline — asking for beer, spirits, etc. returns a bilingual "I'm a wine assistant" message instead of unrelated results
 - Availability filter — recommendations now exclude products not available online

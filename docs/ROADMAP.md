@@ -43,7 +43,7 @@ Prerequisite for web app and protecting expensive endpoints.
 - [x] JWT token middleware (#355)
 - [x] Guard all routes behind JWT except `/health` (#356)
 - [x] Invite code access gate — admin-only `/api/admin/invites` endpoint, `invite_codes` table (#357)
-- [ ] Migrate bot allowlist from .env to users table (#358)
+- [x] Migrate bot allowlist from .env to users table (#358)
 
 ### Phase 8 — Chat Endpoint
 
