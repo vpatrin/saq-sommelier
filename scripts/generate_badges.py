@@ -17,13 +17,13 @@ def get_coverage_percent(xml_path: Path) -> int | None:
 
 def badge_color(percent: int) -> str:
     """Return badge color based on coverage percentage."""
-    if percent >= 90:
+    if percent >= 85:
         return "#4c1"  # bright green
-    if percent >= 75:
+    if percent >= 80:
         return "#a3c51c"  # yellow-green
-    if percent >= 60:
+    if percent >= 65:
         return "#dfb317"  # yellow
-    if percent >= 40:
+    if percent >= 50:
         return "#fe7d37"  # orange
     return "#e05d44"  # red
 

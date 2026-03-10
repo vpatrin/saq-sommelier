@@ -8,8 +8,8 @@
   </mask>
   <g mask="url(#a)">
     <rect width="62.0" height="20" fill="#555"/>
-    <rect x="62.0" width="83.5" height="20" fill="#a3c51c"/>
-    <rect x="145.5" width="83.5" height="20" fill="#a3c51c"/>
+    <rect x="62.0" width="83.5" height="20" fill="#4c1"/>
+    <rect x="145.5" width="83.5" height="20" fill="#dfb317"/>
     <rect x="229.0" width="57.5" height="20" fill="#4c1"/>
     <rect width="286.5" height="20" fill="url(#b)"/>
   </g>
@@ -20,7 +20,7 @@
     <text x="103.75" y="14">backend 86%</text>
     <text x="187.25" y="15" fill="#010101" fill-opacity=".3">scraper 79%</text>
     <text x="187.25" y="14">scraper 79%</text>
-    <text x="257.75" y="15" fill="#010101" fill-opacity=".3">bot 92%</text>
-    <text x="257.75" y="14">bot 92%</text>
+    <text x="257.75" y="15" fill="#010101" fill-opacity=".3">bot 94%</text>
+    <text x="257.75" y="14">bot 94%</text>
   </g>
 </svg>
