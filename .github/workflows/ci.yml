@@ -11,7 +11,9 @@ concurrency:
 env:
   PYTHONDONTWRITEBYTECODE: 1
   POETRY_VIRTUALENVS_IN_PROJECT: "true"
+  PYTHON_VERSION: "3.12"
   POETRY_VERSION: "2.3.2"
+  TRIVY_SEVERITY: "LOW,MEDIUM,HIGH,CRITICAL"
 
 jobs:
   changes:
@@ -54,6 +56,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: backend
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
           install-args: --only dev
       - run: make lint-backend
@@ -68,6 +71,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: scraper
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
           install-args: --only dev
       - run: make lint-scraper
@@ -82,6 +86,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: core
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
           install-args: --only dev
       - run: make lint-core
@@ -96,6 +101,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: bot
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
           install-args: --only dev
       - run: make lint-bot
@@ -132,6 +138,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: backend
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make coverage-backend
 
@@ -145,6 +152,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: scraper
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make coverage-scraper
 
@@ -158,6 +166,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: bot
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make coverage-bot
 
@@ -173,6 +182,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: core
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make audit-core
 
@@ -186,6 +196,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: backend
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make audit-backend
 
@@ -199,6 +210,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: scraper
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make audit-scraper
 
@@ -212,6 +224,7 @@ jobs:
       - uses: ./.github/actions/setup-python-service
         with:
           service: bot
+          python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make audit-bot
 
@@ -226,7 +239,61 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # ── Docker build + Trivy ─────────────────────────────────────
+
+  build-backend:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/build-and-scan
+        with:
+          service: backend
+          trivy-severity: ${{ env.TRIVY_SEVERITY }}
+
+  build-scraper:
+    needs: [changes]
+    if: needs.changes.outputs.scraper == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/build-and-scan
+        with:
+          service: scraper
+          trivy-severity: ${{ env.TRIVY_SEVERITY }}
+
+  build-bot:
+    needs: [changes]
+    if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/build-and-scan
+        with:
+          service: bot
+          trivy-severity: ${{ env.TRIVY_SEVERITY }}
+
   # ── Summary gates ─────────────────────────────────────────────
+
+  build:
+    needs: [build-backend, build-scraper, build-bot]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+    steps:
+      - run: |
+          for result in \
+            "${{ needs.build-backend.result }}" \
+            "${{ needs.build-scraper.result }}" \
+            "${{ needs.build-bot.result }}"; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              exit 1
+            fi
+          done
 
   lint:
     needs: [lint-backend, lint-scraper, lint-core, lint-bot, lint-dockerfiles]
