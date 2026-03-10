@@ -1,0 +1,41 @@
+name: CD
+
+on:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_PREFIX: ghcr.io/vpatrin/saq-sommelier
+  TRIVY_SEVERITY: LOW,MEDIUM,HIGH,CRITICAL
+
+jobs:
+  # ── Build, scan, push ───────────────────────────────────────
+
+  build-scan-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [backend, bot, scraper]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ./.github/actions/build-and-scan
+        with:
+          service: ${{ matrix.service }}
+          trivy-severity: ${{ env.TRIVY_SEVERITY }}
+          push: "true"
+          tags: ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}:${{ github.ref_name }}
