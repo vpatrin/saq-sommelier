@@ -110,3 +110,44 @@ def test_auth_endpoint_is_public(unauthenticated_client):
     """422 — /api/auth/telegram is public (422 from missing body, not 401)."""
     resp = unauthenticated_client.post("/api/auth/telegram", json={})
     assert resp.status_code != status.HTTP_401_UNAUTHORIZED
+
+
+# ── /api/auth/telegram/check (bot-secret gated) ───────────
+
+
+@pytest.fixture()
+def _check_client():
+    """Client with global auth bypassed but bot_secret real."""
+    session = AsyncMock()
+    app.dependency_overrides[get_db] = lambda: session
+    yield TestClient(app), session
+    app.dependency_overrides.clear()
+
+
+def test_check_active_user_returns_204(_check_client):
+    client, _ = _check_client
+    with patch("backend.api.auth.users_repo") as mock_repo:
+        user = AsyncMock(is_active=True)
+        mock_repo.find_by_telegram_id = AsyncMock(return_value=user)
+        resp = client.get("/api/auth/telegram/check?telegram_id=12345")
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_check_unknown_user_returns_404(_check_client):
+    client, _ = _check_client
+    with patch("backend.api.auth.users_repo") as mock_repo:
+        mock_repo.find_by_telegram_id = AsyncMock(return_value=None)
+        resp = client.get("/api/auth/telegram/check?telegram_id=99999")
+
+    assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_check_inactive_user_returns_403(_check_client):
+    client, _ = _check_client
+    with patch("backend.api.auth.users_repo") as mock_repo:
+        user = AsyncMock(is_active=False)
+        mock_repo.find_by_telegram_id = AsyncMock(return_value=user)
+        resp = client.get("/api/auth/telegram/check?telegram_id=12345")
+
+    assert resp.status_code == status.HTTP_403_FORBIDDEN
