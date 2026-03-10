@@ -37,6 +37,7 @@ htmlcov/
 
 # Node (frontend)
 node_modules/
+dist/
 
 # Claude
 CLAUDE.md
@@ -46,6 +47,3 @@ CLAUDE.md
 # Eval results (generated, not versioned)
 backend/eval/results/
 !backend/eval/results/.gitkeep
-
-# Scraper HTML samples (local exploration only)
-*.html
