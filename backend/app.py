@@ -58,7 +58,7 @@ app = FastAPI(title="SAQ Sommelier", version="1.0.0", debug=settings.DEBUG, life
 app.add_middleware(
     CORSMiddleware,
     allow_origins=backend_settings.CORS_ORIGINS,
-    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
 )
 
