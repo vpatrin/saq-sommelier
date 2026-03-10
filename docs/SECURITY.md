@@ -100,16 +100,16 @@ Telegram user sends message
   → handler
 ```
 
-### Admin bootstrap (manual, one-time)
+### Admin bootstrap
 
-No automated bootstrap yet. First admin is created via direct SQL:
+Idempotent `make create-admin` command — creates or promotes the admin user from `ADMIN_TELEGRAM_ID` env var.
 
-```sql
-INSERT INTO users (telegram_id, first_name, role, is_active, created_at)
-VALUES (<your_telegram_id>, 'Name', 'admin', true, now());
+```bash
+# Bare metal (reads .env via Makefile)
+make create-admin
 ```
 
-Then the admin can generate invite codes via the API. Planned: idempotent `make bootstrap` CLI command.
+Safe to run on every deploy — no-ops if admin already exists with correct role.
 
 ---
 
@@ -212,7 +212,7 @@ No rate limiting on the login endpoint yet (tech debt — Telegram's HMAC makes 
 
 - **No JWT revocation** — can't invalidate a token before its 7-day expiry. Mitigated by `is_active` flag checked on every API call.
 - **No rate limit on login** — `POST /api/auth/telegram` is public. Low risk due to HMAC requirement.
-- **Manual admin bootstrap** — first admin must be `UPDATE`d in the database directly.
+- **Single admin** — only one admin supported via `ADMIN_TELEGRAM_ID`. Multi-admin would need a promotion endpoint.
 - **Docker secrets not adopted** — credentials live in `.env` on disk. Planned migration to Docker secrets.
 - **Bot auth cache** — up to 1 hour stale. A deactivated user can keep using the bot for up to 1 hour after deactivation.
 
