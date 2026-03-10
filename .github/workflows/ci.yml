@@ -226,7 +226,58 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # ── Docker build + Trivy ─────────────────────────────────────
+
+  build-backend:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/build-and-scan
+        with:
+          service: backend
+
+  build-scraper:
+    needs: [changes]
+    if: needs.changes.outputs.scraper == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/build-and-scan
+        with:
+          service: scraper
+
+  build-bot:
+    needs: [changes]
+    if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/build-and-scan
+        with:
+          service: bot
+
   # ── Summary gates ─────────────────────────────────────────────
+
+  build:
+    needs: [build-backend, build-scraper, build-bot]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+    steps:
+      - run: |
+          for result in \
+            "${{ needs.build-backend.result }}" \
+            "${{ needs.build-scraper.result }}" \
+            "${{ needs.build-bot.result }}"; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
+              exit 1
+            fi
+          done
 
   lint:
     needs: [lint-backend, lint-scraper, lint-core, lint-bot, lint-dockerfiles]
