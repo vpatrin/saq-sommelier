@@ -26,8 +26,10 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Copy installed Python packages from builder (includes core via poetry install)
+# Copy installed Python packages from builder
 COPY --from=builder /usr/local /usr/local
+# Strip build tools leaked from builder (not needed at runtime)
+RUN pip uninstall pip setuptools wheel poetry -y
 
 # Copy scraper code
 COPY scraper/scraper/ scraper/scraper/
