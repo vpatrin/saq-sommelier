@@ -46,23 +46,28 @@ Prerequisite for web app and protecting expensive endpoints.
 - [x] Migrate bot allowlist from .env to users table (#358)
 - [x] Admin bootstrap + user management — `make create-admin`, startup guard, list/deactivate endpoints
 
-### Phase 8 — Chat Endpoint
+### Phase 8 — React Frontend (shell)
+
+Web app ships before chat — auth, watches, and stores are already API-complete.
+
+- [ ] Scaffold + auth + Compose — Vite + React + Tailwind, Telegram OAuth login (invite code → Login Widget → JWT), Dockerfile, Caddy routing
+- [ ] Watch dashboard — watch list, availability status, add/remove
+- [ ] Store picker — map or list view, add/remove preferred stores (replaces bot `/mystores`)
+- [ ] "Enable Telegram alerts" onboarding — QR code / deep link to link web user to bot
+
+### Phase 9 — Chat Endpoint
 
 Wraps existing Haiku RAG pipeline for web consumption. No new AI architecture.
 
 - [ ] Single-turn `/chat` endpoint — thin wrapper around recommendations service
 - [ ] Chat session model + multi-turn — `chat_sessions` table, conversation history as pipeline context, sliding window
-- [ ] SSE streaming — `text/event-stream` for progressive response display (after frontend exists)
+- [ ] SSE streaming — `text/event-stream` for progressive response display
 
-### Phase 9 — React Frontend
+### Phase 9b — Chat Interface
 
-- [ ] Scaffold + auth + Compose — Vite + React + Tailwind, Telegram OAuth login (invite code → Login Widget → JWT), Dockerfile, Caddy routing
-- [ ] Chat interface — message input, response display, conversation history
-- [ ] Watch dashboard — watch list, availability status, add/remove
-- [ ] Store picker — map or list view, add/remove preferred stores (replaces bot `/mystores`)
-- [ ] "Enable Telegram alerts" onboarding — QR code / deep link to link web user to bot
+- [ ] Chat UI — message input, response display, SSE streaming, conversation history
 
-### Phase 10 — MCP Server / Sonnet + Tools (standalone, optional)
+### Phase 10 — MCP Server / Sonnet + Tools (optional)
 
 Upgrade path from Haiku RAG to Claude with direct tool access. Either as MCP server (developer tooling) or Sonnet + tool use in `/chat` (product feature) — same architecture, different transport.
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Systemd timers use prod Docker Compose override so scraper/availability run from GHCR images instead of attempting local builds
+
 ## [1.3.1] - 2026-03-10
 
 ### Fixed

@@ -10,6 +10,9 @@ set -a; source .env; set +a
 export IMAGE_TAG="${1:?Usage: ./deploy/deploy.sh <tag>}"
 echo "==> Deploying $IMAGE_TAG"
 
+# Persist IMAGE_TAG so systemd timers (scraper, availability) use the deployed version
+echo "IMAGE_TAG=$IMAGE_TAG" > .image-tag
+
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml)
 
 echo "==> Env diff (.env.example vs .env):"

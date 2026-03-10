@@ -21,6 +21,7 @@ htmlcov/
 # Environment & secrets
 .env
 .envrc
+.image-tag
 
 # Logs
 *.log

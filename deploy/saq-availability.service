@@ -6,4 +6,5 @@ After=docker.service
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/saq-sommelier
-ExecStart=/usr/bin/docker compose run --rm scraper python -m scraper availability
+EnvironmentFile=/opt/saq-sommelier/.image-tag
+ExecStart=/usr/bin/docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm scraper python -m scraper availability
