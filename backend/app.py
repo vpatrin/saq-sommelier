@@ -7,13 +7,14 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
+from backend.api.admin import router as admin_router
 from backend.api.auth import router as auth_router
 from backend.api.health import router as health_router
 from backend.api.products import router as products_router
 from backend.api.recommendations import router as recommendations_router
 from backend.api.stores import stores_router, users_router
 from backend.api.watches import router as watches_router
-from backend.auth import get_current_active_user
+from backend.auth import get_current_active_user, verify_admin
 from backend.config import SERVICE_NAME, backend_settings
 from backend.db import engine, verify_db_connection
 from backend.errors import register_exception_handlers
@@ -56,3 +57,4 @@ app.include_router(stores_router, prefix="/api", dependencies=_auth)
 app.include_router(users_router, prefix="/api", dependencies=_auth)
 app.include_router(watches_router, prefix="/api", dependencies=_auth)
 app.include_router(recommendations_router, prefix="/api", dependencies=_auth)
+app.include_router(admin_router, prefix="/api", dependencies=[Depends(verify_admin)])

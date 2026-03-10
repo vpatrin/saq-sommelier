@@ -61,6 +61,41 @@ class User(Base):
         return f"<User(id={self.id!r}, telegram_id={self.telegram_id!r}, role={self.role!r})>"
 
 
+class InviteCode(Base):
+    """Single-use invite code for gating access during closed beta."""
+
+    __tablename__ = "invite_codes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    code = Column(String(32), unique=True, nullable=False, index=True, comment="Invite code string")
+    created_by_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        comment="Admin who generated this code",
+    )
+    used_by_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+        comment="User who redeemed this code (NULL = unused)",
+    )
+    used_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When the code was redeemed",
+    )
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="When the code was generated",
+    )
+
+    def __repr__(self) -> str:
+        return f"<InviteCode(id={self.id!r}, code={self.code!r})>"
+
+
 class Store(Base):
     """SAQ physical store location.
 

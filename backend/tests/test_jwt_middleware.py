@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from backend.app import app
 from backend.auth import get_current_active_user
+from backend.config import ROLE_USER
 from backend.db import get_db
 
 JWT_SECRET = "test-jwt-secret-key-for-unit-tests-32b"
@@ -17,7 +18,7 @@ JWT_SECRET = "test-jwt-secret-key-for-unit-tests-32b"
 def _make_token(
     user_id: int = 1,
     telegram_id: int = 12345,
-    role: str = "user",
+    role: str = ROLE_USER,
     expired: bool = False,
 ) -> str:
     now = datetime.now(UTC)
@@ -36,7 +37,7 @@ def _mock_user(user_id: int = 1, is_active: bool = True) -> MagicMock:
     user = MagicMock(spec=User)
     user.id = user_id
     user.telegram_id = 12345
-    user.role = "user"
+    user.role = ROLE_USER
     user.is_active = is_active
     return user
 

@@ -8,13 +8,14 @@ configure_test_db_env()
 
 from backend.app import app  # noqa: E402
 from backend.auth import get_current_active_user  # noqa: E402
+from backend.config import ROLE_USER  # noqa: E402
 
 
 def _mock_authenticated_user() -> MagicMock:
     user = MagicMock(spec=User)
     user.id = 1
     user.telegram_id = 12345
-    user.role = "user"
+    user.role = ROLE_USER
     user.is_active = True
     return user
 

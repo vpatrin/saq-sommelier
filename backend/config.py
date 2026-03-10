@@ -17,6 +17,9 @@ MAX_SAQ_STORE_ID_LENGTH = 20
 
 DEFAULT_RECOMMENDATION_LIMIT = 5
 
+ROLE_USER = "user"
+ROLE_ADMIN = "admin"
+
 
 class BackendSettings(BaseSettings):
     """Backend-specific configuration (CORS, auth, etc.)."""
