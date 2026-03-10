@@ -9,12 +9,12 @@ Designed as a **modular monolith** for a solo developer serving ~20 users. Servi
 ## System diagram
 
 ```
-                          ┌─────────────────────┐
-                          │      CLIENTS         │
-                          │                      │
-                          │  Telegram Bot          │
-                          │  React Dashboard (P8)  │
-                          └──────────┬───────────┘
+                          ┌────────────────────────┐
+                          │        CLIENTS         │
+                          │                        │
+                          │  Telegram Bot           │
+                          │  React Dashboard (P8)   │
+                          └───────────┬────────────┘
                                      │
                                 HTTPS (Caddy)
                                      │
