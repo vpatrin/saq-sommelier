@@ -5,7 +5,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from backend.app import app
-from backend.auth import get_current_active_user
+from backend.auth import get_current_active_user, verify_auth
 from backend.db import get_db
 
 SECRET = "test-secret-abc123"
@@ -16,27 +16,37 @@ def unauthenticated_client():
     """Client with JWT bypass removed — requests have no auth."""
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session
+    app.dependency_overrides.pop(verify_auth, None)
     app.dependency_overrides.pop(get_current_active_user, None)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
 
-def test_missing_secret_returns_403():
-    """403 — X-Bot-Secret header absent when BOT_SECRET is configured."""
+@pytest.fixture()
+def _real_auth_client():
+    """Client with auth bypass removed — real verify_auth runs."""
+    app.dependency_overrides.pop(verify_auth, None)
+    session = AsyncMock()
+    app.dependency_overrides[get_db] = lambda: session
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+def test_missing_secret_returns_401(_real_auth_client):
+    """401 — no auth header and no bot secret when BOT_SECRET is configured."""
     with patch("backend.auth.backend_settings") as mock_settings:
         mock_settings.BOT_SECRET = SECRET
-        client = TestClient(app)
-        resp = client.get("/api/watches/notifications")
+        mock_settings.JWT_SECRET_KEY = "unused"
+        resp = _real_auth_client.get("/api/watches/notifications")
 
-    assert resp.status_code == status.HTTP_403_FORBIDDEN
+    assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_wrong_secret_returns_403():
+def test_wrong_secret_returns_403(_real_auth_client):
     """403 — X-Bot-Secret header present but incorrect."""
     with patch("backend.auth.backend_settings") as mock_settings:
         mock_settings.BOT_SECRET = SECRET
-        client = TestClient(app)
-        resp = client.get(
+        resp = _real_auth_client.get(
             "/api/watches/notifications",
             headers={"X-Bot-Secret": "wrong-value"},
         )
@@ -44,7 +54,7 @@ def test_wrong_secret_returns_403():
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_correct_secret_passes():
+def test_correct_secret_passes(_real_auth_client):
     """200 — correct X-Bot-Secret header is accepted."""
     with (
         patch("backend.auth.backend_settings") as mock_settings,
@@ -52,10 +62,7 @@ def test_correct_secret_passes():
     ):
         mock_settings.BOT_SECRET = SECRET
         mock_repo.find_pending_notifications = AsyncMock(return_value=[])
-        session = AsyncMock()
-        app.dependency_overrides[get_db] = lambda: session
-        client = TestClient(app)
-        resp = client.get(
+        resp = _real_auth_client.get(
             "/api/watches/notifications",
             headers={"X-Bot-Secret": SECRET},
         )
@@ -63,20 +70,15 @@ def test_correct_secret_passes():
     assert resp.status_code == status.HTTP_200_OK
 
 
-def test_unconfigured_secret_allows_all():
-    """200 — when BOT_SECRET is empty (dev default), no header required."""
-    with (
-        patch("backend.auth.backend_settings") as mock_settings,
-        patch("backend.services.watches.repo") as mock_repo,
-    ):
+def test_unconfigured_secret_falls_through_to_jwt(_real_auth_client):
+    """401 — no bot secret configured and no JWT → rejected."""
+    with patch("backend.auth.backend_settings") as mock_settings:
         mock_settings.BOT_SECRET = ""
-        mock_repo.find_pending_notifications = AsyncMock(return_value=[])
-        session = AsyncMock()
-        app.dependency_overrides[get_db] = lambda: session
-        client = TestClient(app)
-        resp = client.get("/api/watches/notifications")
+        mock_settings.JWT_SECRET_KEY = "unused"
+        resp = _real_auth_client.get("/api/watches/notifications")
 
-    assert resp.status_code == status.HTTP_200_OK
+    # No bot secret configured AND no JWT → 401
+    assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 # ── Route guard: JWT required on protected routes ────────────

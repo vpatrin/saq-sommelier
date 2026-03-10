@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Explicit availability filters on recommendations — `available_online` and `in_store` on request body, decoupled from intent parsing (#345)
 - Telegram Login Widget authentication — `POST /api/auth/telegram` verifies HMAC, upserts user, returns JWT (#353)
 - JWT route guards — all API routes require authentication except `/health` and `/api/auth` (#356)
+
+### Fixed
+
+- Bot blocked by JWT route guards — unified auth accepts either JWT or bot secret (#371)
 - Invite code access gate — admin CRUD for invite codes, new users must present a valid code at Telegram login (#357)
 
 ### Changed
