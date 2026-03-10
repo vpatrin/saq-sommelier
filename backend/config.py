@@ -54,5 +54,8 @@ class BackendSettings(BaseSettings):
     # Override in production .env: CORS_ORIGINS=["https://wine.victorpatrin.dev"]
     CORS_ORIGINS: list[str] = ["http://localhost:5173"]
 
+    # Telegram ID of the admin user — verified at startup.
+    ADMIN_TELEGRAM_ID: int = 0
+
 
 backend_settings = BackendSettings()

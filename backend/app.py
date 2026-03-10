@@ -16,8 +16,9 @@ from backend.api.stores import stores_router, users_router
 from backend.api.watches import router as watches_router
 from backend.auth import verify_admin, verify_auth
 from backend.config import SERVICE_NAME, backend_settings
-from backend.db import engine, verify_db_connection
+from backend.db import engine, get_db, verify_db_connection
 from backend.errors import register_exception_handlers
+from backend.repositories import users as users_repo
 
 setup_logging(SERVICE_NAME, level=settings.LOG_LEVEL)
 
@@ -35,6 +36,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             raise RuntimeError("TELEGRAM_BOT_TOKEN must be set in production")
     await verify_db_connection()
     logger.info("Database connection verified")
+
+    if not backend_settings.ADMIN_TELEGRAM_ID:
+        raise RuntimeError("ADMIN_TELEGRAM_ID must be set. Run: make create-admin")
+    async for db in get_db():
+        admin = await users_repo.find_active_admin(db, backend_settings.ADMIN_TELEGRAM_ID)
+    if not admin:
+        raise RuntimeError(
+            f"No active admin with telegram_id={backend_settings.ADMIN_TELEGRAM_ID}. "
+            "Run: make create-admin"
+        )
+    logger.info("Admin user verified")
+
     yield  # When uvicorn shuts down, it runs the code after yield
     await engine.dispose()
     logger.info("Database engine disposed")
@@ -45,7 +58,7 @@ app = FastAPI(title="SAQ Sommelier", version="1.0.0", debug=settings.DEBUG, life
 app.add_middleware(
     CORSMiddleware,
     allow_origins=backend_settings.CORS_ORIGINS,
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
 )
 
