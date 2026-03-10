@@ -4,7 +4,7 @@ ARG POETRY_VERSION=2.3.2
 RUN pip install --no-cache-dir poetry==${POETRY_VERSION}
 WORKDIR /build
 
-# Copy core package (path dependency of scraper)
+# Copy core package (path dependency)
 COPY core/ core/
 
 # Copy scraper dependency files + install into a virtualenv
