@@ -4,7 +4,7 @@
 -include .env
 export
 
-.PHONY: install dev-backend dev-bot dev-scraper availability-check enrich-wines embed-sync scrape-stores migrate revision reset-db lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit build-backend build-scraper build-bot build run run-db run-scraper down clean eval
+.PHONY: install dev-backend dev-bot dev-scraper availability-check enrich-wines embed-sync scrape-stores migrate revision reset-db create-admin lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit build-backend build-scraper build-bot build run run-db run-scraper down clean eval
 
 install:
 	git config core.hooksPath .githooks
@@ -49,6 +49,9 @@ revision:
 
 reset-db:
 	cd core && poetry run alembic downgrade base && poetry run alembic upgrade head
+
+create-admin:
+	python scripts/create_admin.py
 
 # Lint
 lint-backend:

@@ -3,6 +3,9 @@ set -euo pipefail # Standard bash strict mode
 
 cd "$(dirname "$0")/.." # Works regardless of where you run the script from
 
+# Load .env so $DB_USER, $DB_NAME, $ADMIN_TELEGRAM_ID etc. are available
+set -a; source .env; set +a
+
 # Usage: ./deploy/deploy.sh v1.3.0
 export IMAGE_TAG="${1:?Usage: ./deploy/deploy.sh <tag>}"
 echo "==> Deploying $IMAGE_TAG"
@@ -20,6 +23,12 @@ echo "==> Pre-deploy database backup..."
 
 echo "==> Running migrations..."
 "${COMPOSE[@]}" run --rm migrate
+
+echo "==> Bootstrapping admin user..."
+docker exec "$DB_HOST" psql -U "$DB_USER" -d "$DB_NAME" -c \
+  "INSERT INTO users (telegram_id, first_name, role, is_active, created_at)
+   VALUES ($ADMIN_TELEGRAM_ID, 'Admin', 'admin', true, now())
+   ON CONFLICT (telegram_id) DO UPDATE SET role = 'admin', is_active = true;"
 
 echo "==> Restarting services..."
 "${COMPOSE[@]}" up -d backend bot
