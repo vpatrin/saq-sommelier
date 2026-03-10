@@ -44,7 +44,7 @@ from bot.handlers.recommend import recommend_command
 from bot.handlers.start import help_command, start
 from bot.handlers.url_paste import url_paste_handler, watch_confirm_callback, watch_skip_callback
 from bot.handlers.watch import alerts_command, unwatch_command, watch_command, watch_remove_callback
-from bot.middleware import allowlist_gate, rate_limit_gate
+from bot.middleware import access_gate, rate_limit_gate
 
 
 async def _post_init(application: Application) -> None:
@@ -83,7 +83,7 @@ def create_app() -> Application:
     )
     app.add_error_handler(_error_handler)
     # Middlewares — runs before all command handlers, in group order
-    app.add_handler(TypeHandler(Update, allowlist_gate), group=-2)
+    app.add_handler(TypeHandler(Update, access_gate), group=-2)
     app.add_handler(TypeHandler(Update, rate_limit_gate), group=-1)
     # Command handlers (group=0, default)
     app.add_handler(CommandHandler(CMD_START, start))
