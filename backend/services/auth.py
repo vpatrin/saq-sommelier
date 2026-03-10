@@ -8,6 +8,7 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import backend_settings
+from backend.exceptions import ForbiddenError, InvalidCredentialsError
 from backend.repositories import users as users_repo
 from backend.schemas.auth import TelegramLoginIn, TokenOut
 
@@ -51,16 +52,16 @@ def _create_jwt(user_id: int, telegram_id: int, role: str) -> str:
 async def authenticate_telegram(db: AsyncSession, data: TelegramLoginIn) -> TokenOut:
     """Verify Telegram OAuth, upsert user, return JWT."""
     if time.time() - data.auth_date > _TELEGRAM_AUTH_MAX_AGE_SECONDS:
-        raise ValueError("Telegram authentication data has expired")
+        raise InvalidCredentialsError("Telegram authentication data has expired")
 
     if not _verify_telegram_hash(data, backend_settings.TELEGRAM_BOT_TOKEN):
-        raise ValueError("Invalid Telegram authentication hash")
+        raise InvalidCredentialsError("Invalid Telegram authentication hash")
 
-    # Upsert user
+    existing = await users_repo.find_by_telegram_id(db, data.id)
+    if existing and not existing.is_active:
+        raise ForbiddenError("Account is deactivated")
+
     user = await users_repo.upsert(db, data.id, data.first_name, data.username)
-
-    if not user.is_active:
-        raise PermissionError("Account is deactivated")
 
     logger.info("Telegram auth: telegram_id={} user_id={}", data.id, user.id)
 
