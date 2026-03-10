@@ -43,7 +43,10 @@ def _mock_user(user_id: int = 1, is_active: bool = True) -> MagicMock:
 
 @pytest.fixture()
 def protected_client():
-    """Client with a test route protected by get_current_active_user."""
+    """Client with a test route protected by get_current_active_user.
+
+    Removes the conftest JWT bypass so real auth logic runs.
+    """
 
     @app.get("/test/protected")
     async def protected_route(user: User = Depends(get_current_active_user)):
@@ -51,6 +54,7 @@ def protected_client():
 
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session
+    app.dependency_overrides.pop(get_current_active_user, None)
     yield TestClient(app)
     app.dependency_overrides.clear()
     # Clean up test route

@@ -1,12 +1,24 @@
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from backend.app import app
+from backend.auth import get_current_active_user
 from backend.db import get_db
 
 SECRET = "test-secret-abc123"
+
+
+@pytest.fixture()
+def unauthenticated_client():
+    """Client with JWT bypass removed — requests have no auth."""
+    session = AsyncMock()
+    app.dependency_overrides[get_db] = lambda: session
+    app.dependency_overrides.pop(get_current_active_user, None)
+    yield TestClient(app)
+    app.dependency_overrides.clear()
 
 
 def test_missing_secret_returns_403():
@@ -65,3 +77,34 @@ def test_unconfigured_secret_allows_all():
         resp = client.get("/api/watches/notifications")
 
     assert resp.status_code == status.HTTP_200_OK
+
+
+# ── Route guard: JWT required on protected routes ────────────
+
+
+@pytest.mark.parametrize(
+    "method,path",
+    [
+        ("GET", "/api/products"),
+        ("GET", "/api/stores/nearby?lat=45.5&lng=-73.6"),
+        ("GET", "/api/watches?user_id=tg:1"),
+        ("POST", "/api/recommendations"),
+    ],
+)
+def test_protected_routes_reject_unauthenticated(unauthenticated_client, method, path):
+    """401 — protected routes require a valid JWT."""
+    resp = unauthenticated_client.request(method, path)
+    assert resp.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def test_health_is_public(unauthenticated_client):
+    """200 — /health does not require JWT."""
+    resp = unauthenticated_client.get("/health")
+    # May fail DB check, but should not be 401
+    assert resp.status_code != status.HTTP_401_UNAUTHORIZED
+
+
+def test_auth_endpoint_is_public(unauthenticated_client):
+    """422 — /api/auth/telegram is public (422 from missing body, not 401)."""
+    resp = unauthenticated_client.post("/api/auth/telegram", json={})
+    assert resp.status_code != status.HTTP_401_UNAUTHORIZED

@@ -1,11 +1,22 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from core.config.test_utils import configure_test_db_env
+from core.db.models import User
 
 configure_test_db_env()
 
 from backend.app import app  # noqa: E402
+from backend.auth import get_current_active_user  # noqa: E402
+
+
+def _mock_authenticated_user() -> MagicMock:
+    user = MagicMock(spec=User)
+    user.id = 1
+    user.telegram_id = 12345
+    user.role = "user"
+    user.is_active = True
+    return user
 
 
 @pytest.fixture(autouse=True)
@@ -22,3 +33,10 @@ def _disable_bot_secret():
     with patch("backend.auth.backend_settings") as mock:
         mock.BOT_SECRET = ""
         yield
+
+
+@pytest.fixture(autouse=True)
+def _bypass_jwt_auth():
+    """Bypass JWT auth by default — tests that need real auth override this."""
+    app.dependency_overrides[get_current_active_user] = _mock_authenticated_user
+    yield
