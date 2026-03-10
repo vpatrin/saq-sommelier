@@ -4,7 +4,7 @@ from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.config import backend_settings
+from backend.config import ROLE_ADMIN, backend_settings
 from backend.db import get_db
 from backend.exceptions import ForbiddenError, InvalidCredentialsError
 from backend.repositories import users as users_repo
@@ -52,4 +52,11 @@ async def get_current_active_user(user: User = Depends(get_current_user)) -> Use
     """Require that the authenticated user is active."""
     if not user.is_active:
         raise ForbiddenError("Account is deactivated")
+    return user
+
+
+async def verify_admin(user: User = Depends(get_current_active_user)) -> User:
+    """Require that the authenticated user has the admin role."""
+    if user.role != ROLE_ADMIN:
+        raise ForbiddenError("Admin access required")
     return user
