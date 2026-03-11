@@ -7,7 +7,9 @@ export interface ProductOut {
   country: string | null
   size: string | null
   price: string | null // Decimal serialized as string
+  url: string | null
   online_availability: boolean | null
+  store_availability: string[] | null
   rating: number | null
   review_count: number | null
   region: string | null

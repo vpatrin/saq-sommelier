@@ -43,6 +43,8 @@ def _fake_product(
     p.alcohol = "13.5%"
     p.sugar = None
     p.producer = producer
+    p.url = "https://www.saq.com/fr/123456"
+    p.store_availability = ["23002", "23004"]
     p.vintage = "2020"
     p.taste_tag = taste_tag
     p.created_at = "2026-01-01T00:00:00Z"

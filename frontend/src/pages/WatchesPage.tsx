@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
-import type { WatchWithProduct } from '@/lib/types'
+import type { WatchWithProduct, UserStorePreferenceOut } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 
 function WatchesPage() {
@@ -12,19 +12,28 @@ function WatchesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [removing, setRemoving] = useState<string | null>(null)
+  const [storeNames, setStoreNames] = useState<Map<string, string>>(new Map())
+  const [expandedStores, setExpandedStores] = useState<Set<string>>(new Set())
 
   const userId = `tg:${user?.telegram_id}`
 
+  // Fetch watches and saved store preferences in parallel
   useEffect(() => {
     let cancelled = false
 
-    async function fetchWatches() {
+    async function fetchData() {
       try {
-        const data = await apiClient<WatchWithProduct[]>(
-          `/watches?user_id=${encodeURIComponent(userId)}`
-        )
+        const [watchData, prefs] = await Promise.all([
+          apiClient<WatchWithProduct[]>(
+            `/watches?user_id=${encodeURIComponent(userId)}`
+          ),
+          apiClient<UserStorePreferenceOut[]>('/stores/preferences'),
+        ])
         if (!cancelled) {
-          setWatches(data)
+          setWatches(watchData)
+          setStoreNames(
+            new Map(prefs.map((p) => [p.saq_store_id, p.store.name]))
+          )
           setError(null)
         }
       } catch (err) {
@@ -36,7 +45,7 @@ function WatchesPage() {
       }
     }
 
-    fetchWatches()
+    fetchData()
 
     return () => {
       cancelled = true
@@ -93,25 +102,108 @@ function WatchesPage() {
                   {product ? (
                     <>
                       <p className="font-mono font-bold truncate">
-                        {product.name}
+                        {product.url ? (
+                          <a
+                            href={product.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-primary"
+                          >
+                            {product.name}
+                          </a>
+                        ) : (
+                          product.name
+                        )}
                       </p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                        {product.price && <span>${product.price}</span>}
-                        {product.country && <span>{product.country}</span>}
-                        {product.vintage && <span>{product.vintage}</span>}
-                        {product.grape && <span>{product.grape}</span>}
-                      </div>
-                      {product.online_availability !== null && (
-                        <p className="text-sm mt-1">
-                          {product.online_availability ? (
-                            <span className="text-green-500">Available online</span>
-                          ) : (
-                            <span className="text-muted-foreground">
-                              Not available online
-                            </span>
-                          )}
-                        </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {(() => {
+                          // Deduplicate region like "Bourgogne, Bourgogne" → "Bourgogne"
+                          const region = product.region
+                            ? [...new Set(product.region.split(', '))].join(', ')
+                            : null
+                          const origin =
+                            region && product.country && region !== product.country
+                              ? `${region}, ${product.country}`
+                              : region || product.country
+                          return [product.grape, origin, product.vintage]
+                            .filter(Boolean)
+                            .join(' · ')
+                        })()}
+                      </p>
+                      {product.price && (
+                        <p className="text-sm mt-1">${product.price}</p>
                       )}
+                      {(() => {
+                        const storeAvail = product.store_availability ?? []
+                        const matchingIds = storeAvail.filter((id) => storeNames.has(id))
+                        const hasSavedStores = storeNames.size > 0
+                        const isOnline = product.online_availability === true
+                        const inStore = matchingIds.length > 0
+                        const isExpanded = expandedStores.has(watch.sku)
+
+                        const storeText =
+                          matchingIds.length === 1
+                            ? `At ${storeNames.get(matchingIds[0])}`
+                            : `In ${matchingIds.length} of your stores`
+
+                        const toggleExpand = () =>
+                          setExpandedStores((prev) => {
+                            const next = new Set(prev)
+                            if (next.has(watch.sku)) {
+                              next.delete(watch.sku)
+                            } else {
+                              next.add(watch.sku)
+                            }
+                            return next
+                          })
+
+                        const canExpand = inStore && matchingIds.length > 1
+
+                        const storeNode = hasSavedStores && inStore ? (
+                          canExpand ? (
+                            <button
+                              type="button"
+                              className="text-green-500 hover:underline underline-offset-4 cursor-pointer"
+                              onClick={toggleExpand}
+                            >
+                              {storeText}
+                            </button>
+                          ) : (
+                            <span className="text-green-500">{storeText}</span>
+                          )
+                        ) : null
+
+                        const unavailable = !isOnline && !inStore
+
+                        return (
+                          <div className="flex flex-col gap-1 text-sm mt-1">
+                            <div className="flex flex-wrap gap-x-1 gap-y-1">
+                              {unavailable && hasSavedStores ? (
+                                <span className="text-muted-foreground">
+                                  Unavailable — you'll be notified
+                                </span>
+                              ) : (
+                                <>
+                                  {isOnline && (
+                                    <span className="text-green-500">Available online</span>
+                                  )}
+                                  {isOnline && storeNode && (
+                                    <span className="text-muted-foreground">·</span>
+                                  )}
+                                  {storeNode}
+                                </>
+                              )}
+                            </div>
+                            {isExpanded && canExpand && (
+                              <ul className="text-muted-foreground text-xs ml-1">
+                                {matchingIds.map((id) => (
+                                  <li key={id}>{storeNames.get(id)}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </>
                   ) : (
                     <p className="text-muted-foreground font-mono">

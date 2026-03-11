@@ -14,7 +14,9 @@ class ProductOut(BaseModel):
     country: str | None
     size: str | None
     price: Decimal | None = Field(examples=[24.95])  # For the Swagger example
+    url: str | None = None
     online_availability: bool | None
+    store_availability: list[str] | None = None
     rating: float | None
     review_count: int | None
     region: str | None

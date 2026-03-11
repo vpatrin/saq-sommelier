@@ -127,7 +127,7 @@ def test_get_product_excludes_sensitive_fields():
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
     resp = client.get("/api/products/test")
-    for field in ("description", "url", "image"):
+    for field in ("description", "image"):
         assert field not in resp.json(), f"{field} should not be exposed in API"
 
 
@@ -246,7 +246,7 @@ def test_list_products_excludes_sensitive_fields():
     resp = client.get("/api/products")
     product = resp.json()["products"][0]
     # ! We decided to exclude SAQ proprietary data
-    for field in ("description", "url", "image"):
+    for field in ("description", "image"):
         assert field not in product, f"{field} should not be exposed in API"
 
 
