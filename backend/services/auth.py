@@ -37,9 +37,7 @@ def _verify_telegram_hash(data: TelegramLoginIn, bot_token: str) -> bool:
     return hmac.compare_digest(computed, data.hash)
 
 
-def _create_jwt(
-    user_id: int, telegram_id: int, role: str, first_name: str
-) -> str:
+def _create_jwt(user_id: int, telegram_id: int, role: str, first_name: str) -> str:
     now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),
