@@ -1,8 +1,92 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
-import type { WatchWithProduct, UserStorePreferenceOut } from '@/lib/types'
+import type { ProductOut, WatchWithProduct, UserStorePreferenceOut } from '@/lib/types'
 import { Button } from '@/components/ui/button'
+
+/** Deduplicate "Bourgogne, Bourgogne" → "Bourgogne", then combine with country. */
+function formatOrigin(product: ProductOut): string {
+  const region = product.region
+    ? [...new Set(product.region.split(', '))].join(', ')
+    : null
+  if (region && product.country && region !== product.country) {
+    return `${region}, ${product.country}`
+  }
+  return region || product.country || ''
+}
+
+function AvailabilityStatus({
+  product,
+  sku,
+  storeNames,
+  expandedStores,
+  onToggleExpand,
+}: {
+  product: ProductOut
+  sku: string
+  storeNames: Map<string, string>
+  expandedStores: Set<string>
+  onToggleExpand: (sku: string) => void
+}) {
+  const storeAvail = product.store_availability ?? []
+  const matchingIds = storeAvail.filter((id) => storeNames.has(id))
+  const hasSavedStores = storeNames.size > 0
+  const isOnline = product.online_availability === true
+  const inStore = matchingIds.length > 0
+  const isExpanded = expandedStores.has(sku)
+  const canExpand = inStore && matchingIds.length > 1
+
+  const storeText =
+    matchingIds.length === 1
+      ? `At ${storeNames.get(matchingIds[0])}`
+      : `In ${matchingIds.length} of your stores`
+
+  const storeNode =
+    hasSavedStores && inStore ? (
+      canExpand ? (
+        <button
+          type="button"
+          className="text-green-500 hover:underline underline-offset-4 cursor-pointer"
+          onClick={() => onToggleExpand(sku)}
+        >
+          {storeText}
+        </button>
+      ) : (
+        <span className="text-green-500">{storeText}</span>
+      )
+    ) : null
+
+  const unavailable = !isOnline && !inStore
+
+  return (
+    <div className="flex flex-col gap-1 text-sm mt-1">
+      <div className="flex flex-wrap gap-x-1 gap-y-1">
+        {unavailable && hasSavedStores ? (
+          <span className="text-muted-foreground">
+            Unavailable — you'll be notified
+          </span>
+        ) : (
+          <>
+            {isOnline && (
+              <span className="text-green-500">Available online</span>
+            )}
+            {isOnline && storeNode && (
+              <span className="text-muted-foreground">·</span>
+            )}
+            {storeNode}
+          </>
+        )}
+      </div>
+      {isExpanded && canExpand && (
+        <ul className="text-muted-foreground text-xs ml-1">
+          {matchingIds.map((id) => (
+            <li key={id}>{storeNames.get(id)}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 function WatchesPage() {
   const { user } = useAuth()
@@ -17,23 +101,16 @@ function WatchesPage() {
 
   const userId = `tg:${user?.telegram_id}`
 
-  // Fetch watches and saved store preferences in parallel
   useEffect(() => {
     let cancelled = false
 
-    async function fetchData() {
+    async function fetchWatches() {
       try {
-        const [watchData, prefs] = await Promise.all([
-          apiClient<WatchWithProduct[]>(
-            `/watches?user_id=${encodeURIComponent(userId)}`
-          ),
-          apiClient<UserStorePreferenceOut[]>('/stores/preferences'),
-        ])
+        const data = await apiClient<WatchWithProduct[]>(
+          `/watches?user_id=${encodeURIComponent(userId)}`
+        )
         if (!cancelled) {
-          setWatches(watchData)
-          setStoreNames(
-            new Map(prefs.map((p) => [p.saq_store_id, p.store.name]))
-          )
+          setWatches(data)
           setError(null)
         }
       } catch (err) {
@@ -45,7 +122,20 @@ function WatchesPage() {
       }
     }
 
-    fetchData()
+    // Non-blocking — store prefs failing shouldn't block the watch list
+    async function fetchStorePrefs() {
+      try {
+        const prefs = await apiClient<UserStorePreferenceOut[]>('/stores/preferences')
+        if (!cancelled) {
+          setStoreNames(new Map(prefs.map((p) => [p.saq_store_id, p.store.name])))
+        }
+      } catch {
+        // Supplementary data — silently degrade to no store matching
+      }
+    }
+
+    fetchWatches()
+    fetchStorePrefs()
 
     return () => {
       cancelled = true
@@ -69,6 +159,18 @@ function WatchesPage() {
     },
     [apiClient, userId]
   )
+
+  const handleToggleExpand = useCallback((sku: string) => {
+    setExpandedStores((prev) => {
+      const next = new Set(prev)
+      if (next.has(sku)) {
+        next.delete(sku)
+      } else {
+        next.add(sku)
+      }
+      return next
+    })
+  }, [])
 
   if (loading) {
     return (
@@ -116,94 +218,20 @@ function WatchesPage() {
                         )}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {(() => {
-                          // Deduplicate region like "Bourgogne, Bourgogne" → "Bourgogne"
-                          const region = product.region
-                            ? [...new Set(product.region.split(', '))].join(', ')
-                            : null
-                          const origin =
-                            region && product.country && region !== product.country
-                              ? `${region}, ${product.country}`
-                              : region || product.country
-                          return [product.grape, origin, product.vintage]
-                            .filter(Boolean)
-                            .join(' · ')
-                        })()}
+                        {[product.grape, formatOrigin(product), product.vintage]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </p>
                       {product.price && (
                         <p className="text-sm mt-1">${product.price}</p>
                       )}
-                      {(() => {
-                        const storeAvail = product.store_availability ?? []
-                        const matchingIds = storeAvail.filter((id) => storeNames.has(id))
-                        const hasSavedStores = storeNames.size > 0
-                        const isOnline = product.online_availability === true
-                        const inStore = matchingIds.length > 0
-                        const isExpanded = expandedStores.has(watch.sku)
-
-                        const storeText =
-                          matchingIds.length === 1
-                            ? `At ${storeNames.get(matchingIds[0])}`
-                            : `In ${matchingIds.length} of your stores`
-
-                        const toggleExpand = () =>
-                          setExpandedStores((prev) => {
-                            const next = new Set(prev)
-                            if (next.has(watch.sku)) {
-                              next.delete(watch.sku)
-                            } else {
-                              next.add(watch.sku)
-                            }
-                            return next
-                          })
-
-                        const canExpand = inStore && matchingIds.length > 1
-
-                        const storeNode = hasSavedStores && inStore ? (
-                          canExpand ? (
-                            <button
-                              type="button"
-                              className="text-green-500 hover:underline underline-offset-4 cursor-pointer"
-                              onClick={toggleExpand}
-                            >
-                              {storeText}
-                            </button>
-                          ) : (
-                            <span className="text-green-500">{storeText}</span>
-                          )
-                        ) : null
-
-                        const unavailable = !isOnline && !inStore
-
-                        return (
-                          <div className="flex flex-col gap-1 text-sm mt-1">
-                            <div className="flex flex-wrap gap-x-1 gap-y-1">
-                              {unavailable && hasSavedStores ? (
-                                <span className="text-muted-foreground">
-                                  Unavailable — you'll be notified
-                                </span>
-                              ) : (
-                                <>
-                                  {isOnline && (
-                                    <span className="text-green-500">Available online</span>
-                                  )}
-                                  {isOnline && storeNode && (
-                                    <span className="text-muted-foreground">·</span>
-                                  )}
-                                  {storeNode}
-                                </>
-                              )}
-                            </div>
-                            {isExpanded && canExpand && (
-                              <ul className="text-muted-foreground text-xs ml-1">
-                                {matchingIds.map((id) => (
-                                  <li key={id}>{storeNames.get(id)}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        )
-                      })()}
+                      <AvailabilityStatus
+                        product={product}
+                        sku={watch.sku}
+                        storeNames={storeNames}
+                        expandedStores={expandedStores}
+                        onToggleExpand={handleToggleExpand}
+                      />
                     </>
                   ) : (
                     <p className="text-muted-foreground font-mono">
