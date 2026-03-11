@@ -37,12 +37,13 @@ def _verify_telegram_hash(data: TelegramLoginIn, bot_token: str) -> bool:
     return hmac.compare_digest(computed, data.hash)
 
 
-def _create_jwt(user_id: int, telegram_id: int, role: str) -> str:
+def _create_jwt(user_id: int, telegram_id: int, role: str, first_name: str) -> str:
     now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),
         "telegram_id": telegram_id,
         "role": role,
+        "first_name": first_name,
         "exp": now + timedelta(days=_JWT_EXPIRY_DAYS),
         "iat": now,
     }
@@ -79,5 +80,5 @@ async def authenticate_telegram(db: AsyncSession, data: TelegramLoginIn) -> Toke
 
     logger.info("Telegram auth: telegram_id={} user_id={}", data.id, user.id)
 
-    token = _create_jwt(user.id, user.telegram_id, user.role)
+    token = _create_jwt(user.id, user.telegram_id, user.role, user.first_name)
     return TokenOut(access_token=token)

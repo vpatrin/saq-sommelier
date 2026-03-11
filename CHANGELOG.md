@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- React frontend with Telegram OAuth login, JWT session persistence, and invite code support
+
 ### Fixed
 
 - Systemd timers use prod Docker Compose override so scraper/availability run from GHCR images instead of attempting local builds

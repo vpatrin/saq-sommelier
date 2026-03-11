@@ -66,7 +66,7 @@ The tool implementations reuse existing repository code (`find_similar()`, produ
 
 **MCP protocol** — for developer use (Claude Code, Claude Desktop):
 - Local stdio or SSE transport
-- Victor (and other devs) can explore the catalog conversationally
+- To explore the catalog conversationally
 - Debug recommendations, understand data gaps, test queries
 
 **Claude API + tool use** — for the web app:

@@ -4,6 +4,7 @@ import time
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import jwt as pyjwt
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
@@ -19,8 +20,8 @@ BOT_TOKEN = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
 
 def _make_telegram_payload(
     telegram_id: int = 12345,
-    first_name: str = "Victor",
-    username: str = "vpatrin",
+    first_name: str = "Test",
+    username: str = "testuser",
     auth_date: int | None = None,
 ) -> dict:
     """Build a valid Telegram Login Widget payload with correct HMAC."""
@@ -50,6 +51,7 @@ def _mock_user(telegram_id: int = 12345, role: str = ROLE_USER, is_active: bool 
     user.telegram_id = telegram_id
     user.role = role
     user.is_active = is_active
+    user.first_name = "Test"
     return user
 
 
@@ -83,6 +85,8 @@ class TestTelegramLogin:
         data = resp.json()
         assert "access_token" in data
         assert data["token_type"] == "bearer"
+        payload = pyjwt.decode(data["access_token"], JWT_SECRET, algorithms=["HS256"])
+        assert payload["first_name"] == "Test"
 
     def test_invalid_hash_returns_401(self, client: TestClient):
         payload = _make_telegram_payload()
