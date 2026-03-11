@@ -15,9 +15,6 @@ echo "IMAGE_TAG=$IMAGE_TAG" > .image-tag
 
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml)
 
-echo "==> Env diff (.env.example vs .env):"
-diff -u .env.example .env || true
-
 echo "==> Pulling images..."
 "${COMPOSE[@]}" pull backend bot scraper
 
