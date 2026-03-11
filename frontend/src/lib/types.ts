@@ -53,3 +53,9 @@ export interface StoreOut {
 export interface StoreWithDistance extends StoreOut {
   distance_km: number
 }
+
+export interface UserStorePreferenceOut {
+  saq_store_id: string
+  created_at: string
+  store: StoreOut
+}

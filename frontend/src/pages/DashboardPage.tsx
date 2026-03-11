@@ -29,7 +29,7 @@ function DashboardPage() {
             to="/stores"
             className="text-primary font-mono underline underline-offset-4"
           >
-            Nearby Stores
+            My Stores
           </Link>
         </nav>
 
