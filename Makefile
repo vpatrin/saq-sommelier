@@ -4,7 +4,7 @@
 -include .env
 export
 
-.PHONY: install dev-backend dev-bot dev-scraper availability-check enrich-wines embed-sync scrape-stores migrate revision reset-db create-admin lint-backend lint-scraper lint-core lint-bot lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit build-backend build-scraper build-bot build run run-db run-scraper down clean eval
+.PHONY: install dev-backend dev-bot dev-scraper dev-frontend availability-check enrich-wines embed-sync scrape-stores migrate revision reset-db create-admin lint-backend lint-scraper lint-core lint-bot lint-frontend lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit-frontend audit build-backend build-scraper build-bot build-frontend build run run-db run-scraper down clean eval
 
 install:
 	git config core.hooksPath .githooks
@@ -15,6 +15,9 @@ install:
 
 dev-backend:
 	cd backend && poetry run uvicorn backend.app:app --reload --port 8001
+
+dev-frontend:
+	cd frontend && yarn dev
 
 dev-bot:
 	cd bot && poetry run python -m bot
@@ -69,6 +72,10 @@ lint-core:
 lint-bot:
 	@echo "\n▶ Linting bot/"
 	cd bot && poetry run ruff check . && poetry run ruff format --check .
+
+lint-frontend:
+	@echo "\n▶ Linting frontend/"
+	cd frontend && yarn lint
 
 lint: lint-backend lint-scraper lint-core lint-bot
 
@@ -140,6 +147,10 @@ audit-bot:
 	@echo "\n▶ Auditing bot/"
 	cd bot && poetry run pip-audit
 
+audit-frontend:
+	@echo "\n▶ Auditing frontend/"
+	cd frontend && yarn audit
+
 audit: audit-core audit-backend audit-scraper audit-bot
 
 # Build
@@ -151,6 +162,9 @@ build-scraper:
 
 build-bot:
 	docker compose build bot
+
+build-frontend:
+	cd frontend && yarn build
 
 build: build-backend build-scraper build-bot
 
