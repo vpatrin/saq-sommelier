@@ -3,6 +3,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import WatchesPage from '@/pages/WatchesPage'
+import StoresPage from '@/pages/StoresPage'
 
 function App() {
   return (
@@ -21,6 +22,14 @@ function App() {
         element={
           <ProtectedRoute>
             <WatchesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stores"
+        element={
+          <ProtectedRoute>
+            <StoresPage />
           </ProtectedRoute>
         }
       />
