@@ -8,7 +8,7 @@ from backend.schemas.product import ProductOut
 
 # input validation for POST /watches
 class WatchIn(BaseModel):
-    user_id: str = Field(min_length=1, max_length=MAX_USER_ID_LENGTH)
+    user_id: str | None = Field(default=None, min_length=1, max_length=MAX_USER_ID_LENGTH)
     sku: str = Field(min_length=1, max_length=MAX_SKU_LENGTH)
 
 

@@ -7,9 +7,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 
 from backend.app import app
+from backend.auth import get_caller_user_id
 from backend.db import get_db
 
 NOW = datetime(2025, 1, 1, tzinfo=UTC)
+
+# conftest._mock_authenticated_user returns telegram_id=12345
+JWT_USER_ID = "tg:12345"
 
 
 def _fake_store(**overrides):
@@ -124,11 +128,11 @@ def test_nearby_empty_db():
     assert resp.json() == []
 
 
-# ── GET /users/{user_id}/stores ───────────────────────────────
+# ── GET /stores/preferences ──────────────────────────────────
 
 
 def test_get_user_stores_success():
-    """200 — returns user's preferred stores with embedded store data."""
+    """200 — returns user's preferred stores (user_id from JWT)."""
     store = _fake_store()
     pref = _fake_pref()
 
@@ -137,13 +141,27 @@ def test_get_user_stores_success():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.get("/api/users/tg:123/stores")
+        resp = client.get("/api/stores/preferences")
 
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert len(data) == 1
     assert data[0]["saq_store_id"] == "23009"
     assert data[0]["store"]["name"] == "Du Parc - Fairmount Ouest"
+    assert mock_repo.get_user_stores.call_args[0][1] == JWT_USER_ID
+
+
+def test_get_user_stores_ignores_query_user_id():
+    """200 — JWT caller's query user_id is ignored."""
+    with patch("backend.services.stores.repo") as mock_repo:
+        mock_repo.get_user_stores = AsyncMock(return_value=[])
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.get("/api/stores/preferences?user_id=tg:ATTACKER")
+
+    assert resp.status_code == status.HTTP_200_OK
+    assert mock_repo.get_user_stores.call_args[0][1] == JWT_USER_ID
 
 
 def test_get_user_stores_empty():
@@ -153,17 +171,34 @@ def test_get_user_stores_empty():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.get("/api/users/tg:123/stores")
+        resp = client.get("/api/stores/preferences")
 
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == []
 
 
-# ── POST /users/{user_id}/stores ──────────────────────────────
+def test_get_user_stores_bot_uses_query_param():
+    """200 — bot caller uses explicit user_id query param."""
+    store = _fake_store()
+    pref = _fake_pref()
+
+    with patch("backend.services.stores.repo") as mock_repo:
+        mock_repo.get_user_stores = AsyncMock(return_value=[(pref, store)])
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        app.dependency_overrides[get_caller_user_id] = lambda: None
+        client = TestClient(app)
+        resp = client.get("/api/stores/preferences?user_id=tg:999")
+
+    assert resp.status_code == status.HTTP_200_OK
+    assert mock_repo.get_user_stores.call_args[0][1] == "tg:999"
+
+
+# ── POST /stores/preferences ────────────────────────────────
 
 
 def test_add_user_store_success():
-    """201 — preference added with embedded store data."""
+    """201 — preference added (user_id from JWT)."""
     store = _fake_store()
     pref = _fake_pref()
 
@@ -173,12 +208,13 @@ def test_add_user_store_success():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.post("/api/users/tg:123/stores", json={"saq_store_id": "23009"})
+        resp = client.post("/api/stores/preferences", json={"saq_store_id": "23009"})
 
     assert resp.status_code == status.HTTP_201_CREATED
     data = resp.json()
     assert data["saq_store_id"] == "23009"
     assert data["store"]["city"] == "Montréal"
+    assert mock_repo.add_user_store.call_args[0][1] == JWT_USER_ID
 
 
 def test_add_user_store_store_not_found():
@@ -188,7 +224,7 @@ def test_add_user_store_store_not_found():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.post("/api/users/tg:123/stores", json={"saq_store_id": "99999"})
+        resp = client.post("/api/stores/preferences", json={"saq_store_id": "99999"})
 
     assert resp.status_code == status.HTTP_404_NOT_FOUND
 
@@ -203,24 +239,25 @@ def test_add_user_store_duplicate():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.post("/api/users/tg:123/stores", json={"saq_store_id": "23009"})
+        resp = client.post("/api/stores/preferences", json={"saq_store_id": "23009"})
 
     assert resp.status_code == status.HTTP_409_CONFLICT
 
 
-# ── DELETE /users/{user_id}/stores/{saq_store_id} ─────────────
+# ── DELETE /stores/preferences/{saq_store_id} ────────────────
 
 
 def test_remove_user_store_success():
-    """204 — preference deleted."""
+    """204 — preference deleted (user_id from JWT)."""
     with patch("backend.services.stores.repo") as mock_repo:
         mock_repo.remove_user_store = AsyncMock(return_value=True)
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.delete("/api/users/tg:123/stores/23009")
+        resp = client.delete("/api/stores/preferences/23009")
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
+    assert mock_repo.remove_user_store.call_args[0][1] == JWT_USER_ID
 
 
 def test_remove_user_store_not_found():
@@ -230,6 +267,19 @@ def test_remove_user_store_not_found():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.delete("/api/users/tg:123/stores/99999")
+        resp = client.delete("/api/stores/preferences/99999")
 
     assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_remove_user_store_ignores_query_user_id():
+    """204 — JWT caller's query user_id is ignored."""
+    with patch("backend.services.stores.repo") as mock_repo:
+        mock_repo.remove_user_store = AsyncMock(return_value=True)
+        session = AsyncMock()
+        app.dependency_overrides[get_db] = lambda: session
+        client = TestClient(app)
+        resp = client.delete("/api/stores/preferences/23009?user_id=tg:ATTACKER")
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+    assert mock_repo.remove_user_store.call_args[0][1] == JWT_USER_ID

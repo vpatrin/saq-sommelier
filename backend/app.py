@@ -10,7 +10,7 @@ from backend.api.auth import router as auth_router
 from backend.api.health import router as health_router
 from backend.api.products import router as products_router
 from backend.api.recommendations import router as recommendations_router
-from backend.api.stores import stores_router, users_router
+from backend.api.stores import router as stores_router
 from backend.api.watches import router as watches_router
 from backend.auth import verify_admin, verify_auth
 from backend.config import SERVICE_NAME, backend_settings
@@ -67,7 +67,6 @@ app.include_router(health_router)
 app.include_router(auth_router, prefix="/api")
 app.include_router(products_router, prefix="/api", dependencies=_auth)
 app.include_router(stores_router, prefix="/api", dependencies=_auth)
-app.include_router(users_router, prefix="/api", dependencies=_auth)
 app.include_router(watches_router, prefix="/api", dependencies=_auth)
 app.include_router(recommendations_router, prefix="/api", dependencies=_auth)
 app.include_router(admin_router, prefix="/api", dependencies=[Depends(verify_admin)])

@@ -69,6 +69,29 @@ async def verify_auth(
     return await get_current_active_user(credentials, db)
 
 
+def get_caller_user_id(user: User | None = Depends(verify_auth)) -> str | None:
+    """Derive user_id from JWT for authenticated users. Returns None for bot-secret callers."""
+    if user is None:
+        return None
+    return f"tg:{user.telegram_id}"
+
+
+def resolve_user_id(caller_user_id: str | None, target_user_id: str | None) -> str:
+    """Pick the authoritative user_id based on caller type.
+
+    JWT callers: use the JWT-derived ID (ignore any client-supplied value).
+    Bot-secret callers: require the explicit parameter.
+    """
+    if caller_user_id is not None:
+        return caller_user_id
+    if target_user_id:
+        return target_user_id
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        detail="user_id is required for bot-secret callers",
+    )
+
+
 async def verify_admin(user: User | None = Depends(verify_auth)) -> User:
     """Require that the authenticated user is an active admin.
 

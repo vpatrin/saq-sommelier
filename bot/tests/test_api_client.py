@@ -263,7 +263,9 @@ async def test_list_user_stores_success(client: BackendClient) -> None:
     result = await client.list_user_stores("tg:42")
 
     assert result == data
-    client._client.request.assert_called_once_with("GET", "/users/tg:42/stores")
+    client._client.request.assert_called_once_with(
+        "GET", "/stores/preferences", params={"user_id": "tg:42"}
+    )
 
 
 async def test_add_user_store_success(client: BackendClient) -> None:
@@ -274,7 +276,10 @@ async def test_add_user_store_success(client: BackendClient) -> None:
 
     assert result == data
     client._client.request.assert_called_once_with(
-        "POST", "/users/tg:42/stores", json={"saq_store_id": "23009"}
+        "POST",
+        "/stores/preferences",
+        params={"user_id": "tg:42"},
+        json={"saq_store_id": "23009"},
     )
 
 
@@ -283,7 +288,9 @@ async def test_remove_user_store_success(client: BackendClient) -> None:
 
     await client.remove_user_store("tg:42", "23009")
 
-    client._client.request.assert_called_once_with("DELETE", "/users/tg:42/stores/23009")
+    client._client.request.assert_called_once_with(
+        "DELETE", "/stores/preferences/23009", params={"user_id": "tg:42"}
+    )
 
 
 async def test_remove_user_store_not_found(client: BackendClient) -> None:

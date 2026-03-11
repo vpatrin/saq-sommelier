@@ -91,16 +91,20 @@ class BackendClient:
         return await self._get("/stores/nearby", params={"lat": lat, "lng": lng})
 
     async def list_user_stores(self, user_id: str) -> list[dict[str, Any]]:
-        """GET /api/users/{user_id}/stores — user's preferred stores."""
-        return await self._get(f"/users/{user_id}/stores")
+        """GET /api/stores/preferences — user's preferred stores."""
+        return await self._get("/stores/preferences", params={"user_id": user_id})
 
     async def add_user_store(self, user_id: str, saq_store_id: str) -> dict[str, Any]:
-        """POST /api/users/{user_id}/stores — add a store to preferences."""
-        return await self._post(f"/users/{user_id}/stores", json={"saq_store_id": saq_store_id})
+        """POST /api/stores/preferences — add a store to preferences."""
+        return await self._post(
+            "/stores/preferences",
+            params={"user_id": user_id},
+            json={"saq_store_id": saq_store_id},
+        )
 
     async def remove_user_store(self, user_id: str, saq_store_id: str) -> None:
-        """DELETE /api/users/{user_id}/stores/{saq_store_id}."""
-        await self._delete(f"/users/{user_id}/stores/{saq_store_id}")
+        """DELETE /api/stores/preferences/{saq_store_id}."""
+        await self._delete(f"/stores/preferences/{saq_store_id}", params={"user_id": user_id})
 
     # ── Auth ──────────────────────────────────────────────────────
 

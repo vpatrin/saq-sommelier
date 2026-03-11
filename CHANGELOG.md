@@ -12,9 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - React frontend with Telegram OAuth login, JWT session persistence, and invite code support
 - Watch dashboard — view watched wines with availability status, remove watches (#385)
 
+### Changed
+
+- Store preferences moved from `/users/{id}/stores` to `/stores/preferences` — single router, JWT-aware
+
 ### Fixed
 
 - Systemd timers use prod Docker Compose override so scraper/availability run from GHCR images instead of attempting local builds
+
+### Security
+
+- API endpoints now derive user_id from JWT — prevents client-supplied impersonation (#401)
 
 ## [1.3.1] - 2026-03-10
 
