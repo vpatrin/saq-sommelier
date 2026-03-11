@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Watch dashboard — view watched wines with availability status, remove watches (#385)
 - Nearby stores page — browser geolocation, store cards with distance (#387)
 - Store picker — saved stores page, save/unsave toggle on nearby stores (#388)
+- Enriched watch cards — SAQ product link, smart origin display, store availability cross-referenced with saved stores (#412)
+- Telegram onboarding card on dashboard — deep link to @CoupetteBot (#412)
 
 ### Changed
 
