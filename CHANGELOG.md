@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Invite links (`/invite/:code`) replace manual code input — cleaner onboarding UX (#408)
 - Store preferences moved from `/users/{id}/stores` to `/stores/preferences` — single router, JWT-aware
 
 ### Fixed
