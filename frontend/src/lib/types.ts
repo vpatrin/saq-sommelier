@@ -36,3 +36,20 @@ export interface WatchWithProduct {
   watch: WatchOut
   product: ProductOut | null
 }
+
+export interface StoreOut {
+  saq_store_id: string
+  name: string
+  store_type: string | null
+  address: string | null
+  city: string
+  postcode: string | null
+  telephone: string | null
+  latitude: number | null
+  longitude: number | null
+  temporarily_closed: boolean
+}
+
+export interface StoreWithDistance extends StoreOut {
+  distance_km: number
+}

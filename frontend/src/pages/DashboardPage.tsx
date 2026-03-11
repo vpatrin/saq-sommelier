@@ -25,6 +25,12 @@ function DashboardPage() {
           >
             My Watches
           </Link>
+          <Link
+            to="/stores"
+            className="text-primary font-mono underline underline-offset-4"
+          >
+            Nearby Stores
+          </Link>
         </nav>
 
         <div>

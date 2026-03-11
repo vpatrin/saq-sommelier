@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - React frontend with Telegram OAuth login, JWT session persistence, and invite code support
 - Watch dashboard — view watched wines with availability status, remove watches (#385)
+- Nearby stores page — browser geolocation, store cards with distance (#387)
 
 ### Changed
 
