@@ -132,12 +132,19 @@ async def find_page(
 
 
 async def get_distinct_values(
-    db: AsyncSession, column: Column, *, wine_scope: bool = False
+    db: AsyncSession,
+    column: Column,
+    *,
+    category: list[str] | None = None,
+    available: bool | None = None,
+    in_stores: list[str] | None = None,
+    wine_scope: bool = False,
 ) -> list[str]:
     """Return sorted distinct non-null values for a product column (active products only)."""
-    stmt = select(column).where(Product.delisted_at.is_(None)).where(column.isnot(None))
-    if wine_scope:
-        stmt = stmt.where(or_(*(Product.category.startswith(prefix) for prefix in _WINE_PREFIXES)))
+    stmt = select(column).where(column.isnot(None))
+    stmt = _apply_filters(
+        stmt, category=category, available=available, in_stores=in_stores, wine_scope=wine_scope
+    )
     stmt = stmt.distinct().order_by(column)
     result = await db.execute(stmt)
     return list(result.scalars().all())
@@ -193,16 +200,18 @@ async def find_random(
 
 
 async def get_price_range(
-    db: AsyncSession, *, wine_scope: bool = False
+    db: AsyncSession,
+    *,
+    category: list[str] | None = None,
+    available: bool | None = None,
+    in_stores: list[str] | None = None,
+    wine_scope: bool = False,
 ) -> tuple[Decimal, Decimal] | None:
     """Return (min, max) price for active products, or None if no prices exist."""
-    stmt = (
-        select(func.min(Product.price), func.max(Product.price))
-        .where(Product.delisted_at.is_(None))
-        .where(Product.price.isnot(None))
+    stmt = select(func.min(Product.price), func.max(Product.price)).where(Product.price.isnot(None))
+    stmt = _apply_filters(
+        stmt, category=category, available=available, in_stores=in_stores, wine_scope=wine_scope
     )
-    if wine_scope:
-        stmt = stmt.where(or_(*(Product.category.startswith(prefix) for prefix in _WINE_PREFIXES)))
     result = await db.execute(stmt)
     row = result.one()
     if row[0] is None:

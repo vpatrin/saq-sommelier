@@ -16,9 +16,9 @@ export class ApiError extends Error {
 
 export async function api<T>(
   path: string,
-  options: RequestInit & { token?: string | null } = {}
+  options: RequestInit & { token?: string | null; onUnauthorized?: () => void } = {}
 ): Promise<T> {
-  const { token, headers: extraHeaders, ...fetchOptions } = options
+  const { token, onUnauthorized, headers: extraHeaders, ...fetchOptions } = options
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -35,6 +35,9 @@ export async function api<T>(
   })
 
   if (!response.ok) {
+    if (response.status === 401 && onUnauthorized) {
+      onUnauthorized()
+    }
     const body = await response.json().catch(() => ({ detail: response.statusText }))
     throw new ApiError(response.status, body.detail ?? response.statusText)
   }
@@ -48,11 +51,11 @@ export async function api<T>(
 // Returns an api() wrapper that auto-attaches the JWT from AuthContext.
 // Use this in any authenticated component instead of passing token manually.
 export function useApiClient() {
-  const { token } = useAuth()
+  const { token, logout } = useAuth()
 
   return useCallback(
     <T>(path: string, options: RequestInit = {}) =>
-      api<T>(path, { ...options, token }),
-    [token]
+      api<T>(path, { ...options, token, onUnauthorized: logout }),
+    [token, logout]
   )
 }

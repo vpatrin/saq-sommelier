@@ -31,6 +31,7 @@ function AvailabilityStatus({
       ? `At ${storeNames.get(matchingIds[0])}`
       : `In ${matchingIds.length} of your stores`
 
+  const genericStoreCount = storeAvail.length
   const storeNode =
     hasSavedStores && inStore ? (
       canExpand ? (
@@ -44,6 +45,10 @@ function AvailabilityStatus({
       ) : (
         <span className="text-green-500">{storeText}</span>
       )
+    ) : !hasSavedStores && genericStoreCount > 0 ? (
+      <span className="text-green-500">
+        In {genericStoreCount} store{genericStoreCount !== 1 ? 's' : ''}
+      </span>
     ) : null
 
   const unavailable = !isOnline && !inStore
@@ -58,7 +63,7 @@ function AvailabilityStatus({
         ) : (
           <>
             {isOnline && (
-              <span className="text-green-500">Available online</span>
+              <span className="text-green-500">Online</span>
             )}
             {isOnline && storeNode && (
               <span className="text-muted-foreground">·</span>

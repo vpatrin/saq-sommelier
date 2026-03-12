@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Product search page with category, country, price, and availability filters (#386)
 - Sidebar navigation (AppShell) — persistent across all authenticated pages
 - "In my stores" availability filter — cross-references saved stores with product stock
+- Availability status on search results — online, in-store with store names, clickable expand
+- Automatic logout on expired JWT (401 interceptor)
+
+### Fixed
+
+- Facet filters (regions, grapes, price range) now respect availability filters
 
 ### Changed
 

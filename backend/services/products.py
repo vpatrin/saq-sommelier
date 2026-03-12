@@ -118,19 +118,26 @@ async def get_facets(
     """Fetch distinct filter values and price range for active products."""
     # ? asyncio.gather would be faster here, but requires separate sessions —
     # ? a single AsyncSession can't run concurrent queries on the same connection.
+    availability_filters = dict(
+        available=available,
+        in_stores=in_stores,
+        wine_scope=wine_scope,
+    )
+    # * Categories skip availability filters — chip list shows all categories
+    # regardless of online/in-store toggles.
     categories = await get_distinct_values(db, Product.category, wine_scope=wine_scope)
     country_rows = await get_distinct_values_by_count(
         db,
         Product.country,
         category=category,
-        available=available,
-        in_stores=in_stores,
-        wine_scope=wine_scope,
+        **availability_filters,
     )
     countries = [CountryFacet(name=name, count=cnt) for name, cnt in country_rows]
-    regions = await get_distinct_values(db, Product.region, wine_scope=wine_scope)
-    grapes = await get_distinct_values(db, Product.grape, wine_scope=wine_scope)
-    price_result = await get_price_range(db, wine_scope=wine_scope)
+    regions = await get_distinct_values(
+        db, Product.region, category=category, **availability_filters
+    )
+    grapes = await get_distinct_values(db, Product.grape, category=category, **availability_filters)
+    price_result = await get_price_range(db, category=category, **availability_filters)
 
     # Build grouped categories — preserves CATEGORY_GROUPS definition order
     grouped = group_facets(categories)

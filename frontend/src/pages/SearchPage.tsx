@@ -79,9 +79,12 @@ function SearchPage() {
   // Watch state — track which SKUs the user is already watching
   const [watchedSkus, setWatchedSkus] = useState<Set<string>>(new Set())
   const [watchingInProgress, setWatchingInProgress] = useState<string | null>(null)
+  const [expandedStores, setExpandedStores] = useState<Set<string>>(new Set())
 
-  // Saved store IDs — for "In my stores" filter
+  // Saved store IDs + names — for "In my stores" filter and availability display
   const [savedStoreIdsRaw, setSavedStoreIds] = useState<string[]>([])
+  const [storeNames, setStoreNames] = useState<Map<string, string>>(new Map())
+  const [storesLoaded, setStoresLoaded] = useState(false)
   // Stable reference: only changes when the actual IDs change, not on every render
   const storeIdsKey = savedStoreIdsRaw.join(',')
   const savedStoreIds = useMemo(() => savedStoreIdsRaw, [storeIdsKey])
@@ -109,8 +112,10 @@ function SearchPage() {
   )
 
   // Fetch facets — re-fetches when category or availability filters change
-  // so country counts reflect the active filter set
+  // so country counts reflect the active filter set.
+  // Wait for store prefs before fetching if "In my stores" is active.
   useEffect(() => {
+    if (inStoresOnly && !storesLoaded) return
     let cancelled = false
     async function fetchFacets() {
       const params = new URLSearchParams()
@@ -128,7 +133,7 @@ function SearchPage() {
     }
     fetchFacets()
     return () => { cancelled = true }
-  }, [apiClient, appendFilterParams])
+  }, [apiClient, appendFilterParams, inStoresOnly, storesLoaded])
 
   // Fetch existing watches and saved stores on mount
   useEffect(() => {
@@ -152,9 +157,12 @@ function SearchPage() {
         const prefs = await apiClient<UserStorePreferenceOut[]>('/stores/preferences')
         if (!cancelled) {
           setSavedStoreIds(prefs.map((p) => p.saq_store_id).sort())
+          setStoreNames(new Map(prefs.map((p) => [p.saq_store_id, p.store.name])))
         }
       } catch {
         // Non-critical — "In my stores" filter won't work without prefs
+      } finally {
+        if (!cancelled) setStoresLoaded(true)
       }
     }
 
@@ -163,8 +171,10 @@ function SearchPage() {
     return () => { cancelled = true }
   }, [apiClient, userId])
 
-  // Fetch products whenever URL params change
+  // Fetch products whenever URL params change.
+  // Wait for store prefs before fetching if "In my stores" is active.
   useEffect(() => {
+    if (inStoresOnly && !storesLoaded) return
     let cancelled = false
 
     async function fetchProducts() {
@@ -195,7 +205,7 @@ function SearchPage() {
 
     fetchProducts()
     return () => { cancelled = true }
-  }, [apiClient, query, country, appendFilterParams, sort, minPrice, maxPrice, page, retryCount])
+  }, [apiClient, query, country, appendFilterParams, sort, minPrice, maxPrice, page, retryCount, inStoresOnly, storesLoaded])
 
   // Debounced search input
   const handleInputChange = useCallback(
@@ -593,10 +603,17 @@ function SearchPage() {
                   {displayProducts.map((product) => {
                     const isWatched = watchedSkus.has(product.sku)
                     const isBusy = watchingInProgress === product.sku
+                    const isOnline = product.online_availability === true
+                    const storeAvail = product.store_availability ?? []
+                    const matchingIds = storeAvail.filter((id) => storeNames.has(id))
+                    const hasStores = storeNames.size > 0
+                    const hasAvailability = isOnline
+                      || (hasStores && matchingIds.length > 0)
+                      || (!hasStores && storeAvail.length > 0)
                     return (
                       <li
                         key={product.sku}
-                        className="border border-border p-4 flex justify-between items-start gap-4"
+                        className={`border border-border p-4 flex justify-between items-start gap-4${hasAvailability ? '' : ' opacity-50'}`}
                       >
                         <div className="flex-1 min-w-0">
                           <p className="font-mono font-bold truncate">
@@ -622,10 +639,49 @@ function SearchPage() {
                             {product.price && (
                               <span className="text-sm">{product.price} $</span>
                             )}
-                            {product.online_availability && (
-                              <span className="text-xs text-green-500">Available online</span>
-                            )}
+                            {(() => {
+                              const canExpand = matchingIds.length > 1
+
+                              const storeText = matchingIds.length === 1
+                                ? `At ${storeNames.get(matchingIds[0])}`
+                                : `In ${matchingIds.length} of your stores`
+
+                              const storeNode = hasStores && matchingIds.length > 0
+                                ? canExpand
+                                  ? <button
+                                      type="button"
+                                      className="text-xs text-green-500 hover:underline underline-offset-4 cursor-pointer"
+                                      onClick={() => setExpandedStores((prev) => {
+                                        const next = new Set(prev)
+                                        if (next.has(product.sku)) next.delete(product.sku)
+                                        else next.add(product.sku)
+                                        return next
+                                      })}
+                                    >
+                                      {storeText}
+                                    </button>
+                                  : <span className="text-xs text-green-500">{storeText}</span>
+                                : !hasStores && storeAvail.length > 0
+                                  ? <span className="text-xs text-green-500">In {storeAvail.length} store{storeAvail.length !== 1 ? 's' : ''}</span>
+                                  : null
+
+                              if (!isOnline && !storeNode) return null
+                              return (
+                                <>
+                                  {isOnline && <span className="text-xs text-green-500">Online</span>}
+                                  {isOnline && storeNode && <span className="text-xs text-muted-foreground">·</span>}
+                                  {storeNode}
+                                </>
+                              )
+                            })()}
                           </div>
+                          {expandedStores.has(product.sku) && matchingIds.length > 1 && (
+                            <ul className="text-muted-foreground text-xs ml-1 mt-1">
+                              {matchingIds.map((id) => (
+                                <li key={id}>{storeNames.get(id)}</li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
 
                         <button
