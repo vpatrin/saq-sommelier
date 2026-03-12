@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-03-12
+
 ### Added
 
 - React frontend with Telegram OAuth login, JWT session persistence, and invite code support
@@ -21,22 +23,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Availability status on search results — online, in-store with store names, clickable expand
 - Automatic logout on expired JWT (401 interceptor)
 
-### Fixed
-
-- Facet filters (regions, grapes, price range) now respect availability filters
-
 ### Changed
 
 - Invite links (`/invite/:code`) replace manual code input — cleaner onboarding UX (#408)
 - Dashboard replaced by search page as default post-login destination
+- Store preferences moved from `/users/{id}/stores` to `/stores/preferences` — single router, JWT-aware
 
 ### Removed
 
 - Dashboard page (functionality moved to sidebar + search)
-- Store preferences moved from `/users/{id}/stores` to `/stores/preferences` — single router, JWT-aware
 
 ### Fixed
 
+- Facet filters (regions, grapes, price range) now respect availability filters
 - Systemd timers use prod Docker Compose override so scraper/availability run from GHCR images instead of attempting local builds
 
 ### Security
@@ -166,7 +165,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Compose deployment with Caddy reverse proxy
 - CI pipeline with per-service linting, testing, and coverage thresholds
 
-[Unreleased]: https://github.com/vpatrin/coupette/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/vpatrin/coupette/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/vpatrin/coupette/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/vpatrin/coupette/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/vpatrin/coupette/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/vpatrin/coupette/compare/v1.1.0...v1.2.0
