@@ -404,7 +404,6 @@ class ChatSession(Base):
         Integer,
         ForeignKey("users.id"),
         nullable=False,
-        index=True,
         comment="Owner of this chat session",
     )
     title = Column(
@@ -426,6 +425,8 @@ class ChatSession(Base):
         comment="Last message timestamp",
     )
 
+    __table_args__ = (Index("ix_chat_sessions_user_updated", "user_id", updated_at.desc()),)
+
     def __repr__(self) -> str:
         return f"<ChatSession(id={self.id!r}, user_id={self.user_id!r})>"
 
@@ -440,7 +441,6 @@ class ChatMessage(Base):
         Integer,
         ForeignKey("chat_sessions.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
         comment="Parent chat session",
     )
     role = Column(
@@ -453,6 +453,7 @@ class ChatMessage(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         nullable=False,
-        index=True,
         comment="When message was sent",
     )
+
+    __table_args__ = (Index("ix_chat_messages_session_created", "session_id", "created_at"),)
