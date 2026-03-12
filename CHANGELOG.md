@@ -15,10 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store picker — saved stores page, save/unsave toggle on nearby stores (#388)
 - Enriched watch cards — SAQ product link, smart origin display, store availability cross-referenced with saved stores (#412)
 - Telegram onboarding card on dashboard — deep link to @CoupetteBot (#412)
+- Product search page with category, country, price, and availability filters (#386)
+- Sidebar navigation (AppShell) — persistent across all authenticated pages
+- "In my stores" availability filter — cross-references saved stores with product stock
 
 ### Changed
 
 - Invite links (`/invite/:code`) replace manual code input — cleaner onboarding UX (#408)
+- Dashboard replaced by search page as default post-login destination
+
+### Removed
+
+- Dashboard page (functionality moved to sidebar + search)
 - Store preferences moved from `/users/{id}/stores` to `/stores/preferences` — single router, JWT-aware
 
 ### Fixed

@@ -54,6 +54,7 @@ Web app ships before chat — auth, watches, and stores are already API-complete
 - [x] Watch dashboard — watch list, availability status, remove (#385)
 - [x] Store picker — map or list view, add/remove preferred stores (replaces bot `/mystores`) (#388)
 - [x] "Enable Telegram alerts" onboarding — deep link to bot on dashboard (#412)
+- [x] Product search + add watch — search, filter (category/country/price/availability), watch from results (#386)
 
 ### Phase 9 — Chat Endpoint
 

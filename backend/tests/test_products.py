@@ -404,9 +404,16 @@ def _mock_row_result(row: tuple):
     return result
 
 
+def _mock_rows_result(rows: list[tuple]):
+    """Mock result for GROUP BY queries (all() returning tuples)."""
+    result = MagicMock()
+    result.all.return_value = rows
+    return result
+
+
 def _mock_db_for_facets(
     categories: list[str],
-    countries: list[str],
+    country_rows: list[tuple],
     regions: list[str],
     grapes: list[str],
     price_row: tuple,
@@ -416,7 +423,7 @@ def _mock_db_for_facets(
     session.execute = AsyncMock(
         side_effect=[
             _mock_scalars_result(categories),
-            _mock_scalars_result(countries),
+            _mock_rows_result(country_rows),
             _mock_scalars_result(regions),
             _mock_scalars_result(grapes),
             _mock_row_result(price_row),
@@ -429,7 +436,7 @@ def test_facets_response_shape():
     """Facets endpoint returns all expected keys with sorted values."""
     session = _mock_db_for_facets(
         categories=["Vin blanc", "Vin rouge"],
-        countries=["France", "Italie"],
+        country_rows=[("France", 10), ("Italie", 5)],
         regions=["Bordeaux", "Toscane"],
         grapes=["Chardonnay", "Merlot"],
         price_row=(Decimal("8.99"), Decimal("450.00")),
@@ -441,17 +448,22 @@ def test_facets_response_shape():
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["categories"] == ["Vin blanc", "Vin rouge"]
-    assert data["countries"] == ["France", "Italie"]
+    assert data["countries"] == [
+        {"name": "France", "count": 10},
+        {"name": "Italie", "count": 5},
+    ]
     assert data["regions"] == ["Bordeaux", "Toscane"]
     assert data["grapes"] == ["Chardonnay", "Merlot"]
     assert data["price_range"] == {"min": "8.99", "max": "450.00"}
+    assert isinstance(data["grouped_categories"], list)
+    assert isinstance(data["category_families"], list)
 
 
 def test_facets_empty_catalog():
     """Empty catalog returns empty lists and null price range."""
     session = _mock_db_for_facets(
         categories=[],
-        countries=[],
+        country_rows=[],
         regions=[],
         grapes=[],
         price_row=(None, None),
@@ -473,7 +485,7 @@ def test_facets_no_prices():
     """Products exist but none have prices — lists populated, price_range null."""
     session = _mock_db_for_facets(
         categories=["Vin rouge"],
-        countries=["France"],
+        country_rows=[("France", 1)],
         regions=["Bordeaux"],
         grapes=["Merlot"],
         price_row=(None, None),

@@ -85,6 +85,7 @@ function SearchPage() {
   const [facets, setFacets] = useState<FacetsOut | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   // Watch state — track which SKUs the user is already watching
   const [watchedSkus, setWatchedSkus] = useState<Set<string>>(new Set())
@@ -178,7 +179,7 @@ function SearchPage() {
       for (const cat of resolveCategories(category, groupsRef.current)) {
         params.append('category', cat)
       }
-      if (sort && sort !== 'alpha') params.set('sort', sort)
+      if (sort) params.set('sort', sort)
       if (onlineOnly) params.set('available', 'true')
       if (minPrice) params.set('min_price', minPrice)
       if (maxPrice) params.set('max_price', maxPrice)
@@ -202,7 +203,7 @@ function SearchPage() {
 
     fetchProducts()
     return () => { cancelled = true }
-  }, [apiClient, query, country, category, sort, onlineOnly, inStoresOnly, minPrice, maxPrice, savedStoreIds, page])
+  }, [apiClient, query, country, category, sort, onlineOnly, inStoresOnly, minPrice, maxPrice, savedStoreIds, page, retryCount])
 
   // Debounced search input
   const handleInputChange = useCallback(
@@ -527,6 +528,7 @@ function SearchPage() {
               <p className="text-xs font-mono text-muted-foreground mb-2">Price</p>
               <div className="flex gap-2">
                 <input
+                  key={`min-${minPrice}`}
                   type="number"
                   min="0"
                   step="1"
@@ -540,6 +542,7 @@ function SearchPage() {
                   className="w-full bg-background border border-border px-2 py-1.5 text-xs font-mono placeholder:text-muted-foreground focus:outline-none focus:border-ring"
                 />
                 <input
+                  key={`max-${maxPrice}`}
                   type="number"
                   min="0"
                   step="1"
@@ -565,7 +568,7 @@ function SearchPage() {
                 {' — '}
                 <button
                   type="button"
-                  onClick={() => setSearchParams(searchParams)}
+                  onClick={() => setRetryCount((c) => c + 1)}
                   className="underline hover:text-destructive/80"
                 >
                   retry
