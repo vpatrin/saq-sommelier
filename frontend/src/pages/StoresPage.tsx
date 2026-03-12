@@ -162,7 +162,7 @@ function StoresPage() {
   )
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-8">
+    <div className="p-8">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-mono font-bold mb-6">Edit My Stores</h1>
 

@@ -16,7 +16,7 @@ CATEGORY_GROUPS: dict[str, CategoryGroup] = {
     "rouge": CategoryGroup("Vin rouge", ("Vin rouge",)),
     "blanc": CategoryGroup("Vin blanc", ("Vin blanc",)),
     "rose": CategoryGroup("Vin rosé", ("Vin rosé",)),
-    "bulles": CategoryGroup("Mousseux", ("Champagne", "Vin mousseux")),
+    "bulles": CategoryGroup("Champagne & Mousseux", ("Champagne", "Vin mousseux")),
     "fortifie": CategoryGroup(
         "Vin fortifié",
         (
@@ -42,13 +42,15 @@ CATEGORY_GROUPS: dict[str, CategoryGroup] = {
     ),
     "whisky": CategoryGroup("Whisky", ("Whisky", "Whiskey")),
     "rhum": CategoryGroup("Rhum", ("Rhum",)),
-    "gin": CategoryGroup("Gin", ("Dry gin", "Genièvre")),
+    "gin": CategoryGroup("Gin & Genièvre", ("Dry gin", "Genièvre")),
     "vodka": CategoryGroup("Vodka", ("Vodka",)),
-    "tequila": CategoryGroup("Tequila", ("Téquila", "Mezcal", "Sotol")),
-    "cognac": CategoryGroup("Cognac", ("Cognac", "Armagnac", "Brandy", "Calvados", "Pisco")),
+    "tequila": CategoryGroup("Tequila & Mezcal", ("Téquila", "Mezcal", "Sotol")),
+    "cognac": CategoryGroup(
+        "Cognac & Brandy", ("Cognac", "Armagnac", "Brandy", "Calvados", "Pisco")
+    ),
     "liqueur": CategoryGroup("Liqueur", ("Liqueur",)),
     "biere": CategoryGroup("Bière", ("Bière",)),
-    "cidre": CategoryGroup("Cidre", ("Cidre", "Poiré")),
+    "cidre": CategoryGroup("Cidre & Poiré", ("Cidre", "Poiré")),
     "eauxdevie": CategoryGroup(
         "Eau-de-vie",
         ("Eau-de-vie", "Eaux-de-vie", "Grappa", "Kirsch", "Poire Williams", "Marc "),

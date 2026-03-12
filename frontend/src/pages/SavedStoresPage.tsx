@@ -36,14 +36,14 @@ function SavedStoresPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground font-mono">Loading saved stores...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-8">
+    <div className="p-8">
       <div className="max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-mono font-bold">My Stores</h1>

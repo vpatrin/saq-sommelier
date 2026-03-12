@@ -61,3 +61,43 @@ export interface UserStorePreferenceOut {
   created_at: string
   store: StoreOut
 }
+
+export interface PaginatedOut {
+  products: ProductOut[]
+  total: number
+  page: number
+  per_page: number
+  pages: number
+}
+
+export interface PriceRange {
+  min: string // Decimal serialized as string
+  max: string
+}
+
+export interface CategoryGroupOut {
+  key: string
+  label: string
+  categories: string[]
+}
+
+export interface CategoryFamilyOut {
+  key: string
+  label: string
+  children: string[] // group keys
+}
+
+export interface CountryFacet {
+  name: string
+  count: number
+}
+
+export interface FacetsOut {
+  categories: string[]
+  grouped_categories: CategoryGroupOut[]
+  category_families: CategoryFamilyOut[]
+  countries: CountryFacet[]
+  regions: string[]
+  grapes: string[]
+  price_range: PriceRange | null
+}
