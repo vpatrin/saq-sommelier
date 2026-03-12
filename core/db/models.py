@@ -18,7 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 
 from core.db.base import Base
-from core.embedding_client import EMBEDDING_DIMENSIONS
+from core.embedding_constants import EMBEDDING_DIMENSIONS
 
 
 class User(Base):
@@ -392,3 +392,68 @@ class RecommendationLog(Base):
 
     def __repr__(self) -> str:
         return f"<RecommendationLog(id={self.id!r}, query={self.query!r})>"
+
+
+class ChatSession(Base):
+    """Conversation session for the web chat interface."""
+
+    __tablename__ = "chat_sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        comment="Owner of this chat session",
+    )
+    title = Column(
+        String,
+        nullable=True,
+        comment="Auto-generated from first message (~50 chars)",
+    )
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="When session was started",
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="Last message timestamp",
+    )
+
+    __table_args__ = (Index("ix_chat_sessions_user_updated", "user_id", "updated_at"),)
+
+    def __repr__(self) -> str:
+        return f"<ChatSession(id={self.id!r}, user_id={self.user_id!r})>"
+
+
+class ChatMessage(Base):
+    """Individual message within a chat session."""
+
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(
+        Integer,
+        ForeignKey("chat_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        comment="Parent chat session",
+    )
+    role = Column(
+        String(20),
+        nullable=False,
+        comment="Message author: user or assistant",
+    )
+    content = Column(Text, nullable=False, comment="Message text content")
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="When message was sent",
+    )
+
+    __table_args__ = (Index("ix_chat_messages_session_created", "session_id", "created_at"),)

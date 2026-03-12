@@ -45,10 +45,42 @@ eval:
 migrate:
 	cd core && poetry run alembic upgrade head
 
+# Generate migration against a clean, ephemeral Postgres (no dev DB drift).
+# Spins up a temporary container, runs all existing migrations, autogenerates,
+# then tears down. The result only contains real model changes.
+REVISION_CONTAINER := coupette-revision-tmp
+REVISION_PORT := 5433
 revision:
 	@test -n "$(msg)" || (echo "Usage: make revision msg=\"description\"" && exit 1)
-	cd core && poetry run alembic revision --autogenerate -m "$(msg)"
+	@docker rm -f $(REVISION_CONTAINER) 2>/dev/null || true
+	@echo "▶ Starting ephemeral Postgres on port $(REVISION_PORT)..."
+	@docker run -d --name $(REVISION_CONTAINER) \
+		-e POSTGRES_USER=migration \
+		-e POSTGRES_PASSWORD=migration \
+		-e POSTGRES_DB=migration \
+		-p 127.0.0.1:$(REVISION_PORT):5432 \
+		pgvector/pgvector:pg16 >/dev/null
+	@echo "▶ Waiting for Postgres to be ready..."
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		docker exec $(REVISION_CONTAINER) pg_isready -U migration >/dev/null 2>&1 && break; \
+		if [ $$i -eq 10 ]; then echo "❌ Postgres failed to start"; docker rm -f $(REVISION_CONTAINER) >/dev/null; exit 1; fi; \
+		sleep 1; \
+	done
+	@echo "▶ Installing extensions..."
+	@docker exec $(REVISION_CONTAINER) psql -U migration -d migration \
+		-c "CREATE EXTENSION IF NOT EXISTS vector; CREATE EXTENSION IF NOT EXISTS pg_trgm;" >/dev/null
+	@echo "▶ Running existing migrations..."
+	cd core && DB_HOST=localhost DB_PORT=$(REVISION_PORT) DB_USER=migration \
+		DB_PASSWORD=migration DB_NAME=migration \
+		poetry run alembic upgrade head || (docker rm -f $(REVISION_CONTAINER) >/dev/null; exit 1)
+	@echo "▶ Autogenerating migration..."
+	cd core && DB_HOST=localhost DB_PORT=$(REVISION_PORT) DB_USER=migration \
+		DB_PASSWORD=migration DB_NAME=migration \
+		poetry run alembic revision --autogenerate -m "$(msg)" || (docker rm -f $(REVISION_CONTAINER) >/dev/null; exit 1)
+	@echo "▶ Tearing down ephemeral Postgres..."
+	@docker rm -f $(REVISION_CONTAINER) >/dev/null
 	make format
+	@echo "✅ Migration generated cleanly."
 
 reset-db:
 	cd core && poetry run alembic downgrade base && poetry run alembic upgrade head

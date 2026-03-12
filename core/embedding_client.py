@@ -1,8 +1,6 @@
 from openai import OpenAI
 
-# Imported by core/db/models.py for Vector column size
-EMBEDDING_MODEL = "text-embedding-3-large"
-EMBEDDING_DIMENSIONS = 1536  # Matryoshka truncation — same column size, better quality
+from core.embedding_constants import EMBEDDING_DIMENSIONS, EMBEDDING_MODEL
 
 # OpenAI batch limit: max 2048 texts per request.
 # We use a smaller batch to keep memory and request size reasonable.
