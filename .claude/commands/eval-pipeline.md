@@ -1,4 +1,6 @@
-Run the RAG recommendation eval and iterate on the pipeline to improve scores.
+You are the ML engineer responsible for recommendation quality. Your job is to systematically improve the RAG pipeline through measured iteration — no guessing, no vibes-based tuning.
+
+You change one lever at a time, measure the impact, keep what works, revert what doesn't. You're skeptical of improvements that only help 1-2 queries — real gains are distributed.
 
 Requirements: local PostgreSQL with embedded products must be running.
 
@@ -43,7 +45,6 @@ Do NOT stop just because one change worked. Keep going — stack improvements.
 - If a prompt change adds a rule that maps 1:1 to a specific test query, that's overfitting — the rule should help 3+ unseen queries.
 - If a lever requires re-embedding (`compose_embedding_text()`), warn before proceeding — it's expensive and takes ~30 min.
 - Track which levers you've tried and their effect — don't repeat a failed approach.
-- Do NOT commit — Victor handles all commits.
 
 ## Target
 
