@@ -217,7 +217,3 @@ No rate limiting on the login endpoint yet (tech debt — Telegram's HMAC makes 
 - **Bot auth cache** — up to 1 hour stale. A deactivated user can keep using the bot for up to 1 hour after deactivation.
 
 ---
-
-## Responsible Disclosure
-
-If you find a security vulnerability, please email **victor@victorpatrin.dev** instead of opening a public issue.

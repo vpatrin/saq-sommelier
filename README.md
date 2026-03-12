@@ -14,7 +14,7 @@ Wine discovery and recommendation platform for the SAQ (Quebec liquor board) cat
 - 🤖 Telegram bot with availability alerts and AI recommendations
 - 📍 In-store availability for Montreal stores (daily refresh via SAQ's catalog API)
 - 💬 Natural language wine recommendations via Claude + pgvector semantic search
-- 🌐 Web frontend planned at wine.victorpatrin.dev (React + Vite)
+- 🌐 Web frontend at coupette.club (React + Vite)
 
 ## Architecture
 
