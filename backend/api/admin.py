@@ -39,4 +39,4 @@ async def update_user(user_id: int, body: UserUpdateIn, db: AsyncSession = Depen
         raise NotFoundError("User", str(user_id))
     if not body.is_active and target_user.role == ROLE_ADMIN:
         raise ConflictError("User", "cannot deactivate an admin")
-    await users_repo.set_active(db, user_id, active=body.is_active)
+    await users_repo.set_active(db, target_user, active=body.is_active)

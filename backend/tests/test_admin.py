@@ -171,6 +171,7 @@ def test_reactivate_user_success(admin_client):
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
     mock_set.assert_called_once()
+    assert mock_set.call_args.kwargs["active"] is True
 
 
 def test_deactivate_user_not_found(admin_client):

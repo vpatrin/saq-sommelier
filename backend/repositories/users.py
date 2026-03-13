@@ -58,11 +58,8 @@ async def upsert(
     return user
 
 
-async def set_active(db: AsyncSession, user_id: int, *, active: bool) -> User | None:
-    """Set is_active flag. Returns updated user, or None if not found."""
-    user = await find_by_id(db, user_id)
-    if user is None:
-        return None
+async def set_active(db: AsyncSession, user: User, *, active: bool) -> User:
+    """Set is_active flag on an already-loaded user."""
     user.is_active = active
     await db.flush()
     return user
