@@ -19,8 +19,7 @@ async def create_invite(
     user: User = Depends(verify_admin),
     db: AsyncSession = Depends(get_db),
 ) -> InviteCodeOut:
-    invite = await invites_repo.create(db, created_by_id=user.id)
-    return invite
+    return await invites_repo.create(db, created_by_id=user.id)
 
 
 @router.get("/invites", response_model=list[InviteCodeOut])

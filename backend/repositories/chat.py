@@ -11,9 +11,7 @@ async def create_session(db: AsyncSession, user_id: int, title: str) -> ChatSess
     return session
 
 
-async def create_message(
-    db: AsyncSession, session_id: int, role: str, content: str
-) -> ChatMessage:
+async def create_message(db: AsyncSession, session_id: int, role: str, content: str) -> ChatMessage:
     msg = ChatMessage(session_id=session_id, role=role, content=content)
     db.add(msg)
     await db.flush()
