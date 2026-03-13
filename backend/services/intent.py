@@ -5,6 +5,7 @@ from loguru import logger
 
 from backend.config import backend_settings
 from backend.schemas.recommendation import IntentResult
+from backend.services._anthropic import get_anthropic_client
 from core.categories import CATEGORY_FAMILIES, CATEGORY_GROUPS
 
 _MODEL = "claude-haiku-4-5-20251001"
@@ -130,17 +131,7 @@ _TOOLS: list[anthropic.types.ToolParam] = [
 ]
 
 
-_client: anthropic.Anthropic | None = None
-
-
-def _get_client() -> anthropic.Anthropic:
-    global _client
-    if _client is None:
-        _client = anthropic.Anthropic(api_key=backend_settings.ANTHROPIC_API_KEY)
-    return _client
-
-
-def parse_intent(query: str) -> IntentResult:
+async def parse_intent(query: str) -> IntentResult:
     """Extract structured search filters from a natural language wine query.
 
     Uses Claude Haiku with forced tool_use to return structured filters.
@@ -150,10 +141,10 @@ def parse_intent(query: str) -> IntentResult:
         logger.warning("ANTHROPIC_API_KEY not set — returning raw query as semantic search")
         return IntentResult(semantic_query=query)
 
-    client = _get_client()
+    client = get_anthropic_client()
 
     try:
-        response = client.messages.create(
+        response = await client.messages.create(
             model=_MODEL,
             max_tokens=128,
             temperature=backend_settings.HAIKU_TEMPERATURE,

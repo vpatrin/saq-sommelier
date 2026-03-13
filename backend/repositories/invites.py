@@ -17,7 +17,6 @@ async def create(db: AsyncSession, *, created_by_id: int) -> InviteCode:
     code = InviteCode(code=_generate_code(), created_by_id=created_by_id)
     db.add(code)
     await db.flush()
-    await db.refresh(code)
     return code
 
 

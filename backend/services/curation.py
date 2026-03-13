@@ -3,6 +3,7 @@ from loguru import logger
 
 from backend.config import backend_settings
 from backend.schemas.recommendation import IntentResult
+from backend.services._anthropic import get_anthropic_client
 from core.db.models import Product
 
 _MODEL = "claude-haiku-4-5-20251001"
@@ -64,16 +65,6 @@ def _build_user_message(query: str, intent: IntentResult, products: list[Product
     return f"Query: {query}\n\nRecommended wines:\n{wines}"
 
 
-_client: anthropic.Anthropic | None = None
-
-
-def _get_client() -> anthropic.Anthropic:
-    global _client
-    if _client is None:
-        _client = anthropic.Anthropic(api_key=backend_settings.ANTHROPIC_API_KEY)
-    return _client
-
-
 class ExplanationResult:
     __slots__ = ("reasons", "summary")
 
@@ -82,7 +73,7 @@ class ExplanationResult:
         self.summary = summary
 
 
-def explain_recommendations(
+async def explain_recommendations(
     query: str,
     intent: IntentResult,
     products: list[Product],
@@ -96,11 +87,11 @@ def explain_recommendations(
         logger.warning("ANTHROPIC_API_KEY not set — skipping curation")
         return _fallback(n)
 
-    client = _get_client()
+    client = get_anthropic_client()
     user_msg = _build_user_message(query, intent, products)
 
     try:
-        response = client.messages.create(
+        response = await client.messages.create(
             model=_MODEL,
             max_tokens=512,
             temperature=backend_settings.HAIKU_TEMPERATURE,

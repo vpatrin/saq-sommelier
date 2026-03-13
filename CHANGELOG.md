@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Chat API — session-based chat endpoints wrapping the recommendation pipeline (`/api/chat/sessions/*`) (#425)
 
+### Fixed
+
+- Recommendation pipeline now fully async — intent parsing, embeddings, and curation no longer block the event loop
+- DB session lifecycle cleanup — removed redundant `commit()` and `refresh()` calls, centralized client singletons
+
 ## [1.4.0] - 2026-03-12
 
 ### Added

@@ -55,7 +55,6 @@ async def upsert(
         )
         db.add(user)
     await db.flush()
-    await db.refresh(user)
     return user
 
 

@@ -1,4 +1,6 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from backend.schemas.recommendation import IntentResult
 from backend.services.curation import (
@@ -94,25 +96,30 @@ class TestFallback:
 
 
 class TestExplainRecommendations:
-    def test_empty_products_returns_empty(self) -> None:
-        result = explain_recommendations("query", IntentResult(semantic_query="q"), [])
+    @pytest.mark.asyncio
+    async def test_empty_products_returns_empty(self) -> None:
+        result = await explain_recommendations("query", IntentResult(semantic_query="q"), [])
         assert isinstance(result, ExplanationResult)
         assert result.reasons == []
         assert result.summary == ""
 
+    @pytest.mark.asyncio
     @patch("backend.services.curation.backend_settings")
-    def test_no_api_key_returns_fallback(self, mock_settings: MagicMock) -> None:
+    async def test_no_api_key_returns_fallback(self, mock_settings: MagicMock) -> None:
         mock_settings.ANTHROPIC_API_KEY = ""
         products = [_fake_product()]
-        result = explain_recommendations("query", IntentResult(semantic_query="q"), products)
+        result = await explain_recommendations("query", IntentResult(semantic_query="q"), products)
         assert len(result.reasons) == 1
         assert result.reasons[0] == ""
 
-    @patch("backend.services.curation._get_client")
+    @pytest.mark.asyncio
+    @patch("backend.services.curation.get_anthropic_client")
     @patch("backend.services.curation.backend_settings")
-    def test_successful_call(self, mock_settings: MagicMock, mock_get_client: MagicMock) -> None:
+    async def test_successful_call(
+        self, mock_settings: MagicMock, mock_get_client: MagicMock
+    ) -> None:
         mock_settings.ANTHROPIC_API_KEY = "sk-test"
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_get_client.return_value = mock_client
 
         # Mock tool_use response
@@ -128,38 +135,40 @@ class TestExplainRecommendations:
         mock_client.messages.create.return_value = mock_response
 
         products = [_fake_product()]
-        result = explain_recommendations(
+        result = await explain_recommendations(
             "bold red", IntentResult(semantic_query="bold red"), products
         )
         assert result.reasons == ["Great Bordeaux red"]
         assert result.summary == "A solid pick"
 
-    @patch("backend.services.curation._get_client")
+    @pytest.mark.asyncio
+    @patch("backend.services.curation.get_anthropic_client")
     @patch("backend.services.curation.backend_settings")
-    def test_api_error_returns_fallback(
+    async def test_api_error_returns_fallback(
         self, mock_settings: MagicMock, mock_get_client: MagicMock
     ) -> None:
         import anthropic
 
         mock_settings.ANTHROPIC_API_KEY = "sk-test"
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_get_client.return_value = mock_client
         mock_client.messages.create.side_effect = anthropic.APIError(
             message="fail", request=MagicMock(), body=None
         )
 
         products = [_fake_product()]
-        result = explain_recommendations("query", IntentResult(semantic_query="q"), products)
+        result = await explain_recommendations("query", IntentResult(semantic_query="q"), products)
         assert len(result.reasons) == 1
         assert result.reasons[0] == ""
 
-    @patch("backend.services.curation._get_client")
+    @pytest.mark.asyncio
+    @patch("backend.services.curation.get_anthropic_client")
     @patch("backend.services.curation.backend_settings")
-    def test_no_tool_use_block_returns_fallback(
+    async def test_no_tool_use_block_returns_fallback(
         self, mock_settings: MagicMock, mock_get_client: MagicMock
     ) -> None:
         mock_settings.ANTHROPIC_API_KEY = "sk-test"
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_get_client.return_value = mock_client
 
         text_block = MagicMock()
@@ -169,5 +178,5 @@ class TestExplainRecommendations:
         mock_client.messages.create.return_value = mock_response
 
         products = [_fake_product()]
-        result = explain_recommendations("query", IntentResult(semantic_query="q"), products)
+        result = await explain_recommendations("query", IntentResult(semantic_query="q"), products)
         assert result.reasons[0] == ""

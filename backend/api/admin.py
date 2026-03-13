@@ -19,9 +19,7 @@ async def create_invite(
     user: User = Depends(verify_admin),
     db: AsyncSession = Depends(get_db),
 ) -> InviteCodeOut:
-    invite = await invites_repo.create(db, created_by_id=user.id)
-    await db.commit()
-    return invite
+    return await invites_repo.create(db, created_by_id=user.id)
 
 
 @router.get("/invites", response_model=list[InviteCodeOut])
@@ -42,4 +40,3 @@ async def deactivate_user(user_id: int, db: AsyncSession = Depends(get_db)) -> N
     if target_user.role == ROLE_ADMIN:
         raise ConflictError("User", "cannot deactivate an admin")
     await users_repo.deactivate(db, user_id)
-    await db.commit()

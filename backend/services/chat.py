@@ -1,9 +1,9 @@
 from loguru import logger
 from pydantic import ValidationError
-from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.exceptions import ForbiddenError, NotFoundError
+from backend.repositories import chat as chat_repo
 from backend.schemas.chat import (
     SESSION_TITLE_MAX_LENGTH,
     ChatMessageOut,
@@ -17,8 +17,7 @@ from core.db.models import ChatMessage, ChatSession
 
 async def _get_owned_session(db: AsyncSession, user_id: int, session_id: int) -> ChatSession:
     """Fetch a session and verify ownership. Raises NotFoundError or ForbiddenError."""
-    stmt = select(ChatSession).where(ChatSession.id == session_id)
-    session = (await db.execute(stmt)).scalar_one_or_none()
+    session = await chat_repo.find_by_id(db, session_id)
     if session is None:
         raise NotFoundError("ChatSession", str(session_id))
     if session.user_id != user_id:
@@ -54,10 +53,7 @@ async def create_session(
 ) -> ChatSessionOut:
     """Create a new chat session, titled from the first message."""
     title = message[:SESSION_TITLE_MAX_LENGTH].strip()
-    session = ChatSession(user_id=user_id, title=title)
-    db.add(session)
-    await db.flush()
-    await db.refresh(session)
+    session = await chat_repo.create_session(db, user_id, title)
     return ChatSessionOut.model_validate(session)
 
 
@@ -71,20 +67,15 @@ async def send_message(
     await _get_owned_session(db, user_id, session_id)
 
     # Save user message
-    user_msg = ChatMessage(session_id=session_id, role="user", content=message)
-    db.add(user_msg)
+    await chat_repo.create_message(db, session_id, "user", message)
 
     # Call recommendation pipeline
     result = await recommend(db, message, user_id=f"web:{user_id}")
 
     # Save assistant response as JSON
-    assistant_msg = ChatMessage(
-        session_id=session_id,
-        role="assistant",
-        content=result.model_dump_json(),
+    assistant_msg = await chat_repo.create_message(
+        db, session_id, "assistant", result.model_dump_json()
     )
-    db.add(assistant_msg)
-    await db.flush()
 
     return ChatMessageOut(
         message_id=assistant_msg.id,
@@ -102,14 +93,7 @@ async def list_sessions(
     offset: int,
 ) -> list[ChatSessionOut]:
     """List chat sessions for a user, most recent first."""
-    stmt = (
-        select(ChatSession)
-        .where(ChatSession.user_id == user_id)
-        .order_by(ChatSession.updated_at.desc())
-        .limit(limit)
-        .offset(offset)
-    )
-    rows = (await db.execute(stmt)).scalars().all()
+    rows = await chat_repo.find_by_user(db, user_id, limit=limit, offset=offset)
     return [ChatSessionOut.model_validate(s) for s in rows]
 
 
@@ -120,13 +104,7 @@ async def get_session(
 ) -> ChatSessionDetailOut:
     """Get a session with its full message history."""
     session = await _get_owned_session(db, user_id, session_id)
-
-    stmt = (
-        select(ChatMessage)
-        .where(ChatMessage.session_id == session_id)
-        .order_by(ChatMessage.created_at)
-    )
-    messages = (await db.execute(stmt)).scalars().all()
+    messages = await chat_repo.find_messages(db, session_id)
 
     return ChatSessionDetailOut(
         id=session.id,
@@ -145,9 +123,7 @@ async def update_session(
 ) -> ChatSessionOut:
     """Update a chat session's title."""
     session = await _get_owned_session(db, user_id, session_id)
-    session.title = title
-    await db.flush()
-    await db.refresh(session)
+    session = await chat_repo.update_title(db, session, title)
     return ChatSessionOut.model_validate(session)
 
 
@@ -158,4 +134,4 @@ async def delete_session(
 ) -> None:
     """Hard-delete a chat session (cascade deletes messages)."""
     await _get_owned_session(db, user_id, session_id)
-    await db.execute(delete(ChatSession).where(ChatSession.id == session_id))
+    await chat_repo.delete_session(db, session_id)

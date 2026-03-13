@@ -10,6 +10,7 @@ Parse `$ARGUMENTS` for mode:
 
 - **Surface mode (default):** `/health` or `/health --surface` — lightweight vital signs using the surface checklist. Fast, 150-line output cap.
 - **Full mode:** `/health --full` — deep audit using the full checklist. Thorough, 300-line output cap.
+- **Focused mode:** any other arguments (e.g. `/health auth flow`, `/health data layer`, `/health AI cost`) — audit **exclusively through the lens of the given topic**, but still check all four areas (QA, security, data, AI) where that topic intersects. Produce the same dashboard format, but scoped to findings relevant to that topic.
 
 Surface mode is for quick pulse checks (weekly, before a new phase). Full mode replaces running `/qa --full` + `/security --full` + `/data --full` + `/ai --full` individually — same depth, one synthesized report.
 
