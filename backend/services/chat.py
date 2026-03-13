@@ -54,6 +54,7 @@ def _extract_multi_turn_context(
 
     Returns (exclude_skus, conversation_history).
     """
+    # SKUs from ALL messages (never re-recommend), history windowed to last N turns (token budget)
     skus: list[str] = []
     # Parse all assistant messages once, keep parsed results for history windowing
     parsed: dict[int, RecommendationOut | None] = {}
