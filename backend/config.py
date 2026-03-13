@@ -2,8 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SERVICE_NAME = "backend"
 
-DEFAULT_PAGE_SIZE = 20
-MAX_PAGE_SIZE = 100
+DEFAULT_LIMIT = 20
+MAX_LIMIT = 100
 
 MAX_SEARCH_LENGTH = 200
 MAX_FILTER_LENGTH = 100

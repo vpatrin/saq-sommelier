@@ -8,7 +8,7 @@ from backend.exceptions import ConflictError, NotFoundError
 from backend.repositories import invites as invites_repo
 from backend.repositories import users as users_repo
 from backend.schemas.invite import InviteCodeOut
-from backend.schemas.user import UserOut
+from backend.schemas.user import UserOut, UserUpdateIn
 from core.db.models import User
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -32,11 +32,11 @@ async def list_users(db: AsyncSession = Depends(get_db)) -> list[UserOut]:
     return await users_repo.list_all(db)
 
 
-@router.post("/users/{user_id}/deactivate", status_code=status.HTTP_204_NO_CONTENT)
-async def deactivate_user(user_id: int, db: AsyncSession = Depends(get_db)) -> None:
+@router.patch("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def update_user(user_id: int, body: UserUpdateIn, db: AsyncSession = Depends(get_db)) -> None:
     target_user = await users_repo.find_by_id(db, user_id)
     if target_user is None:
         raise NotFoundError("User", str(user_id))
-    if target_user.role == ROLE_ADMIN:
+    if not body.is_active and target_user.role == ROLE_ADMIN:
         raise ConflictError("User", "cannot deactivate an admin")
-    await users_repo.deactivate(db, user_id)
+    await users_repo.set_active(db, user_id, active=body.is_active)

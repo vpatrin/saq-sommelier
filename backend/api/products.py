@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import (
-    DEFAULT_PAGE_SIZE,
+    DEFAULT_LIMIT,
     MAX_FILTER_LENGTH,
-    MAX_PAGE_SIZE,
+    MAX_LIMIT,
     MAX_SAQ_STORE_ID_LENGTH,
     MAX_SEARCH_LENGTH,
     MAX_SKU_LENGTH,
@@ -21,8 +21,8 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 @router.get("", response_model=PaginatedOut)
 async def get_products(
-    page: int = Query(default=1, ge=1),
-    per_page: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    limit: int = Query(default=DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
+    offset: int = Query(default=0, ge=0),
     sort: Literal["recent", "price_asc", "price_desc", "alpha"] | None = Query(default=None),
     q: str | None = Query(default=None, min_length=1, max_length=MAX_SEARCH_LENGTH),
     category: list[Annotated[str, Query(max_length=MAX_FILTER_LENGTH)]] | None = Query(
@@ -42,8 +42,8 @@ async def get_products(
     """List products with offset-based pagination and optional filters and sorting options."""
     return await list_products(
         db,
-        page,
-        per_page,
+        limit,
+        offset,
         sort=sort,
         q=q,
         category=category,

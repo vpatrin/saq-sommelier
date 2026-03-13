@@ -476,7 +476,7 @@ def test_pending_notifications_online_event_has_null_store():
     assert data[0]["store_name"] is None
 
 
-# ── POST /watches/notifications/ack ──────────────────────────
+# ── PATCH /watches/notifications ──────────────────────────
 
 
 def test_ack_notifications_success():
@@ -487,8 +487,8 @@ def test_ack_notifications_success():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.post(
-            "/api/watches/notifications/ack",
+        resp = client.patch(
+            "/api/watches/notifications",
             json={"event_ids": [1, 2]},
         )
 
@@ -503,8 +503,8 @@ def test_ack_notifications_removes_watches_for_delisted_products():
         session = AsyncMock()
         app.dependency_overrides[get_db] = lambda: session
         client = TestClient(app)
-        resp = client.post(
-            "/api/watches/notifications/ack",
+        resp = client.patch(
+            "/api/watches/notifications",
             json={"event_ids": [5]},
         )
 
@@ -518,8 +518,8 @@ def test_ack_notifications_empty_list_rejected():
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.post(
-        "/api/watches/notifications/ack",
+    resp = client.patch(
+        "/api/watches/notifications",
         json={"event_ids": []},
     )
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
@@ -530,5 +530,5 @@ def test_ack_notifications_missing_body():
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.post("/api/watches/notifications/ack")
+    resp = client.patch("/api/watches/notifications")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT

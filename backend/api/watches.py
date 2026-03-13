@@ -49,8 +49,8 @@ async def get_pending_notifications(
     return await list_pending_notifications(db)
 
 
-@router.post(
-    "/notifications/ack",
+@router.patch(
+    "/notifications",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def ack_notifications_endpoint(

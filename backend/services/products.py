@@ -1,4 +1,3 @@
-import math
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,8 +37,8 @@ async def get_product(db: AsyncSession, sku: str) -> ProductOut:
 
 async def list_products(
     db: AsyncSession,
-    page: int,
-    per_page: int,
+    limit: int,
+    offset: int,
     *,
     sort: str | None = None,
     q: str | None = None,
@@ -65,16 +64,13 @@ async def list_products(
         wine_scope=wine_scope,
     )
     total = await count(db, **filters)
-
-    offset = (page - 1) * per_page
-    rows = await find_page(db, offset, per_page, sort=sort, **filters)
+    rows = await find_page(db, offset, limit, sort=sort, **filters)
 
     return PaginatedOut(
         products=[ProductOut.model_validate(r) for r in rows],
         total=total,
-        page=page,
-        per_page=per_page,
-        pages=math.ceil(total / per_page) if total > 0 else 0,
+        limit=limit,
+        offset=offset,
     )
 
 

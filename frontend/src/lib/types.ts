@@ -65,9 +65,8 @@ export interface UserStorePreferenceOut {
 export interface PaginatedOut {
   products: ProductOut[]
   total: number
-  page: number
-  per_page: number
-  pages: number
+  limit: number
+  offset: number
 }
 
 export interface PriceRange {

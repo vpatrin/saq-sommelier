@@ -3,6 +3,10 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class UserUpdateIn(BaseModel):
+    is_active: bool
+
+
 class UserOut(BaseModel):
     id: int
     telegram_id: int

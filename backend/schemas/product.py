@@ -37,9 +37,8 @@ class ProductOut(BaseModel):
 class PaginatedOut(BaseModel):
     products: list[ProductOut]
     total: int
-    page: int
-    per_page: int
-    pages: int
+    limit: int
+    offset: int
 
 
 class PriceRange(BaseModel):

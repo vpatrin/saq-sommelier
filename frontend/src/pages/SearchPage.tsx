@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { formatOrigin } from '@/lib/utils'
 
 const DEBOUNCE_MS = 300
-const PER_PAGE = 20
+const LIMIT = 20
 const GROUP_PREFIX = 'group:'
 
 /** Resolve a category URL param to API query params. */
@@ -182,8 +182,8 @@ function SearchPage() {
       setError(null)
 
       const params = new URLSearchParams()
-      params.set('page', String(page))
-      params.set('per_page', String(PER_PAGE))
+      params.set('limit', String(LIMIT))
+      params.set('offset', String((page - 1) * LIMIT))
       if (query) params.set('q', query)
       if (country) params.set('country', country)
       appendFilterParams(params)
@@ -326,6 +326,7 @@ function SearchPage() {
   )
 
   const displayProducts = results?.products ?? []
+  const pages = results ? Math.ceil(results.total / results.limit) : 0
   const hasStores = storeNames.size > 0
 
   return (
@@ -586,7 +587,7 @@ function SearchPage() {
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-xs text-muted-foreground font-mono">
                     {results.total} result{results.total !== 1 ? 's' : ''}
-                    {results.pages > 1 && ` · page ${results.page} of ${results.pages}`}
+                    {pages > 1 && ` · page ${page} of ${pages}`}
                   </p>
                   <select
                     value={sort}
@@ -708,7 +709,7 @@ function SearchPage() {
                 </ul>
 
                 {/* Pagination */}
-                {results.pages > 1 && (
+                {pages > 1 && (
                   <div className="flex items-center gap-2 mt-6 font-mono text-sm">
                     <Button
                       variant="outline"
@@ -726,14 +727,14 @@ function SearchPage() {
                     >
                       Prev
                     </Button>
-                    {Array.from({ length: Math.min(results.pages, 7) }, (_, i) => {
+                    {Array.from({ length: Math.min(pages, 7) }, (_, i) => {
                       let p: number
-                      if (results.pages <= 7) {
+                      if (pages <= 7) {
                         p = i + 1
                       } else if (page <= 4) {
                         p = i + 1
-                      } else if (page >= results.pages - 3) {
-                        p = results.pages - 6 + i
+                      } else if (page >= pages - 3) {
+                        p = pages - 6 + i
                       } else {
                         p = page - 3 + i
                       }
@@ -755,7 +756,7 @@ function SearchPage() {
                     <Button
                       variant="outline"
                       size="xs"
-                      disabled={page >= results.pages}
+                      disabled={page >= pages}
                       onClick={() => setPage(page + 1)}
                     >
                       Next
@@ -763,8 +764,8 @@ function SearchPage() {
                     <Button
                       variant="outline"
                       size="xs"
-                      disabled={page >= results.pages}
-                      onClick={() => setPage(results.pages)}
+                      disabled={page >= pages}
+                      onClick={() => setPage(pages)}
                     >
                       Last
                     </Button>

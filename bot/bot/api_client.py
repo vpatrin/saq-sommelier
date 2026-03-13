@@ -124,8 +124,8 @@ class BackendClient:
         return await self._get("/watches/notifications")
 
     async def ack_notifications(self, event_ids: list[int]) -> None:
-        """POST /api/watches/notifications/ack — mark events as sent."""
-        await self._post("/watches/notifications/ack", json={"event_ids": event_ids})
+        """PATCH /api/watches/notifications — mark events as sent."""
+        await self._patch("/watches/notifications", json={"event_ids": event_ids})
 
     # ── Transport ──────────────────────────────────────────────
 
@@ -156,6 +156,10 @@ class BackendClient:
 
     async def _post(self, path: str, **kwargs: Any) -> Any:
         resp = await self._request("POST", path, **kwargs)
+        return self._parse_response(resp)
+
+    async def _patch(self, path: str, **kwargs: Any) -> Any:
+        resp = await self._request("PATCH", path, **kwargs)
         return self._parse_response(resp)
 
     async def _delete(self, path: str, **kwargs: Any) -> None:

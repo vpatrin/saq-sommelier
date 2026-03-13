@@ -145,9 +145,8 @@ def test_list_products_default_pagination():
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 3
-    assert data["page"] == 1
-    assert data["per_page"] == 20
-    assert data["pages"] == 1
+    assert data["limit"] == 20
+    assert data["offset"] == 0
     assert len(data["products"]) == 3
     assert data["products"][0]["sku"] == "SKU0"
 
@@ -181,13 +180,12 @@ def test_list_products_custom_pagination():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/products?page=2&per_page=10")
+    resp = client.get("/api/products?limit=10&offset=10")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 25
-    assert data["page"] == 2
-    assert data["per_page"] == 10
-    assert data["pages"] == 3
+    assert data["limit"] == 10
+    assert data["offset"] == 10
     assert len(data["products"]) == 1
 
 
@@ -200,17 +198,17 @@ def test_list_products_empty():
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 0
-    assert data["pages"] == 0
     assert data["products"] == []
 
 
 @pytest.mark.parametrize(
     "qs",
     [
-        "page=0",
-        "per_page=101",
+        "limit=0",
+        "limit=101",
+        "offset=-1",
     ],
-    ids=["page_zero", "per_page_too_large"],
+    ids=["limit_zero", "limit_too_large", "negative_offset"],
 )
 def test_pagination_validation_rejected(qs):
     """Invalid pagination params return 422."""
@@ -297,12 +295,12 @@ def test_combined_filters_with_pagination():
 
     app.dependency_overrides[get_db] = lambda: session
     client = TestClient(app)
-    resp = client.get("/api/products?country=France&min_price=10&page=2&per_page=10")
+    resp = client.get("/api/products?country=France&min_price=10&limit=10&offset=10")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 15
-    assert data["page"] == 2
-    assert data["pages"] == 2
+    assert data["limit"] == 10
+    assert data["offset"] == 10
 
 
 def test_filter_no_results():

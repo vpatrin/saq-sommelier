@@ -164,7 +164,7 @@ async def test_ack_notifications_success(client: BackendClient) -> None:
     await client.ack_notifications([1, 2])
 
     client._client.request.assert_called_once_with(
-        "POST", "/watches/notifications/ack", json={"event_ids": [1, 2]}
+        "PATCH", "/watches/notifications", json={"event_ids": [1, 2]}
     )
 
 

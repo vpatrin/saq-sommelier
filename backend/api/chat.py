@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.auth import get_current_active_user
-from backend.config import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from backend.config import DEFAULT_LIMIT, MAX_LIMIT
 from backend.db import get_db
 from backend.schemas.chat import (
     ChatIn,
@@ -36,7 +36,7 @@ async def post_session(
 
 @router.get("", response_model=list[ChatSessionOut])
 async def get_sessions(
-    limit: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    limit: int = Query(default=DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
     offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
