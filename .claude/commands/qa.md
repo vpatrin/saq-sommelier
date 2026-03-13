@@ -6,6 +6,17 @@ Input: a branch name, issue number, or feature description. Use `$ARGUMENTS` as 
 
 **Full repo mode:** If `$ARGUMENTS` is `--full` or `repo`, audit the entire codebase — not just the current branch diff. Use this for periodic health checks, not pre-merge reviews.
 
+## Mode
+
+**Arguments:** `$ARGUMENTS`
+
+- **No arguments** → run the full default QA review (all steps below).
+- **`--full` or `repo`** → full repo mode (as described above).
+- **Other arguments** → the arguments describe a focused QA topic (e.g. "auth edge cases", "frontend state bugs", "error handling paths"). In this mode:
+  1. Still gather context (branch mode steps 1-5).
+  2. Skip the default scenario categories and instead generate test scenarios **exclusively through the lens of the given topic**. Be thorough and adversarial about that specific concern.
+  3. Still run the coverage audit and produce the standard output (verdict, gaps, etc.).
+
 ## Context gathering
 
 Before testing, silently:

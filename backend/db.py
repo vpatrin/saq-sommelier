@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from core.config.settings import settings
 
+# Raw SQL async engine and sessionmaker, without ORM models. Used for Alembic migrations and low-level DB checks.
 engine = create_async_engine(settings.database_url, echo=settings.DATABASE_ECHO)
 SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 

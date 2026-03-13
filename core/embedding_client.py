@@ -1,4 +1,6 @@
-from openai import OpenAI
+from __future__ import annotations
+
+from openai import AsyncOpenAI, OpenAI
 
 from core.embedding_constants import EMBEDDING_DIMENSIONS, EMBEDDING_MODEL
 
@@ -30,3 +32,11 @@ def embed_query(text: str, *, api_key: str) -> list[float]:
     """Embed a single text (e.g. a user query) and return the vector."""
     vectors = create_embeddings([text], api_key=api_key)
     return vectors[0]
+
+
+async def async_embed_query(text: str, *, client: AsyncOpenAI) -> list[float]:
+    """Async variant of embed_query. Caller provides the AsyncOpenAI client."""
+    response = await client.embeddings.create(
+        model=EMBEDDING_MODEL, input=[text], dimensions=EMBEDDING_DIMENSIONS
+    )
+    return response.data[0].embedding

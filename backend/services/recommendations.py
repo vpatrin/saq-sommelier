@@ -3,17 +3,17 @@ import time
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.config import backend_settings
 from backend.repositories.recommendations import find_similar
 from backend.schemas.product import ProductOut
 from backend.schemas.recommendation import (
     RecommendationOut,
     RecommendationProductOut,
 )
+from backend.services._openai import get_openai_client
 from backend.services.curation import explain_recommendations
 from backend.services.intent import parse_intent
 from core.db.models import RecommendationLog
-from core.embedding_client import embed_query
+from core.embedding_client import async_embed_query
 
 _NON_WINE_MESSAGE = (
     "Je suis un assistant de recommandation de vins — je ne peux pas vous aider avec ça. "
@@ -74,14 +74,14 @@ async def recommend(
 
     try:
         t0 = time.monotonic()
-        intent = parse_intent(query)
+        intent = await parse_intent(query)
         latency["intent"] = _time_ms(t0)
 
         if not intent.is_wine:
             return RecommendationOut(products=[], intent=intent, summary=_NON_WINE_MESSAGE)
 
         t0 = time.monotonic()
-        vector = embed_query(intent.semantic_query, api_key=backend_settings.OPENAI_API_KEY)
+        vector = await async_embed_query(intent.semantic_query, client=get_openai_client())
         latency["embed"] = _time_ms(t0)
 
         t0 = time.monotonic()
@@ -91,7 +91,7 @@ async def recommend(
         latency["search"] = _time_ms(t0)
 
         t0 = time.monotonic()
-        explanation = explain_recommendations(query, intent, products)
+        explanation = await explain_recommendations(query, intent, products)
         latency["curation"] = _time_ms(t0)
 
         skus = [p.sku for p in products]

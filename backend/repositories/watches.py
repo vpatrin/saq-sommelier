@@ -13,7 +13,6 @@ async def create(db: AsyncSession, user_id: str, sku: str) -> Watch:
     watch = Watch(user_id=user_id, sku=sku)
     db.add(watch)
     await db.flush()
-    await db.refresh(watch)
     return watch
 
 

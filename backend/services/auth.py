@@ -76,8 +76,6 @@ async def authenticate_telegram(db: AsyncSession, data: TelegramLoginIn) -> Toke
     if invite:
         await invites_repo.redeem(db, invite, user.id)
 
-    await db.commit()
-
     logger.info("Telegram auth: telegram_id={} user_id={}", data.id, user.id)
 
     token = _create_jwt(user.id, user.telegram_id, user.role, user.first_name)

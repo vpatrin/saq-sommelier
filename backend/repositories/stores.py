@@ -37,7 +37,6 @@ async def add_user_store(db: AsyncSession, user_id: str, saq_store_id: str) -> U
     pref = UserStorePreference(user_id=user_id, saq_store_id=saq_store_id)
     db.add(pref)
     await db.flush()
-    await db.refresh(pref)
     return pref
 
 

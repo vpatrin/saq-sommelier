@@ -6,6 +6,17 @@ Input: a branch name, issue number, or scope description. Use `$ARGUMENTS` as th
 
 **Full repo mode:** If `$ARGUMENTS` is `--full` or `repo`, audit the entire codebase — not just the current branch diff. Use this for periodic security posture reviews.
 
+## Mode
+
+**Arguments:** `$ARGUMENTS`
+
+- **No arguments** → run the full default security audit (all steps below).
+- **`--full` or `repo`** → full repo mode (as described above).
+- **Other arguments** → the arguments describe a focused security topic (e.g. "IDOR vulnerabilities", "input validation", "secrets management"). In this mode:
+  1. Still gather context (branch mode steps 1-4).
+  2. Skip the default checklist and instead audit **exclusively through the lens of the given topic**. Be thorough and think like an attacker targeting that specific surface.
+  3. Still produce the standard output (findings, threat model delta, verdict).
+
 ## Context gathering
 
 Before auditing, silently:

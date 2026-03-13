@@ -8,6 +8,17 @@ Input: a feature description, architecture question, or branch to review. Use `$
 
 **Relationship to `/eval-pipeline`:** This command reviews AI *design and architecture*. `/eval-pipeline` is for *iterating on scores* through measured experimentation. Use `/ai` to decide what to build. Use `/eval-pipeline` to tune what you've built.
 
+## Mode
+
+**Arguments:** `$ARGUMENTS`
+
+- **No arguments** → run the full default AI review (all steps below).
+- **`--full` or `repo`** → full repo mode (as described above).
+- **Other arguments** → the arguments describe a focused AI topic (e.g. "prompt injection", "latency bottlenecks", "embedding strategy", "error handling"). In this mode:
+  1. Still gather context (branch mode steps 1-3).
+  2. Skip the default review areas and instead review **exclusively through the lens of the given topic**. Be thorough and explain trade-offs in terms of latency, cost, accuracy, and complexity.
+  3. Still produce the standard output (findings, verdict).
+
 ## Context gathering
 
 Before reviewing, silently:

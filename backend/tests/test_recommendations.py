@@ -55,18 +55,18 @@ def _fake_product(
 class TestRecommend:
     @pytest.mark.asyncio
     @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
-    @patch("backend.services.recommendations.explain_recommendations")
-    @patch("backend.services.recommendations.find_similar")
-    @patch("backend.services.recommendations.embed_query")
-    @patch("backend.services.recommendations.parse_intent")
+    @patch("backend.services.recommendations.explain_recommendations", new_callable=AsyncMock)
+    @patch("backend.services.recommendations.find_similar", new_callable=AsyncMock)
+    @patch("backend.services.recommendations.async_embed_query", new_callable=AsyncMock)
+    @patch("backend.services.recommendations.parse_intent", new_callable=AsyncMock)
     @patch("backend.services.recommendations.backend_settings")
     async def test_full_pipeline(
         self,
         mock_settings: MagicMock,
-        mock_parse: MagicMock,
-        mock_embed: MagicMock,
+        mock_parse: AsyncMock,
+        mock_embed: AsyncMock,
         mock_find: AsyncMock,
-        mock_explain: MagicMock,
+        mock_explain: AsyncMock,
         mock_write_log: AsyncMock,
     ) -> None:
         mock_settings.OPENAI_API_KEY = "sk-test"
@@ -98,18 +98,18 @@ class TestRecommend:
 
     @pytest.mark.asyncio
     @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
-    @patch("backend.services.recommendations.explain_recommendations")
-    @patch("backend.services.recommendations.find_similar")
-    @patch("backend.services.recommendations.embed_query")
-    @patch("backend.services.recommendations.parse_intent")
+    @patch("backend.services.recommendations.explain_recommendations", new_callable=AsyncMock)
+    @patch("backend.services.recommendations.find_similar", new_callable=AsyncMock)
+    @patch("backend.services.recommendations.async_embed_query", new_callable=AsyncMock)
+    @patch("backend.services.recommendations.parse_intent", new_callable=AsyncMock)
     @patch("backend.services.recommendations.backend_settings")
     async def test_empty_results(
         self,
         mock_settings: MagicMock,
-        mock_parse: MagicMock,
-        mock_embed: MagicMock,
+        mock_parse: AsyncMock,
+        mock_embed: AsyncMock,
         mock_find: AsyncMock,
-        mock_explain: MagicMock,
+        mock_explain: AsyncMock,
         mock_write_log: AsyncMock,
     ) -> None:
         mock_settings.OPENAI_API_KEY = "sk-test"
@@ -128,10 +128,10 @@ class TestRecommend:
 
     @pytest.mark.asyncio
     @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
-    @patch("backend.services.recommendations.parse_intent")
+    @patch("backend.services.recommendations.parse_intent", new_callable=AsyncMock)
     async def test_non_wine_returns_early_without_logging(
         self,
-        mock_parse: MagicMock,
+        mock_parse: AsyncMock,
         mock_write_log: AsyncMock,
     ) -> None:
         mock_parse.return_value = IntentResult(is_wine=False, semantic_query="beer")
@@ -144,10 +144,10 @@ class TestRecommend:
         mock_write_log.assert_not_called()
 
     @pytest.mark.asyncio
-    @patch("backend.services.recommendations.parse_intent")
+    @patch("backend.services.recommendations.parse_intent", new_callable=AsyncMock)
     async def test_pipeline_failure_does_not_log(
         self,
-        mock_parse: MagicMock,
+        mock_parse: AsyncMock,
     ) -> None:
         mock_parse.side_effect = RuntimeError("API down")
 

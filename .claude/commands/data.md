@@ -6,6 +6,17 @@ Input: a branch name, issue number, migration, or topic. Use `$ARGUMENTS` as the
 
 **Full repo mode:** If `$ARGUMENTS` is `--full` or `repo`, audit the entire data layer — models, repositories, migrations, indexes. Use this for periodic schema health checks.
 
+## Mode
+
+**Arguments:** `$ARGUMENTS`
+
+- **No arguments** → run the full default data review (all steps below).
+- **`--full` or `repo`** → full repo mode (as described above).
+- **Other arguments** → the arguments describe a focused data topic (e.g. "schema issues", "query performance", "index coverage", "model-schema consistency"). In this mode:
+  1. Still gather context (branch mode steps 1-6).
+  2. Skip the default checklist and instead review **exclusively through the lens of the given topic**. Be thorough and explain production consequences.
+  3. Still produce the standard output (findings, verdict).
+
 ## Context gathering
 
 Before reviewing, silently:
