@@ -90,11 +90,11 @@ See [SECURITY.md](SECURITY.md) — auth model, threat model, CI scanning, known 
 
 **Done:** Makefile (per-service and combined targets for install, dev, lint, format, test, coverage, audit, build, run). Docker Compose (dev profile for postgres, production for backend + bot). CI/CD (lint + test + audit per service, Hadolint, coverage enforcement, concurrency cancel-in-progress). Systemd timers for production scheduling. Scoped git hooks (pre-commit lints changed services, pre-push tests changed services + checks lock files + migration coverage).
 
+**Done (cont.):** CD pipeline — build + Trivy + push to GHCR on tag push (#362). `docker-compose.prod.yml` — GHCR images, restart policies, no dev volumes (#364). Manual deploy via `./deploy/deploy.sh vX.Y.Z`.
+
 **Next:**
 - ~~`docs/DEPLOYMENT.md`~~: folded into [PRODUCTION.md](PRODUCTION.md#deploying) (#227)
-- CD pipeline: push to main → build image → push to GHCR → SSH deploy to VPS — currently manual and undocumented
 - Image tagging: `:latest` for production, `:YYYYMMDD-HHMMSS` for rollback archive — enables one-command rollback
-- `docker-compose.prod.yml`: explicit resource limits, restart policies, health checks, no debug ports — current compose mixes dev and prod concerns
 
 ---
 
@@ -116,8 +116,9 @@ See [SECURITY.md](SECURITY.md) — auth model, threat model, CI scanning, known 
 
 **Done:** Single `.env` pattern with env-specific defaults. Pydantic `BaseSettings` with fail-fast on missing required vars. `ENVIRONMENT` flag gates debug behavior. `DATABASE_ECHO` flag for SQL query logging in dev.
 
+**Done (cont.):** `docker-compose.prod.yml` with restart policies and no dev volumes (#364).
+
 **Next:**
-- `docker-compose.prod.yml`: production-specific compose with no hot-reload volumes, explicit restart policies, no debug ports
 - Secrets injection: migrate bot token + DB credentials from `.env` file to Docker secrets or environment-injected at deploy time
 
 ---

@@ -61,16 +61,66 @@ Web app ships before chat — auth, watches, and stores are already API-complete
 Wraps existing Haiku RAG pipeline for web consumption. No new AI architecture.
 
 - [x] Chat session + endpoints — session CRUD, single-turn message flow wrapping recommendations service (#425, #429)
-- [ ] Multi-turn context — conversation history as pipeline context, sliding window
-- [ ] SSE streaming — `text/event-stream` for progressive response display
+- [x] Multi-turn context — conversation history as pipeline context, sliding window (#428, #434)
+- [ ] SSE streaming endpoint — `text/event-stream` backend transport (#427)
 
 ### Phase 9b — Chat Interface
 
-- [ ] Chat UI — message input, response display, SSE streaming, conversation history
+- [ ] Chat UI — message input, response display, conversation history (#426)
+- [ ] SSE rendering — progressive token display in chat UI (depends on Phase 9 SSE endpoint)
 
-### Phase 10 — MCP Server / Sonnet + Tools (optional)
+### Phase 10 — Intent Router
 
-Upgrade path from Haiku RAG to Claude with direct tool access. Either as MCP server (developer tooling) or Sonnet + tool use in `/chat` (product feature) — same architecture, different transport.
+Chat becomes the primary interface. Existing `is_recommendation()` check routes recommendation queries through the RAG pipeline; everything else (wine chat, food pairings, region questions, comparisons) goes direct to Claude. No granular intent taxonomy needed — if it's wine-related, the sommelier handles it.
+
+- [ ] Chat-only path — non-recommendation wine queries skip the RAG pipeline, respond via Claude directly
+- [ ] Structured data in chat — wine cards rendered inline when the sommelier references a product
+- [ ] Prompt templates — suggested conversation starters on empty chat state ("Blind tasting challenge", "What pairs with...", "Compare two wines", "Explore a region")
+
+### Phase 11 — Tasting Journal
+
+Log wines you've tasted with 100-point ratings and tasting notes. SAQ catalog wines only (select by SKU). "Log tasting" action on product cards in search results and chat. Dedicated "My Tastings" page in sidebar.
+
+- [ ] TastingNote model + migration — user_id, sku (FK), rating (0-100), notes, tasted_at
+- [ ] Tasting CRUD endpoints — create, list (paginated, reverse-chronological), update, delete
+- [ ] "Log tasting" inline form on product cards (search + chat)
+- [ ] My Tastings page — reverse-chronological list, inline edit
+- [ ] Surface "You rated: 92" on product cards in search results
+
+### Phase 12 — Taste Profile
+
+Build a user taste profile from watches, recommendation feedback, and tasting journal scores. MVP signals — no cellar data needed yet. Inject into recommendation prompts for personalization. Displayed as a sidebar widget, not a standalone page.
+
+- [ ] Taste profile computation — aggregate signals into structured preferences (regions, grapes, price range, style)
+- [ ] Adventure temperature — controls how exploratory vs conservative recommendations are (resolve UX scope — chat only, digest only, or both — during phase planning, before implementation)
+- [ ] Profile context injection — pass taste profile + adventure setting to Claude for personalized recommendations
+- [ ] Sidebar taste profile card — only shown after threshold (5+ tastings or 3+ watches), not before
+
+### Phase 13 — Weekly Digest
+
+Automated personalized summary of new/restocked wines matching user's taste profile. Delivered via Telegram DM (per-user, not group chat — #120 scope updated). This reintroduces the bot as a content delivery channel beyond alerts.
+
+- [ ] Weekly job — query new/restocked products since last run
+- [ ] Per-user personalization — filter by taste profile preferences
+- [ ] Claude curation — summarize top picks with brief reasoning
+- [ ] Telegram delivery — summary + link to full digest on web app
+- [ ] Digest web page — weekly picks with full wine cards and tasting/cellar actions
+
+### Phase 14 — Cellar
+
+Track wines you have at home. SAQ catalog wines only. "Add to cellar" action on product cards. Quantity management on dedicated "My Cellar" page. Auto-remove when quantity hits 0. Cellar data feeds back into taste profile for richer signals.
+
+- [ ] CellarEntry model + migration — user_id, sku (FK), quantity, added_at
+- [ ] Cellar CRUD endpoints — add, list, update quantity, remove
+- [ ] "Add to cellar" button on product cards
+- [ ] My Cellar page — list with quantity +1/−1 controls
+- [ ] Surface "In your cellar (×2)" on product cards in search results
+
+### Side Projects (not product phases)
+
+#### MCP Server / Sonnet + Tools
+
+Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via MCP. Same tool architecture as intent router but different transport. Not user-facing.
 
 - [ ] Tool schema definitions — `search_wines()`, `get_product()`, `get_user_watches()`
 - [ ] Agentic tool execution loop — Claude calls tools, backend executes, returns results
@@ -79,24 +129,27 @@ Upgrade path from Haiku RAG to Claude with direct tool access. Either as MCP ser
 
 ### Ideas (unscoped)
 
-- [ ] `/occasion` — context-aware suggestions ("wine for a BBQ", "gift for belle-mère") via Claude
-- [ ] `/budget` — smart budget optimizer ("best rouge under $40") with value reasoning
-- [ ] `/surprise` — discovery roulette that pushes outside comfort zone based on watch history
-- [ ] `/gifter` — opt-in watch list sharing between friends for gift ideas
-- [ ] `/blind` — blind tasting game: bot describes a wine, friends guess, track scores
-- [ ] `/split` — group buy coordinator: share a bottle deal, track RSVPs among friends
-- [ ] `/terroir` — region deep-dive with educational context + current SAQ inventory
-- [ ] `/versus` — head-to-head wine comparison with Claude commentary on when to pick each
-- [ ] `/cellar` — personal purchase tracker with taste profile insights over time
-- [ ] `/digest` — weekly curated new arrivals summary, personalized to group preferences (#120)
+- [ ] Usage & model controls — Sonnet vs Haiku toggle in UI, per-user API cost tracking, monthly usage limits
+- [ ] Wine lists — named collections ("BBQ wines"), shareable via public link
+- [ ] "Drink tonight" — context-aware quick pick from cellar ("I'm making lamb, what should I open?")
+- [ ] "My Year in Wine" — annual recap (total tasted, avg score, top region, highest-rated, shareable)
+- [ ] Chat-driven journal entry — log tastings via conversation ("just had the Mont-Redon, solid 88")
 - [ ] Rating aggregator — enrich products with Vivino scores and critic ratings; fuzzy name matching
 - [ ] Price comparison vs France — compare SAQ prices to French retail (Wine-Searcher, Vinatis)
-- [ ] Chrome extension — floating "Watch" button on SAQ product pages, triggers deep link to bot (or `POST /api/watches` with JWT after auth)
-- [ ] Bilingual support — per-user language preference, static translation tables, bilingual bot/web responses (#134, #151–#153)
+- [ ] Chrome extension — floating "Watch" button on SAQ product pages (reuses bot URL paste SKU extraction logic)
+- [ ] Bilingual support — per-user language preference, static translation tables, bilingual web/bot responses (#134, #151–#153)
+- [ ] Wine tech sheets — external data enrichment beyond SAQ catalog (fiches techniques, critic notes)
+- [ ] Bot `/recommend` deprecation — remove command, bot is alerts-only (cross-cutting chore, not a product idea)
 
 ---
 
 ## Cross-cutting
+
+### UX Improvements
+
+- [ ] Sidebar restructure — grouped nav (Discover / My Wines / My Stores) to scale for future phases
+- [ ] Chat history in sidebar — recent session titles + "New chat" (Perplexity/ChatGPT pattern)
+- [ ] Product card action overflow — expandable row for 3+ actions (Watch visible, tasting/cellar on expand) when tasting + cellar ship
 
 ### DevOps & CD Pipeline
 
