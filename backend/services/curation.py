@@ -4,7 +4,6 @@ import anthropic
 from loguru import logger
 
 from backend.config import backend_settings
-from backend.schemas.recommendation import IntentResult
 from backend.services._anthropic import get_anthropic_client
 from core.db.models import Product
 
@@ -64,7 +63,6 @@ def _format_wine(idx: int, product: Product) -> str:
 
 def _build_user_message(
     query: str,
-    intent: IntentResult,
     products: list[Product],
     *,
     conversation_history: str | None = None,
@@ -85,7 +83,6 @@ class ExplanationResult:
 
 async def explain_recommendations(
     query: str,
-    intent: IntentResult,
     products: list[Product],
     *,
     conversation_history: str | None = None,
@@ -100,9 +97,7 @@ async def explain_recommendations(
         return _fallback(n)
 
     client = get_anthropic_client()
-    user_msg = _build_user_message(
-        query, intent, products, conversation_history=conversation_history
-    )
+    user_msg = _build_user_message(query, products, conversation_history=conversation_history)
 
     try:
         response = await client.messages.create(

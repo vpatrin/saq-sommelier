@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.schemas.recommendation import IntentResult
 from backend.services.curation import (
     ExplanationResult,
     _build_user_message,
@@ -56,28 +55,23 @@ class TestFormatWine:
 
 class TestBuildUserMessage:
     def test_includes_query_and_wines(self) -> None:
-        intent = IntentResult(semantic_query="bold red")
         products = [_fake_product(), _fake_product(name="Second Wine")]
-        msg = _build_user_message("bold red wine", intent, products)
+        msg = _build_user_message("bold red wine", products)
         assert "Query: bold red wine" in msg
         assert "Test Wine" in msg
         assert "Second Wine" in msg
 
     def test_with_conversation_history(self) -> None:
-        intent = IntentResult(semantic_query="cheaper")
         products = [_fake_product()]
         history = "User: bold red\nAssistant: Great picks for steak."
-        msg = _build_user_message(
-            "something cheaper", intent, products, conversation_history=history
-        )
+        msg = _build_user_message("something cheaper", products, conversation_history=history)
         assert msg.startswith("Previous conversation:\n")
         assert "User: bold red" in msg
         assert "Query: something cheaper" in msg
 
     def test_without_history_no_prefix(self) -> None:
-        intent = IntentResult(semantic_query="red")
         products = [_fake_product()]
-        msg = _build_user_message("red wine", intent, products, conversation_history=None)
+        msg = _build_user_message("red wine", products, conversation_history=None)
         assert "Previous conversation" not in msg
         assert msg.startswith("Query: red wine")
 
@@ -116,7 +110,7 @@ class TestFallback:
 class TestExplainRecommendations:
     @pytest.mark.asyncio
     async def test_empty_products_returns_empty(self) -> None:
-        result = await explain_recommendations("query", IntentResult(semantic_query="q"), [])
+        result = await explain_recommendations("query", [])
         assert isinstance(result, ExplanationResult)
         assert result.reasons == []
         assert result.summary == ""
@@ -126,7 +120,7 @@ class TestExplainRecommendations:
     async def test_no_api_key_returns_fallback(self, mock_settings: MagicMock) -> None:
         mock_settings.ANTHROPIC_API_KEY = ""
         products = [_fake_product()]
-        result = await explain_recommendations("query", IntentResult(semantic_query="q"), products)
+        result = await explain_recommendations("query", products)
         assert len(result.reasons) == 1
         assert result.reasons[0] == ""
 
@@ -153,9 +147,7 @@ class TestExplainRecommendations:
         mock_client.messages.create.return_value = mock_response
 
         products = [_fake_product()]
-        result = await explain_recommendations(
-            "bold red", IntentResult(semantic_query="bold red"), products
-        )
+        result = await explain_recommendations("bold red", products)
         assert result.reasons == ["Great Bordeaux red"]
         assert result.summary == "A solid pick"
 
@@ -175,7 +167,7 @@ class TestExplainRecommendations:
         )
 
         products = [_fake_product()]
-        result = await explain_recommendations("query", IntentResult(semantic_query="q"), products)
+        result = await explain_recommendations("query", products)
         assert len(result.reasons) == 1
         assert result.reasons[0] == ""
 
@@ -196,5 +188,5 @@ class TestExplainRecommendations:
         mock_client.messages.create.return_value = mock_response
 
         products = [_fake_product()]
-        result = await explain_recommendations("query", IntentResult(semantic_query="q"), products)
+        result = await explain_recommendations("query", products)
         assert result.reasons[0] == ""

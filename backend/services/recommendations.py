@@ -99,7 +99,7 @@ async def recommend(
 
         t0 = time.monotonic()
         explanation = await explain_recommendations(
-            query, intent, products, conversation_history=conversation_history
+            query, products, conversation_history=conversation_history
         )
         latency["curation"] = _time_ms(t0)
 
