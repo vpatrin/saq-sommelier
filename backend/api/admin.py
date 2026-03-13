@@ -34,9 +34,9 @@ async def list_users(db: AsyncSession = Depends(get_db)) -> list[UserOut]:
 
 @router.patch("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_user(user_id: int, body: UserUpdateIn, db: AsyncSession = Depends(get_db)) -> None:
-    target_user = await users_repo.find_by_id(db, user_id)
-    if target_user is None:
+    target = await users_repo.find_by_id(db, user_id)
+    if target is None:
         raise NotFoundError("User", str(user_id))
-    if not body.is_active and target_user.role == ROLE_ADMIN:
+    if not body.is_active and target.role == ROLE_ADMIN:
         raise ConflictError("User", "cannot deactivate an admin")
-    await users_repo.set_active(db, target_user, active=body.is_active)
+    await users_repo.set_active(db, target, active=body.is_active)
