@@ -14,18 +14,13 @@ interface TelegramLoginButtonProps {
   onAuth: (data: TelegramLoginData) => void
 }
 
-export function TelegramLoginButton({
-  botUsername,
-  onAuth,
-}: TelegramLoginButtonProps) {
+export function TelegramLoginButton({ botUsername, onAuth }: TelegramLoginButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // Telegram's widget calls this global function on successful auth
     const callbackName = '__telegram_login_callback'
-    ;(window as unknown as Record<string, unknown>)[callbackName] = (
-      data: TelegramLoginData
-    ) => {
+    ;(window as unknown as Record<string, unknown>)[callbackName] = (data: TelegramLoginData) => {
       onAuth(data)
     }
 

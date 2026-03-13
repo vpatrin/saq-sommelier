@@ -35,7 +35,8 @@ function AppShell() {
         {/* Navigation */}
         <nav className="flex-1 p-2 flex flex-col gap-0.5">
           {NAV_ITEMS.map(({ to, label }) => {
-            const active = location.pathname === to ||
+            const active =
+              location.pathname === to ||
               (to === '/stores' && location.pathname === '/stores/nearby')
             return (
               <Link
@@ -64,9 +65,7 @@ function AppShell() {
             @{BOT_USERNAME}
           </a>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-mono truncate">
-              {user?.first_name}
-            </span>
+            <span className="text-sm font-mono truncate">{user?.first_name}</span>
             <Button variant="ghost" size="xs" onClick={handleLogout}>
               Logout
             </Button>

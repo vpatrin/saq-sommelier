@@ -17,10 +17,7 @@ const LIMIT = 20
 const GROUP_PREFIX = 'group:'
 
 /** Resolve a category URL param to API query params. */
-function resolveCategories(
-  value: string,
-  groups: CategoryGroupOut[]
-): string[] {
+function resolveCategories(value: string, groups: CategoryGroupOut[]): string[] {
   if (!value) return []
   if (!value.startsWith(GROUP_PREFIX)) return [value]
   const key = value.slice(GROUP_PREFIX.length)
@@ -108,7 +105,7 @@ function SearchPage() {
         }
       }
     },
-    [category, onlineOnly, inStoresOnly, savedStoreIds]
+    [category, onlineOnly, inStoresOnly, savedStoreIds],
   )
 
   // Fetch facets — re-fetches when category or availability filters change
@@ -132,7 +129,9 @@ function SearchPage() {
       }
     }
     fetchFacets()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [apiClient, appendFilterParams, inStoresOnly, storesLoaded])
 
   // Fetch existing watches and saved stores on mount
@@ -142,7 +141,7 @@ function SearchPage() {
     async function fetchWatches() {
       try {
         const data = await apiClient<WatchWithProduct[]>(
-          `/watches?user_id=${encodeURIComponent(userId)}`
+          `/watches?user_id=${encodeURIComponent(userId)}`,
         )
         if (!cancelled) {
           setWatchedSkus(new Set(data.map((w) => w.watch.sku)))
@@ -168,7 +167,9 @@ function SearchPage() {
 
     fetchWatches()
     fetchStorePrefs()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [apiClient, userId])
 
   // Fetch products whenever URL params change.
@@ -204,8 +205,22 @@ function SearchPage() {
     }
 
     fetchProducts()
-    return () => { cancelled = true }
-  }, [apiClient, query, country, appendFilterParams, sort, minPrice, maxPrice, page, retryCount, inStoresOnly, storesLoaded])
+    return () => {
+      cancelled = true
+    }
+  }, [
+    apiClient,
+    query,
+    country,
+    appendFilterParams,
+    sort,
+    minPrice,
+    maxPrice,
+    page,
+    retryCount,
+    inStoresOnly,
+    storesLoaded,
+  ])
 
   // Debounced search input
   const handleInputChange = useCallback(
@@ -225,7 +240,7 @@ function SearchPage() {
         })
       }, DEBOUNCE_MS)
     },
-    [setSearchParams]
+    [setSearchParams],
   )
 
   // Filter change helpers — reset page on any filter change
@@ -242,7 +257,7 @@ function SearchPage() {
         return next
       })
     },
-    [setSearchParams]
+    [setSearchParams],
   )
 
   const toggleFilter = useCallback(
@@ -258,7 +273,7 @@ function SearchPage() {
         return next
       })
     },
-    [setSearchParams]
+    [setSearchParams],
   )
 
   const setPage = useCallback(
@@ -273,7 +288,7 @@ function SearchPage() {
         return next
       })
     },
-    [setSearchParams]
+    [setSearchParams],
   )
 
   const handleWatch = useCallback(
@@ -298,7 +313,7 @@ function SearchPage() {
         setWatchingInProgress(null)
       }
     },
-    [apiClient]
+    [apiClient],
   )
 
   const handleUnwatch = useCallback(
@@ -322,7 +337,7 @@ function SearchPage() {
         setWatchingInProgress(null)
       }
     },
-    [apiClient, userId]
+    [apiClient, userId],
   )
 
   const displayProducts = results?.products ?? []
@@ -350,13 +365,9 @@ function SearchPage() {
             <div className="flex flex-wrap gap-1.5">
               {facets.category_families.map((family, fi) => (
                 <span key={family.key} className="contents">
-                  {fi > 0 && (
-                    <span className="w-px bg-border self-stretch mx-1" />
-                  )}
+                  {fi > 0 && <span className="w-px bg-border self-stretch mx-1" />}
                   {family.children.map((groupKey) => {
-                    const group = facets.grouped_categories.find(
-                      (g) => g.key === groupKey
-                    )
+                    const group = facets.grouped_categories.find((g) => g.key === groupKey)
                     if (!group) return null
                     const isActive =
                       category === `${GROUP_PREFIX}${groupKey}` ||
@@ -368,10 +379,7 @@ function SearchPage() {
                         key={groupKey}
                         type="button"
                         onClick={() =>
-                          setFilter(
-                            'category',
-                            isActive ? '' : `${GROUP_PREFIX}${groupKey}`
-                          )
+                          setFilter('category', isActive ? '' : `${GROUP_PREFIX}${groupKey}`)
                         }
                         className={`border px-2 py-1 text-xs font-mono transition-colors ${
                           isActive
@@ -391,9 +399,7 @@ function SearchPage() {
             {(() => {
               const groupKey = activeGroupKey(category, facets.grouped_categories)
               if (!groupKey) return null
-              const group = facets.grouped_categories.find(
-                (g) => g.key === groupKey
-              )
+              const group = facets.grouped_categories.find((g) => g.key === groupKey)
               if (!group || group.categories.length < 2) return null
 
               // Large groups: "All" chip + dropdown to narrow
@@ -403,9 +409,7 @@ function SearchPage() {
                   <div className="flex flex-wrap items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() =>
-                        setFilter('category', `${GROUP_PREFIX}${groupKey}`)
-                      }
+                      onClick={() => setFilter('category', `${GROUP_PREFIX}${groupKey}`)}
                       className={`border px-2 py-1 text-xs font-mono transition-colors ${
                         isAllActive
                           ? 'border-primary bg-primary/10 text-primary'
@@ -415,14 +419,9 @@ function SearchPage() {
                       All
                     </button>
                     <select
-                      value={
-                        category.startsWith(GROUP_PREFIX) ? '' : category
-                      }
+                      value={category.startsWith(GROUP_PREFIX) ? '' : category}
                       onChange={(e) =>
-                        setFilter(
-                          'category',
-                          e.target.value || `${GROUP_PREFIX}${groupKey}`
-                        )
+                        setFilter('category', e.target.value || `${GROUP_PREFIX}${groupKey}`)
                       }
                       className="bg-background border border-border px-2 py-1 text-xs font-mono focus:outline-none focus:border-ring"
                     >
@@ -441,9 +440,7 @@ function SearchPage() {
                 <div className="flex flex-wrap gap-1.5">
                   <button
                     type="button"
-                    onClick={() =>
-                      setFilter('category', `${GROUP_PREFIX}${groupKey}`)
-                    }
+                    onClick={() => setFilter('category', `${GROUP_PREFIX}${groupKey}`)}
                     className={`border px-2 py-1 text-xs font-mono transition-colors ${
                       category === `${GROUP_PREFIX}${groupKey}`
                         ? 'border-primary bg-primary/10 text-primary'
@@ -521,9 +518,7 @@ function SearchPage() {
                         : 'border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {savedStoreIds.length > 0
-                    ? 'In my stores'
-                    : 'In my stores (none saved)'}
+                  {savedStoreIds.length > 0 ? 'In my stores' : 'In my stores (none saved)'}
                 </button>
               </div>
             </div>
@@ -608,9 +603,10 @@ function SearchPage() {
                     const isOnline = product.online_availability === true
                     const storeAvail = product.store_availability ?? []
                     const matchingIds = storeAvail.filter((id) => storeNames.has(id))
-                    const hasAvailability = isOnline
-                      || (hasStores && matchingIds.length > 0)
-                      || (!hasStores && storeAvail.length > 0)
+                    const hasAvailability =
+                      isOnline ||
+                      (hasStores && matchingIds.length > 0) ||
+                      (!hasStores && storeAvail.length > 0)
                     return (
                       <li
                         key={product.sku}
@@ -637,40 +633,50 @@ function SearchPage() {
                               .join(' · ')}
                           </p>
                           <div className="flex items-center gap-3 mt-1">
-                            {product.price && (
-                              <span className="text-sm">{product.price} $</span>
-                            )}
+                            {product.price && <span className="text-sm">{product.price} $</span>}
                             {(() => {
                               const canExpand = matchingIds.length > 1
 
-                              const storeText = matchingIds.length === 1
-                                ? `At ${storeNames.get(matchingIds[0])}`
-                                : `In ${matchingIds.length} of your stores`
+                              const storeText =
+                                matchingIds.length === 1
+                                  ? `At ${storeNames.get(matchingIds[0])}`
+                                  : `In ${matchingIds.length} of your stores`
 
-                              const storeNode = hasStores && matchingIds.length > 0
-                                ? canExpand
-                                  ? <button
+                              const storeNode =
+                                hasStores && matchingIds.length > 0 ? (
+                                  canExpand ? (
+                                    <button
                                       type="button"
                                       className="text-xs text-green-500 hover:underline underline-offset-4 cursor-pointer"
-                                      onClick={() => setExpandedStores((prev) => {
-                                        const next = new Set(prev)
-                                        if (next.has(product.sku)) next.delete(product.sku)
-                                        else next.add(product.sku)
-                                        return next
-                                      })}
+                                      onClick={() =>
+                                        setExpandedStores((prev) => {
+                                          const next = new Set(prev)
+                                          if (next.has(product.sku)) next.delete(product.sku)
+                                          else next.add(product.sku)
+                                          return next
+                                        })
+                                      }
                                     >
                                       {storeText}
                                     </button>
-                                  : <span className="text-xs text-green-500">{storeText}</span>
-                                : !hasStores && storeAvail.length > 0
-                                  ? <span className="text-xs text-green-500">In {storeAvail.length} store{storeAvail.length !== 1 ? 's' : ''}</span>
-                                  : null
+                                  ) : (
+                                    <span className="text-xs text-green-500">{storeText}</span>
+                                  )
+                                ) : !hasStores && storeAvail.length > 0 ? (
+                                  <span className="text-xs text-green-500">
+                                    In {storeAvail.length} store{storeAvail.length !== 1 ? 's' : ''}
+                                  </span>
+                                ) : null
 
                               if (!isOnline && !storeNode) return null
                               return (
                                 <>
-                                  {isOnline && <span className="text-xs text-green-500">Online</span>}
-                                  {isOnline && storeNode && <span className="text-xs text-muted-foreground">·</span>}
+                                  {isOnline && (
+                                    <span className="text-xs text-green-500">Online</span>
+                                  )}
+                                  {isOnline && storeNode && (
+                                    <span className="text-xs text-muted-foreground">·</span>
+                                  )}
                                   {storeNode}
                                 </>
                               )
@@ -697,11 +703,7 @@ function SearchPage() {
                               : 'border-border text-muted-foreground hover:text-foreground'
                           } ${isBusy ? 'opacity-50' : ''}`}
                         >
-                          {isBusy
-                            ? '...'
-                            : isWatched
-                              ? 'Watching'
-                              : 'Watch'}
+                          {isBusy ? '...' : isWatched ? 'Watching' : 'Watch'}
                         </button>
                       </li>
                     )
@@ -744,9 +746,7 @@ function SearchPage() {
                           type="button"
                           onClick={() => setPage(p)}
                           className={`px-2 py-1 text-xs ${
-                            p === page
-                              ? 'bg-primary text-primary-foreground'
-                              : 'hover:bg-muted'
+                            p === page ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
                           }`}
                         >
                           {p}
@@ -773,9 +773,7 @@ function SearchPage() {
                 )}
               </>
             ) : (
-              <p className="text-muted-foreground font-mono">
-                No wines match your filters.
-              </p>
+              <p className="text-muted-foreground font-mono">No wines match your filters.</p>
             )}
           </div>
         </div>

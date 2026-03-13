@@ -1,10 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useNavigate, useParams, Navigate } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
-import {
-  TelegramLoginButton,
-  type TelegramLoginData,
-} from '@/components/TelegramLoginButton'
+import { TelegramLoginButton, type TelegramLoginData } from '@/components/TelegramLoginButton'
 import { api, ApiError } from '@/lib/api'
 
 const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string
@@ -42,7 +39,7 @@ function LoginPage() {
         }
       }
     },
-    [code, login, navigate]
+    [code, login, navigate],
   )
 
   if (token) return <Navigate to="/dashboard" replace />
@@ -51,9 +48,7 @@ function LoginPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-8 p-8">
       <div className="flex flex-col items-center gap-2">
         <h1 className="text-5xl font-mono font-bold">Coupette 🥂</h1>
-        <p className="text-muted-foreground">
-          Wine discovery for the curious.
-        </p>
+        <p className="text-muted-foreground">Wine discovery for the curious.</p>
       </div>
 
       {code && (
@@ -66,9 +61,7 @@ function LoginPage() {
         <TelegramLoginButton botUsername={BOT_USERNAME} onAuth={handleAuth} />
 
         {error && (
-          <p className="text-destructive text-sm font-mono max-w-xs text-center">
-            {error}
-          </p>
+          <p className="text-destructive text-sm font-mono max-w-xs text-center">{error}</p>
         )}
       </div>
 

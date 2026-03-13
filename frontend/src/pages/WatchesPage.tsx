@@ -57,17 +57,11 @@ function AvailabilityStatus({
     <div className="flex flex-col gap-1 text-sm mt-1">
       <div className="flex flex-wrap gap-x-1 gap-y-1">
         {unavailable && hasSavedStores ? (
-          <span className="text-muted-foreground">
-            Unavailable — you'll be notified
-          </span>
+          <span className="text-muted-foreground">Unavailable — you'll be notified</span>
         ) : (
           <>
-            {isOnline && (
-              <span className="text-green-500">Online</span>
-            )}
-            {isOnline && storeNode && (
-              <span className="text-muted-foreground">·</span>
-            )}
+            {isOnline && <span className="text-green-500">Online</span>}
+            {isOnline && storeNode && <span className="text-muted-foreground">·</span>}
             {storeNode}
           </>
         )}
@@ -102,7 +96,7 @@ function WatchesPage() {
     async function fetchWatches() {
       try {
         const data = await apiClient<WatchWithProduct[]>(
-          `/watches?user_id=${encodeURIComponent(userId)}`
+          `/watches?user_id=${encodeURIComponent(userId)}`,
         )
         if (!cancelled) {
           setWatches(data)
@@ -152,7 +146,7 @@ function WatchesPage() {
         setRemoving(null)
       }
     },
-    [apiClient, userId]
+    [apiClient, userId],
   )
 
   const handleToggleExpand = useCallback((sku: string) => {
@@ -180,9 +174,7 @@ function WatchesPage() {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-mono font-bold mb-6">My Watches</h1>
 
-        {error && (
-          <p className="text-destructive text-sm font-mono mb-4">{error}</p>
-        )}
+        {error && <p className="text-destructive text-sm font-mono mb-4">{error}</p>}
 
         {watches.length === 0 ? (
           <p className="text-muted-foreground font-mono">
@@ -217,9 +209,7 @@ function WatchesPage() {
                           .filter(Boolean)
                           .join(' · ')}
                       </p>
-                      {product.price && (
-                        <p className="text-sm mt-1">${product.price}</p>
-                      )}
+                      {product.price && <p className="text-sm mt-1">${product.price}</p>}
                       <AvailabilityStatus
                         product={product}
                         sku={watch.sku}

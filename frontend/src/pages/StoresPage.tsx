@@ -33,14 +33,12 @@ function useGeolocation() {
         const messages: Record<number, string> = {
           [GeolocationPositionError.PERMISSION_DENIED]:
             'Location permission denied. Enable it in your browser settings to see nearby stores.',
-          [GeolocationPositionError.POSITION_UNAVAILABLE]:
-            'Unable to determine your location.',
-          [GeolocationPositionError.TIMEOUT]:
-            'Location request timed out. Try again.',
+          [GeolocationPositionError.POSITION_UNAVAILABLE]: 'Unable to determine your location.',
+          [GeolocationPositionError.TIMEOUT]: 'Location request timed out. Try again.',
         }
         setGeo({ status: 'denied', message: messages[error.code] ?? 'Unknown location error.' })
       },
-      { enableHighAccuracy: false, timeout: 10_000 }
+      { enableHighAccuracy: false, timeout: 10_000 },
     )
   }, [])
 
@@ -82,7 +80,9 @@ function StoresPage() {
     }
 
     fetchPreferences()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [user, apiClient])
 
   // Fetch nearby stores when location is available
@@ -95,7 +95,7 @@ function StoresPage() {
     async function fetchStores() {
       try {
         const data = await apiClient<StoreWithDistance[]>(
-          `/stores/nearby?lat=${lat}&lng=${lng}&limit=20`
+          `/stores/nearby?lat=${lat}&lng=${lng}&limit=20`,
         )
         if (!cancelled) {
           setStores(data)
@@ -158,7 +158,7 @@ function StoresPage() {
         setToggling(null)
       }
     },
-    [apiClient, savedIds]
+    [apiClient, savedIds],
   )
 
   return (
@@ -166,14 +166,10 @@ function StoresPage() {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-mono font-bold mb-6">Edit My Stores</h1>
 
-        {error && (
-          <p className="text-destructive text-sm font-mono mb-4">{error}</p>
-        )}
+        {error && <p className="text-destructive text-sm font-mono mb-4">{error}</p>}
 
         {(geo.status === 'idle' || geo.status === 'requesting') && (
-          <p className="text-muted-foreground font-mono">
-            Requesting your location...
-          </p>
+          <p className="text-muted-foreground font-mono">Requesting your location...</p>
         )}
 
         {geo.status === 'denied' && (
@@ -187,14 +183,10 @@ function StoresPage() {
           </div>
         )}
 
-        {loading && (
-          <p className="text-muted-foreground font-mono">Loading stores...</p>
-        )}
+        {loading && <p className="text-muted-foreground font-mono">Loading stores...</p>}
 
         {geo.status === 'granted' && !loading && stores.length === 0 && !error && (
-          <p className="text-muted-foreground font-mono">
-            No stores found nearby.
-          </p>
+          <p className="text-muted-foreground font-mono">No stores found nearby.</p>
         )}
 
         {stores.length > 0 && (
@@ -202,24 +194,17 @@ function StoresPage() {
             {stores.map((store) => {
               const isSaved = savedIds.has(store.saq_store_id)
               return (
-                <li
-                  key={store.saq_store_id}
-                  className="border border-border p-4"
-                >
+                <li key={store.saq_store_id} className="border border-border p-4">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono font-bold truncate">
-                        {store.name}
-                      </p>
+                      <p className="font-mono font-bold truncate">{store.name}</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
                         {store.address && <span>{store.address}</span>}
                         <span>{store.city}</span>
                         {store.postcode && <span>{store.postcode}</span>}
                       </div>
                       {store.telephone && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {store.telephone}
-                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">{store.telephone}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
@@ -232,18 +217,12 @@ function StoresPage() {
                         onClick={() => handleToggle(store.saq_store_id)}
                         disabled={toggling === store.saq_store_id}
                       >
-                        {toggling === store.saq_store_id
-                          ? '...'
-                          : isSaved
-                            ? 'Saved'
-                            : 'Save'}
+                        {toggling === store.saq_store_id ? '...' : isSaved ? 'Saved' : 'Save'}
                       </Button>
                     </div>
                   </div>
                   {store.temporarily_closed && (
-                    <p className="text-sm text-destructive mt-2 font-mono">
-                      Temporarily closed
-                    </p>
+                    <p className="text-sm text-destructive mt-2 font-mono">Temporarily closed</p>
                   )}
                 </li>
               )

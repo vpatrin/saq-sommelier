@@ -16,7 +16,7 @@ export class ApiError extends Error {
 
 export async function api<T>(
   path: string,
-  options: RequestInit & { token?: string | null; onUnauthorized?: () => void } = {}
+  options: RequestInit & { token?: string | null; onUnauthorized?: () => void } = {},
 ): Promise<T> {
   const { token, onUnauthorized, headers: extraHeaders, ...fetchOptions } = options
 
@@ -56,6 +56,6 @@ export function useApiClient() {
   return useCallback(
     <T>(path: string, options: RequestInit = {}) =>
       api<T>(path, { ...options, token, onUnauthorized: logout }),
-    [token, logout]
+    [token, logout],
   )
 }

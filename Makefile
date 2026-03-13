@@ -1,10 +1,41 @@
+.PHONY: help install \
+	dev-backend dev-frontend dev-bot \
+	scrape-stores scrape-products scrape-enrich scrape-availability scrape-all embed-sync \
+	eval \
+	migrate revision \
+	lint lint-backend lint-scraper lint-core lint-bot lint-frontend \
+	format format-backend format-scraper format-core format-bot format-frontend \
+	test test-backend test-scraper test-bot \
+	coverage coverage-backend coverage-scraper coverage-bot \
+	audit audit-core audit-backend audit-scraper audit-bot audit-frontend \
+	build build-backend build-scraper build-bot build-frontend \
+	start-db stop-db \
+	clean
+
 # Load root .env and export to all child processes (bare-metal dev).
 # -include: don't fail if .env is missing (CI, fresh clone).
-# export: make vars available to commands (poetry run, pytest, etc.).
+# export: make vars available to commands (poetry run, scripts/create_admin.py, etc.).
 -include .env
 export
 
-.PHONY: install dev-backend dev-bot dev-scraper dev-frontend availability-check enrich-wines embed-sync scrape-stores migrate revision reset-db create-admin lint-backend lint-scraper lint-core lint-bot lint-frontend lint format-backend format-scraper format-core format-bot format test-backend test-scraper test-bot test coverage-backend coverage-scraper coverage-bot coverage audit-core audit-backend audit-scraper audit-bot audit-frontend audit build-backend build-scraper build-bot build-frontend build run run-db run-scraper down clean eval
+# --- Help ---
+
+help:
+	@echo "Setup:     install"
+	@echo "Dev:       dev-backend  dev-frontend  dev-bot"
+	@echo "Scraper:   scrape-stores  scrape-products  scrape-enrich  scrape-availability  scrape-all  embed-sync"
+	@echo "Eval:      eval"
+	@echo "Database:  migrate  revision"
+	@echo "Lint:      lint  lint-{backend,scraper,core,bot,frontend}"
+	@echo "Format:    format  format-{backend,scraper,core,bot,frontend}"
+	@echo "Test:      test  test-{backend,scraper,bot}"
+	@echo "Coverage:  coverage  coverage-{backend,scraper,bot}"
+	@echo "Audit:     audit  audit-{core,backend,scraper,bot,frontend}"
+	@echo "Build:     build  build-{backend,scraper,bot,frontend}"
+	@echo "Docker:    start-db  stop-db"
+	@echo "Cleanup:   clean"
+
+# --- Setup ---
 
 install:
 	git config core.hooksPath .githooks
@@ -12,6 +43,9 @@ install:
 	cd scraper && poetry lock && poetry install
 	cd core && poetry lock && poetry install
 	cd bot && poetry lock && poetry install
+	cd frontend && yarn install
+
+# --- Dev servers ---
 
 dev-backend:
 	cd backend && poetry run uvicorn backend.app:app --reload --port 8001
@@ -22,28 +56,36 @@ dev-frontend:
 dev-bot:
 	cd bot && poetry run python -m bot
 
-dev-scraper:
-	cd scraper && poetry run python -m scraper
-
-availability-check:
-	cd scraper && poetry run python -m scraper availability
-
-enrich-wines:
-	cd scraper && poetry run python -m scraper enrich
-
-embed-sync:
-	cd scraper && poetry run python -m scraper embed
+# --- Scraper tasks ---
 
 scrape-stores:
 	cd scraper && poetry run python -m scraper stores
 
-# Eval — HAIKU_TEMPERATURE=0 forces deterministic intent/curation for reproducible scores.
+scrape-products:
+	cd scraper && poetry run python -m scraper
+
+scrape-enrich:
+	cd scraper && poetry run python -m scraper enrich
+
+scrape-availability:
+	cd scraper && poetry run python -m scraper availability
+
+scrape-all: scrape-stores scrape-products scrape-enrich scrape-availability
+
+embed-sync:
+	cd scraper && poetry run python -m scraper embed
+
+# --- Eval ---
+# HAIKU_TEMPERATURE=0 forces deterministic intent/curation for reproducible scores.
+
 eval:
 	cd backend && HAIKU_TEMPERATURE=0 poetry run python -m backend.eval $(if $(QUERY),--query "$(QUERY)",) $(if $(SPLIT),--split $(SPLIT),) $(if $(JUDGE_RUNS),--judge-runs $(JUDGE_RUNS),) $(if $(JUDGE_TEMP),--judge-temp $(JUDGE_TEMP),) $(if $(PIPELINE_RUNS),--pipeline-runs $(PIPELINE_RUNS),)
 
-# Database migrations
+# --- Database ---
+
 migrate:
 	cd core && poetry run alembic upgrade head
+	cd core && poetry run python ../scripts/create_admin.py
 
 # Generate migration against a clean, ephemeral Postgres (no dev DB drift).
 # Spins up a temporary container, runs all existing migrations, autogenerates,
@@ -82,13 +124,8 @@ revision:
 	make format
 	@echo "✅ Migration generated cleanly."
 
-reset-db:
-	cd core && poetry run alembic downgrade base && poetry run alembic upgrade head
+# --- Lint ---
 
-create-admin:
-	python scripts/create_admin.py
-
-# Lint
 lint-backend:
 	@echo "\n▶ Linting backend/"
 	cd backend && poetry run ruff check . && poetry run ruff format --check .
@@ -107,11 +144,12 @@ lint-bot:
 
 lint-frontend:
 	@echo "\n▶ Linting frontend/"
-	cd frontend && yarn lint
+	cd frontend && yarn lint && yarn typecheck && yarn format:check
 
-lint: lint-backend lint-scraper lint-core lint-bot
+lint: lint-backend lint-scraper lint-core lint-bot lint-frontend
 
-# Format
+# --- Format ---
+
 format-backend:
 	@echo "\n▶ Formatting backend/"
 	cd backend && poetry run ruff format . && poetry run ruff check --fix .
@@ -128,9 +166,14 @@ format-bot:
 	@echo "\n▶ Formatting bot/"
 	cd bot && poetry run ruff format . && poetry run ruff check --fix .
 
-format: format-backend format-scraper format-core format-bot
+format-frontend:
+	@echo "\n▶ Formatting frontend/"
+	cd frontend && yarn format
 
-# Test
+format: format-backend format-scraper format-core format-bot format-frontend
+
+# --- Test ---
+
 test-backend:
 	@echo "\n▶ Testing backend/"
 	cd backend && poetry run pytest -v
@@ -145,7 +188,8 @@ test-bot:
 
 test: test-backend test-scraper test-bot
 
-# Coverage
+# --- Coverage ---
+
 coverage-backend:
 	@echo "\n▶ Coverage backend/"
 	cd backend && poetry run pytest --cov --cov-report=xml -v && poetry run coverage report
@@ -162,7 +206,8 @@ coverage: coverage-backend coverage-scraper coverage-bot
 	@echo "\n▶ Generating badges"
 	python scripts/generate_badges.py
 
-# Audit
+# --- Audit ---
+
 audit-core:
 	@echo "\n▶ Auditing core/"
 	cd core && poetry run pip-audit
@@ -183,9 +228,10 @@ audit-frontend:
 	@echo "\n▶ Auditing frontend/"
 	cd frontend && yarn audit
 
-audit: audit-core audit-backend audit-scraper audit-bot
+audit: audit-core audit-backend audit-scraper audit-bot audit-frontend
 
-# Build
+# --- Build ---
+
 build-backend:
 	docker compose build backend
 
@@ -198,20 +244,17 @@ build-bot:
 build-frontend:
 	cd frontend && yarn build
 
-build: build-backend build-scraper build-bot
+build: build-backend build-scraper build-bot build-frontend
 
-# Docker Compose
-run:
-	docker compose --profile dev up -d postgres backend bot
+# --- Docker ---
 
-run-db:
+start-db:
 	docker compose --profile dev up -d postgres
 
-run-scraper:
-	docker compose run --rm scraper
-
-down:
+stop-db:
 	docker compose --profile dev down
+
+# --- Cleanup ---
 
 clean:
 	@echo "\n▶ Cleaning caches"
