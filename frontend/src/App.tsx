@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import AppShell from '@/components/AppShell'
 import LoginPage from '@/pages/LoginPage'
+import ChatPage from '@/pages/ChatPage'
 import SearchPage from '@/pages/SearchPage'
 import WatchesPage from '@/pages/WatchesPage'
 import SavedStoresPage from '@/pages/SavedStoresPage'
@@ -20,8 +21,9 @@ function App() {
     <Routes>
       <Route path="/" element={<LoginPage />} />
       <Route path="/invite/:code" element={<LoginPage />} />
-      <Route path="/dashboard" element={<Navigate to="/search" replace />} />
       <Route element={<AuthedLayout />}>
+        <Route path="/dashboard" element={<Navigate to="/chat" replace />} />
+        <Route path="/chat" element={<ChatPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/watches" element={<WatchesPage />} />
         <Route path="/stores" element={<SavedStoresPage />} />

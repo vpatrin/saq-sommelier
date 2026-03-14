@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Chat API — session-based chat endpoints wrapping the recommendation pipeline (`/api/chat/sessions/*`) (#425)
+- Chat UI — sommelier conversation page with message input, response display, and session persistence (#426)
 
 ### Changed
 

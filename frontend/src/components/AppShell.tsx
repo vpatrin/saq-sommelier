@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string
 
 const NAV_ITEMS = [
+  { to: '/chat', label: 'Chat' },
   { to: '/search', label: 'Search' },
   { to: '/watches', label: 'My Watches' },
   { to: '/stores', label: 'My Stores' },
@@ -27,7 +28,7 @@ function AppShell() {
       <aside className="w-60 shrink-0 border-r border-border bg-sidebar text-sidebar-foreground flex flex-col h-full">
         {/* Brand */}
         <div className="p-4 border-b border-sidebar-border">
-          <Link to="/search" className="text-lg font-mono font-bold text-primary">
+          <Link to="/chat" className="text-lg font-mono font-bold text-primary">
             Coupette
           </Link>
         </div>
