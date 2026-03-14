@@ -9,3 +9,7 @@ services:
   bot:
     volumes:
       - ./bot/bot:/app/bot/bot
+
+volumes:
+  pgdata:
+    name: saq-sommelier_pgdata
