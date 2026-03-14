@@ -1,5 +1,50 @@
 // API response types — mirrors backend Pydantic *Out schemas
 
+// --- Chat ---
+
+export interface ChatSessionOut {
+  id: number
+  title: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatMessageOut {
+  message_id: number
+  session_id: number
+  role: 'user' | 'assistant'
+  content: string | RecommendationOut
+  created_at: string
+}
+
+export interface ChatSessionDetailOut extends ChatSessionOut {
+  messages: ChatMessageOut[]
+}
+
+// --- Recommendations (inline in chat) ---
+
+export interface IntentResult {
+  is_wine: boolean
+  categories: string[]
+  min_price: string | null
+  max_price: string | null
+  country: string | null
+  semantic_query: string
+  exclude_grapes: string[]
+}
+
+export interface RecommendationProductOut {
+  product: ProductOut
+  reason: string
+}
+
+export interface RecommendationOut {
+  products: RecommendationProductOut[]
+  intent: IntentResult
+  summary: string
+  log_id: number | null
+}
+
 export interface ProductOut {
   sku: string
   name: string | null
