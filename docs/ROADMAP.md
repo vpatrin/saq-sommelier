@@ -173,6 +173,9 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 - [x] Build + Trivy + push to GHCR on tag push (#362)
 - [x] docker-compose.prod.yml — GHCR images, restart policies, no dev volumes (#364)
 - [x] Manual deploy via `./deploy/deploy.sh vX.Y.Z`
+- [x] Auto-create GitHub Release with changelog on tag push
+- [x] Production environment — GitHub Environment with main-only deployment branch policy, tag protection ruleset
+- [ ] Environment-scoped secrets — move deploy secrets from repo-level to production environment (prerequisite: automated CD or k3s migration)
 
 **Observability:**
 
