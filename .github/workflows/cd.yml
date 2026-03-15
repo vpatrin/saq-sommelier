@@ -13,7 +13,7 @@ concurrency:
 
 env:
   IMAGE_PREFIX: ghcr.io/vpatrin/coupette
-  TRIVY_SEVERITY: LOW,MEDIUM,HIGH,CRITICAL
+  TRIVY_SEVERITY: "LOW,MEDIUM,HIGH,CRITICAL"
 
 jobs:
   # ── Build, scan, push ───────────────────────────────────────
