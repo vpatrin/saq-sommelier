@@ -50,7 +50,6 @@ jobs:
     needs: [build-scan-push]
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    environment: production
     permissions:
       contents: write
     steps:
