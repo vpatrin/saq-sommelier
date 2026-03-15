@@ -21,7 +21,7 @@ embeddings = ["openai>=1.0"]
 
 [tool.poetry.group.dev.dependencies]
 pip-audit = ">=2.7"
-ruff = "^0.15.5"
+ruff = "^0.15.6"
 
 [tool.ruff]
 target-version = "py312"
