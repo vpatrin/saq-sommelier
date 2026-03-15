@@ -32,55 +32,39 @@ Just GitHub features, why they matter, and how to turn them on.
 
 ## 1. Repository Settings
 
-The first thing to configure on a new repo is the merge strategy. GitHub
-defaults to allowing merge commits, squash merges, and rebases — all three.
-That sounds flexible, but it means your `main` history is an unpredictable
-mix of merge bubbles and individual commits.
-
-Pick a strategy and enforce it:
-
 ```bash
-gh api -X PATCH repos/$REPO -f \
-  has_wiki=false \
-  has_discussions=false \
-  has_projects=true \
-  has_issues=true \
-  allow_squash_merge=true \
-  allow_merge_commit=false \
-  allow_rebase_merge=true \
-  delete_branch_on_merge=true \
-  allow_auto_merge=true \
-  allow_update_branch=true \
-  squash_merge_commit_title=PR_TITLE \
-  squash_merge_commit_message=BLANK \
-  web_commit_signoff_required=false
+gh api -X PATCH repos/$REPO \
+  -F has_wiki=false \
+  -F has_discussions=false \
+  -F has_projects=true \
+  -F has_issues=true \
+  -F allow_squash_merge=true \
+  -F allow_merge_commit=false \
+  -F allow_rebase_merge=true \
+  -F delete_branch_on_merge=true \
+  -F allow_auto_merge=true \
+  -F allow_update_branch=true \
+  -f squash_merge_commit_title=PR_TITLE \
+  -f squash_merge_commit_message=BLANK \
+  -F web_commit_signoff_required=false
 ```
 
-**Why squash + rebase, no merge commits?** Squash gives you one clean commit
-per PR — the PR title becomes the commit message, so `git log --oneline`
-reads like a changelog. Rebase is there for when a PR has carefully crafted
-atomic commits worth preserving. Merge commits just add noise.
+> **`-F` vs `-f`:** `-F` sends values as JSON types (booleans, numbers).
+> `-f` sends strings. Booleans *must* use `-F` — otherwise `false` is sent
+> as the string `"false"`, which is truthy in JSON.
 
-**Why `PR_TITLE` + `BLANK`?** The PR title follows conventional commit format
-(`feat: add X`), which flows directly into the squash commit. The PR body
-lives on GitHub — no need to duplicate it in the commit message.
-
-**Why `delete_branch_on_merge`?** Merged branches are dead branches. Without
-this, you accumulate stale branches that nobody cleans up.
-
-**Why `allow_auto_merge`?** This is what makes Dependabot auto-merge work.
-A PR marked for auto-merge will merge itself once all required checks pass.
-
-**Why disable the wiki?** Docs should live in your repo (`docs/`), not in a
-separate wiki that's disconnected from your code, PRs, and version history.
+- **Squash + rebase, no merge commits** — one clean commit per PR, linear `git log`
+- **`PR_TITLE` + `BLANK`** — conventional commit title flows into squash; body lives on GitHub
+- **`delete_branch_on_merge`** — auto-cleanup after merge
+- **`allow_auto_merge`** — required for Dependabot auto-merge
+- **Wiki off** — docs live in `docs/`, not a disconnected wiki
 
 ---
 
 ## 2. Actions Permissions
 
-GitHub Actions has two permission layers, and both default to dangerously
-permissive settings. This is the single highest-impact security change you
-can make.
+Both permission layers default to dangerously permissive. This is the
+highest-impact security change you can make.
 
 ### Layer 1: Default token permissions
 
@@ -90,17 +74,12 @@ gh api -X PUT repos/$REPO/actions/permissions/workflow \
   -F can_approve_pull_request_reviews=false
 ```
 
-By default, `GITHUB_TOKEN` has **write** access to everything — code,
-issues, PRs, packages, deployments. That means any action in any workflow
-can push code, merge PRs, or delete branches.
+`GITHUB_TOKEN` defaults to **write** on everything. Setting `read` forces
+every workflow to declare what it needs via `permissions:` blocks. A
+compromised action can read your code but can't modify anything.
 
-Setting `default_workflow_permissions=read` flips this. Now every workflow
-*must* explicitly declare what it needs via `permissions:` blocks. If a
-workflow doesn't declare permissions, it gets read-only. A compromised
-third-party action can read your code but can't modify anything.
-
-`can_approve_pull_request_reviews=false` prevents workflows from approving
-their own PRs — which would bypass human review entirely.
+`can_approve_pull_request_reviews=false` prevents workflows from
+auto-approving their own PRs.
 
 ### Layer 2: Which actions can run
 
@@ -117,16 +96,11 @@ gh api -X PUT repos/$REPO/actions/permissions/selected-actions \
   # ... one line per third-party action you use
 ```
 
-Anyone can publish a GitHub Action. With the default "allow all" policy,
-a typo in a `uses:` line could pull arbitrary code into your CI runner.
-`selected` mode means only actions you've explicitly approved can execute.
+`selected` mode with an explicit allowlist. `github_owned_allowed=true`
+trusts `actions/*` as a baseline. `verified_allowed=false` because
+"verified creator" is a Marketplace badge, not a security audit.
 
-GitHub-owned actions (`actions/checkout`, `actions/setup-python`, etc.) are
-safe to trust as a baseline. But "verified creator" is just a Marketplace
-badge — it's not a security audit. Keep that off and maintain an explicit
-allowlist instead.
-
-To find which third-party actions your workflows currently use:
+To build your allowlist, find all third-party actions:
 
 ```bash
 grep -rh 'uses:' .github/ | grep -v 'actions/' | grep -v './' | sort -u
@@ -187,7 +161,8 @@ gh api -X POST repos/$REPO/rulesets --input - <<'EOF'
           { "context": "lint" },
           { "context": "test" },
           { "context": "build" },
-          { "context": "security" }
+          { "context": "security" },
+          { "context": "gitleaks" }
         ]
       }
     }
@@ -196,7 +171,7 @@ gh api -X POST repos/$REPO/rulesets --input - <<'EOF'
 EOF
 ```
 
-That's a lot of JSON. Here's what each rule is doing:
+What each rule does:
 
 - **`deletion`** + **`non_fast_forward`** — nobody can delete `main` or
   force-push to it. History is immutable.
@@ -287,7 +262,7 @@ Go to **Settings > Code security and analysis** and enable:
 ### CodeQL
 
 ```bash
-gh api -X PUT repos/$REPO/code-scanning/default-setup \
+gh api -X PATCH repos/$REPO/code-scanning/default-setup \
   --input - <<'EOF'
 {
   "state": "configured",
@@ -346,7 +321,7 @@ credentials.
 
 For teams, you can also add **required reviewers** (manual approval before
 CD runs) or a **wait timer** (N-minute delay as an "oh no" window). Both
-are usually overkill for solo devs.
+are optional — skip them if you're the only deployer.
 
 ---
 
@@ -378,7 +353,7 @@ or `v*` tags.
 
 ## 7. Workflow Architecture
 
-A well-structured repo has four workflows, each triggered differently:
+A typical production repo needs four workflows, each triggered differently:
 
 ```text
 PR opened ────────► ci.yml
@@ -447,7 +422,7 @@ jobs:
       svc-b: ${{ steps.filter.outputs.svc-b }}
       shared: ${{ steps.filter.outputs.shared }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -465,7 +440,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-lang    # composite action
         with:
           service: svc-a
@@ -492,65 +467,20 @@ jobs:
           done
 ```
 
-Key patterns to notice:
-
-- **Top-level permissions:** `contents: read`, `pull-requests: read`. All
-  jobs inherit this. Gate jobs explicitly set `permissions: {}` since they
-  just evaluate results.
-- **Concurrency:** `ci-${{ github.ref }}` with `cancel-in-progress: true`.
-  Pushing to the same branch cancels the previous run — saves minutes.
-- **Timeout:** every job has `timeout-minutes`. Runaway jobs can't burn
-  unlimited CI minutes.
-- **Path filtering:** the `changes` job detects which directories were
-  modified. Downstream jobs check the output before running. Shared package
-  changes cascade to all dependent services.
-- **Coverage uploads:** test jobs can upload reports to Codecov with
-  per-service flags for segmented tracking.
-
 ### The summary gate pattern
 
-This is the most important CI pattern in this guide, and it's not well
-documented anywhere. Here's the problem:
+The gate job at the bottom of the skeleton is the key pattern. Branch
+protection requires named status checks, but path-filtered jobs get
+*skipped* when irrelevant. GitHub treats "skipped" as neither pass nor
+fail — so a frontend-only PR would be blocked forever waiting for
+`lint-backend`.
 
-Branch protection requires specific status checks to pass before merging.
-But with path filtering, jobs that aren't relevant get *skipped*. GitHub
-treats "skipped" as neither pass nor fail — so if branch protection
-requires `lint-backend`, a frontend-only PR is blocked forever because
-`lint-backend` will never run.
+Summary gates solve this: they run `if: always()`, list all related jobs
+in `needs:`, and pass if every result is `success` or `skipped`. Branch
+protection points at the gates, not individual jobs.
 
-The solution is **summary gate jobs**. Instead of requiring individual jobs,
-branch protection requires gate jobs that aggregate results:
-
-```yaml
-lint:
-  needs: [lint-svc-a, lint-svc-b, lint-shared, lint-frontend]
-  if: always()
-  runs-on: ubuntu-latest
-  permissions: {}
-  steps:
-    - run: |
-        for result in \
-          "${{ needs.lint-svc-a.result }}" \
-          "${{ needs.lint-svc-b.result }}" \
-          # ... one per dependency
-        do
-          if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
-            exit 1
-          fi
-        done
-```
-
-The gate runs `if: always()` (so it's never skipped), lists all related
-jobs in `needs:`, and iterates over their results. It passes if everything
-is either `success` or `skipped`. Branch protection points at the gates,
-not the individual jobs.
-
-A frontend-only PR? All backend lint jobs are skipped, the `lint` gate sees
-all `skipped` results, passes, and the PR can merge.
-
-Jobs that should *always* run (like Gitleaks — secrets can leak in any file)
-don't need path filtering or a gate. Make them a direct required status
-check.
+Always-run jobs (like Gitleaks) don't need a gate — make them a direct
+required status check.
 
 ### CD: tag-triggered builds
 
@@ -584,8 +514,8 @@ jobs:
       matrix:
         service: [svc-a, svc-b]
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@v6
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -603,7 +533,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Extract changelog
         run: |
           TAG="${GITHUB_REF_NAME#v}"
@@ -619,21 +549,13 @@ jobs:
             --notes-file /tmp/release-notes.md
 ```
 
-Key details:
-
-- **`environment: production`** — only `main` and `v*` tags can access this
-  (configured in [section 5](#5-deployment-environments))
-- **`concurrency: cd-${{ github.ref }}`** — prevents parallel deploys
-- **Image tags use the git tag** (`v1.2.3`), never `latest` — you always
-  know exactly what's deployed
-- **Release notes from CHANGELOG** — the `awk` script extracts the section
-  matching the tag version
+Note: `environment: production` restricts this to `main` + `v*` tags
+([section 5](#5-deployment-environments)). Image tags use the exact git
+tag — never `latest`.
 
 ### CVE scan: weekly vigilance
 
-A dependency you shipped last week can get a CVE advisory today. This
-workflow runs on a weekly cron (plus manual `workflow_dispatch`), rebuilds
-all Docker images, and scans them with Trivy.
+Catches new CVEs in base images *between* releases:
 
 ```yaml
 name: CVE Scan
@@ -652,7 +574,7 @@ jobs:
       matrix:
         service: [svc-a, svc-b]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/build-and-scan
         with:
           service: ${{ matrix.service }}
@@ -662,29 +584,25 @@ jobs:
     if: failure()
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v4
       - name: Create issue if none exists
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          EXISTING=$(gh issue list --label security --state open --search "CVE scan failure" --json number --jq '.[0].number')
+          EXISTING=$(gh issue list --label cve-scan --state open --json number --jq '.[0].number')
           if [ -z "$EXISTING" ]; then
             gh issue create \
               --title "CVE scan failure — $(date +%Y-%m-%d)" \
-              --label security \
+              --label cve-scan \
               --body "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           fi
 ```
 
-`fail-fast: false` ensures all services get scanned even if one fails.
-The `open-issue` job checks for existing open issues to avoid duplicates.
-
 ### Dependabot auto-merge
 
-Not all Dependabot PRs need manual review. This workflow auto-merges
-**patch-only** updates:
+Auto-merges **patch-only** Dependabot PRs:
 
 ```yaml
 name: Dependabot Auto-Merge
@@ -706,57 +624,21 @@ jobs:
       - uses: dependabot/fetch-metadata@v2
         id: meta
       - if: steps.meta.outputs.update-type == 'version-update:semver-patch'
+        run: gh pr merge --auto --squash "$PR_URL"
         env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr merge "${{ github.event.pull_request.number }}" --auto --squash
 ```
 
-`--auto` means the merge waits for all required status checks to pass
-first. Patch updates are bug fixes and security patches — low risk. Minor
-and major updates get manual review.
-
-Notice the **permission trick:** `permissions: {}` at the workflow level
-(deny everything), then `contents: write` + `pull-requests: write` only on
-the auto-merge job. Elevated permissions scoped to exactly one job.
+`--auto` waits for all checks to pass. `permissions: {}` at workflow level,
+then per-job write — elevated permissions scoped to exactly one job.
 
 ---
 
 ## 8. Composite Actions
 
-A composite action is a reusable YAML file that bundles multiple steps into
-a single `uses:` call. Think of it as a function for your CI — you define
-inputs, run steps, and call it from any workflow.
-
-```yaml
-# .github/actions/my-action/action.yml
-name: My Action
-inputs:
-  service:
-    required: true
-runs:
-  using: composite
-  steps:
-    - run: echo "Setting up ${{ inputs.service }}"
-      shell: bash
-```
-
-```yaml
-# In a workflow:
-- uses: ./.github/actions/my-action
-  with:
-    service: backend
-```
-
-### Why bother?
-
-When the same sequence of steps appears in multiple jobs — setting up
-Python + Poetry + venv cache, or building a Docker image + running Trivy —
-you're duplicating code. One day you update the Python version in three
-jobs but forget the fourth. Composite actions fix this: one source of truth,
-called everywhere.
-
-**When to extract:** if the same steps appear in 2+ jobs. Don't extract a
-one-off — the indirection isn't worth it for a single caller.
+A composite action (`.github/actions/<name>/action.yml`) bundles steps into
+a single `uses:` call. Extract when the same steps appear in 2+ jobs.
 
 ### Pattern 1: Language setup
 
@@ -782,33 +664,31 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: ${{ inputs.python-version }}
 
     - name: Install Poetry
-      run: pipx install poetry==${{ inputs.poetry-version }}
+      run: pip install poetry==${{ inputs.poetry-version }}
       shell: bash
 
     - name: Cache venv
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ inputs.service }}/.venv
         key: venv-${{ inputs.service }}-${{ inputs.install-args || 'all' }}-${{ hashFiles(format('{0}/poetry.lock', inputs.service)) }}
 
     - name: Install dependencies
-      run: cd ${{ inputs.service }} && poetry install ${{ inputs.install-args }}
+      run: cd ${{ inputs.service }} && poetry install ${{ inputs.install-args }} --no-interaction
       shell: bash
 ```
 
-The cache key includes `install-args` because `--only dev` produces a
-different venv than a full install. Without this, lint jobs (dev-only) and
-test jobs (full) thrash each other's caches.
+The cache key includes `install-args` so lint jobs (`--only dev`) and test
+jobs (full install) don't thrash each other's caches.
 
 ### Pattern 2: Build and scan
 
-Builds a Docker image with layer caching, scans it for CVEs, and optionally
-pushes to a registry. Used by CI (scan only) and CD (scan + push).
+Builds, scans, and optionally pushes. Used by CI (no push) and CD (push).
 
 ```yaml
 # .github/actions/build-and-scan/action.yml
@@ -829,19 +709,20 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: docker/setup-buildx-action@v3
+    - uses: docker/setup-buildx-action@v4
 
     - name: Build image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
-        context: ./${{ inputs.service }}
+        context: .
+        file: ${{ inputs.service }}/Dockerfile
         load: true
         tags: ${{ inputs.service }}:scan
         cache-from: type=gha,scope=${{ inputs.service }}
-        cache-to: type=gha,mode=max,scope=${{ inputs.service }}
+        cache-to: type=gha,scope=${{ inputs.service }}
 
     - name: Trivy scan
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.35.0
       with:
         image-ref: ${{ inputs.service }}:scan
         exit-code: "1"
@@ -851,43 +732,21 @@ runs:
 
     - name: Push image
       if: inputs.push == 'true'
-      uses: docker/build-push-action@v6
-      with:
-        context: ./${{ inputs.service }}
-        push: true
-        tags: ${{ inputs.tags }}
-        cache-from: type=gha,scope=${{ inputs.service }}
+      shell: bash
+      run: |
+        docker tag ${{ inputs.service }}:scan ${{ inputs.tags }}
+        docker push ${{ inputs.tags }}
 ```
 
-`cache-from` and `cache-to` use `type=gha` scoped per service — so
-different services don't pollute each other's layer caches. Cache hits
-reduce Docker builds from minutes to seconds.
-
-### Gotchas
-
-- Always set `shell: bash` on every `run:` step — composite actions don't
-  inherit the calling workflow's shell default.
-- Pin tool versions as inputs, not hardcoded values — upgrades become a
-  one-line change.
+**Tips:** always set `shell: bash` on `run:` steps (composites don't
+inherit the workflow's shell). Pin tool versions as inputs.
 
 ---
 
 ## 9. Dependabot
 
-Dependabot does two things: **security updates** (reactive, triggered by
-CVE advisories — enabled in section 4) and **version updates** (proactive
-weekly bumps — configured in `.github/dependabot.yml`).
-
-For a monorepo, you need one entry per ecosystem per directory:
-
-| Ecosystem | What it bumps | Typical scope |
-| --- | --- | --- |
-| `pip` | Python packages | One entry per Python service |
-| `npm` | Node packages | One entry per frontend service |
-| `docker` | Base image versions | One entry per Dockerfile |
-| `github-actions` | Action versions | One entry at `/` |
-
-Here's a complete example for a two-service Python + frontend monorepo:
+One entry per ecosystem per directory. Example for a Python + frontend
+monorepo:
 
 ```yaml
 # .github/dependabot.yml
@@ -933,40 +792,21 @@ updates:
         update-types: [minor, patch]
 ```
 
-### Design decisions
-
-**Weekly, not daily.** Daily updates are too noisy for a small team. Weekly
-batches everything into one review session.
-
-**Grouping minor + patch** produces one PR per ecosystem-directory pair
-instead of one PR per dependency. Without it, a monorepo gets dozens of
-PRs per week.
-
-**Ignoring Docker base image minor bumps** is important because language
-runtime versions like `python:3.12-slim` → `python:3.13-slim` are breaking
-changes. Only let Dependabot handle patch bumps for these.
+**Weekly** — daily is too noisy. **Grouped** — one PR per ecosystem-directory
+instead of per-dependency. **Docker ignores** — `python:3.12` → `3.13` is
+breaking; only Dependabot patch bumps for base images.
 
 ---
 
 ## 10. Git Hooks
 
-CI catches everything, but it's slow. Git hooks catch the easy stuff
-*locally* — lint errors, lock file drift, missing migrations — before you
-wait 5 minutes for CI to tell you the same thing.
-
-The trick is committing hooks to the repo (in `.githooks/`) and activating
-them with one command:
+Commit hooks to `.githooks/` and activate per-repo:
 
 ```bash
-git config core.hooksPath .githooks
+git config core.hooksPath .githooks    # add to your make install
 ```
 
-Put this in your project's setup command (e.g. `make install`). It's a
-per-repo setting — no global git config changes.
-
-### pre-commit: lint only what changed
-
-Runs on `git commit`. Only lints services with staged changes:
+### pre-commit: lint staged services
 
 ```bash
 #!/usr/bin/env bash
@@ -1003,16 +843,13 @@ for svc in "${to_lint[@]}"; do
 done
 ```
 
-Full lint across all services takes 15+ seconds. Path-scoped lint keeps
-it under 3 seconds for typical commits.
-
 ### pre-push: tests + validation
-
-Runs on `git push`. More thorough because pushes are less frequent:
 
 ```bash
 #!/usr/bin/env bash
 set -e
+
+SERVICES=(svc-a svc-b shared)
 
 # 1. Lock file integrity
 echo "Checking lock files..."
@@ -1020,43 +857,45 @@ echo "Checking lock files..."
 (cd svc-b && poetry check --lock)
 
 # 2. Migration coverage
-MODELS_CHANGED=$(git log main..HEAD -1 --format="%H" -- 'shared/models*.py')
-MIGRATION_PRESENT=$(git log main..HEAD -1 --format="%H" -- 'shared/migrations/')
+MODELS_CHANGED=$(git diff --name-only main..HEAD -- 'shared/models*.py')
+MIGRATION_PRESENT=$(git diff --name-only main..HEAD -- 'shared/migrations/')
 
 if [ -n "$MODELS_CHANGED" ] && [ -z "$MIGRATION_PRESENT" ]; then
   echo "Model changes without migration! Run: make revision msg=\"description\""
   exit 1
 fi
 
-# 3. Test changed services (same path-scoping as pre-commit)
+# 3. Test changed services (same cascade logic as pre-commit)
 changed_dirs=$(git diff --name-only main..HEAD | cut -d/ -f1 | sort -u)
-# ... same cascade logic as pre-commit, then:
+
+to_test=()
+shared_changed=false
+
+for dir in $changed_dirs; do
+  for svc in "${SERVICES[@]}"; do
+    [ "$dir" = "$svc" ] && to_test+=("$svc")
+    [ "$svc" = "shared" ] && [ "$dir" = "shared" ] && shared_changed=true
+  done
+done
+
+if $shared_changed; then
+  to_test=(svc-a svc-b shared)
+fi
+
+to_test=($(printf '%s\n' "${to_test[@]}" | sort -u))
+
 for svc in "${to_test[@]}"; do
   make "test-$svc"
 done
 ```
 
-Uses `git diff main..HEAD` (full branch diff, not just the latest commit)
-to catch issues across the entire branch.
-
-### Setting up hooks in a new repo
-
-1. Create `.githooks/pre-commit` and `.githooks/pre-push`
-2. Make them executable: `chmod +x .githooks/*`
-3. Add `git config core.hooksPath .githooks` to your setup command
-4. Update service directory names and file paths to match your project
+Uses `git diff main..HEAD` — full branch diff, not just the latest commit.
 
 ---
 
 ## 11. Repo Files
 
-A few files round out the setup:
-
-### PR template
-
-**File:** `.github/pull_request_template.md`
-
-GitHub auto-fills this when creating a PR. Four sections are enough:
+### PR template (`.github/pull_request_template.md`)
 
 ```markdown
 ## Summary        — what changed and why
@@ -1065,14 +904,9 @@ GitHub auto-fills this when creating a PR. Four sections are enough:
 ## How to test    — commands or steps to verify
 ```
 
-Every PR answers the same questions. `Closes #XX` auto-closes the linked
-issue on merge.
-
 ### .trivyignore
 
-Suppresses known CVEs that can't be fixed yet (e.g. no upstream patch).
-Every entry needs a comment — *why* it's suppressed, *when* it was added,
-and a link to the advisory:
+CVE suppressions with mandatory comments:
 
 ```text
 # glibc overflow — no fix in Debian yet (2026-03-14)
@@ -1080,12 +914,9 @@ and a link to the advisory:
 CVE-YYYY-NNNNN
 ```
 
-Review this file on every base image bump and remove entries that now have
-fixes.
+Review on every base image bump — remove entries that now have fixes.
 
 ### File inventory
-
-When you're done, your `.github/` directory should look something like this:
 
 | File | Purpose |
 | --- | --- |
@@ -1096,10 +927,10 @@ When you're done, your `.github/` directory should look something like this:
 | `dependabot.yml` | Version update config: ecosystems, grouping, ignore rules |
 | `actions/build-and-scan/action.yml` | Composite: Docker build + cache + Trivy |
 | `actions/setup-lang/action.yml` | Composite: runtime + package manager + cache |
-| `pull_request_template.md` | Auto-filled PR description template |
-
-Plus at the repo root: `.githooks/pre-commit`, `.githooks/pre-push`,
-`.trivyignore`.
+| `pull_request_template.md` | PR description template |
+| `.githooks/pre-commit` | Local lint gate |
+| `.githooks/pre-push` | Local test + lockfile + migration gate |
+| `.trivyignore` | CVE suppressions |
 
 ---
 
