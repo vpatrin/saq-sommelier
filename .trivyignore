@@ -1,3 +1,6 @@
 # glibc memalign overflow — no fix in Debian 13 yet (2026-03-14)
 # https://avd.aquasec.com/nvd/cve-2026-0861
 CVE-2026-0861
+
+# libsqlite3-0 FTS5 integer overflow — fix exists but pinned image hasn't caught up (2026-03-15)
+CVE-2025-7709
