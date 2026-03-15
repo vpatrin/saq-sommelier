@@ -24,9 +24,6 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
-      pull-requests: read
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       scraper: ${{ steps.filter.outputs.scraper }}
@@ -60,8 +57,6 @@ jobs:
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -77,8 +72,6 @@ jobs:
     if: needs.changes.outputs.scraper == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -94,8 +87,6 @@ jobs:
     if: needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -111,8 +102,6 @@ jobs:
     if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -128,8 +117,6 @@ jobs:
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.scraper == 'true' || needs.changes.outputs.bot == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: hadolint/hadolint-action@v3.3.0
@@ -150,8 +137,6 @@ jobs:
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -169,8 +154,6 @@ jobs:
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -180,7 +163,6 @@ jobs:
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make coverage-backend
       - uses: codecov/codecov-action@v5
-        if: always()
         with:
           files: backend/coverage.xml
           flags: backend
@@ -191,8 +173,6 @@ jobs:
     if: needs.changes.outputs.scraper == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -202,7 +182,6 @@ jobs:
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make coverage-scraper
       - uses: codecov/codecov-action@v5
-        if: always()
         with:
           files: scraper/coverage.xml
           flags: scraper
@@ -213,8 +192,6 @@ jobs:
     if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -224,7 +201,6 @@ jobs:
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make coverage-bot
       - uses: codecov/codecov-action@v5
-        if: always()
         with:
           files: bot/coverage.xml
           flags: bot
@@ -237,8 +213,6 @@ jobs:
     if: needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -253,8 +227,6 @@ jobs:
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -269,8 +241,6 @@ jobs:
     if: needs.changes.outputs.scraper == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -285,8 +255,6 @@ jobs:
     if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-python-service
@@ -301,8 +269,6 @@ jobs:
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -316,8 +282,6 @@ jobs:
   gitleaks:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
@@ -333,8 +297,6 @@ jobs:
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/build-and-scan
@@ -347,8 +309,6 @@ jobs:
     if: needs.changes.outputs.scraper == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/build-and-scan
@@ -361,8 +321,6 @@ jobs:
     if: needs.changes.outputs.bot == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/build-and-scan
@@ -377,8 +335,6 @@ jobs:
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
