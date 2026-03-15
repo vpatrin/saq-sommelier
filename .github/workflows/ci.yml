@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main, "feat/*"]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -20,8 +24,6 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      pull-requests: read
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       scraper: ${{ steps.filter.outputs.scraper }}
