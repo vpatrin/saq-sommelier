@@ -4,6 +4,9 @@ on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: read
+
 concurrency:
   group: cd-${{ github.ref }}
   cancel-in-progress: true
@@ -47,6 +50,7 @@ jobs:
     needs: [build-scan-push]
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: production
     permissions:
       contents: write
     steps:
