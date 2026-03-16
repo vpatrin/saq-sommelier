@@ -4,30 +4,49 @@ You change one lever at a time, measure the impact, keep what works, revert what
 
 Requirements: local PostgreSQL with embedded products must be running.
 
+**Relationship to `/ai`:** `/ai` reviews AI *design and architecture*. This command *tunes scores* through measured experimentation. Run `/ai` to decide what to build. Run this to tune what you've built.
+
+## Mode
+
+**Arguments:** `$ARGUMENTS`
+
+- **No arguments** → run baseline eval + up to 5 iterations on the full train split.
+- **A number** (e.g., `3`) → run baseline eval + up to N iterations.
+- **`baseline`** → run step 1 only (eval + analysis), no iteration. Use to check current state.
+- **A tag name** (e.g., `pairing`, `occasion`) → filter analysis to queries with that tag. Still iterate on the full train split, but prioritize levers that improve the tagged category.
+
+## Context gathering
+
+Before starting, silently read the implementation files you may need to modify:
+
+1. `backend/services/intent.py` — intent parsing prompts and logic
+2. `backend/services/recommendations.py` — recommendation orchestration
+3. `backend/repositories/recommendations.py` — pgvector queries, hybrid search
+4. `backend/eval/levers.md` — available optimization levers
+5. `backend/eval/data/rubric.json` — scoring dimensions and weights
+
 ## Steps
 
 1. Run `make eval` and read the full output (console + latest JSON in `backend/eval/results/`).
    - This runs the **train split only** (14 queries) with deterministic judging (temp=0, 1 run).
-2. Read `backend/eval/levers.md` to understand available optimization levers.
-3. Read `backend/eval/data/rubric.json` to understand scoring dimensions and weights.
-4. Analyze the results:
+2. Analyze the results:
    - Sort queries by overall score, focus on bottom quartile.
    - Check **tag averages** to identify weak categories (e.g. "pairing" scores low → focus there).
    - Read judge justifications to identify root causes (wrong intent? bad retrieval? poor embeddings?).
    - Map each failure to a specific lever from levers.md.
-5. Pick the ONE lever most likely to improve the worst scores. Change only that lever.
-6. Re-run `make eval` and compare scores using the built-in diff mode.
-7. If scores improved: keep the change and move to the next iteration.
-8. If scores regressed: revert the change, explain why it didn't work, and try a different lever.
-9. Repeat steps 4-8 for up to 5 iterations.
-10. **Holdout validation** — after all iterations, run: `make eval SPLIT=holdout JUDGE_RUNS=2 JUDGE_TEMP=1.0`
+3. Pick the ONE lever most likely to improve the worst scores. Change only that lever.
+4. Re-run `make eval` and compare scores using the built-in diff mode.
+5. If scores improved: keep the change and move to the next iteration.
+6. If scores regressed: revert the change, explain why it didn't work, and try a different lever.
+7. Repeat steps 2-6 for up to 5 iterations.
+8. **Holdout validation** — after all iterations, run: `make eval SPLIT=holdout JUDGE_RUNS=2 JUDGE_TEMP=1.0`
     - Compare holdout weighted average to the final train weighted average.
     - If holdout is >0.5 below train, flag to Victor — the changes likely overfit to the train set.
     - Report both scores in the final summary.
 
 ## Iteration Budget
 
-Run up to **5 iterations** (or as specified by the user via $ARGUMENTS). Stop early only if:
+Run up to **5 iterations** (or as specified by the user via `$ARGUMENTS`). Stop early only if:
 - Target score is reached
 - 3 consecutive iterations show no improvement (< 0.05 gain each) — the pipeline has plateaued
 - All viable levers have been tried

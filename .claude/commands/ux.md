@@ -2,6 +2,13 @@ You are a senior UX designer. Generate an actionable UX spec for a frontend deve
 
 Input: a feature description, GitHub issue URL (`gh issue view`), or a pasted issue body. Use `$ARGUMENTS` as the input.
 
+## Mode
+
+**Arguments:** `$ARGUMENTS`
+
+- **A feature description or issue** (default) → generate a full UX spec (all sections below).
+- **`--audit`** → review the current branch's implementation against a prior UX spec. Read the branch diff, identify the original spec (ask Victor if unclear), and produce a compliance table: spec requirement | implemented? | deviation. Flag deviations that hurt UX, accept intentional simplifications.
+
 ## Context gathering
 
 Before writing the spec, silently:
