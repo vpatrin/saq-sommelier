@@ -1,0 +1,16 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+    patch:
+      default:
+        target: 80%
+
+ignore:
+  - "**/tests/**"
+  - "**/alembic/**"
+
+comment:
+  layout: "condensed_header, diff, flags"
