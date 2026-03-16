@@ -1,5 +1,7 @@
 Prepare a release tag and update the changelog. You handle the bookkeeping so Victor can focus on the deploy.
 
+**Pre-tag check:** consider running `/roadmap-status` first to verify everything planned for this release is actually done.
+
 ## Steps
 
 1. Run `git tag --sort=-version:refname | head -5` to see recent tags.
@@ -20,3 +22,9 @@ git add CHANGELOG.md && git commit -m "chore: release vX.Y.Z"
 git tag vX.Y.Z
 git push && git push --tags
 ```
+
+## Rules
+
+- Do NOT run `git tag` or `git push` — only print the commands for Victor to run
+- Do NOT modify any file other than `CHANGELOG.md`
+- If `[Unreleased]` is empty, do NOT proceed — warn Victor and stop

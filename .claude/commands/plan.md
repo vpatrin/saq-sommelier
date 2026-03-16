@@ -4,6 +4,14 @@ Input: a phase name, epic description, or feature scope. Use `$ARGUMENTS` as the
 
 Your job is NOT just to list tasks — it's to **sequence work, identify risks, and make shipping decisions**. You think in dependency graphs and critical paths.
 
+## Mode
+
+**Arguments:** `$ARGUMENTS`
+
+- **A phase or feature description** (default) → plan from scratch. Full output: scope, dependencies, issues, shipping strategy.
+- **`--breakdown #N`** → take an existing large issue (#N) and split it into smaller issues. Read the issue, understand its scope, and propose a breakdown following the same planning principles.
+- **`--replan <phase or feature>`** → update an existing plan after scope changes. Read the current issues for the phase, identify what's changed (completed, descoped, new requirements), and propose adjustments. Don't rewrite from scratch — show the delta.
+
 ## Context gathering
 
 Before planning, silently:
