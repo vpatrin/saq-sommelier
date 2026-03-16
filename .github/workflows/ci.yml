@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main, "feat/*"]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -20,8 +24,6 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      pull-requests: read
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       scraper: ${{ steps.filter.outputs.scraper }}
@@ -160,6 +162,11 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make coverage-backend
+      - uses: codecov/codecov-action@v5
+        with:
+          files: backend/coverage.xml
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   test-scraper:
     needs: [changes]
@@ -174,6 +181,11 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make coverage-scraper
+      - uses: codecov/codecov-action@v5
+        with:
+          files: scraper/coverage.xml
+          flags: scraper
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   test-bot:
     needs: [changes]
@@ -188,6 +200,11 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           poetry-version: ${{ env.POETRY_VERSION }}
       - run: make coverage-bot
+      - uses: codecov/codecov-action@v5
+        with:
+          files: bot/coverage.xml
+          flags: bot
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # ── Security ──────────────────────────────────────────────────
 
@@ -343,6 +360,7 @@ jobs:
     needs: [build-backend, build-scraper, build-bot, build-frontend]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions: {}
     if: always()
     steps:
       - run: |
@@ -360,6 +378,7 @@ jobs:
     needs: [lint-backend, lint-scraper, lint-core, lint-bot, lint-dockerfiles, lint-frontend]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions: {}
     if: always()
     steps:
       - run: |
@@ -379,6 +398,7 @@ jobs:
     needs: [test-backend, test-scraper, test-bot]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions: {}
     if: always()
     steps:
       - run: |
@@ -395,6 +415,7 @@ jobs:
     needs: [audit-core, audit-backend, audit-scraper, audit-bot, audit-frontend, gitleaks]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions: {}
     if: always()
     steps:
       - run: |
