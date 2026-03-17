@@ -152,30 +152,9 @@ See [PRODUCTION.md](PRODUCTION.md) for deploy process. Systemd timers and backup
 
 ## AI / ML
 
-RAG-based wine recommendation pipeline, shipped in Phase 6.
+RAG-based wine recommendation pipeline: intent parsing → embedding → hybrid retrieval → diversity reranking → curation. Claude Haiku for LLM calls, OpenAI `text-embedding-3-large` for embeddings, pgvector for hybrid search.
 
-**Architecture:** intent parsing → embedding → hybrid retrieval → diversity reranking → curation
-
-| Stage | Tool | Purpose |
-|-------|------|---------|
-| Intent parsing | Claude Haiku (`tool_use`) | Extract structured filters (categories, price, country, grapes) from natural language |
-| Query embedding | OpenAI `text-embedding-3-large` (1536-d) | Bilingual FR/EN semantic search vector |
-| Hybrid retrieval | pgvector + SQL filters | Vector similarity filtered by intent (category, price, country, availability) |
-| Diversity reranking | Python (greedy, redundancy penalty) | Avoid recommending 5 wines from the same producer/grape |
-| Curation | Claude Haiku (`tool_use`) | Per-wine explanations and selection summary |
-
-**Key decisions:**
-
-- **pgvector** over Pinecone/Weaviate — hybrid queries (vector + SQL) in one statement, no extra service, no vendor lock-in
-- **text-embedding-3-large** — bilingual FR/EN, Matryoshka (truncatable dimensions), best-in-class retrieval quality
-- **Claude Haiku** — fast (~1s), cheap (~$0.002/query), structured output via `tool_use`. Sufficient for intent extraction and curation; Sonnet upgrade path available if quality needs improvement
-- **RAG over fine-tuning** — catalog changes weekly (~14k wine products), embeddings update incrementally via `--embed-sync` CLI flag
-
-**Multi-turn context:** sliding window of last 5 turns. Previously recommended SKUs excluded from future results within a session.
-
-**Eval:** LLM-as-judge framework (Claude scores recommendations against configurable rubric). See [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md).
-
-**Logging:** every recommendation request logged to the `recommendation_logs` table with query, parsed intent, returned SKUs, and per-stage latency.
+Full architecture, rationale, and key decisions in [ADR 0005](decisions/0005-rag-pipeline.md). Eval framework in [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md).
 
 ---
 

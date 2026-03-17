@@ -7,17 +7,11 @@
 
 Coupette needs wine catalog data from the SAQ (Société des alcools du Québec). Web scraping is in a legal grey zone in Canada. We need a strategy that is legally defensible, technically reliable, and provides enough product detail for recommendations.
 
-The scraper also needs to run as a production job — we need a scheduling and failure model.
-
 ## How it evolved
 
-**Phase 1 — Pure HTML scraping** (Feb 2026). The scraper fetched product URLs from SAQ's public sitemaps (declared in `robots.txt`) and parsed HTML pages for product data. This was the most conservative legal approach — we only fetched URLs the site explicitly published.
+Started with **pure sitemap + HTML scraping** (Feb 2026) — legally conservative (only fetching URLs SAQ publishes in `robots.txt`), but brittle. SAQ's markup varied across pages, some attributes were missing from HTML, and in-store availability only rendered via JavaScript.
 
-Problem: HTML parsing was brittle. SAQ's markup varied across product pages, some attributes were missing from the HTML entirely, and in-store availability was only visible after JavaScript rendered the page — not in the static HTML.
-
-**Phase 2 — Adobe API discovery** (Mar 2026). While debugging availability rendering in the browser, we found SAQ's frontend calls an Adobe Live Search GraphQL endpoint (`livesearch.adobe.io`) to fetch product attributes and real-time stock levels. This is a public API (no auth required) that returns structured data.
-
-**Phase 3 — Hybrid pipeline** (current). Sitemap remains the discovery mechanism (legal basis). Adobe API replaces fragile HTML parsing for enrichment (tasting notes, grape varieties, detailed attributes) and provides store-level availability that HTML couldn't.
+While debugging availability in the browser's network console, discovered SAQ's frontend calls an **Adobe Live Search GraphQL endpoint** (`livesearch.adobe.io`) — public, no auth, structured data. Pivoted to a hybrid: sitemap for product discovery (legal basis), Adobe API for enrichment (tasting notes, grape varieties) and store-level availability.
 
 ## Decision
 

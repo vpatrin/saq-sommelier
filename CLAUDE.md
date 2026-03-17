@@ -212,7 +212,7 @@ Rules:
 - Keep docs concise — no one reads a 300-line doc. If it's long, split it
 - Update docs when architecture changes, not as a standalone task
 - README lists all docs with a one-liner — add new docs there when created
-- Roadmap maintenance: when work completes a capability tracked in `docs/roadmaps/`, mark it `[x]` with the issue ref (e.g., `(#50)`). Only add new items if they represent a meaningful capability — roadmaps are strategic (what we can do), not operational (what we did). This check is part of the `/pr` flow.
+- Roadmap maintenance: when work completes a capability tracked in `docs/ROADMAP.md`, mark it `[x]` with the issue ref (e.g., `(#50)`). Only add new items if they represent a meaningful capability — roadmaps are strategic (what we can do), not operational (what we did). This check is part of the `/pr` flow.
 
 ### Documentation boundaries
 
