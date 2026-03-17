@@ -31,6 +31,7 @@ Before planning, silently:
 - **Right-size issues.** Target ~100-200 lines changed per PR. End-to-end vertical slices touching many files with 1-3 lines each are fine. Large changes concentrated in few files are not.
 - **Flag the hard parts.** For each issue, note if it involves new concepts (first time using SSE, first time with React context, etc.) so Victor can budget learning time.
 - **Cut scope aggressively.** If something is nice-to-have, say so and defer it. Ship the 80% that matters.
+- **Flag ADR-worthy decisions.** If the plan involves a real tradeoff (rejected alternatives, non-obvious constraints, risk of revisiting), flag it as needing an ADR in `docs/decisions/`. Not for default/obvious choices — only when a future reader would ask "why not X?"
 
 ## Output format
 
