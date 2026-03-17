@@ -65,6 +65,7 @@ Collaboration:
 - When creating files, show the structure first
 - Never delete anything without explicit confirmation
 - If something fails, stop and explain before trying another approach
+- When a technical decision involves a real tradeoff (rejected alternatives, non-obvious constraints, or risk of revisiting later), suggest an ADR in `docs/decisions/`. Not for default/obvious choices — only when a future reader would ask "why not X?"
 
 Incremental development:
 - One feature = one branch = one PR (even if I'm the only reviewer)
@@ -213,6 +214,36 @@ Rules:
 - README lists all docs with a one-liner — add new docs there when created
 - Roadmap maintenance: when work completes a capability tracked in `docs/roadmaps/`, mark it `[x]` with the issue ref (e.g., `(#50)`). Only add new items if they represent a meaningful capability — roadmaps are strategic (what we can do), not operational (what we did). This check is part of the `/pr` flow.
 
+### Documentation boundaries
+
+Three backlogs exist across two repos. Each has a clear scope — don't put items in the wrong place.
+
+| Document | Repo | Scope | Examples |
+|----------|------|-------|---------|
+| `docs/ROADMAP.md` | coupette | Product phases + cross-cutting UX/CD pipeline | Phase 10 intent router, sidebar restructure, GHCR pipeline |
+| `docs/ENGINEERING.md` backlog | coupette | App-level engineering quality | Test factories, structured logging, SLOs, LLM cost tracking |
+| `docs/ROADMAP.md` | infra | Platform infrastructure | K3s migration, Fail2ban, Terraform, staging environment |
+
+**Rule of thumb:** if a user would notice the change → coupette ROADMAP. If it improves how we build but users don't see it → ENGINEERING backlog. If it's about the VPS, networking, or shared services → infra ROADMAP.
+
+### Architecture Decision Records (ADRs)
+
+Significant technical decisions are recorded in `docs/decisions/` using a lightweight format: Context, Options, Decision, Rationale, Consequences.
+
+When to write an ADR:
+
+- Choosing between real alternatives (not obvious choices)
+- Decisions that are hard to reverse or expensive to change
+- Decisions that would need explaining to a future contributor or interviewer
+
+When NOT to write an ADR:
+
+- Following framework conventions (FastAPI dependency injection, React hooks)
+- Tooling choices with no meaningful alternative (ruff for Python linting)
+- Implementation details that live in code comments
+
+Format: `NNNN-short-description.md`. Keep them concise (30-50 lines). The goal is to capture *why*, not *how* — the code shows how.
+
 ---
 
 ## Project Goals
@@ -288,8 +319,31 @@ Frontend lives in `frontend/` — React SPA served by Caddy in production.
 - Swap: 2GB configured at /swapfile, swappiness=10
 - LlamaFile is NOT viable on this VPS — 4GB RAM insufficient, using Claude API instead
 - Existing services sharing the VPS: Uptime Kuma, Umami, URL shortener — do not touch these
-- Docker networks available: web (shared with Caddy), infra_default
-- Caddy config lives in separate infra/ repo
+
+### Infra repo boundary
+
+Two repos are coupled through shared infrastructure on the VPS. Source: [`empire/infra`](https://github.com/vpatrin/infra).
+
+|   | coupette/ | infra/ |
+| --- | --------- | ------ |
+| **Owns** | App containers, docker-compose.yml, app config, CI, Alembic migrations, deploy process | Caddy config, DNS, shared-postgres container, `internal` Docker network, VPS-level services, backups |
+| **Deploys** | Build images → push to GHCR → restart app containers | `git pull` + `docker compose up -d` (or `make reload` for Caddy-only) |
+
+**Shared Docker network:** `internal` (external, defined in infra's compose). All containers communicate by name on this network.
+
+**Caddy routing** (infra's `services/caddy/Caddyfile`):
+
+- `coupette.club/api/*` → `coupette-backend:8001`
+- `coupette.club/*` → static SPA from `/srv/coupette`
+
+**Cross-repo changes requiring coordination:**
+
+- New app route or subdomain → Caddyfile PR in infra
+- Container name or port change → update both compose files + Caddyfile
+- New systemd timer → infra owns the timer inventory (SERVICE_CATALOG.md)
+- Pre-deploy backups call infra's `services/postgres/backups/backup.sh`
+
+**Infra documentation:** `empire/infra/docs/` — SERVICE_CATALOG.md (port mappings, network contract), INFRASTRUCTURE.md (VPS setup, security, backups), SECURITY.md, decisions/ (ADRs).
 
 ## Database
 
@@ -315,7 +369,7 @@ sudo docker exec shared-postgres psql -U saq_sommelier -d saq_sommelier -c "SELE
 - NEVER write migration files manually — always use `make revision msg="description"` (requires running DB)
 - When a migration is needed, always suggest the exact `make revision msg="..."` command with a descriptive message
 - Victor generates and reviews migrations; Claude only modifies the model
-- See [docs/MIGRATIONS.md](docs/MIGRATIONS.md) for full practices
+- See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#migrations) and [docs/OPERATIONS.md](docs/OPERATIONS.md#migrations) for full practices
 
 ### Scraping
 

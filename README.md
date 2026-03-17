@@ -76,6 +76,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for database setup options and fu
 - [Security](docs/SECURITY.md) — auth model, threat model, CI scanning, known limitations
 - [Engineering](docs/ENGINEERING.md) — testing, observability, SRE, platform, ML/MLOps
 - [Roadmap](docs/ROADMAP.md) — product phases and timeline
+- [Architecture Decision Records](docs/decisions/) — ADRs for key technical choices
 - [Changelog](CHANGELOG.md) — release history
 - [specs/DATA_PIPELINE.md](docs/specs/DATA_PIPELINE.md) — data pipeline spec (Adobe Live Search, HTML scrape)
 - [specs/RECOMMENDATIONS.md](docs/specs/RECOMMENDATIONS.md) — Phase 6 RAG + Claude architecture spec
