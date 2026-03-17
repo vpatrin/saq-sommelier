@@ -4,107 +4,128 @@
 
 - Python 3.12+
 - [Poetry](https://python-poetry.org/docs/#installation)
+- Node.js 24+ and [Yarn](https://classic.yarnpkg.com/) (for frontend)
 - Docker (for PostgreSQL)
 
 ## Setup
 
 ```bash
-make install              # install all dependencies
-cp .env.example .env      # set ADMIN_TELEGRAM_ID (your Telegram user ID)
+make install              # install all Python + frontend dependencies
+cp .env.example .env      # fill in required values (see Environment below)
 make run-db               # start PostgreSQL (localhost:5432)
 make migrate              # create database tables
 make create-admin         # seed admin user (required — backend won't start without it)
-make dev-scraper          # populate the database (~38k products)
+make dev-scraper          # populate the database (~14k wine products)
 make dev-backend          # start the backend (localhost:8001)
+make dev-frontend         # start the frontend (localhost:5173)
 ```
 
 Or skip Poetry entirely and run everything in Docker:
 
 ```bash
-cp .env.example .env      # set ADMIN_TELEGRAM_ID (your Telegram user ID)
+cp .env.example .env      # fill in required values
 make run                  # postgres + backend + bot (with hot reload)
 make migrate              # create database tables
-make create-admin         # seed admin user (required — backend won't start without it)
+make create-admin         # seed admin user
 make run-scraper          # populate the database
 ```
 
-## Database
-
-### Default: Docker Compose
-
-`make run-db` starts a postgres:16-alpine container on `localhost:5432`. Bare-metal tools (alembic, `make dev-backend`, `make dev-scraper`) connect to it directly. GUI tools like DBeaver can also connect to `localhost:5432` with the credentials from `.env`.
-
-```bash
-make run-db               # start postgres only (for bare-metal dev)
-make down                 # stop all containers (data persists in pgdata volume)
-```
-
-### Using an existing PostgreSQL instance
-
-If you already have PostgreSQL running (e.g., [shared-postgres](https://github.com/vpatrin/shared-postgres) or a system install), skip `make run-db` and update `.env`:
-
-```bash
-DB_HOST=localhost         # or your postgres host
-DB_PORT=5432              # or your postgres port
-```
-
-Everything else (`make migrate`, `make dev-scraper`, `make dev-backend`) works the same.
+Note: the frontend runs bare-metal only (`yarn dev`) — not in Docker. Hot reload matters.
 
 ## Environment
 
 All services read from a single root `.env` file. See [.env.example](../.env.example) for all available variables.
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DB_USER` | yes | — | PostgreSQL username |
-| `DB_PASSWORD` | yes | — | PostgreSQL password |
-| `DB_NAME` | yes | — | Database name |
-| `DB_HOST` | no | `localhost` | Database host |
-| `DB_PORT` | no | `5432` | Database port |
-| `ENVIRONMENT` | no | `development` | `development` or `production` |
-| `LOG_LEVEL` | no | `INFO` | Logging level |
-| `DEBUG` | no | `false` | Debug mode |
-| `DATABASE_ECHO` | no | `false` | Log SQL queries |
-| `TELEGRAM_BOT_TOKEN` | bot only | — | Token from @BotFather |
-| `BACKEND_URL` | no | `http://localhost:8001` | API URL for the bot |
-| `SCRAPE_LIMIT` | no | `500` | Max products to scrape per run (0 = full catalog) |
-| `NOTIFICATION_POLL_INTERVAL` | no | `60` | Bot notification poll interval in seconds (21600 = 6h in prod) |
-| `ALLOWED_USER_IDS` | no | — | Comma-separated Telegram user IDs (empty = allow all) |
+### Required
+
+| Variable | Description |
+|----------|-------------|
+| `DB_USER` | PostgreSQL username |
+| `DB_PASSWORD` | PostgreSQL password |
+| `DB_NAME` | Database name |
+| `ADMIN_TELEGRAM_ID` | Your Telegram user ID (for admin bootstrap) |
+
+### Optional (with defaults)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DB_HOST` | `localhost` | Database host |
+| `DB_PORT` | `5432` | Database port |
+| `ENVIRONMENT` | `development` | `development` or `production` |
+| `LOG_LEVEL` | `INFO` | Logging level |
+| `DEBUG` | `false` | Debug mode |
+| `DATABASE_ECHO` | `false` | Log SQL queries |
+| `SCRAPE_LIMIT` | `500` | Max products to scrape per run (0 = full catalog) |
+
+### Service-specific
+
+| Variable | Required for | Description |
+|----------|-------------|-------------|
+| `TELEGRAM_BOT_TOKEN` | bot | Token from @BotFather |
+| `BOT_SECRET` | bot + backend | Shared secret for bot → backend auth |
+| `BACKEND_URL` | bot | API URL (default: `http://localhost:8001`) |
+| `NOTIFICATION_POLL_INTERVAL` | bot | Notification poll interval in seconds |
+| `ANTHROPIC_API_KEY` | backend | Claude API key (intent parsing, curation, chat) |
+| `OPENAI_API_KEY` | backend + scraper | OpenAI API key (embeddings) |
+| `JWT_SECRET_KEY` | backend | JWT signing key |
+| `CORS_ORIGINS` | backend | Allowed origins (default: `["http://localhost:5173"]`) |
+| `VITE_TELEGRAM_BOT_USERNAME` | frontend | Bot username for Telegram Login Widget |
 
 ## Make targets
 
 ```bash
 # Development
-make install       # poetry install for all services
-make dev-backend   # uvicorn backend on localhost:8001
-make dev-bot       # telegram bot in polling mode
-make dev-scraper   # run the scraper
-make migrate       # alembic upgrade head
-make reset-db      # wipe all data and recreate tables
+make install         # poetry install (all Python services) + yarn install (frontend)
+make dev-backend     # uvicorn backend on localhost:8001
+make dev-bot         # telegram bot in polling mode
+make dev-scraper     # run the scraper
+make dev-frontend    # vite dev server on localhost:5173
+make migrate         # alembic upgrade head
+make create-admin    # seed admin user
+make reset-db        # wipe all data and recreate tables
 
 # Quality
-make lint          # ruff check (all services)
-make format        # ruff format (all services)
-make test          # pytest (all services)
-make coverage      # tests + coverage badges
+make lint            # ruff check (Python) + eslint + typecheck (frontend)
+make format          # ruff format (Python) + prettier (frontend)
+make test            # pytest (all Python services)
+make coverage        # tests + coverage badges
 
 # Docker
-make build         # build all service images
-make run           # full Docker dev stack (postgres + backend + bot)
-make run-db        # postgres only (for bare-metal dev)
-make run-scraper   # one-shot scrape (Docker)
-make down          # stop all containers
+make build           # build all service images
+make run             # full Docker dev stack (postgres + backend + bot)
+make run-db          # postgres only (for bare-metal dev)
+make run-scraper     # one-shot scrape (Docker)
+make down            # stop all containers
 
 # Cleanup
-make clean         # remove __pycache__, .pytest_cache, .ruff_cache
+make clean           # remove __pycache__, .pytest_cache, .ruff_cache
+```
+
+## Working on the frontend
+
+The frontend is a React SPA built with Vite, TypeScript, Tailwind CSS, and shadcn/ui. It runs bare-metal (not in Docker) for fast hot reload.
+
+```bash
+make dev-frontend         # vite dev server on localhost:5173
+```
+
+The frontend expects the backend running on `localhost:8001`. Run `make dev-backend` in another terminal.
+
+```bash
+# Lint and format
+make lint-frontend        # eslint + typecheck + format check
+make format-frontend      # prettier
+
+# Build for production
+make build-frontend       # typecheck + vite build
 ```
 
 ## Working on the scraper
 
-The scraper is a one-shot batch job (not a long-running service). It fetches the SAQ sitemap and upserts products into PostgreSQL. See [OPERATIONS.md](OPERATIONS.md) for production scheduling and operations.
+The scraper is a one-shot batch job (not a long-running service). It fetches the SAQ sitemap and upserts products into PostgreSQL. See [OPERATIONS.md](OPERATIONS.md) for production scheduling.
 
 ```bash
-make dev-scraper          # run the scraper (upserts ~38k products)
+make dev-scraper          # run the scraper (upserts ~14k wine products)
 ```
 
 When iterating on parser logic, wipe the database first to test from a clean state:
@@ -113,7 +134,7 @@ When iterating on parser logic, wipe the database first to test from a clean sta
 make reset-db && make dev-scraper
 ```
 
-`make reset-db` runs `alembic downgrade base && alembic upgrade head` — drops all tables and recreates them, so the scraper starts fresh. This also validates that your migrations work in both directions.
+`make reset-db` runs `alembic downgrade base && alembic upgrade head` — drops all tables and recreates them. This also validates that your migrations work in both directions.
 
 ## Working on the backend
 
@@ -156,6 +177,7 @@ Volume mounts and `--reload` are baked into `docker-compose.yml`. Edit code loca
 ```bash
 make run-db               # postgres only
 make dev-backend          # uvicorn with --reload
+make dev-frontend         # vite with HMR
 make dev-bot              # telegram bot polling
 make dev-scraper          # one-shot scrape
 make down                 # stop postgres
@@ -173,7 +195,7 @@ make build-bot            # build bot only
 ## Running tests
 
 ```bash
-# All services
+# All Python services
 make test
 
 # Single service
@@ -185,7 +207,7 @@ make test-bot
 make coverage
 ```
 
-Tests use an in-memory SQLite database by default (no PostgreSQL required).
+Tests use mocked database sessions and external API calls (no live PostgreSQL or API keys required).
 
 ## Migrations
 
