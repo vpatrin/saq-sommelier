@@ -160,13 +160,11 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 **Production safety:**
 
 - [x] Automated DB backups — weekly pg_dump + 30-day retention via systemd timer (#351)
-- [ ] Cron failure alerts — Uptime Kuma push monitors for backup + scraper (#350)
 - [x] Include alembic config in backend Docker image for in-container migrations (#227)
 
 **CI hardening:**
 
 - [x] Container security scan — Trivy on built images, catches OS-level CVEs that pip-audit misses (#360)
-- [ ] Alembic migration smoke test — `upgrade head && check` against test DB (#316)
 
 **CD pipeline:**
 
@@ -177,26 +175,5 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 - [x] Production environment — GitHub Environment with main-only deployment branch policy, tag protection ruleset
 - [ ] Environment-scoped secrets — move deploy secrets from repo-level to production environment (prerequisite: automated CD or k3s migration)
 
-**Observability:**
-
-- [ ] Request correlation — X-Request-ID middleware across bot → backend → DB (#315)
-
-**Secrets management:**
-
-- [ ] sops + age secrets — split `.env` into committed config + encrypted secrets, delete `.env.example`
-
-**Learning backlog (future):**
-
-- [ ] Staging environment — same VPS, separate port + DB, environment promotion pattern
-- [ ] Kubernetes — container orchestration (when multi-node scaling is needed)
-- [ ] ArgoCD / Flux — GitOps-style continuous delivery
-- [ ] Terraform — infrastructure as code for VPS provisioning
-- [ ] HashiCorp Vault — centralized secret management with RBAC and auto-rotation
-
-### ~~RAG Eval + MLOps~~ — frozen
-
-Revisit when pipeline quality needs iteration or for Phase 10 benchmark. See [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md).
-
-- [x] Eval framework — LLM-as-judge scoring with configurable rubric (#327)
-- ~~Remaining items~~ — deferred
+Platform-level concerns (monitoring alerts, secrets management, IaC, staging, K8s) are tracked in the [infra ROADMAP](https://github.com/vpatrin/infra/blob/main/docs/ROADMAP.md). Engineering backlog (testing, observability, SRE) is tracked in [ENGINEERING.md](ENGINEERING.md#backlog).
 

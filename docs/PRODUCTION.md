@@ -3,8 +3,8 @@
 Deployment process and app-level production concerns for Coupette.
 VPS-level infrastructure (firewall, SSH, TLS, networking) is documented in the [infra repo](https://github.com/vpatrin/infra/blob/main/docs/INFRASTRUCTURE.md).
 
-- **Deployed**: v1.2.0
-- **Services**: backend, bot, scraper (systemd timer), shared-postgres
+- **Deployed**: v1.4.0
+- **Services**: backend, frontend, bot, scraper (systemd timer), shared-postgres
 
 ---
 

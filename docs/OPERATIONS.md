@@ -96,9 +96,9 @@ Defined as named constants in `scraper/src/constants.py`.
 
 | Code | Constant | Meaning | Action needed |
 | ---- | -------- | ------- | ------------- |
-| `0` | `EXIT_SUCCESS` | Clean run | None |
+| `0` | `EXIT_OK` | Clean run | None |
 | `1` | `EXIT_PARTIAL` | Partial failure (some products saved, some failed) | Check logs, usually transient |
-| `2` | `EXIT_FAILURE` | Total failure (nothing saved) | Investigate — likely SAQ down or DB unreachable |
+| `2` | `EXIT_FATAL` | Total failure (nothing saved) | Investigate — likely SAQ down or DB unreachable |
 
 ### Robots.txt compliance
 
@@ -128,7 +128,7 @@ Runtime: ~1 min. Scope: all categories (wine, spirits, beer, cider).
 
 ### Scheduling and operations
 
-Runs daily at 2am via systemd timer, one hour before the DB backup (3am).
+Runs daily at 2am via systemd timer. On Mondays, the infra backup timer also runs at 2am — see [infra SERVICE_CATALOG.md](https://github.com/vpatrin/infra/blob/main/docs/SERVICE_CATALOG.md) for the full timer schedule.
 
 Source files: [`deploy/coupette-availability.service`](../deploy/coupette-availability.service) and [`deploy/coupette-availability.timer`](../deploy/coupette-availability.timer).
 
@@ -181,18 +181,6 @@ cd core && poetry run alembic history  # show migration history
 ### Forward-only in production
 
 Never run `downgrade()` on production. If a migration adds a column and populates it with data, downgrading drops that column and the data. Write a new migration to fix mistakes instead.
-
-### Pre-production squash
-
-Before the first production deployment, squash all dev migrations into one clean `initial`:
-
-```bash
-make squash
-# Then hand-add CREATE EXTENSION to the generated file
-make reset-db  # verify it works
-```
-
-After production exists, never squash — migrations become the permanent history.
 
 ### Backward-compatible deploys
 
