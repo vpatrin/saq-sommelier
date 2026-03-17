@@ -78,8 +78,8 @@ async def recommend(
             intent = await parse_intent(query)
             latency["intent"] = _time_ms(t0)
 
-            if intent.intent_type != "recommendation":
-                return RecommendationOut(products=[], intent=intent, summary=NON_WINE_MESSAGE)
+        if intent.intent_type != "recommendation":
+            return RecommendationOut(products=[], intent=intent, summary=NON_WINE_MESSAGE)
 
         t0 = time.monotonic()
         vector = await async_embed_query(intent.semantic_query, client=get_openai_client())

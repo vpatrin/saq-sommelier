@@ -117,24 +117,25 @@ async def send_message(
     content: str | RecommendationOut
     if intent.intent_type == "off_topic":
         content = NON_WINE_MESSAGE
-    elif intent.intent_type == "wine_chat":
-        prior_messages = await chat_repo.find_messages(db, session_id)
-        # Fetch prior messages for multi-turn context
-        _, conversation_history = _extract_multi_turn_context(prior_messages)
-        content = await sommelier_chat(message, conversation_history=conversation_history or None)
-    elif intent.intent_type == "recommendation":
+    else:
         prior_messages = await chat_repo.find_messages(db, session_id)
         exclude_skus, conversation_history = _extract_multi_turn_context(prior_messages)
-        content = await recommend(
-            db,
-            message,
-            user_id=f"web:{user_id}",
-            exclude_skus=exclude_skus or None,
-            conversation_history=conversation_history or None,
-            intent=intent,
-        )
-    else:
-        content = NON_WINE_MESSAGE
+
+        if intent.intent_type == "wine_chat":
+            content = await sommelier_chat(
+                message, conversation_history=conversation_history or None
+            )
+        elif intent.intent_type == "recommendation":
+            content = await recommend(
+                db,
+                message,
+                user_id=f"web:{user_id}",
+                exclude_skus=exclude_skus or None,
+                conversation_history=conversation_history or None,
+                intent=intent,
+            )
+        else:
+            content = NON_WINE_MESSAGE
 
     # Save assistant response
     response_text = content.model_dump_json() if isinstance(content, RecommendationOut) else content
