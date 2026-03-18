@@ -146,67 +146,70 @@ function ChatPage() {
     inputRef.current?.focus()
   }, [urlSessionId])
 
-  const submitMessage = useCallback(async (override?: string) => {
-    const text = (override ?? input).trim()
-    if (!text || sending) return
+  const submitMessage = useCallback(
+    async (override?: string) => {
+      const text = (override ?? input).trim()
+      if (!text || sending) return
 
-    setInput('')
-    setError(null)
-    setSending(true)
+      setInput('')
+      setError(null)
+      setSending(true)
 
-    // Reset textarea height
-    if (inputRef.current) inputRef.current.style.height = 'auto'
+      // Reset textarea height
+      if (inputRef.current) inputRef.current.style.height = 'auto'
 
-    // Optimistic user message
-    const tempUserMsg: ChatMessageOut = {
-      message_id: -Date.now(),
-      session_id: sessionId ?? 0,
-      role: 'user',
-      content: text,
-      created_at: new Date().toISOString(),
-    }
-    setMessages((prev) => [...prev, tempUserMsg])
+      // Optimistic user message
+      const tempUserMsg: ChatMessageOut = {
+        message_id: -Date.now(),
+        session_id: sessionId ?? 0,
+        role: 'user',
+        content: text,
+        created_at: new Date().toISOString(),
+      }
+      setMessages((prev) => [...prev, tempUserMsg])
 
-    try {
-      let sid = sessionId
+      try {
+        let sid = sessionId
 
-      let isNewSession = false
+        let isNewSession = false
 
-      if (sid === null) {
-        // First message — create session (title only), then send the message below
-        const session = await apiClient<ChatSessionOut>('/chat/sessions', {
+        if (sid === null) {
+          // First message — create session (title only), then send the message below
+          const session = await apiClient<ChatSessionOut>('/chat/sessions', {
+            method: 'POST',
+            body: JSON.stringify({ message: text }),
+          })
+          sid = session.id
+          isNewSession = true
+          // Skip the load effect — we'll fetch the data right below
+          skipLoadRef.current = true
+          navigate(`/chat/${sid}`, { replace: true })
+        }
+
+        // Send message (first or follow-up — same endpoint)
+        await apiClient(`/chat/sessions/${sid}/messages`, {
           method: 'POST',
           body: JSON.stringify({ message: text }),
         })
-        sid = session.id
-        isNewSession = true
-        // Skip the load effect — we'll fetch the data right below
-        skipLoadRef.current = true
-        navigate(`/chat/${sid}`, { replace: true })
+
+        // Re-fetch full session to get real messages
+        const detail = await apiClient<ChatSessionDetailOut>(`/chat/sessions/${sid}`)
+        setMessages(detail.messages)
+
+        // Refresh sidebar only when a new session was created (title added)
+        if (isNewSession) refreshSessions()
+      } catch (err) {
+        // Remove optimistic message on error
+        setMessages((prev) => prev.filter((m) => m.message_id !== tempUserMsg.message_id))
+        setLastFailedInput(text)
+        setError(err instanceof Error ? err.message : 'Something went wrong')
+      } finally {
+        setSending(false)
+        inputRef.current?.focus()
       }
-
-      // Send message (first or follow-up — same endpoint)
-      await apiClient(`/chat/sessions/${sid}/messages`, {
-        method: 'POST',
-        body: JSON.stringify({ message: text }),
-      })
-
-      // Re-fetch full session to get real messages
-      const detail = await apiClient<ChatSessionDetailOut>(`/chat/sessions/${sid}`)
-      setMessages(detail.messages)
-
-      // Refresh sidebar only when a new session was created (title added)
-      if (isNewSession) refreshSessions()
-    } catch (err) {
-      // Remove optimistic message on error
-      setMessages((prev) => prev.filter((m) => m.message_id !== tempUserMsg.message_id))
-      setLastFailedInput(text)
-      setError(err instanceof Error ? err.message : 'Something went wrong')
-    } finally {
-      setSending(false)
-      inputRef.current?.focus()
-    }
-  }, [apiClient, input, sending, sessionId, navigate, refreshSessions])
+    },
+    [apiClient, input, sending, sessionId, navigate, refreshSessions],
+  )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
