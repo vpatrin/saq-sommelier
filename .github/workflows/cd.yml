@@ -91,6 +91,7 @@ jobs:
           key: ${{ secrets.SSH_DEPLOY_KEY }}
           envs: SOPS_AGE_KEY,IMAGE_TAG
           script: |
+            [[ "$IMAGE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "ERROR: IMAGE_TAG '$IMAGE_TAG' is not a valid semver tag (expected vX.Y.Z)"; exit 1; }
             cd /opt/coupette
             git fetch origin tag "$IMAGE_TAG" --no-tags
             git checkout "$IMAGE_TAG"

@@ -17,6 +17,7 @@ yarn install --frozen-lockfile
 yarn build
 
 echo "==> Deploying to $REMOTE_DIR..."
+rm -rf "$REMOTE_DIR"/*
 cp -r dist/* "$REMOTE_DIR/"
 
 echo "==> Frontend $VITE_APP_VERSION deployed. Caddy serves new files immediately."

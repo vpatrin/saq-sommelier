@@ -76,13 +76,14 @@ echo "==> Restarting services..."
 "${COMPOSE[@]}" up -d backend bot
 
 echo "==> Health check..."
+healthy=false
 for i in 1 2 3 4 5 6; do
-  curl -sf localhost:8001/health > /dev/null && break
+  curl -sf localhost:8001/health > /dev/null && healthy=true && break
   sleep 2
 done
 
-if ! curl -sf localhost:8001/health > /dev/null; then
-  echo "ERROR: backend health check failed after 10s"
+if ! $healthy; then
+  echo "ERROR: backend health check failed after 12s"
   exit 1
 fi
 echo "OK: backend healthy"
