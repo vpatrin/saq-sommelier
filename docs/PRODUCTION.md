@@ -13,16 +13,10 @@ VPS-level infrastructure (firewall, SSH, TLS, networking) is documented in the [
 Tag on main first (see [CHANGELOG.md](../CHANGELOG.md)), then deploy the tag on the VPS.
 
 ```bash
-./deploy/deploy.sh vX.Y.Z        # pull → backup → migrate → bootstrap admin → restart → health check
+./deploy/deploy_backend.sh vX.Y.Z        # pull → backup → migrate → bootstrap admin → restart → health check
 ```
 
-If `deploy/` unit files changed (or first deploy):
-
-```bash
-sudo cp deploy/coupette-scraper.{service,timer} deploy/coupette-availability.{service,timer} /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now coupette-scraper.timer coupette-availability.timer
-```
+Systemd unit files are synced automatically by `deploy_backend.sh` on every run (diff-before-copy, idempotent).
 
 Verify:
 
@@ -33,7 +27,7 @@ systemctl status coupette-scraper.timer   # timer active, next run scheduled
 systemctl status coupette-availability.timer   # timer active, next run scheduled
 ```
 
-Rollback: `./deploy/deploy.sh vPREVIOUS` (pulls the previous tag's images from GHCR)
+Rollback: `./deploy/deploy_backend.sh vPREVIOUS` (pulls the previous tag's images from GHCR)
 
 Migrations are forward-only — never run `downgrade()` in production. Write a new migration to fix mistakes. See [OPERATIONS.md](OPERATIONS.md#forward-only-in-production).
 
