@@ -6,14 +6,18 @@
 services:
   backend:
     image: ghcr.io/vpatrin/coupette-backend:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
+    env_file: .env.prod
     restart: unless-stopped
 
   bot:
     image: ghcr.io/vpatrin/coupette-bot:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
+    env_file: .env.prod
     restart: unless-stopped
 
   scraper:
     image: ghcr.io/vpatrin/coupette-scraper:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
+    env_file: .env.prod
 
   migrate:
     image: ghcr.io/vpatrin/coupette-backend:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
+    env_file: .env.prod
