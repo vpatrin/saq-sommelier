@@ -118,6 +118,7 @@ Docker log rotation configured per service (10MB × 3 files = 30MB cap). Platfor
 - Build + Trivy + push to GHCR on tag push
 - `docker-compose.prod.yml` — GHCR images, restart policies, no dev volumes
 - Automated deploy on tag push via SSH — see [PRODUCTION.md](PRODUCTION.md)
+- Production secrets encrypted with sops + age, decrypted at deploy time
 - GitHub Release auto-created with changelog on tag push
 - Production environment with main-only deployment branch policy and tag protection
 
