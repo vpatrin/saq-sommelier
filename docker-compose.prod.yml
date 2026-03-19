@@ -1,5 +1,5 @@
-# Production overrides — used explicitly:
-# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Production overrides — operational constraints (restart, memory, secrets).
+# Used explicitly: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
 # Set IMAGE_TAG to the version being deployed:
 # IMAGE_TAG=v1.3.0 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
@@ -8,16 +8,20 @@ services:
     image: ghcr.io/vpatrin/coupette-backend:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
     env_file: .env.prod
     restart: unless-stopped
+    mem_limit: 512m
 
   bot:
     image: ghcr.io/vpatrin/coupette-bot:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
     env_file: .env.prod
     restart: unless-stopped
+    mem_limit: 256m
 
   scraper:
     image: ghcr.io/vpatrin/coupette-scraper:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
     env_file: .env.prod
+    mem_limit: 512m
 
   migrate:
     image: ghcr.io/vpatrin/coupette-backend:${IMAGE_TAG:?Set IMAGE_TAG (e.g. v1.3.0)}
     env_file: .env.prod
+    mem_limit: 256m

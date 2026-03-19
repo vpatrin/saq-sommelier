@@ -19,7 +19,7 @@ Before assessing, silently:
 1. Read `docs/ROADMAP.md` to understand planned phases and tasks
 2. Run `gh issue list --state all --limit 100` to see all issues (open and closed)
 3. Run `gh pr list --state merged --limit 50` to see what's been shipped
-4. Run `gh project item-list 1 --owner vpatrin --limit 100` to check the kanban board
+4. Run `gh issue list --milestone "<active milestone>" --state all --limit 100` to check milestone progress
 5. Run `git log --oneline -20` to understand recent momentum
 6. For focused mode: also read the relevant phase's spec in `docs/specs/` if one exists
 

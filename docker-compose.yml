@@ -1,5 +1,6 @@
-# Base configuration — hardened by default (prod-safe).
-# Dev: auto-loads docker-compose.override.yml (volume mounts, hot reload).
+# Base configuration — service topology + security hardening.
+# NO restart, mem_limit, env_file, or dev port bindings — those live in overlays.
+# Dev: auto-loads docker-compose.override.yml (ports, env_file, hot reload).
 # Prod: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 name: coupette
 services:
@@ -11,15 +12,12 @@ services:
     environment:
       # Override localhost → Compose service name for container-to-container networking.
       DB_HOST: postgres
-    ports:
-      - "127.0.0.1:8001:8001"
     # Filesystem is immutable — prevents writes if the container is compromised.
     read_only: true
     # Blocks privilege escalation (e.g. setuid binaries).
     security_opt: [no-new-privileges:true]
     # Drop ALL Linux capabilities — app needs none
     cap_drop: [ALL]
-    mem_limit: 512m
     # Rotate logs so they don't fill the disk (3 × 50 MB = 150 MB max per service).
     logging:
       driver: json-file
@@ -45,12 +43,11 @@ services:
       context: .
       dockerfile: bot/Dockerfile
     environment:
-      # Override localhost → Compose service name for container-to-container networking.
+      # Compose service name for container-to-container networking.
       BACKEND_URL: http://backend:8001
     read_only: true
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    mem_limit: 256m
     logging:
       driver: json-file
       options:
@@ -73,7 +70,6 @@ services:
     read_only: true
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    mem_limit: 512m
     logging:
       driver: json-file
       options:
@@ -99,7 +95,6 @@ services:
     read_only: true
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    mem_limit: 256m
     networks:
       - internal
     depends_on:
@@ -112,24 +107,23 @@ services:
     image: pgvector/pgvector:pg16
     container_name: coupette-postgres
     environment:
-      POSTGRES_USER: ${DB_USER:-saq_sommelier}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-saq_sommelier}
-      POSTGRES_DB: ${DB_NAME:-saq_sommelier}
-    # Exposed on localhost so bare-metal tools (alembic, make dev, DBeaver) can connect.
-    ports:
-      - "127.0.0.1:5432:5432"
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-saq_sommelier}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 5s
       timeout: 3s
       retries: 5
     security_opt: [no-new-privileges:true]
     # Drop everything, then re-add only what Postgres needs to init its data dir.
+    # CHOWN/FOWNER: initdb sets ownership of /var/lib/postgresql/data to postgres user.
+    # SETUID/SETGID: entrypoint drops from root to postgres via gosu.
+    # DAC_OVERRIDE: reads/writes data dir before ownership is transferred.
     cap_drop: [ALL]
     cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE, FOWNER]
-    mem_limit: 1g
     networks:
       - internal
 

@@ -1,8 +1,11 @@
 # Dev overrides — auto-loaded by `docker compose up`.
-#! Adds volume mounts for hot reload and uvicorn --reload.
+#! Adds port bindings, env_file, volume mounts, and hot reload.
 services:
   backend:
     env_file: .env
+    # Exposed on localhost for bare-metal tools (curl, browser, DBeaver).
+    ports:
+      - "127.0.0.1:8001:8001"
     volumes:
       - ./backend:/app/backend
     command: ["uvicorn", "backend.app:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
@@ -17,6 +20,12 @@ services:
 
   migrate:
     env_file: .env
+
+  postgres:
+    env_file: .env
+    # Exposed on localhost for bare-metal tools (alembic, make dev, DBeaver).
+    ports:
+      - "127.0.0.1:5432:5432"
 
 volumes:
   pgdata:
