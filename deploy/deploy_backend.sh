@@ -57,9 +57,6 @@ else
   echo "  systemd units unchanged"
 fi
 
-echo "==> Pre-deploy database backup..."
-/home/deploy/infra/scripts/postgres_backup.sh saq_sommelier
-
 echo "==> Ensuring pgvector extension..."
 docker exec "$DB_HOST" psql -U postgres -d "$DB_NAME" -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
