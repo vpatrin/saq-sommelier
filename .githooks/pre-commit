@@ -10,8 +10,10 @@ changed_dirs=$(git diff --cached --name-only | cut -d/ -f1 | sort -u)
 # Detect which services have staged changes
 to_lint=()
 core_changed=false
+frontend_changed=false
 
 for dir in $changed_dirs; do
+  [ "$dir" = "frontend" ] && frontend_changed=true
   for svc in "${SERVICES[@]}"; do
     if [ "$dir" = "$svc" ]; then
       to_lint+=("$svc")
@@ -28,16 +30,22 @@ fi
 # Deduplicate
 to_lint=($(printf '%s\n' "${to_lint[@]}" | sort -u))
 
-if [ ${#to_lint[@]} -eq 0 ]; then
+if [ ${#to_lint[@]} -eq 0 ] && ! $frontend_changed; then
   echo "No service changes staged — skipping lint."
   exit 0
 fi
 
-echo "🔍 Linting changed services: ${to_lint[*]}"
+if [ ${#to_lint[@]} -gt 0 ]; then
+  echo "🔍 Linting changed services: ${to_lint[*]}"
+  for svc in "${to_lint[@]}"; do
+    make "lint-$svc"
+  done
+fi
 
-for svc in "${to_lint[@]}"; do
-  make "lint-$svc"
-done
+if $frontend_changed; then
+  echo "🔍 Linting frontend/"
+  make lint-frontend
+fi
 
 echo ""
 echo "✅ Lint passed — committing."

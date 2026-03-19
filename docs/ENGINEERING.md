@@ -117,7 +117,8 @@ Docker log rotation configured per service (10MB × 3 files = 30MB cap). Platfor
 
 - Build + Trivy + push to GHCR on tag push
 - `docker-compose.prod.yml` — GHCR images, restart policies, no dev volumes
-- Manual deploy via `./deploy/deploy.sh` — see [PRODUCTION.md](PRODUCTION.md)
+- Automated deploy on tag push via SSH — see [PRODUCTION.md](PRODUCTION.md)
+- Production secrets encrypted with sops + age, decrypted at deploy time
 - GitHub Release auto-created with changelog on tag push
 - Production environment with main-only deployment branch policy and tag protection
 
@@ -202,6 +203,7 @@ Unscheduled engineering improvements — not product features, not infra. Picked
 
 **Platform:**
 
+- [x] Automated CD — tag push deploys to VPS (sops decrypt + frontend build + deploy_backend.sh + systemd unit sync) (#482)
 - Image tagging — `:latest` for production, `:YYYYMMDD-HHMMSS` for rollback archive
 
 **Ops / housekeeping:**

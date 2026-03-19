@@ -168,7 +168,7 @@ The design principle: add infrastructure when a bottleneck is measured, not when
 - **Containers**: Docker Compose (dev + prod profiles)
 - **Database**: PostgreSQL 16 + pgvector (shared instance, `saq_sommelier` database)
 - **Reverse proxy**: Caddy (automatic HTTPS, managed in infra repo)
-- **CI/CD**: GitHub Actions → GHCR → manual deploy via `deploy.sh`
+- **CI/CD**: GitHub Actions → GHCR → automated deploy on tag push (`deploy_backend.sh` + `deploy_frontend.sh`)
 - **Domain**: `coupette.club` (frontend SPA served by Caddy, API proxied to backend)
 
 ## Legal constraints

@@ -8,7 +8,6 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: coupette-backend
-    env_file: .env
     environment:
       # Override localhost → Compose service name for container-to-container networking.
       DB_HOST: postgres
@@ -45,7 +44,6 @@ services:
     build:
       context: .
       dockerfile: bot/Dockerfile
-    env_file: .env
     environment:
       # Override localhost → Compose service name for container-to-container networking.
       BACKEND_URL: http://backend:8001
@@ -68,7 +66,6 @@ services:
     build:
       context: .
       dockerfile: scraper/Dockerfile
-    env_file: .env
     environment:
       DB_HOST: postgres
     # One-shot job — don't restart after exit. Systemd timer handles scheduling.
@@ -96,7 +93,6 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    env_file: .env
     environment:
       DB_HOST: postgres
     command: ["alembic", "-c", "core/alembic.ini", "upgrade", "head"]

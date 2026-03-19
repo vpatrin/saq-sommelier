@@ -41,7 +41,7 @@ The scraper runs weekly via a **systemd timer** on the VPS. Systemd handles sche
 
 #### Unit files
 
-Source files: [`deploy/coupette-scraper.service`](../deploy/coupette-scraper.service) and [`deploy/coupette-scraper.timer`](../deploy/coupette-scraper.timer).
+Source files: [`deploy/systemd/coupette-scraper.service`](../deploy/systemd/coupette-scraper.service) and [`deploy/systemd/coupette-scraper.timer`](../deploy/systemd/coupette-scraper.timer).
 
 The service file assumes `WorkingDirectory=/opt/coupette`. If your repo lives elsewhere, either symlink it:
 
@@ -54,7 +54,7 @@ Or edit `WorkingDirectory` in the installed service file after copying.
 #### Installation
 
 ```bash
-sudo cp deploy/coupette-scraper.{service,timer} /etc/systemd/system/
+sudo cp deploy/systemd/coupette-scraper.{service,timer} /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now coupette-scraper.timer
 ```
@@ -130,11 +130,11 @@ Runtime: ~1 min. Scope: all categories (wine, spirits, beer, cider).
 
 Runs daily at 2am via systemd timer. On Mondays, the infra backup timer also runs at 2am — see [infra SERVICE_CATALOG.md](https://github.com/vpatrin/infra/blob/main/docs/SERVICE_CATALOG.md) for the full timer schedule.
 
-Source files: [`deploy/coupette-availability.service`](../deploy/coupette-availability.service) and [`deploy/coupette-availability.timer`](../deploy/coupette-availability.timer).
+Source files: [`deploy/systemd/coupette-availability.service`](../deploy/systemd/coupette-availability.service) and [`deploy/systemd/coupette-availability.timer`](../deploy/systemd/coupette-availability.timer).
 
 ```bash
 # Install
-sudo cp deploy/coupette-availability.{service,timer} /etc/systemd/system/
+sudo cp deploy/systemd/coupette-availability.{service,timer} /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now coupette-availability.timer
 

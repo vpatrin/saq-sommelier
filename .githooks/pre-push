@@ -30,8 +30,10 @@ changed_dirs=$(git diff --name-only main..HEAD | cut -d/ -f1 | sort -u)
 
 to_test=()
 core_changed=false
+frontend_changed=false
 
 for dir in $changed_dirs; do
+  [ "$dir" = "frontend" ] && frontend_changed=true
   for svc in "${TESTABLE[@]}"; do
     if [ "$dir" = "$svc" ]; then
       to_test+=("$svc")
@@ -48,15 +50,23 @@ fi
 # Deduplicate
 to_test=($(printf '%s\n' "${to_test[@]}" | sort -u))
 
-if [ ${#to_test[@]} -eq 0 ]; then
-  echo ""
-  echo "No testable service changes — skipping coverage."
-else
+if [ ${#to_test[@]} -gt 0 ]; then
   echo ""
   echo "🧪 Testing changed services: ${to_test[*]}"
   for svc in "${to_test[@]}"; do
     make "coverage-$svc"
   done
+fi
+
+if $frontend_changed; then
+  echo ""
+  echo "🔍 Linting + typechecking frontend/"
+  make lint-frontend
+fi
+
+if [ ${#to_test[@]} -eq 0 ] && ! $frontend_changed; then
+  echo ""
+  echo "No testable service changes — skipping tests."
 fi
 
 echo ""

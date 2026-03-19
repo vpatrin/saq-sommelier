@@ -2,13 +2,21 @@
 #! Adds volume mounts for hot reload and uvicorn --reload.
 services:
   backend:
+    env_file: .env
     volumes:
       - ./backend:/app/backend
     command: ["uvicorn", "backend.app:app", "--reload", "--host", "0.0.0.0", "--port", "8001"]
 
   bot:
+    env_file: .env
     volumes:
       - ./bot/bot:/app/bot/bot
+
+  scraper:
+    env_file: .env
+
+  migrate:
+    env_file: .env
 
 volumes:
   pgdata:
