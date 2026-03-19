@@ -15,7 +15,7 @@ command -v sops >/dev/null || { echo "ERROR: sops not found in PATH"; exit 1; }
 echo "==> Decrypting secrets..."
 (
     umask 077  # owner-only from creation — no race window unlike chmod after write
-    sops --decrypt .env.prod.enc > .env.prod
+    sops --decrypt --output-type dotenv .env.prod.enc > .env.prod
 )
 
 if [[ ! -s .env.prod ]]; then
