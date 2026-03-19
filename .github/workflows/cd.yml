@@ -99,6 +99,14 @@ jobs:
           yarn install --frozen-lockfile
           yarn build
 
+      - name: Clear old frontend assets
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_DEPLOY_HOST }}
+          username: ${{ secrets.SSH_DEPLOY_USER }}
+          key: ${{ secrets.SSH_DEPLOY_KEY }}
+          script: rm -rf /srv/coupette/*
+
       - name: Deploy frontend to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -108,7 +116,6 @@ jobs:
           source: "frontend/dist/*"
           target: "/srv/coupette"
           strip_components: 2
-          rm: true
 
       - name: Deploy backend to VPS
         uses: appleboy/ssh-action@v1.2.5
