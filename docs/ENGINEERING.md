@@ -204,7 +204,7 @@ Unscheduled engineering improvements — not product features, not infra. Picked
 **Platform:**
 
 - [x] Automated CD — tag push deploys to VPS (sops decrypt + frontend build + deploy_backend.sh + systemd unit sync) (#482)
-- [ ] Image tagging — `:latest` for production, `:YYYYMMDD-HHMMSS` for rollback archive
+- Image tagging — `:latest` for production, `:YYYYMMDD-HHMMSS` for rollback archive
 
 **Ops / housekeeping:**
 
