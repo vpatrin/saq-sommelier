@@ -158,14 +158,12 @@ Apply both with `--label` flags on `gh issue create`. Example:
 gh issue create --title "..." --label api --label feature
 ```
 
-### GitHub Project
+### Milestones
 
-**Every** issue created with `gh issue create` must immediately be added to the kanban:
+Assign every issue to the relevant phase milestone via `--milestone` on `gh issue create`. Example:
 ```
-gh project item-add 1 --owner vpatrin --url <issue-url>
+gh issue create --title "..." --label api --label feature --milestone "Phase 10: Intent Router"
 ```
-Do this in the same command block as the issue creation — never defer it.
-When closing issues, they stay on the board (GitHub moves them to Done automatically).
 
 ## Pre-PR Pipeline
 
