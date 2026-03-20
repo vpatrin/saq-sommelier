@@ -22,10 +22,32 @@ services:
     env_file: .env
 
   postgres:
+    image: pgvector/pgvector:pg16
+    container_name: coupette-postgres
     env_file: .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     # Exposed on localhost for bare-metal tools (alembic, make dev, DBeaver).
     ports:
       - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    security_opt: [no-new-privileges:true]
+    # Drop everything, then re-add only what Postgres needs to init its data dir.
+    # CHOWN/FOWNER: initdb sets ownership of /var/lib/postgresql/data to postgres user.
+    # SETUID/SETGID: entrypoint drops from root to postgres via gosu.
+    # DAC_READ_SEARCH: reads data dir before ownership is transferred.
+    cap_drop: [ALL]
+    cap_add: [SETUID, SETGID, DAC_READ_SEARCH, CHOWN, FOWNER]
+    networks:
+      - internal
 
 volumes:
   pgdata:

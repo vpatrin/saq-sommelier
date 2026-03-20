@@ -269,10 +269,10 @@ scan: scan-backend scan-scraper scan-bot
 # --- Docker ---
 
 start-db:
-	docker compose --profile dev up -d postgres
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres
 
 stop-db:
-	docker compose --profile dev down
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 
 # --- Cleanup ---
 

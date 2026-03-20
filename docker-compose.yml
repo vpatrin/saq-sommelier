@@ -74,7 +74,7 @@ services:
         condition: service_healthy
         required: false
 
-  # --- Profiled services (not started by default) ---
+  # --- On-demand services (not started by default) ---
 
   migrate:
     profiles: ["migrate"]
@@ -91,32 +91,6 @@ services:
       postgres:
         condition: service_healthy
         required: false
-
-  postgres:
-    profiles: ["dev"]
-    image: pgvector/pgvector:pg16
-    container_name: coupette-postgres
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    security_opt: [no-new-privileges:true]
-    # Drop everything, then re-add only what Postgres needs to init its data dir.
-    # CHOWN/FOWNER: initdb sets ownership of /var/lib/postgresql/data to postgres user.
-    # SETUID/SETGID: entrypoint drops from root to postgres via gosu.
-    # DAC_READ_SEARCH: reads data dir before ownership is transferred.
-    cap_drop: [ALL]
-    # TODO: re-evaluate these caps for production.
-    cap_add: [SETUID, SETGID, DAC_READ_SEARCH, CHOWN, FOWNER]
-    networks:
-      - internal
 
 volumes:
   pgdata:
