@@ -29,11 +29,6 @@ services:
       start_period: 5s
     networks:
       - internal
-    depends_on:
-      postgres:
-        condition: service_healthy
-        # Not required so prod works without the dev postgres service.
-        required: false
 
   bot:
     build:
@@ -69,10 +64,6 @@ services:
         max-file: "3"
     networks:
       - internal
-    depends_on:
-      postgres:
-        condition: service_healthy
-        required: false
 
   # --- On-demand services (not started by default) ---
 
@@ -87,10 +78,6 @@ services:
     cap_drop: [ALL]
     networks:
       - internal
-    depends_on:
-      postgres:
-        condition: service_healthy
-        required: false
 
 volumes:
   pgdata:
