@@ -99,6 +99,8 @@ Scraper uses named exit codes (`EXIT_OK`/`EXIT_PARTIAL`/`EXIT_FATAL`) for system
 
 Recommendation pipeline logs each request to the `recommendation_logs` table (query, intent, returned SKUs, latency breakdown by stage).
 
+Prometheus metrics exposed at `/metrics` via `prometheus-fastapi-instrumentator` (per-route HTTP histograms) plus custom `coupette_*` metrics: LLM call latency/errors/token usage by service, recommendation pipeline stage durations, intent classification counts, and candidate pool sizes.
+
 Docker log rotation configured per service (10MB × 3 files = 30MB cap). Platform-level monitoring (Uptime Kuma, Umami) is managed in the [infra repo](https://github.com/vpatrin/infra).
 
 ---
