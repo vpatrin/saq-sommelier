@@ -19,6 +19,8 @@ anthropic = ">=0.52"
 loguru = ">=0.7"
 coupette-core = {path = "../core", develop = true, extras = ["embeddings"]}
 pyjwt = "^2.12.0"
+prometheus-client = "^0.24.1"
+prometheus-fastapi-instrumentator = "^7.1.0"
 
 [tool.poetry.group.dev.dependencies]
 httpx = ">=0.28"

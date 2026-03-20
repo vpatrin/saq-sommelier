@@ -1,9 +1,11 @@
 import dataclasses
+import time
 
 import anthropic
 from loguru import logger
 
 from backend.config import backend_settings
+from backend.metrics import llm_call_duration, llm_errors, observe_token_usage
 from backend.services._anthropic import get_anthropic_client
 from core.db.models import Product
 
@@ -100,6 +102,7 @@ async def explain_recommendations(
     user_msg = _build_user_message(query, products, conversation_history=conversation_history)
 
     try:
+        t0 = time.monotonic()
         response = await client.messages.create(
             model=_MODEL,
             max_tokens=512,
@@ -109,9 +112,13 @@ async def explain_recommendations(
             tools=_TOOLS,
             tool_choice={"type": "tool", "name": "explain"},
         )
+        llm_call_duration.labels(service="curation").observe(time.monotonic() - t0)
     except anthropic.APIError as exc:
         logger.opt(exception=exc).warning("Curation call failed — using fallback")
+        llm_errors.labels(service="curation").inc()
         return _fallback(n)
+
+    observe_token_usage("curation", response)
 
     for block in response.content:
         if block.type == "tool_use" and block.name == "explain":

@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from backend.api.admin import router as admin_router
 from backend.api.auth import router as auth_router
@@ -64,6 +65,7 @@ app.add_middleware(
 )
 
 register_exception_handlers(app)
+Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 app.include_router(health_router)
 app.include_router(auth_router, prefix="/api")
 app.include_router(products_router, prefix="/api", dependencies=_auth)

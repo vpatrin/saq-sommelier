@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Prometheus metrics endpoint at `/metrics` with per-route HTTP histograms and custom recommendation pipeline metrics (#490)
+
 ## [1.5.0] - 2026-03-19
 
 ### Added

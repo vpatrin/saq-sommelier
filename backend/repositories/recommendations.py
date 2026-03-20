@@ -2,6 +2,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import DEFAULT_RECOMMENDATION_LIMIT
+from backend.metrics import recommendation_candidates
 from backend.schemas.recommendation import IntentResult
 from core.categories import expand_family
 from core.db.models import Product
@@ -56,6 +57,7 @@ async def find_similar(
 
     result = await db.execute(stmt)
     candidates = list(result.scalars().all())
+    recommendation_candidates.observe(len(candidates))
 
     return _rerank(candidates, limit)
 

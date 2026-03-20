@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import CONTEXT_WINDOW_TURNS, NON_WINE_MESSAGE
 from backend.exceptions import ForbiddenError, NotFoundError
+from backend.metrics import intent_classifications
 from backend.repositories import chat as chat_repo
 from backend.schemas.chat import (
     SESSION_TITLE_MAX_LENGTH,
@@ -123,6 +124,7 @@ async def send_message(
 
     # Classify intent — Claude picks one of three tools
     intent = await parse_intent(message, conversation_history=last_2_turns)
+    intent_classifications.labels(intent_type=intent.intent_type).inc()
 
     # Route based on intent_type — off_topic skips history entirely
     content: str | RecommendationOut

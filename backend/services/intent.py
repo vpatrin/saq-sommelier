@@ -1,9 +1,11 @@
+import time
 from decimal import Decimal
 
 import anthropic
 from loguru import logger
 
 from backend.config import backend_settings
+from backend.metrics import llm_call_duration, llm_errors, observe_token_usage
 from backend.schemas.recommendation import IntentResult, IntentType
 from backend.services._anthropic import get_anthropic_client
 from core.categories import CATEGORY_FAMILIES, CATEGORY_GROUPS
@@ -188,6 +190,7 @@ async def parse_intent(query: str, conversation_history: str | None = None) -> I
     messages: list[anthropic.types.MessageParam] = [{"role": "user", "content": content}]
 
     try:
+        t0 = time.monotonic()
         response = await client.messages.create(
             model=_MODEL,
             max_tokens=256,
@@ -197,11 +200,15 @@ async def parse_intent(query: str, conversation_history: str | None = None) -> I
             tools=_TOOLS,
             tool_choice={"type": "auto"},
         )
+        llm_call_duration.labels(service="intent").observe(time.monotonic() - t0)
     except anthropic.APIError as exc:
         logger.opt(exception=exc).warning(
             "Claude intent parsing failed — falling back to raw query"
         )
+        llm_errors.labels(service="intent").inc()
         return IntentResult(semantic_query=query)
+
+    observe_token_usage("intent", response)
 
     for block in response.content:
         if block.type == "tool_use" and block.name in _TOOL_INTENT_MAP:

@@ -4,6 +4,11 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import NON_WINE_MESSAGE
+from backend.metrics import (
+    intent_classifications,
+    recommendation_duration,
+    recommendation_pipeline_errors,
+)
 from backend.repositories.recommendations import find_similar
 from backend.schemas.product import ProductOut
 from backend.schemas.recommendation import (
@@ -77,6 +82,8 @@ async def recommend(
             t0 = time.monotonic()
             intent = await parse_intent(query)
             latency["intent"] = _time_ms(t0)
+            recommendation_duration.labels(stage="intent").observe(latency["intent"] / 1000)
+            intent_classifications.labels(intent_type=intent.intent_type).inc()
 
         if intent.intent_type != "recommendation":
             return RecommendationOut(products=[], intent=intent, summary=NON_WINE_MESSAGE)
@@ -84,6 +91,7 @@ async def recommend(
         t0 = time.monotonic()
         vector = await async_embed_query(intent.semantic_query, client=get_openai_client())
         latency["embed"] = _time_ms(t0)
+        recommendation_duration.labels(stage="embed").observe(latency["embed"] / 1000)
 
         t0 = time.monotonic()
         products = await find_similar(
@@ -95,12 +103,14 @@ async def recommend(
             in_store=in_store,
         )
         latency["search"] = _time_ms(t0)
+        recommendation_duration.labels(stage="retrieval").observe(latency["search"] / 1000)
 
         t0 = time.monotonic()
         explanation = await explain_recommendations(
             query, products, conversation_history=conversation_history
         )
         latency["curation"] = _time_ms(t0)
+        recommendation_duration.labels(stage="llm").observe(latency["curation"] / 1000)
 
         skus = [p.sku for p in products]
 
@@ -117,9 +127,11 @@ async def recommend(
         )
     except Exception as exc:
         logger.opt(exception=exc).error("Recommendation pipeline failed")
+        recommendation_pipeline_errors.inc()
         raise
 
     latency["total"] = _time_ms(t_start)
+    recommendation_duration.labels(stage="total").observe(latency["total"] / 1000)
     log_id = await _write_log(
         db,
         user_id=user_id,

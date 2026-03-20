@@ -1,7 +1,10 @@
+import time
+
 import anthropic
 from loguru import logger
 
 from backend.config import backend_settings
+from backend.metrics import llm_call_duration, llm_errors, observe_token_usage
 from backend.services._anthropic import get_anthropic_client
 
 _MODEL = "claude-haiku-4-5-20251001"
@@ -60,6 +63,7 @@ async def sommelier_chat(
     client = get_anthropic_client()
 
     try:
+        t0 = time.monotonic()
         response = await client.messages.create(
             model=_MODEL,
             max_tokens=_MAX_TOKENS,
@@ -67,9 +71,13 @@ async def sommelier_chat(
             system=_SYSTEM_PROMPT,
             messages=_build_messages(query, conversation_history=conversation_history),
         )
+        llm_call_duration.labels(service="sommelier").observe(time.monotonic() - t0)
     except anthropic.APIError as exc:
         logger.opt(exception=exc).warning("Sommelier chat call failed — returning fallback")
+        llm_errors.labels(service="sommelier").inc()
         return _FALLBACK_MESSAGE
+
+    observe_token_usage("sommelier", response)
 
     # Extract text from response blocks
     parts = [block.text for block in response.content if block.type == "text"]
