@@ -91,7 +91,6 @@ jobs:
 
   deploy:
     needs: [build-scan-push]
-    if: always() && needs.build-scan-push.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production
@@ -140,8 +139,13 @@ jobs:
           envs: SOPS_AGE_KEY,IMAGE_TAG
           script: |
             cd /opt/coupette
-            git fetch origin
-            git checkout "$IMAGE_TAG" 2>/dev/null || git checkout "$( echo "$IMAGE_TAG" | sed 's/^sha-//' )"
+            if [[ "$IMAGE_TAG" == sha-* ]]; then
+              git fetch origin main --no-tags
+              git checkout "${IMAGE_TAG#sha-}"
+            else
+              git fetch origin tag "$IMAGE_TAG" --no-tags --force
+              git checkout "$IMAGE_TAG"
+            fi
             IMAGE_TAG="$IMAGE_TAG" ./deploy/deploy_backend.sh
         env:
           SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}

@@ -50,7 +50,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-    read_only: false
     security_opt: [no-new-privileges:true]
     # Drop everything, then re-add only what Postgres needs to init its data dir.
     # CHOWN/FOWNER: initdb sets ownership of /var/lib/postgresql/data to postgres user.
