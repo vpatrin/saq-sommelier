@@ -72,12 +72,12 @@ Wraps existing Haiku RAG pipeline for web consumption. No new AI architecture.
 
 SSE (#427) and SSE rendering are deferred — current response times (2-3s) are fine with a loading state, and streaming structured JSON (RecommendationOut) is awkward. Revisit when/if freeform conversational responses ship (Phase 10).
 
-### Phase 10 — Intent Router
+### Phase 10 — Intent Router ✅
 
 Chat becomes the primary interface. Claude picks from three tools (`search_wines`, `wine_chat`, `off_topic`) to route queries — recommendations go through the RAG pipeline, wine knowledge goes to the sommelier service, off-topic gets deflected.
 
 - [x] Chat-only path — non-recommendation wine queries skip the RAG pipeline, respond via Claude directly (#472, #473)
-- [ ] Structured data in chat — wine cards rendered inline when the sommelier references a product
+- [x] Structured data in chat — wine cards rendered inline when the sommelier references a product (#440)
 - [x] Conversation starters — clickable prompt chips on empty chat state ("Blind tasting challenge", "What pairs with...", "Compare two wines", "Explore a region") (#474)
 
 ### Phase 11 — Tasting Journal
@@ -140,7 +140,8 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 - [ ] Rating aggregator — enrich products with Vivino scores and critic ratings; fuzzy name matching
 - [ ] Price comparison vs France — compare SAQ prices to French retail (Wine-Searcher, Vinatis)
 - [ ] Chrome extension — floating "Watch" button on SAQ product pages (reuses bot URL paste SKU extraction logic)
-- [ ] Bilingual support — per-user language preference, static translation tables, bilingual web/bot responses (#134, #151–#153)
+- [x] Bilingual web app — FR/EN with react-i18next, ~90 strings, language switcher in sidebar
+- [ ] Bilingual bot — per-user language preference, static translation tables, bilingual bot responses (#134, #151–#153)
 - [ ] Wine tech sheets — external data enrichment beyond SAQ catalog (fiches techniques, critic notes)
 - [ ] Bot `/recommend` deprecation — remove command, bot is alerts-only (cross-cutting chore, not a product idea)
 - [ ] Data retention policy — define TTL for chat sessions, user data lifecycle, and compliance posture (GDPR-adjacent)

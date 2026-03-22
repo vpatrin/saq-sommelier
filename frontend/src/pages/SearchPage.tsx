@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
 import type {
@@ -35,6 +36,7 @@ function activeGroupKey(category: string, groups: CategoryGroupOut[]): string | 
 }
 
 function SearchPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const apiClient = useApiClient()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -205,7 +207,7 @@ function SearchPage() {
         if (!cancelled) setResults(data)
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.detail : 'Failed to search products')
+          setError(err instanceof ApiError ? err.detail : t('search.failedToSearch'))
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -228,6 +230,7 @@ function SearchPage() {
     retryCount,
     inStoresOnly,
     storesLoaded,
+    t,
   ])
 
   // Debounced search input
@@ -316,12 +319,12 @@ function SearchPage() {
           next.delete(sku)
           return next
         })
-        setError(err instanceof ApiError ? err.detail : 'Failed to add watch')
+        setError(err instanceof ApiError ? err.detail : t('search.failedToAddWatch'))
       } finally {
         setWatchingInProgress(null)
       }
     },
-    [apiClient],
+    [apiClient, t],
   )
 
   const handleUnwatch = useCallback(
@@ -340,12 +343,12 @@ function SearchPage() {
       } catch (err) {
         // Rollback on failure
         setWatchedSkus((prev) => new Set([...prev, sku]))
-        setError(err instanceof ApiError ? err.detail : 'Failed to remove watch')
+        setError(err instanceof ApiError ? err.detail : t('search.failedToRemoveWatch'))
       } finally {
         setWatchingInProgress(null)
       }
     },
-    [apiClient, userId],
+    [apiClient, userId, t],
   )
 
   const displayProducts = results?.products ?? []
@@ -355,15 +358,15 @@ function SearchPage() {
   return (
     <div className="p-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-mono font-bold mb-6">Search</h1>
+        <h1 className="text-3xl font-mono font-bold mb-6">{t('search.title')}</h1>
 
         {/* Search input */}
         <input
           type="text"
           value={inputValue}
           onChange={(e) => handleInputChange(e.target.value)}
-          placeholder="Search wines by name..."
-          aria-label="Search wines by name"
+          placeholder={t('search.placeholder')}
+          aria-label={t('search.placeholder')}
           className="w-full bg-background border border-border px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:border-ring mb-4"
         />
 
@@ -424,7 +427,7 @@ function SearchPage() {
                           : 'border-border text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      All
+                      {t('search.all')}
                     </button>
                     <select
                       value={category.startsWith(GROUP_PREFIX) ? '' : category}
@@ -433,7 +436,7 @@ function SearchPage() {
                       }
                       className="bg-background border border-border px-2 py-1 text-xs font-mono focus:outline-none focus:border-ring"
                     >
-                      <option value="">Narrow...</option>
+                      <option value="">{t('search.narrow')}</option>
                       {group.categories.map((cat) => (
                         <option key={cat} value={cat}>
                           {cat}
@@ -484,13 +487,13 @@ function SearchPage() {
           {/* Filters sidebar */}
           <aside className="w-44 shrink-0 flex flex-col gap-4">
             <div>
-              <p className="text-xs font-mono text-muted-foreground mb-2">Country</p>
+              <p className="text-xs font-mono text-muted-foreground mb-2">{t('search.country')}</p>
               <select
                 value={country}
                 onChange={(e) => setFilter('country', e.target.value)}
                 className="w-full bg-background border border-border px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-ring"
               >
-                <option value="">All</option>
+                <option value="">{t('search.all')}</option>
                 {facets?.countries.map((c) => (
                   <option key={c.name} value={c.name}>
                     {c.name} ({c.count})
@@ -500,7 +503,9 @@ function SearchPage() {
             </div>
 
             <div>
-              <p className="text-xs font-mono text-muted-foreground mb-2">Availability</p>
+              <p className="text-xs font-mono text-muted-foreground mb-2">
+                {t('search.availability')}
+              </p>
               <div className="flex flex-col gap-1.5">
                 <button
                   type="button"
@@ -511,7 +516,7 @@ function SearchPage() {
                       : 'border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  Available online
+                  {t('search.availableOnline')}
                 </button>
 
                 <button
@@ -526,13 +531,13 @@ function SearchPage() {
                         : 'border-border text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {savedStoreIds.length > 0 ? 'In my stores' : 'In my stores (none saved)'}
+                  {savedStoreIds.length > 0 ? t('search.inMyStores') : t('search.inMyStoresNone')}
                 </button>
               </div>
             </div>
 
             <div>
-              <p className="text-xs font-mono text-muted-foreground mb-2">Price</p>
+              <p className="text-xs font-mono text-muted-foreground mb-2">{t('search.price')}</p>
               <div className="flex gap-2">
                 <input
                   key={`min-${minPrice}`}
@@ -545,7 +550,7 @@ function SearchPage() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
                   }}
-                  aria-label="Minimum price"
+                  aria-label={t('search.minPrice')}
                   className="w-full bg-background border border-border px-2 py-1.5 text-xs font-mono placeholder:text-muted-foreground focus:outline-none focus:border-ring"
                 />
                 <input
@@ -559,7 +564,7 @@ function SearchPage() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
                   }}
-                  aria-label="Maximum price"
+                  aria-label={t('search.maxPrice')}
                   className="w-full bg-background border border-border px-2 py-1.5 text-xs font-mono placeholder:text-muted-foreground focus:outline-none focus:border-ring"
                 />
               </div>
@@ -578,29 +583,29 @@ function SearchPage() {
                   onClick={() => setRetryCount((c) => c + 1)}
                   className="underline hover:text-destructive/80"
                 >
-                  retry
+                  {t('search.retry')}
                 </button>
               </p>
             )}
 
             {loading ? (
-              <p className="text-muted-foreground font-mono">Loading...</p>
+              <p className="text-muted-foreground font-mono">{t('search.loading')}</p>
             ) : results && displayProducts.length > 0 ? (
               <>
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-xs text-muted-foreground font-mono">
-                    {results.total} result{results.total !== 1 ? 's' : ''}
-                    {pages > 1 && ` · page ${page} of ${pages}`}
+                    {t('search.result', { count: results.total })}
+                    {pages > 1 && ` · ${t('search.pageOf', { page, pages })}`}
                   </p>
                   <select
                     value={sort}
                     onChange={(e) => setFilter('sort', e.target.value)}
                     className="bg-background border border-border px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-ring"
                   >
-                    <option value="recent">Recently updated</option>
-                    <option value="price_asc">Price: low → high</option>
-                    <option value="price_desc">Price: high → low</option>
-                    <option value="alpha">Alphabetically</option>
+                    <option value="recent">{t('search.sortRecent')}</option>
+                    <option value="price_asc">{t('search.sortPriceAsc')}</option>
+                    <option value="price_desc">{t('search.sortPriceDesc')}</option>
+                    <option value="alpha">{t('search.sortAlpha')}</option>
                   </select>
                 </div>
 
@@ -639,7 +644,7 @@ function SearchPage() {
                               : 'border-border text-muted-foreground hover:text-foreground'
                           } ${isBusy ? 'opacity-50' : ''}`}
                         >
-                          {isBusy ? '...' : isWatched ? 'Watching' : 'Watch'}
+                          {isBusy ? '...' : isWatched ? t('search.watching') : t('search.watch')}
                         </button>
                       </li>
                     )
@@ -655,7 +660,7 @@ function SearchPage() {
                       disabled={page <= 1}
                       onClick={() => setPage(1)}
                     >
-                      First
+                      {t('search.first')}
                     </Button>
                     <Button
                       variant="outline"
@@ -663,7 +668,7 @@ function SearchPage() {
                       disabled={page <= 1}
                       onClick={() => setPage(page - 1)}
                     >
-                      Prev
+                      {t('search.prev')}
                     </Button>
                     {Array.from({ length: Math.min(pages, 7) }, (_, i) => {
                       let p: number
@@ -695,7 +700,7 @@ function SearchPage() {
                       disabled={page >= pages}
                       onClick={() => setPage(page + 1)}
                     >
-                      Next
+                      {t('search.next')}
                     </Button>
                     <Button
                       variant="outline"
@@ -703,13 +708,13 @@ function SearchPage() {
                       disabled={page >= pages}
                       onClick={() => setPage(pages)}
                     >
-                      Last
+                      {t('search.last')}
                     </Button>
                   </div>
                 )}
               </>
             ) : (
-              <p className="text-muted-foreground font-mono">No wines match your filters.</p>
+              <p className="text-muted-foreground font-mono">{t('search.noResults')}</p>
             )}
           </div>
         </div>

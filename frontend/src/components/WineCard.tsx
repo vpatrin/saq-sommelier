@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { formatOrigin } from '@/lib/utils'
 import type { ProductOut } from '@/lib/types'
 
@@ -13,6 +14,7 @@ interface WineCardProps {
 }
 
 function WineCard({ product, reason, storeNames, storesExpanded, onToggleStores }: WineCardProps) {
+  const { t } = useTranslation()
   const origin = formatOrigin(product)
   const details = [product.grape, origin, product.vintage].filter(Boolean).join(' · ')
   const hasOnline = product.online_availability === true
@@ -25,8 +27,8 @@ function WineCard({ product, reason, storeNames, storesExpanded, onToggleStores 
 
   const storeText =
     matchingIds.length === 1
-      ? `At ${storeNames?.get(matchingIds[0])}`
-      : `In ${matchingIds.length} of your stores`
+      ? t('availability.atStore', { store: storeNames?.get(matchingIds[0]) })
+      : t('availability.inYourStores', { count: matchingIds.length })
 
   const storeNode = hasStores ? (
     matchingIds.length > 0 ? (
@@ -44,7 +46,7 @@ function WineCard({ product, reason, storeNames, storesExpanded, onToggleStores 
     ) : null
   ) : storeAvail.length > 0 ? (
     <span className="text-xs text-green-500">
-      In {storeAvail.length} store{storeAvail.length !== 1 ? 's' : ''}
+      {t('availability.inStores', { count: storeAvail.length })}
     </span>
   ) : null
 
@@ -79,7 +81,7 @@ function WineCard({ product, reason, storeNames, storesExpanded, onToggleStores 
             )}
           </span>
         )}
-        {hasOnline && <span className="text-xs text-green-500">Online</span>}
+        {hasOnline && <span className="text-xs text-green-500">{t('availability.online')}</span>}
         {hasOnline && storeNode && <span className="text-xs text-muted-foreground">·</span>}
         {storeNode}
       </div>

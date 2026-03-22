@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { useApiClient } from '@/lib/api'
 import type { ChatOutletContext } from '@/components/AppShell'
 import WineCard from '@/components/WineCard'
@@ -12,13 +13,6 @@ import type {
 } from '@/lib/types'
 
 const MAX_MESSAGE_LENGTH = 2000
-
-const STARTERS = [
-  'A bold red under $30',
-  'What pairs with lamb?',
-  "What's the difference between Syrah and Shiraz?",
-  'Explore wines from Argentina',
-]
 
 function isRecommendation(content: string | RecommendationOut): content is RecommendationOut {
   return typeof content === 'object' && 'products' in content
@@ -58,6 +52,7 @@ function AssistantMessage({
 }
 
 function ChatPage() {
+  const { t } = useTranslation()
   const apiClient = useApiClient()
   const navigate = useNavigate()
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>()
@@ -122,7 +117,7 @@ function ChatPage() {
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load session')
+          setError(err instanceof Error ? err.message : t('chat.failedToLoad'))
         }
       })
       .finally(() => {
@@ -134,7 +129,7 @@ function ChatPage() {
     // sessionId is derived from urlSessionId — use urlSessionId as dep to avoid
     // re-fetching when React re-renders without a URL change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlSessionId, apiClient])
+  }, [urlSessionId, apiClient, t])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -202,13 +197,13 @@ function ChatPage() {
         // Remove optimistic message on error
         setMessages((prev) => prev.filter((m) => m.message_id !== tempUserMsg.message_id))
         setLastFailedInput(text)
-        setError(err instanceof Error ? err.message : 'Something went wrong')
+        setError(err instanceof Error ? err.message : t('chat.somethingWentWrong'))
       } finally {
         setSending(false)
         inputRef.current?.focus()
       }
     },
-    [apiClient, input, sending, sessionId, navigate, refreshSessions],
+    [apiClient, input, sending, sessionId, navigate, refreshSessions, t],
   )
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -230,9 +225,9 @@ function ChatPage() {
         <div className="max-w-2xl mx-auto flex flex-col gap-6">
           {messages.length === 0 && !sending && !loading && (
             <div className="flex flex-col items-center justify-center h-full min-h-[40vh] gap-6">
-              <h1 className="text-2xl font-mono font-bold">What are you drinking tonight?</h1>
+              <h1 className="text-2xl font-mono font-bold">{t('chat.welcome')}</h1>
               <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
-                {STARTERS.map((starter) => (
+                {(t('chat.starters', { returnObjects: true }) as string[]).map((starter) => (
                   <button
                     key={starter}
                     type="button"
@@ -248,7 +243,7 @@ function ChatPage() {
 
           {loading && (
             <div className="flex flex-col items-center justify-center min-h-[20vh]">
-              <p className="text-sm text-muted-foreground font-mono">Loading...</p>
+              <p className="text-sm text-muted-foreground font-mono">{t('chat.loading')}</p>
             </div>
           )}
 
@@ -279,7 +274,7 @@ function ChatPage() {
           {sending && (
             <div className="flex flex-col gap-1 items-start">
               <div className="max-w-[85%]">
-                <p className="text-sm text-muted-foreground font-mono">Thinking...</p>
+                <p className="text-sm text-muted-foreground font-mono">{t('chat.thinking')}</p>
               </div>
             </div>
           )}
@@ -300,7 +295,7 @@ function ChatPage() {
                         inputRef.current?.focus()
                       }}
                     >
-                      retry
+                      {t('chat.retry')}
                     </button>
                     {' · '}
                   </>
@@ -313,7 +308,7 @@ function ChatPage() {
                     setLastFailedInput(null)
                   }}
                 >
-                  dismiss
+                  {t('chat.dismiss')}
                 </button>
               </p>
             </div>
@@ -335,7 +330,7 @@ function ChatPage() {
               e.target.style.height = `${e.target.scrollHeight}px`
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Ask the sommelier..."
+            placeholder={t('chat.placeholder')}
             maxLength={MAX_MESSAGE_LENGTH}
             rows={1}
             disabled={sending}
@@ -346,7 +341,7 @@ function ChatPage() {
             disabled={sending || !input.trim()}
             className="self-end border border-border px-4 py-2 text-sm font-mono hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Send
+            {t('chat.send')}
           </button>
         </form>
       </div>

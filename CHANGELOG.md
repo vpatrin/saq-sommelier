@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Bilingual web app — French (default) and English, with language switcher in sidebar
+
 ## [1.5.1] - 2026-03-21
 
 ### Added

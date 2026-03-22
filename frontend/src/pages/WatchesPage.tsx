@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
 import type { ProductOut, WatchWithProduct, UserStorePreferenceOut } from '@/lib/types'
@@ -18,6 +19,7 @@ function AvailabilityStatus({
   expandedStores: Set<string>
   onToggleExpand: (sku: string) => void
 }) {
+  const { t } = useTranslation()
   const storeAvail = product.store_availability ?? []
   const matchingIds = storeAvail.filter((id) => storeNames.has(id))
   const hasSavedStores = storeNames.size > 0
@@ -28,8 +30,8 @@ function AvailabilityStatus({
 
   const storeText =
     matchingIds.length === 1
-      ? `At ${storeNames.get(matchingIds[0])}`
-      : `In ${matchingIds.length} of your stores`
+      ? t('availability.atStore', { store: storeNames.get(matchingIds[0]) })
+      : t('availability.inYourStores', { count: matchingIds.length })
 
   const genericStoreCount = storeAvail.length
   const storeNode =
@@ -47,7 +49,7 @@ function AvailabilityStatus({
       )
     ) : !hasSavedStores && genericStoreCount > 0 ? (
       <span className="text-green-500">
-        In {genericStoreCount} store{genericStoreCount !== 1 ? 's' : ''}
+        {t('availability.inStores', { count: genericStoreCount })}
       </span>
     ) : null
 
@@ -57,10 +59,10 @@ function AvailabilityStatus({
     <div className="flex flex-col gap-1 text-sm mt-1">
       <div className="flex flex-wrap gap-x-1 gap-y-1">
         {unavailable && hasSavedStores ? (
-          <span className="text-muted-foreground">Unavailable — you'll be notified</span>
+          <span className="text-muted-foreground">{t('availability.unavailable')}</span>
         ) : (
           <>
-            {isOnline && <span className="text-green-500">Online</span>}
+            {isOnline && <span className="text-green-500">{t('availability.online')}</span>}
             {isOnline && storeNode && <span className="text-muted-foreground">·</span>}
             {storeNode}
           </>
@@ -78,6 +80,7 @@ function AvailabilityStatus({
 }
 
 function WatchesPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const apiClient = useApiClient()
 
@@ -104,7 +107,7 @@ function WatchesPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.detail : 'Failed to load watches')
+          setError(err instanceof ApiError ? err.detail : t('watches.failedToLoad'))
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -129,7 +132,7 @@ function WatchesPage() {
     return () => {
       cancelled = true
     }
-  }, [userId, apiClient])
+  }, [userId, apiClient, t])
 
   const handleRemove = useCallback(
     async (sku: string) => {
@@ -141,12 +144,12 @@ function WatchesPage() {
         // Remove from local state — no need to re-fetch the full list
         setWatches((prev) => prev.filter((w) => w.watch.sku !== sku))
       } catch (err) {
-        setError(err instanceof ApiError ? err.detail : 'Failed to remove watch')
+        setError(err instanceof ApiError ? err.detail : t('watches.failedToRemove'))
       } finally {
         setRemoving(null)
       }
     },
-    [apiClient, userId],
+    [apiClient, userId, t],
   )
 
   const handleToggleExpand = useCallback((sku: string) => {
@@ -164,7 +167,7 @@ function WatchesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground font-mono">Loading watches...</p>
+        <p className="text-muted-foreground font-mono">{t('watches.loading')}</p>
       </div>
     )
   }
@@ -172,14 +175,12 @@ function WatchesPage() {
   return (
     <div className="p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-mono font-bold mb-6">My Watches</h1>
+        <h1 className="text-3xl font-mono font-bold mb-6">{t('watches.title')}</h1>
 
         {error && <p className="text-destructive text-sm font-mono mb-4">{error}</p>}
 
         {watches.length === 0 ? (
-          <p className="text-muted-foreground font-mono">
-            No watches yet. Search for wines and add them to your watch list.
-          </p>
+          <p className="text-muted-foreground font-mono">{t('watches.empty')}</p>
         ) : (
           <ul className="flex flex-col gap-4">
             {watches.map(({ watch, product }) => (
@@ -220,7 +221,7 @@ function WatchesPage() {
                     </>
                   ) : (
                     <p className="text-muted-foreground font-mono">
-                      Product delisted (SKU: {watch.sku})
+                      {t('watches.delisted', { sku: watch.sku })}
                     </p>
                   )}
                 </div>
@@ -231,7 +232,7 @@ function WatchesPage() {
                   onClick={() => handleRemove(watch.sku)}
                   disabled={removing === watch.sku}
                 >
-                  {removing === watch.sku ? 'Removing...' : 'Remove'}
+                  {removing === watch.sku ? t('watches.removing') : t('watches.remove')}
                 </Button>
               </li>
             ))}

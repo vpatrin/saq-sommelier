@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
 import type { StoreWithDistance, UserStorePreferenceOut } from '@/lib/types'
@@ -8,14 +9,14 @@ type GeoState =
   | { status: 'idle' }
   | { status: 'requesting' }
   | { status: 'granted'; lat: number; lng: number }
-  | { status: 'denied'; message: string }
+  | { status: 'denied'; errorCode: string }
 
 function useGeolocation() {
   const [geo, setGeo] = useState<GeoState>({ status: 'idle' })
 
   const request = useCallback(() => {
     if (!navigator.geolocation) {
-      setGeo({ status: 'denied', message: 'Geolocation is not supported by your browser.' })
+      setGeo({ status: 'denied', errorCode: 'notSupported' })
       return
     }
 
@@ -30,13 +31,12 @@ function useGeolocation() {
         })
       },
       (error) => {
-        const messages: Record<number, string> = {
-          [GeolocationPositionError.PERMISSION_DENIED]:
-            'Location permission denied. Enable it in your browser settings to see nearby stores.',
-          [GeolocationPositionError.POSITION_UNAVAILABLE]: 'Unable to determine your location.',
-          [GeolocationPositionError.TIMEOUT]: 'Location request timed out. Try again.',
+        const codes: Record<number, string> = {
+          [GeolocationPositionError.PERMISSION_DENIED]: 'denied',
+          [GeolocationPositionError.POSITION_UNAVAILABLE]: 'unavailable',
+          [GeolocationPositionError.TIMEOUT]: 'timeout',
         }
-        setGeo({ status: 'denied', message: messages[error.code] ?? 'Unknown location error.' })
+        setGeo({ status: 'denied', errorCode: codes[error.code] ?? 'unknown' })
       },
       { enableHighAccuracy: false, timeout: 10_000 },
     )
@@ -45,7 +45,15 @@ function useGeolocation() {
   return { geo, request }
 }
 
+const GEO_ERROR_KEYS: Record<string, string> = {
+  notSupported: 'editStores.geoNotSupported',
+  denied: 'editStores.geoDenied',
+  unavailable: 'editStores.geoUnavailable',
+  timeout: 'editStores.geoTimeout',
+}
+
 function StoresPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const apiClient = useApiClient()
   const { geo, request: requestLocation } = useGeolocation()
@@ -103,7 +111,7 @@ function StoresPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.detail : 'Failed to load stores')
+          setError(err instanceof ApiError ? err.detail : t('editStores.failedToLoad'))
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -115,7 +123,7 @@ function StoresPage() {
     return () => {
       cancelled = true
     }
-  }, [lat, lng, apiClient])
+  }, [lat, lng, apiClient, t])
 
   const handleToggle = useCallback(
     async (storeId: string) => {
@@ -153,40 +161,42 @@ function StoresPage() {
           }
           return next
         })
-        setError(err instanceof ApiError ? err.detail : 'Failed to update preference')
+        setError(err instanceof ApiError ? err.detail : t('editStores.failedToUpdate'))
       } finally {
         setToggling(null)
       }
     },
-    [apiClient, savedIds],
+    [apiClient, savedIds, t],
   )
 
   return (
     <div className="p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-mono font-bold mb-6">Edit My Stores</h1>
+        <h1 className="text-3xl font-mono font-bold mb-6">{t('editStores.title')}</h1>
 
         {error && <p className="text-destructive text-sm font-mono mb-4">{error}</p>}
 
         {(geo.status === 'idle' || geo.status === 'requesting') && (
-          <p className="text-muted-foreground font-mono">Requesting your location...</p>
+          <p className="text-muted-foreground font-mono">{t('editStores.requestingLocation')}</p>
         )}
 
         {geo.status === 'denied' && (
           <div className="flex flex-col gap-4">
-            <p className="text-muted-foreground font-mono">{geo.message}</p>
+            <p className="text-muted-foreground font-mono">
+              {t(GEO_ERROR_KEYS[geo.errorCode] ?? 'editStores.geoUnavailable')}
+            </p>
             <div>
               <Button variant="outline" size="sm" onClick={requestLocation}>
-                Try again
+                {t('editStores.tryAgain')}
               </Button>
             </div>
           </div>
         )}
 
-        {loading && <p className="text-muted-foreground font-mono">Loading stores...</p>}
+        {loading && <p className="text-muted-foreground font-mono">{t('editStores.loading')}</p>}
 
         {geo.status === 'granted' && !loading && stores.length === 0 && !error && (
-          <p className="text-muted-foreground font-mono">No stores found nearby.</p>
+          <p className="text-muted-foreground font-mono">{t('editStores.noStores')}</p>
         )}
 
         {stores.length > 0 && (
@@ -209,7 +219,7 @@ function StoresPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-mono text-muted-foreground whitespace-nowrap">
-                        {store.distance_km.toFixed(1)} km
+                        {t('editStores.km', { distance: store.distance_km.toFixed(1) })}
                       </span>
                       <Button
                         variant={isSaved ? 'default' : 'outline'}
@@ -217,12 +227,18 @@ function StoresPage() {
                         onClick={() => handleToggle(store.saq_store_id)}
                         disabled={toggling === store.saq_store_id}
                       >
-                        {toggling === store.saq_store_id ? '...' : isSaved ? 'Saved' : 'Save'}
+                        {toggling === store.saq_store_id
+                          ? '...'
+                          : isSaved
+                            ? t('editStores.saved')
+                            : t('editStores.save')}
                       </Button>
                     </div>
                   </div>
                   {store.temporarily_closed && (
-                    <p className="text-sm text-destructive mt-2 font-mono">Temporarily closed</p>
+                    <p className="text-sm text-destructive mt-2 font-mono">
+                      {t('editStores.temporarilyClosed')}
+                    </p>
                   )}
                 </li>
               )

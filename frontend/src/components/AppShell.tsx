@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient } from '@/lib/api'
 import { timeAgo } from '@/lib/utils'
@@ -9,16 +10,17 @@ import type { ChatSessionOut } from '@/lib/types'
 const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string
 
 const NAV_ITEMS = [
-  { to: '/search', label: 'Search' },
-  { to: '/watches', label: 'My Watches' },
-  { to: '/stores', label: 'My Stores' },
-]
+  { to: '/search', labelKey: 'nav.search' },
+  { to: '/watches', labelKey: 'nav.myWatches' },
+  { to: '/stores', labelKey: 'nav.myStores' },
+] as const
 
 export interface ChatOutletContext {
   refreshSessions: () => void
 }
 
 function AppShell() {
+  const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -109,7 +111,7 @@ function AppShell() {
         {/* Brand */}
         <div className="p-4 border-b border-sidebar-border">
           <Link to="/chat" className="text-lg font-mono font-bold text-primary">
-            Coupette
+            {t('brand')}
           </Link>
         </div>
 
@@ -121,11 +123,13 @@ function AppShell() {
               onClick={() => navigate('/chat')}
               className="mx-2 mt-2 mb-1 px-3 py-1.5 text-sm font-mono text-left border border-border hover:bg-sidebar-accent/50"
             >
-              + New chat
+              {t('nav.newChat')}
             </button>
             <div className="overflow-y-auto max-h-48 px-2 pb-2">
               {sessions.length === 0 && (
-                <p className="px-3 py-1.5 text-xs text-muted-foreground">No conversations yet</p>
+                <p className="px-3 py-1.5 text-xs text-muted-foreground">
+                  {t('nav.noConversations')}
+                </p>
               )}
               {sessions.map((session) => {
                 const isActive = activeSessionId === String(session.id)
@@ -141,20 +145,22 @@ function AppShell() {
                   >
                     {isConfirming ? (
                       <div className="flex-1 flex items-center gap-2 min-w-0">
-                        <span className="text-xs text-muted-foreground truncate">Delete?</span>
+                        <span className="text-xs text-muted-foreground truncate">
+                          {t('nav.deleteConfirm')}
+                        </span>
                         <button
                           type="button"
                           onClick={() => handleDelete(session.id)}
                           className="text-xs text-destructive hover:text-destructive/80"
                         >
-                          yes
+                          {t('nav.yes')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(null)}
                           className="text-xs text-muted-foreground hover:text-foreground"
                         >
-                          no
+                          {t('nav.no')}
                         </button>
                       </div>
                     ) : editingId === session.id ? (
@@ -175,23 +181,23 @@ function AppShell() {
                         <Link
                           to={`/chat/${session.id}`}
                           className="flex-1 min-w-0 truncate"
-                          title={session.title ?? 'Untitled'}
+                          title={session.title ?? t('nav.untitled')}
                           onDoubleClick={(e) => {
                             e.preventDefault()
                             setEditTitle(session.title ?? '')
                             setEditingId(session.id)
                           }}
                         >
-                          {session.title ?? 'Untitled'}
+                          {session.title ?? t('nav.untitled')}
                         </Link>
                         <span className="shrink-0 text-xs text-muted-foreground hidden group-hover:inline">
-                          {timeAgo(session.updated_at)}
+                          {timeAgo(session.updated_at, t)}
                         </span>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(session.id)}
                           className="shrink-0 text-xs text-muted-foreground hover:text-destructive hidden group-hover:inline"
-                          title="Delete session"
+                          title={t('nav.deleteSession')}
                         >
                           x
                         </button>
@@ -212,10 +218,10 @@ function AppShell() {
               to="/chat"
               className="block px-3 py-2 text-sm font-mono transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50"
             >
-              Chat
+              {t('nav.chat')}
             </Link>
           )}
-          {NAV_ITEMS.map(({ to, label }) => {
+          {NAV_ITEMS.map(({ to, labelKey }) => {
             const active =
               location.pathname === to ||
               (to === '/stores' && location.pathname === '/stores/nearby')
@@ -229,7 +235,7 @@ function AppShell() {
                     : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
                 }`}
               >
-                {label}
+                {t(labelKey)}
               </Link>
             )
           })}
@@ -245,10 +251,35 @@ function AppShell() {
           >
             @{BOT_USERNAME}
           </a>
+          <div className="flex items-center gap-2 text-xs font-mono">
+            <button
+              type="button"
+              onClick={() => i18n.changeLanguage('fr')}
+              className={
+                i18n.resolvedLanguage === 'fr'
+                  ? 'text-primary font-bold'
+                  : 'text-muted-foreground hover:text-foreground'
+              }
+            >
+              FR
+            </button>
+            <span className="text-muted-foreground">·</span>
+            <button
+              type="button"
+              onClick={() => i18n.changeLanguage('en')}
+              className={
+                i18n.resolvedLanguage === 'en'
+                  ? 'text-primary font-bold'
+                  : 'text-muted-foreground hover:text-foreground'
+              }
+            >
+              EN
+            </button>
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-mono truncate">{user?.first_name}</span>
-            <Button variant="ghost" size="xs" onClick={handleLogout}>
-              Logout
+            <Button variant="ghost" size="xs" className="w-20" onClick={handleLogout}>
+              {t('nav.logout')}
             </Button>
           </div>
         </div>

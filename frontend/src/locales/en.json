@@ -1,0 +1,122 @@
+{
+  "brand": "Coupette",
+  "login": {
+    "tagline": "Wine discovery for the curious.",
+    "invited": "You've been invited",
+    "authFailed": "Authentication failed",
+    "madeWith": "Made with ❤️",
+    "sourceOnGithub": "Source on GitHub"
+  },
+  "chat": {
+    "welcome": "What are you drinking tonight?",
+    "placeholder": "Ask the sommelier...",
+    "send": "Send",
+    "thinking": "Thinking...",
+    "loading": "Loading...",
+    "retry": "retry",
+    "dismiss": "dismiss",
+    "failedToLoad": "Failed to load session",
+    "somethingWentWrong": "Something went wrong",
+    "starters": [
+      "A bold red under $30",
+      "What pairs with lamb?",
+      "What's the difference between Syrah and Shiraz?",
+      "Explore wines from Argentina"
+    ]
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search wines by name...",
+    "country": "Country",
+    "all": "All",
+    "availability": "Availability",
+    "availableOnline": "Available online",
+    "inMyStores": "In my stores",
+    "inMyStoresNone": "In my stores (none saved)",
+    "price": "Price",
+    "narrow": "Narrow...",
+    "loading": "Loading...",
+    "result_one": "{{count}} result",
+    "result_other": "{{count}} results",
+    "pageOf": "page {{page}} of {{pages}}",
+    "sortRecent": "Recently updated",
+    "sortPriceAsc": "Price: low → high",
+    "sortPriceDesc": "Price: high → low",
+    "sortAlpha": "Alphabetically",
+    "noResults": "No wines match your filters.",
+    "watch": "Watch",
+    "watching": "Watching",
+    "first": "First",
+    "prev": "Prev",
+    "next": "Next",
+    "last": "Last",
+    "failedToSearch": "Failed to search products",
+    "failedToAddWatch": "Failed to add watch",
+    "failedToRemoveWatch": "Failed to remove watch",
+    "minPrice": "Minimum price",
+    "maxPrice": "Maximum price",
+    "retry": "retry"
+  },
+  "watches": {
+    "title": "My Watches",
+    "loading": "Loading watches...",
+    "empty": "No watches yet. Search for wines and add them to your watch list.",
+    "remove": "Remove",
+    "removing": "Removing...",
+    "delisted": "Product delisted (SKU: {{sku}})",
+    "failedToLoad": "Failed to load watches",
+    "failedToRemove": "Failed to remove watch"
+  },
+  "stores": {
+    "title": "My Stores",
+    "edit": "Edit",
+    "loading": "Loading saved stores...",
+    "empty": "No saved stores yet. Tap Edit to find nearby stores.",
+    "failedToLoad": "Failed to load saved stores"
+  },
+  "editStores": {
+    "title": "Edit My Stores",
+    "requestingLocation": "Requesting your location...",
+    "geoNotSupported": "Geolocation is not supported by your browser.",
+    "geoDenied": "Location permission denied. Enable it in your browser settings to see nearby stores.",
+    "geoUnavailable": "Unable to determine your location.",
+    "geoTimeout": "Location request timed out. Try again.",
+    "tryAgain": "Try again",
+    "loading": "Loading stores...",
+    "noStores": "No stores found nearby.",
+    "km": "{{distance}} km",
+    "save": "Save",
+    "saved": "Saved",
+    "temporarilyClosed": "Temporarily closed",
+    "failedToUpdate": "Failed to update preference",
+    "failedToLoad": "Failed to load stores"
+  },
+  "nav": {
+    "chat": "Chat",
+    "search": "Search",
+    "myWatches": "My Watches",
+    "myStores": "My Stores",
+    "newChat": "+ New chat",
+    "noConversations": "No conversations yet",
+    "untitled": "Untitled",
+    "deleteSession": "Delete session",
+    "deleteConfirm": "Delete?",
+    "yes": "yes",
+    "no": "no",
+    "logout": "Logout"
+  },
+  "availability": {
+    "online": "Online",
+    "atStore": "At {{store}}",
+    "inYourStores": "In {{count}} of your stores",
+    "inStores_one": "In {{count}} store",
+    "inStores_other": "In {{count}} stores",
+    "unavailable": "Unavailable — you'll be notified"
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  }
+}

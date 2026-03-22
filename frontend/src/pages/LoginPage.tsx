@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useNavigate, useParams, Navigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { TelegramLoginButton, type TelegramLoginData } from '@/components/TelegramLoginButton'
 import { api, ApiError } from '@/lib/api'
@@ -12,6 +13,7 @@ interface TokenResponse {
 }
 
 function LoginPage() {
+  const { t } = useTranslation()
   const { token, login } = useAuth()
   const navigate = useNavigate()
   const { code } = useParams<{ code: string }>()
@@ -35,11 +37,11 @@ function LoginPage() {
         if (err instanceof ApiError) {
           setError(err.detail)
         } else {
-          setError('Authentication failed')
+          setError(t('login.authFailed'))
         }
       }
     },
-    [code, login, navigate],
+    [code, login, navigate, t],
   )
 
   if (token) return <Navigate to="/dashboard" replace />
@@ -47,13 +49,13 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-8 p-8">
       <div className="flex flex-col items-center gap-2">
-        <h1 className="text-5xl font-mono font-bold">Coupette 🥂</h1>
-        <p className="text-muted-foreground">Wine discovery for the curious.</p>
+        <h1 className="text-5xl font-mono font-bold">{t('brand')} 🥂</h1>
+        <p className="text-muted-foreground">{t('login.tagline')}</p>
       </div>
 
       {code && (
         <p className="text-sm text-primary font-mono border border-primary px-4 py-2">
-          You've been invited
+          {t('login.invited')}
         </p>
       )}
 
@@ -66,14 +68,14 @@ function LoginPage() {
       </div>
 
       <footer className="text-xs text-muted-foreground flex flex-col items-center gap-1 mt-4">
-        <p>Made with ❤️</p>
+        <p>{t('login.madeWith')}</p>
         <a
           href="https://github.com/vpatrin/coupette"
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary underline underline-offset-2"
         >
-          Source on GitHub
+          {t('login.sourceOnGithub')}
         </a>
       </footer>
     </div>

@@ -1,0 +1,122 @@
+{
+  "brand": "Coupette",
+  "login": {
+    "tagline": "La découverte du vin pour les curieux.",
+    "invited": "Vous avez été invité",
+    "authFailed": "Échec de l'authentification",
+    "madeWith": "Fait avec ❤️",
+    "sourceOnGithub": "Code source sur GitHub"
+  },
+  "chat": {
+    "welcome": "Qu'est-ce qu'on boit ce soir ?",
+    "placeholder": "Demandez au sommelier...",
+    "send": "Envoyer",
+    "thinking": "Réflexion...",
+    "loading": "Chargement...",
+    "retry": "réessayer",
+    "dismiss": "fermer",
+    "failedToLoad": "Impossible de charger la session",
+    "somethingWentWrong": "Une erreur est survenue",
+    "starters": [
+      "Un rouge corsé à moins de 30 $",
+      "Quel vin avec de l'agneau ?",
+      "Quelle est la différence entre Syrah et Shiraz ?",
+      "Explorer les vins d'Argentine"
+    ]
+  },
+  "search": {
+    "title": "Recherche",
+    "placeholder": "Rechercher un vin par nom...",
+    "country": "Pays",
+    "all": "Tous",
+    "availability": "Disponibilité",
+    "availableOnline": "Disponible en ligne",
+    "inMyStores": "Dans mes succursales",
+    "inMyStoresNone": "Dans mes succursales (aucune enregistrée)",
+    "price": "Prix",
+    "narrow": "Préciser...",
+    "loading": "Chargement...",
+    "result_one": "{{count}} résultat",
+    "result_other": "{{count}} résultats",
+    "pageOf": "page {{page}} de {{pages}}",
+    "sortRecent": "Récemment mis à jour",
+    "sortPriceAsc": "Prix : croissant",
+    "sortPriceDesc": "Prix : décroissant",
+    "sortAlpha": "Alphabétique",
+    "noResults": "Aucun vin ne correspond à vos filtres.",
+    "watch": "Suivre",
+    "watching": "Suivi",
+    "first": "Début",
+    "prev": "Préc.",
+    "next": "Suiv.",
+    "last": "Fin",
+    "failedToSearch": "Impossible de rechercher des produits",
+    "failedToAddWatch": "Impossible d'ajouter le suivi",
+    "failedToRemoveWatch": "Impossible de retirer le suivi",
+    "minPrice": "Prix minimum",
+    "maxPrice": "Prix maximum",
+    "retry": "réessayer"
+  },
+  "watches": {
+    "title": "Mes suivis",
+    "loading": "Chargement des suivis...",
+    "empty": "Aucun suivi pour l'instant. Recherchez des vins et ajoutez-les à votre liste.",
+    "remove": "Retirer",
+    "removing": "Retrait...",
+    "delisted": "Produit retiré (SKU : {{sku}})",
+    "failedToLoad": "Impossible de charger les suivis",
+    "failedToRemove": "Impossible de retirer le suivi"
+  },
+  "stores": {
+    "title": "Mes succursales",
+    "edit": "Modifier",
+    "loading": "Chargement des succursales...",
+    "empty": "Aucune succursale enregistrée. Appuyez sur Modifier pour en trouver.",
+    "failedToLoad": "Impossible de charger les succursales"
+  },
+  "editStores": {
+    "title": "Modifier mes succursales",
+    "requestingLocation": "Localisation en cours...",
+    "geoNotSupported": "La géolocalisation n'est pas supportée par votre navigateur.",
+    "geoDenied": "Permission de localisation refusée. Activez-la dans les paramètres de votre navigateur.",
+    "geoUnavailable": "Impossible de déterminer votre position.",
+    "geoTimeout": "La demande de localisation a expiré. Réessayez.",
+    "tryAgain": "Réessayer",
+    "loading": "Chargement des succursales...",
+    "noStores": "Aucune succursale trouvée à proximité.",
+    "km": "{{distance}} km",
+    "save": "Enregistrer",
+    "saved": "Enregistré",
+    "temporarilyClosed": "Fermé temporairement",
+    "failedToUpdate": "Impossible de mettre à jour la préférence",
+    "failedToLoad": "Impossible de charger les succursales"
+  },
+  "nav": {
+    "chat": "Discussion",
+    "search": "Recherche",
+    "myWatches": "Mes suivis",
+    "myStores": "Mes succursales",
+    "newChat": "+ Nouvelle discussion",
+    "noConversations": "Aucune conversation",
+    "untitled": "Sans titre",
+    "deleteSession": "Supprimer la session",
+    "deleteConfirm": "Supprimer ?",
+    "yes": "oui",
+    "no": "non",
+    "logout": "Déconnexion"
+  },
+  "availability": {
+    "online": "En ligne",
+    "atStore": "À {{store}}",
+    "inYourStores": "Dans {{count}} de vos succursales",
+    "inStores_one": "En succursale ({{count}})",
+    "inStores_other": "En succursale ({{count}})",
+    "unavailable": "Non disponible — vous serez notifié"
+  },
+  "time": {
+    "justNow": "à l'instant",
+    "minutesAgo": "il y a {{count}} min",
+    "hoursAgo": "il y a {{count}} h",
+    "daysAgo": "il y a {{count}} j"
+  }
+}

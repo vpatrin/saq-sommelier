@@ -232,7 +232,7 @@ Unscheduled engineering improvements — not product features, not infra. Picked
 - [ ] Add source identifier to recommendation logs (#340)
 - [x] Cron failure alerts — Uptime Kuma push monitors for backup + scraper (#350)
 - API request logging middleware → `api_request_logs` table (path, status, latency, user_id) — baseline for SLO tracking
-- Structured JSON logging — consistent fields (timestamp, level, service, message) across all services
+- [ ] Structured JSON logging — consistent fields (timestamp, level, service, message) across all services (#489)
 - LLM cost tracking — token usage per request, daily budget cap alert
 
 **Bot:**
@@ -251,12 +251,15 @@ Unscheduled engineering improvements — not product features, not infra. Picked
 **SRE:**
 
 - [ ] DB pool limits + httpx retries in scraper (#314)
+- [ ] Move /metrics to a separate internal port (#501)
+- [ ] Load testing baseline — k6 tier runners, baseline snapshots, regression diffs (#502–#507)
 - `/health/detailed` endpoint — Postgres reachability, data freshness, disk space
 - Define SLOs — API p95 < 500ms, 99% uptime; scraper completes weekly, data < 8 days stale; bot ack < 2s
 
 **Platform:**
 
 - [x] Automated CD — tag push deploys to VPS (sops decrypt + frontend build + deploy_backend.sh + systemd unit sync) (#482)
+- [ ] Move git pull into deploy script (#493)
 - Image tagging — `:latest` for production, `:YYYYMMDD-HHMMSS` for rollback archive
 
 **Ops / housekeeping:**
