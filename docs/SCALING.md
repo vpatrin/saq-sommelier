@@ -1,8 +1,17 @@
-# Scaling Plan
+# Scaling Log
 
-Expands the [scaling path table](ARCHITECTURE.md#scaling-path) into actionable tiers. Each tier defines the bottleneck, concrete actions, cost impact, dependencies, and signals that you've outgrown it.
+Living document: part changelog, part roadmap. Each tier starts as a plan, then fills in with what actually happened — decisions, measurements, and results. The story of how Coupette scales from 1 user to 10,000+.
 
-Design principle: **add infrastructure when a bottleneck is measured, not when it's imagined.**
+**Done** entries record what was implemented, when, and why. **Planned** entries are what's next. Each tier has k6 benchmarks — before and after.
+
+Design principle: **measure first, optimize the box, then scale the infrastructure.**
+
+### Scaling philosophy
+
+1. **Measure** — instrument everything, establish baselines, find where time goes
+2. **Optimize** — pure config and code changes on the same hardware. No new services, no VPS upgrade
+3. **Scale up** — add services (Redis, PgBouncer) and bump the VPS when the box is fully squeezed
+4. **Scale out** — k3s, horizontal replicas, multi-node. Only when vertical hits a wall
 
 ---
 
@@ -21,20 +30,46 @@ Design principle: **add infrastructure when a bottleneck is measured, not when i
 
 ---
 
-## Tier 1: 20 Users (Current)
+## Tier 1: Measure — Baseline & Observability
 
-**Bottleneck:** None — everything works.
+**Objective:** Instrument everything, establish baselines, build the testing framework, fix the obvious. SRE stack (Grafana/Prometheus/Alloy in infra repo) + k6 load testing + first perf fix.
 
-**What to monitor** (observability stack is in place):
+### Done
+
+#### 2026-03-21 — Prometheus metrics + pipeline instrumentation (#497)
+
+**Context:** No runtime observability — can't scale what you can't measure. Needed baselines before making any performance decisions.
+**Action:** Added `prometheus-fastapi-instrumentator` with custom histograms on the recommendation pipeline (intent parsing, curation, embedding, LLM round-trip). Each pipeline stage reports its own duration.
+**Result:** `/metrics` endpoint live. Grafana dashboards show per-stage latency breakdown. Baseline: search p95 ~sub-500ms, recommendation pipeline 5-6s (dominated by embedding + LLM calls).
+
+#### 2026-03-21 — Facets query parallelization (#509)
+
+**Context:** Facets endpoint ran 5 sequential DB queries on a single session — p95 ~450ms, approaching the 500ms threshold. Simple code change with high impact — the 5 queries are independent, so parallelism is free.
+**Action:** Refactored to `asyncio.gather` with independent sessions per query (a single `AsyncSession` can't run concurrent queries on the same connection). Added `session_factory` dependency alongside the existing `db` session.
+**Result:** Facets p95 dropped significantly. Connection pool pressure shifted from 1 long-held connection to 5 short-lived ones (better pool utilization).
+
+#### 2026-03-21 — Connection pool tuning (#509)
+
+**Context:** Backend engine used SQLAlchemy defaults — not tuned for the new parallel workload. With facets now opening 5 connections per request, needed explicit configuration. `pool_pre_ping` catches stale connections from Postgres restarts.
+**Action:** Configured `pool_size=10`, `max_overflow=10`, `pool_timeout=5s`, `pool_pre_ping=True` on the async engine. Settings exposed via env vars (`DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_POOL_TIMEOUT`).
+**Result:** Pool sized for worst case: facets (5 connections) + concurrent search/chat requests. Total max = `pool_size + max_overflow` = 20 connections from backend alone — well within Postgres `max_connections=100`.
+
+#### 2026-03-21 — k6 load testing framework (#509)
+
+**Context:** No way to validate scaling changes or find the break point before real users hit it. Without load testing, scaling decisions are guesswork.
+**Action:** Built k6 test scripts for all major endpoints (search, chat, watches, stores, mixed workload) with a tier-1 baseline runner script. Config externalized for different tiers.
+**Result:** Framework ready at `backend/benchmarks/load/`. Baseline run pending — will establish the numbers that trigger Tier 2 work.
+
+### What to monitor
 
 - API p95 latency (baseline: sub-500ms for search, 5-6s for recommendations — dominated by embedding + LLM calls)
-- DB connection count (backend pool: size=10, overflow=10 — facets endpoint uses 5 concurrent connections)
-- VPS memory usage (target: keep ~1GB free — observability stack claims ~600MB, leaving less app headroom than the raw 4GB suggests)
+- DB connection count (backend pool: size=10, overflow=10)
+- VPS memory usage (target: keep ~1GB free — observability stack claims ~600MB)
 - Claude API monthly spend
 
 **Cost:** ~$10/mo total (VPS share + LLM APIs)
 
-**Signals you've outgrown Tier 1:**
+### Signals to advance to Tier 2
 
 - API p95 consistently > 500ms on search/filter endpoints
 - DB connection pool saturation warnings in logs
@@ -42,283 +77,226 @@ Design principle: **add infrastructure when a bottleneck is measured, not when i
 
 ---
 
-## Tier 2: 200 Users — Query Performance
+## Tier 2: Optimize — Squeeze the CX22
 
-**Bottleneck:** Slow queries, connection exhaustion, single worker throughput.
+**Objective:** Maximum performance from the same hardware. Pure config, code, and query optimization — no new services, no VPS upgrade.
 
-### Actions
+### Done
 
-#### 1. Tune connection pool
-Explicit `pool_size`, `max_overflow`, `pool_timeout` in `core/db/base.py`. Three services share one Postgres — total connections = 3 × (pool_size + max_overflow). Shared Postgres serves other databases too (Umami, URL shortener), so coordinate max_connections.
+*(nothing yet)*
 
-Backend already tuned: `pool_size=10, max_overflow=10, pool_timeout=5` (facets endpoint uses 5 concurrent connections via `asyncio.gather`). Scraper uses defaults (pool_size=5) — sufficient for sequential batch work.
+### Planned
 
-**Effort:** 1h. **Owner:** coupette repo.
+#### Missing indexes
 
-#### 2. PgBouncer
-Connection pooler in front of shared Postgres. Multiplexes application connections → fewer real Postgres connections. Critical when multiple services compete for connections.
+**Context:** No slow query analysis done yet. As query volume grows, unindexed columns become the bottleneck. Likely candidates: `products(category, country)` for filtered search, `watches` partial index for availability joins, `chat_messages(session_id, created_at)` for conversation loading.
+**Action:** Enable `pg_stat_statements`, analyze actual slow queries, add targeted indexes where data shows > 100ms queries.
 
-**Effort:** 2-4h. **Owner:** infra repo. **Mode:** transaction pooling.
+#### pgvector HNSW index
 
-#### 3. Analyze and add missing indexes
-Enable `pg_stat_statements` to identify slow queries. Likely candidates:
-- Composite index on `products(category, country)` for filtered search
-- Partial index on `watches` for active watches with availability joins
-- Index on `chat_messages(session_id, created_at)` for conversation loading
+**Context:** Exact scan is fine at 14k vectors. At ~50k+ vectors or similarity search p95 > 200ms, exact scan becomes the bottleneck.
+**Action:** HNSW index on `products.embedding` — no retraining needed when rows change (unlike IVFFlat), better recall at comparable speed.
 
-**Effort:** 2-4h per index round. **Owner:** coupette repo (model + migration).
+#### API rate limiting
 
-#### 4. pgvector index
-Exact scan is fine at 14k vectors. At ~50k+ vectors, add an HNSW index on `products.embedding`:
-```sql
-CREATE INDEX ON products USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
-```
-HNSW over IVFFlat — no retraining needed when rows change, better recall at comparable speed.
+**Context:** Claude API costs scale linearly with chat requests — a single abusive user could burn the monthly budget. Need cost protection before opening to more users.
+**Action:** Per-user rate limits on `/api/chat`. Start simple: N requests/minute. Options: `slowapi` (app-level) or Caddy rate limiting (infra-level, no code change).
 
-**Effort:** 1h (migration). **Owner:** coupette repo. **Trigger:** vector count > 30k or similarity search p95 > 200ms.
+#### Embedding cache
 
-#### 5. API rate limiting
+**Context:** The embedding call adds ~1.5-2s to every recommendation pipeline run. Same query text always produces the same vector — latency wasted on repeat queries.
+**Action:** In-memory dict with TTL. Cache OpenAI embedding API calls by normalized query string. No Redis dependency yet — keep it in-process.
 
-Protect Claude API costs from abusive or runaway usage. Per-user rate limits on chat/recommendation endpoints. Options: `slowapi` (app-level, easy) or Caddy rate limiting (infra-level, no code change).
+#### Separate metrics port
 
-Start simple: N requests/minute per user on `/api/chat`. Adjust based on real usage patterns from Prometheus metrics.
+**Context:** `/metrics` is publicly reachable via Caddy's `/api/*` route, and Prometheus scraping adds noise to request metrics at scale.
+**Action:** Move metrics to a dedicated internal port (e.g. `:9090`). Either a second uvicorn app or `prometheus-fastapi-instrumentator`'s built-in separate ASGI app.
 
-**Effort:** 1-2h. **Owner:** coupette repo (slowapi) or infra repo (Caddy).
+#### Bot webhook migration
 
-#### 6. Embedding cache
+**Context:** Long polling adds constant backend load regardless of activity. Webhooks are a config change, not new infrastructure — Caddy already provides the HTTPS endpoint.
+**Action:** Replace long polling with Telegram webhooks. Notification delivery shifts from polling to event-driven push.
 
-Cache OpenAI embedding API calls for repeated query strings. Same query text → same embedding vector. In-memory dict or Redis with 24h TTL.
+### k6 targets
 
-Not about cost — about latency. The embedding call adds ~1.5-2s to every recommendation pipeline run. Caching eliminates that for repeated queries.
-
-**Effort:** 1-2h. **Owner:** coupette repo.
-
-#### 7. Multiple backend workers
-Either multiple uvicorn workers (`--workers 4`) or multiple container replicas behind Caddy. Container replicas are cleaner — each gets its own memory limit and crash isolation. k3s makes this trivial later (replica sets), but Docker Compose can do it with `deploy.replicas` in the meantime.
-
-**Effort:** 1-2h. **Owner:** coupette repo (compose) + infra repo (Caddy upstream).
-
-#### 8. Separate metrics port
-Move `/metrics` to a dedicated internal port (e.g. `:9090`) so Prometheus scraping doesn't mix with user traffic and the endpoint isn't publicly reachable via Caddy's `/api/*` route. Currently exposed on the main app via `prometheus-fastapi-instrumentator` — works fine, but at scale scraping adds noise to request metrics and exposes operational data publicly.
-
-Options: run a second uvicorn app on a metrics-only port, or use `prometheus-fastapi-instrumentator`'s built-in support for a separate ASGI app.
-
-**Effort:** 1-2h. **Owner:** coupette repo + infra repo (firewall/network config).
-
-### Cost at Tier 2
-
-| Item | Monthly | Notes |
-|------|---------|-------|
-| VPS | €7-15 | May need CX32 upgrade (8GB RAM) for replicas |
-| LLM (Claude) | ~$6 | 10× users, roughly linear |
-| LLM (OpenAI) | ~$2 | Embeddings don't scale with users (product count stays ~14k) |
-| **Total** | ~$25/mo | |
-
-### Dependencies
-- PgBouncer → infra repo PR
-- Backend replicas → Caddy upstream config in infra repo
-- k3s migration simplifies replicas but is **not required**
+| Scenario | Before (Tier 1 baseline) | Target |
+|----------|--------------------------|--------|
+| Search p95 | TBD | < 200ms |
+| Facets p95 | ~450ms → parallelized | < 150ms |
+| Recommendation p95 | 5-6s (LLM-dominated) | < 4s (embed cache) |
+| Mixed 50 VU sustained | TBD | No errors, p95 < 500ms (excl. chat) |
 
 ### Signals to advance to Tier 3
+
 - Same queries repeated by different users (cache hit ratio would save > 50% of DB reads)
-- Read latency p95 > 500ms despite indexes
+- Connection pool saturation despite tuning
+- Single worker CPU > 70% sustained
 - LLM cost growing faster than acceptable (> $20/mo on Claude)
 
 ---
 
-## Tier 3: 2,000 Users — Caching & Read Scaling
+## Tier 3: Scale Up — Add Services + CX33
 
-**Bottleneck:** Repeated identical queries hitting Postgres, single DB writer, LLM costs.
+**Objective:** Introduce caching infrastructure and bump the VPS. PgBouncer, Redis, backend replicas, VPA right-sizing. Still single-node.
 
-### Actions
+### Done
 
-#### 1. Redis cache layer
-Cache frequently repeated data with TTL-based invalidation:
+*(nothing yet)*
 
-| Cache target | TTL | Invalidation |
-|-------------|-----|--------------|
-| Product search results | 15 min | On scraper run |
-| Facet counts (category, country, price ranges) | 1h | On scraper run |
-| Store data | 24h | On store scrape |
-| Product detail by SKU | 1h | On scraper run |
+### Planned
 
-Use a thin cache-aside pattern in repository layer — check Redis first, fall through to Postgres, populate cache on miss.
+#### VPS upgrade to CX33
 
-**Effort:** 4-8h (Redis container + cache layer + invalidation). **Owner:** infra repo (Redis container) + coupette repo (cache logic).
+**Context:** CX22 (4GB) is shared with observability stack (~600MB), Uptime Kuma, Umami. After Tier 2 optimizations, the bottleneck shifts from code to memory. CX33 doubles RAM (8GB) for ~€8/mo more.
+**Action:** Hetzner upgrade CX22 → CX33. No migration needed — Hetzner does live resize.
 
-#### 2. LLM response cache
-Cache Claude recommendation responses by normalized query hash. Short TTL (1-4h) — wine preferences are personal, but "wines under $20 for pasta" is universal enough to cache.
+#### PgBouncer
 
-Key: `hash(normalized_query + intent + filter_params)`. Don't include user-specific context in the cache key (taste profile will make this user-specific in Phase 12).
+**Context:** Multiple services (backend replicas, bot, scraper) each maintain connection pools against shared Postgres. With replicas, real connection count approaches `max_connections=100`.
+**Action:** Connection pooler in front of shared Postgres, transaction pooling mode. App connection strings point to PgBouncer instead of Postgres directly.
 
-**Effort:** 2-4h. **Owner:** coupette repo.
+#### Redis cache layer
 
-#### 3. Read replica
-Postgres streaming replication — route read-only queries (search, facets, product detail, chat history reads) to replica. Write queries (watches, chat messages, recommendation logs) stay on primary.
+**Context:** Same queries hit Postgres repeatedly — product search, facets, store data. Cache-aside with TTL-based invalidation (15min–24h depending on data freshness) eliminates redundant DB reads.
+**Action:** Redis container + thin cache-aside pattern in repository layer. Check Redis first, fall through to Postgres, populate on miss. Invalidate on scraper runs.
 
-Implementation: second `engine` in `core/db/base.py` with a `read_only` session factory. Repository methods declare whether they're read or write. Needs careful handling of read-after-write consistency (e.g., creating a watch then immediately listing watches).
+#### LLM response cache
 
-**Effort:** 2-3 days (replica setup in infra + read/write routing across all repositories + testing). **Owner:** both repos.
+**Context:** Claude API costs scale with users, but many queries are universal ("wines under $20 for pasta"). Short TTL (1-4h) caches these without stale personalization.
+**Action:** Cache recommendation responses by `hash(normalized_query + intent + filter_params)`. Move embedding cache from in-memory to Redis (shared across replicas). Exclude user-specific context from cache key (taste profile makes this per-user in Phase 12).
 
-#### 4. Bot webhook migration
-Replace long polling with Telegram webhooks. Eliminates periodic backend polling — Telegram pushes updates directly. Requires a public HTTPS endpoint (Caddy already provides this).
+#### Multiple backend replicas
 
-Notification delivery also shifts: instead of the bot polling for stock events every 6h, the backend pushes notifications via a task queue or direct bot API call when events are detected.
+**Context:** Single uvicorn worker — one blocked request reduces throughput for everyone. With CX33's headroom and PgBouncer managing connections, replicas become viable.
+**Action:** Container replicas behind Caddy upstream with health checks. Docker Compose `deploy.replicas`. VPA (recommend mode first) to right-size resource requests per replica.
 
-**Effort:** 4-8h. **Owner:** coupette repo (bot) + infra repo (Caddy route for webhook).
+#### Read replica
 
-### Cost at Tier 3
+**Context:** Write contention or read p95 > 500ms despite indexes and caching — single Postgres can't serve both read-heavy search and write-heavy chat/watches.
+**Action:** Postgres streaming replication. Route read-only queries (search, facets, product detail) to replica. Writes (watches, chat messages) stay on primary. Needs careful read-after-write consistency handling.
 
-| Item | Monthly | Notes |
-|------|---------|-------|
-| VPS | €15-30 | CX32 or CX42 for replica + Redis headroom |
-| Redis | €0 | Self-hosted container on same VPS |
-| LLM (Claude) | ~$30-60 | 2k users, partially offset by response caching |
-| LLM (OpenAI) | ~$2-5 | Embedding cache (from Tier 2) reduces repeat calls |
-| **Total** | ~$50-100/mo | |
+### k6 targets
 
-### Dependencies
-- Redis container → infra repo
-- Read replica → infra repo (Postgres config, possibly second container)
-- Webhook endpoint → infra repo (Caddy route)
-- k3s simplifies Redis + replica deployment (StatefulSets, services) but **not required**
+| Scenario | Before (Tier 2) | Target |
+|----------|-----------------|--------|
+| Search p95 | < 200ms | < 100ms (Redis cache hits) |
+| Facets p95 | < 150ms | < 50ms (Redis cache hits) |
+| Recommendation p95 | < 4s | < 3s (LLM response cache hits: instant) |
+| Mixed 200 VU sustained | TBD | No errors, p95 < 300ms (excl. chat) |
 
 ### Signals to advance to Tier 4
+
 - Claude API costs > $50/mo despite response caching
-- Recommendation p95 latency dominated by LLM round-trip (> 3s)
-- Request queue depth growing (more concurrent recommendations than the async worker can handle)
-- VPS CPU consistently > 80% during peak hours
+- Recommendation p95 dominated by LLM round-trip (> 3s) for cache misses
+- Request queue depth growing (more concurrent recommendations than replicas can handle)
+- VPS CPU consistently > 80% during peak hours on CX33
 
 ---
 
-## Tier 4: 10,000+ Users — Async Processing & Horizontal Scale
+## Tier 4: Scale Out — k3s & Horizontal
 
-**Bottleneck:** Claude API latency as the synchronous bottleneck, single-region, compute limits.
+**Objective:** k3s migration, horizontal autoscaling, async processing. Multi-node when single-node CX33 hits its ceiling.
 
-### Actions
+### Done
 
-#### 1. Async task queue
-Decouple recommendation requests from LLM calls. User sends message → backend returns immediately with a task ID → worker processes recommendation asynchronously → client polls or receives SSE update.
+*(nothing yet)*
 
-Options:
-- **ARQ** (Redis-backed, async-native, lightweight) — fits the stack, minimal overhead
-- **Celery** (battle-tested, heavier) — overkill unless you need complex routing/priorities
+### Planned
 
-ARQ recommended for solo dev context. Redis is already in place from Tier 3.
+#### Async task queue
 
-**Effort:** 8-16h (queue setup + worker + API refactor + client polling/SSE). **Owner:** coupette repo.
+**Context:** At scale, synchronous LLM calls block the request cycle — recommendation requests queue up behind each other. Need to decouple the request from the LLM round-trip.
+**Action:** User sends message → backend returns task ID immediately → worker processes asynchronously → client receives SSE update. ARQ (Redis-backed, async-native) over Celery — lighter, fits solo dev context. Redis already in place from Tier 3.
 
-#### 2. SSE streaming
-Already spec'd as Phase 9 item (#427). Stream LLM responses token-by-token instead of waiting for the full response. Reduces perceived latency significantly — first token arrives in ~200ms vs waiting 5-6s for the full pipeline.
+#### SSE streaming
 
-At this tier it's no longer optional — users won't tolerate synchronous 5-6s waits at scale.
+**Context:** Already spec'd as Phase 9 (#427). At this tier it's no longer optional — users won't tolerate synchronous 5-6s waits. First token in ~200ms vs waiting for the full pipeline.
+**Action:** Backend SSE endpoint + frontend streaming renderer. Token-by-token LLM response rendering.
 
-**Effort:** 8-16h (backend SSE endpoint + frontend streaming renderer). **Owner:** coupette repo.
+#### Response pre-computation
 
-#### 3. Response pre-computation
+**Context:** Popular queries are predictable ("red wines under $20", "wines for BBQ"). Waiting for real-time LLM calls on universal queries wastes latency and money.
+**Action:** Scheduled job batch-generates recommendations for popular query patterns during off-peak. Populates the LLM response cache proactively. Requires query analytics to identify which patterns are worth pre-computing.
 
-Batch-generate recommendations for popular query patterns during off-peak hours. "Red wines under $20", "wines for BBQ", "Bordeaux recommendations" — cache warm responses so peak-time requests are instant.
+#### HPA — horizontal pod autoscaling
 
-Run as a scheduled job (like the scraper). Populate the LLM response cache proactively.
+**Context:** Manual replica management doesn't scale. Backend is stateless — autoscaling is straightforward with the right metrics.
+**Action:** k3s Deployment with HPA scaling on custom Prometheus metrics (request queue depth, recommendation pipeline concurrency) rather than raw CPU — LLM-heavy workloads are I/O-bound, not CPU-bound. VPA continues right-sizing individual pods.
 
-**Prerequisite:** analytics on actual query patterns (which queries are popular enough to pre-compute). Requires Tier 3's LLM response cache to be in place, plus query logging with aggregation.
+#### Multi-node k3s
 
-**Effort:** 4-8h. **Owner:** coupette repo.
+**Context:** Single CX33 (8GB) ceiling reached. Multi-node gives fault tolerance + horizontal capacity.
+**Action:** k3s cluster across 2-3 CX22s (~€21/mo) or CX33s. Better fault tolerance than one large VPS. Alternatively, vertical to CX42 (16GB, €15.90/mo) if ops simplicity matters more.
 
-#### 4. Horizontal backend scaling
-Multiple backend replicas behind a load balancer. With k3s: Deployment with HPA (Horizontal Pod Autoscaler) scaling on CPU/memory or custom metrics (request queue depth). Without k3s: multiple containers behind Caddy upstream with health checks.
+#### LLM provider redundancy
 
-The backend is already stateless — no code changes needed, just orchestration.
+**Context:** Single provider dependency — Claude outage = total recommendation failure. At scale, downtime is unacceptable.
+**Action:** Fallback chain: Claude Haiku → retry with backoff → degraded response (cached/pre-computed). Circuit breaker: if Claude p95 > 5s for 5 min, serve cached responses automatically.
 
-**Effort:** 2-4h with k3s, 4-8h with Docker Compose. **Owner:** infra repo primarily.
+#### CDN for frontend
 
-#### 5. VPS upgrade or multi-node
-CX22 (4GB) won't cut it at 10k users. Options:
-- **Vertical:** CX42 (16GB, €15.90/mo) or CX52 (32GB, €29.90/mo)
-- **Multi-node:** k3s cluster across 2-3 CX22s (~€21/mo) — better fault tolerance, horizontal capacity
+**Context:** Not a capacity concern at earlier tiers (Hetzner bandwidth is unmetered), but with global distribution, edge caching reduces latency significantly.
+**Action:** Cloudflare free tier in front of `coupette.club` — caches static SPA assets at the edge.
 
-k3s multi-node is the natural path if the k3s migration has happened by now.
+#### Database partitioning
 
-**Effort:** Varies. **Owner:** infra repo.
+**Context:** Products table is bounded (~14k, SAQ catalog). But user-generated data (chat_messages, recommendation_logs, tasting_notes) grows linearly — estimate ~1M chat messages/year at 10k users. Postgres handles 10M+ rows fine with proper indexing.
+**Action:** Range partition on `created_at` only when query performance degrades despite indexes. Not a preemptive move.
 
-#### 6. LLM provider redundancy
-Fallback chain: Claude Haiku (primary) → Claude Haiku (retry with backoff) → degraded response (cached/pre-computed result). Consider Sonnet for high-value queries if budget allows.
+### k6 targets
 
-Monitor per-provider latency and error rates. Circuit breaker pattern: if Claude p95 > 5s for 5 min, fall back to cached responses.
-
-**Effort:** 4-8h. **Owner:** coupette repo.
-
-#### 7. CDN for frontend
-
-Cloudflare free tier in front of `coupette.club` — caches static SPA assets at the edge. Not a capacity concern at earlier tiers (Hetzner bandwidth is unmetered), but reduces global latency for geographically distributed users.
-
-**Effort:** 1-2h. **Owner:** infra repo (DNS + Caddy config).
-
-#### 8. Database partitioning considerations
-
-Products table doesn't grow fast (~14k, bounded by SAQ catalog). But user-generated data (chat_messages, recommendation_logs, tasting_notes at Phase 11) grows linearly with users.
-
-At 10k users with active chat: estimate ~1M chat messages/year. Postgres handles 10M+ row tables fine with proper indexing — partitioning (range partition on `created_at`) only when query performance degrades despite indexes.
-
-**Effort:** 2-4h for time-based partitioning. **Owner:** coupette repo.
-
-### Cost at Tier 4
-
-| Item | Monthly | Notes |
-|------|---------|-------|
-| VPS/Infra | €30-90 | Multi-node k3s or larger VPS |
-| LLM (Claude) | $100-300 | 10k users, offset by aggressive caching + pre-computation |
-| LLM (OpenAI) | $5-10 | Embeddings stable, embedding cache (from Tier 2) handles repeats |
-| CDN | €0 | Cloudflare free tier |
-| Monitoring | €0 | Self-hosted observability stack |
-| **Total** | ~$150-400/mo | |
-
-### Dependencies
-- Task queue → Redis (from Tier 3)
-- SSE → Phase 9 #427
-- HPA → k3s migration (infra repo)
-- Multi-node → infra repo
+| Scenario | Before (Tier 3) | Target |
+|----------|-----------------|--------|
+| Search p95 | < 100ms | < 50ms (HPA + cache) |
+| Recommendation p95 | < 3s | < 1s first token (SSE streaming) |
+| Mixed 1000 VU sustained | TBD | No errors, auto-scales to demand |
+| Cache hit ratio | TBD | > 70% on search, > 40% on recommendations |
 
 ---
 
 ## k3s Migration: Impact on Each Tier
 
-k3s is an **enabler, not a prerequisite** — every tier can be achieved with Docker Compose. k3s makes Tiers 3-4 significantly easier to operate.
+k3s is an **enabler, not a prerequisite** — Tiers 1-2 don't need it at all. k3s makes Tier 3 easier and Tier 4 possible.
 
 | Tier | Docker Compose Path | k3s Path |
 |------|-------------------|----------|
-| 2 | `deploy.replicas` + Caddy upstream | Deployment + Service (built-in) |
-| 3 | Manual Redis container + compose networking | Helm chart, StatefulSet for Postgres replica |
-| 4 | Complex compose with multiple workers, hard to auto-scale | HPA, rolling deploys, multi-node cluster |
+| 2 (Optimize) | No infra changes — pure config/code | N/A |
+| 3 (Scale Up) | `deploy.replicas` + manual Redis + PgBouncer | Deployments, Helm charts, VPA |
+| 4 (Scale Out) | Hard to auto-scale, manual replica management | HPA, rolling deploys, multi-node cluster |
 
-**When to migrate:** before Tier 3 is ideal — Redis, replicas, and multiple services are where Compose starts getting painful. But don't block scaling work on the migration.
+**When to migrate:** before or during Tier 3. Redis, replicas, and VPA are where Compose starts getting painful. But don't block scaling work on the migration.
 
 ---
 
 ## Decision Points Summary
 
-| Action | Tier | Trigger Metric | Effort | Owner |
-| -------- | ------ | --------------- | -------- | ------- |
-| Tune connection pool | 2 | Pool saturation warnings | 1h | coupette |
-| PgBouncer | 2 | > 30 total connections | 2-4h | infra |
-| Add DB indexes | 2 | Slow query log shows > 100ms queries | 2-4h | coupette |
-| pgvector HNSW index | 2 | Vector count > 30k or similarity p95 > 200ms | 1h | coupette |
-| API rate limiting | 2 | Any non-trivial user count (cost protection) | 1-2h | coupette or infra |
-| Embedding cache | 2 | Pipeline p95 dominated by embed step | 1-2h | coupette |
-| Backend replicas | 2 | Single worker CPU > 70% sustained | 2-4h | both |
-| Separate metrics port | 2 | `/metrics` publicly reachable or scraping noise in request metrics | 1-2h | both |
-| Redis cache | 3 | Repeated query ratio > 50% | 4-8h | both |
-| LLM response cache | 3 | Claude spend > $20/mo | 2-4h | coupette |
-| Read replica | 3 | Write contention or read p95 > 500ms | 2-3 days | both |
-| Bot webhooks | 3 | Polling load visible in backend metrics | 4-8h | both |
-| Async task queue | 4 | Recommendation queue depth > 10 concurrent | 8-16h | coupette |
-| SSE streaming | 4 | Synchronous pipeline latency unacceptable | 8-16h | coupette |
-| Response pre-computation | 4 | Cache miss rate > 50% on popular queries | 4-8h | coupette |
-| CDN | 4 | Global latency or bandwidth concerns | 1-2h | infra |
-| HPA (k3s) | 4 | Manual scaling becomes a weekly chore | 4-8h | infra |
-| VPS upgrade / multi-node | 4 | Available memory regularly < 500MB | varies | infra |
-| LLM fallback chain | 4 | Claude error rate > 1% or p95 > 5s | 4-8h | coupette |
-| Table partitioning | 4 | Query degradation despite indexes (10M+ rows) | 2-4h | coupette |
+| Action | Tier | Trigger Metric | Status |
+| -------- | ------ | --------------- | ------ |
+| Prometheus metrics | 1 Measure | — (foundational) | Done (#497) |
+| Facets parallelization | 1 Measure | Facets p95 approaching 500ms | Done (#509) |
+| Connection pool tuning | 1 Measure | Pool defaults unsuitable for parallel queries | Done (#509) |
+| k6 load testing | 1 Measure | — (foundational) | Done (#509) |
+| Missing indexes | 2 Optimize | Slow query log shows > 100ms queries | Planned |
+| pgvector HNSW index | 2 Optimize | Vector count > 30k or similarity p95 > 200ms | Planned |
+| API rate limiting | 2 Optimize | Any non-trivial user count (cost protection) | Planned |
+| Embedding cache (in-memory) | 2 Optimize | Pipeline p95 dominated by embed step | Planned |
+| Separate metrics port | 2 Optimize | `/metrics` publicly reachable or scraping noise | Planned |
+| Bot webhooks | 2 Optimize | Polling load visible in backend metrics | Planned |
+| VPS upgrade CX33 | 3 Scale Up | Memory pressure after Tier 2 optimizations | Planned |
+| PgBouncer | 3 Scale Up | Connection count approaching max_connections | Planned |
+| Redis cache | 3 Scale Up | Repeated query ratio > 50% | Planned |
+| LLM response cache (Redis) | 3 Scale Up | Claude spend > $20/mo | Planned |
+| Backend replicas | 3 Scale Up | Single worker CPU > 70% sustained | Planned |
+| VPA (recommend mode) | 3 Scale Up | Resource requests don't match actual usage | Planned |
+| Read replica | 3 Scale Up | Write contention or read p95 > 500ms | Planned |
+| Async task queue | 4 Scale Out | Recommendation queue depth > 10 concurrent | Planned |
+| SSE streaming | 4 Scale Out | Synchronous pipeline latency unacceptable | Planned |
+| Response pre-computation | 4 Scale Out | Cache miss rate > 50% on popular queries | Planned |
+| HPA | 4 Scale Out | Manual scaling becomes a weekly chore | Planned |
+| Multi-node k3s | 4 Scale Out | CX33 ceiling reached | Planned |
+| LLM fallback chain | 4 Scale Out | Claude error rate > 1% or p95 > 5s | Planned |
+| CDN | 4 Scale Out | Global latency or bandwidth concerns | Planned |
+| Table partitioning | 4 Scale Out | Query degradation despite indexes (10M+ rows) | Planned |
 
 ---
 
@@ -326,12 +304,12 @@ k3s is an **enabler, not a prerequisite** — every tier can be achieved with Do
 
 | Tier | Users | Monthly Cost | Biggest Cost Driver |
 |------|-------|-------------|-------------------|
-| 1 | 20 | ~$10 | VPS |
-| 2 | 200 | ~$25 | VPS upgrade |
-| 3 | 2,000 | ~$50-100 | LLM API calls |
-| 4 | 10,000+ | ~$150-400 | LLM API calls |
+| 1 Measure | 20 | ~$10 | VPS |
+| 2 Optimize | 200 | ~$10 | Same hardware, no new costs |
+| 3 Scale Up | 2,000 | ~$50-100 | CX33 + LLM API calls |
+| 4 Scale Out | 10,000+ | ~$150-400 | LLM API calls + multi-node |
 
-LLM costs dominate from Tier 3 onward. Caching and pre-computation are the primary cost controls. The infrastructure itself stays cheap on Hetzner.
+Tier 2 is the cheapest tier — pure optimization, no new infrastructure. LLM costs dominate from Tier 3 onward. Caching and pre-computation are the primary cost controls.
 
 ---
 
@@ -343,10 +321,12 @@ Each tier should be validated with load tests before and after changes. Tooling,
 
 | Tier | VUs | Scenarios | What you're measuring |
 | ---- | --- | --------- | --------------------- |
-| 1 (baseline) | 1-5 | Search, chat, watches | Latency baselines, where time goes |
-| 1→2 break | 10-50 ramp | Mixed workload | Find the actual break point |
-| 2 (after fixes) | 50 sustained | Same scenarios | Prove the fix worked |
-| 2→3 break | 100-200 ramp | Heavy on chat | Find the next bottleneck |
+| 1 Measure | 1-5 | Search, chat, watches | Latency baselines, where time goes |
+| 1→2 break | 10-50 ramp | Mixed workload | Find the CX22 break point |
+| 2 Optimize | 50 sustained | Same scenarios | Prove pure config/code fixes worked |
+| 2→3 break | 100-200 ramp | Heavy on chat | Find the single-node ceiling |
+| 3 Scale Up | 200 sustained | Full workload | Validate CX33 + Redis + replicas |
+| 3→4 break | 500-1000 ramp | Chat-heavy | Find the single-node CX33 ceiling |
 
 ### Considerations
 

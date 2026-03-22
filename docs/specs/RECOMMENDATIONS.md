@@ -369,8 +369,6 @@ The eval framework becomes unnecessary when the MCP server (Phase 7) replaces th
 2. Comparison data: "Phase 6 scored X, Phase 7 (same queries, human-judged) scored Y"
 3. The iteration workflow transfers to any RAG system
 
-See [specs/MCP_SERVER.md](MCP_SERVER.md) for the Phase 7 architecture.
-
 ---
 
 ## Constraints

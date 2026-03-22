@@ -175,4 +175,4 @@ SAQ scraping follows a sitemap-first approach for legal defensibility:
 - Never hotlink SAQ images
 - Respect all Disallow rules in robots.txt
 
-Scraper operations documented in [OPERATIONS.md](OPERATIONS.md).
+Scraper operations documented in [DEVELOPMENT.md](DEVELOPMENT.md#scraper).

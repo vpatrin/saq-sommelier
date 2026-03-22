@@ -367,7 +367,7 @@ sudo docker exec shared-postgres psql -U saq_sommelier -d saq_sommelier -c "SELE
 - NEVER write migration files manually — always use `make revision msg="description"` (requires running DB)
 - When a migration is needed, always suggest the exact `make revision msg="..."` command with a descriptive message
 - Victor generates and reviews migrations; Claude only modifies the model
-- See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#migrations) and [docs/OPERATIONS.md](docs/OPERATIONS.md#migrations) for full practices
+- See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#migrations) for full practices
 
 ### Scraping
 

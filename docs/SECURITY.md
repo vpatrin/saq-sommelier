@@ -35,10 +35,10 @@ Payloads older than 24 hours are rejected to prevent replay attacks.
 
 Two authentication paths through a single `verify_auth()` dependency:
 
-| Client | Method | Header |
-|--------|--------|--------|
-| Web app (future) | JWT bearer token | `Authorization: Bearer <token>` |
-| Bot → backend | Shared secret | `X-Bot-Secret: <secret>` |
+| Client         | Method           | Header                          |
+|----------------|------------------|---------------------------------|
+| Web app        | JWT bearer token | `Authorization: Bearer <token>` |
+| Bot → backend  | Shared secret    | `X-Bot-Secret: <secret>`        |
 
 Bot secret takes priority — if the header is present and valid, JWT validation is skipped and `verify_auth` returns `None` (no user context). Required in production, no-op when empty (dev convenience).
 
@@ -173,13 +173,13 @@ No rate limiting on the login endpoint yet (tech debt — Telegram's HMAC makes 
 
 ## CI/CD Security
 
-| Tool | What it catches | Where |
-|------|----------------|-------|
-| Dependabot | Outdated dependencies (pip + GitHub Actions) | Weekly PRs |
-| pip-audit | Known vulnerabilities in Python packages | CI per service |
-| gitleaks | Secrets committed in code | CI |
-| Hadolint | Dockerfile anti-patterns | CI |
-| Trivy | Container image vulnerabilities | CI on PR |
+| Tool       | What it catches                               | Where          |
+|------------|-----------------------------------------------|----------------|
+| Dependabot | Outdated dependencies (pip + GitHub Actions)  | Weekly PRs     |
+| pip-audit  | Known vulnerabilities in Python packages      | CI per service |
+| gitleaks   | Secrets committed in code                     | CI             |
+| Hadolint   | Dockerfile anti-patterns                      | CI             |
+| Trivy      | Container image vulnerabilities               | CI on PR       |
 
 ---
 
@@ -196,15 +196,17 @@ No rate limiting on the login endpoint yet (tech debt — Telegram's HMAC makes 
 
 ## Threat Model
 
-| Threat | Mitigation | Residual risk |
-|--------|-----------|---------------|
-| HMAC forgery | `hmac.compare_digest` (timing-safe), SHA256 key derivation | None — standard Telegram spec |
-| Auth replay | 24h `auth_date` freshness check | Replay within 24h window (acceptable) |
-| JWT theft | 7-day expiry, `is_active` check on every request | No revocation before expiry |
-| Invite brute-force | 128-bit entropy codes, single-use | Negligible |
-| Bot impersonation | `X-Bot-Secret` required in production | Compromised secret = full bot access |
-| Deactivated user access | `is_active` checked at JWT decode + bot middleware | Cached auth in bot (up to 1h stale) |
-| Backend down | Bot fails open with cached auth | Unauthenticated access during outage (bounded by cache TTL) |
+| Threat                  | Mitigation                                                     | Residual risk                                                   |
+|-------------------------|----------------------------------------------------------------|-----------------------------------------------------------------|
+| HMAC forgery            | `hmac.compare_digest` (timing-safe), SHA256 key derivation     | None — standard Telegram spec                                   |
+| Auth replay             | 24h `auth_date` freshness check                                | Replay within 24h window (acceptable)                           |
+| JWT theft               | 7-day expiry, `is_active` check on every request               | No revocation before expiry                                     |
+| Invite brute-force      | 128-bit entropy codes, single-use                              | Negligible                                                      |
+| Bot impersonation       | `X-Bot-Secret` required in production                          | Compromised secret = full bot access                            |
+| Deactivated user access | `is_active` checked at JWT decode + bot middleware             | Cached auth in bot (up to 1h stale)                              |
+| Backend down            | Bot fails open with cached auth                                | Unauthenticated access during outage (bounded by cache TTL)     |
+| XSS -> token theft      | React JSX auto-escaping, no `dangerouslySetInnerHTML`          | localStorage accessible to XSS (mitigate with CSP -- planned)  |
+| LLM API key leak        | Env vars only, never in frontend or logs, sops-encrypted prod  | Billing exposure if VPS compromised                             |
 
 ---
 
@@ -217,3 +219,35 @@ No rate limiting on the login endpoint yet (tech debt — Telegram's HMAC makes 
 - **Bot auth cache** — up to 1 hour stale. A deactivated user can keep using the bot for up to 1 hour after deactivation.
 
 ---
+
+## Security Log
+
+### 2026-02-15 — API hardening baseline (#72, #80)
+
+**Context:** First public-facing API endpoints going live — needed baseline security before any users touch it.
+**Action:** CORS lockdown (env-driven origins), Pydantic input validation with `max_length` on all string fields, Hadolint in CI for Dockerfile hygiene.
+
+### 2026-02-21 — CI security scanning (#194, #217)
+
+**Context:** Dependencies growing — manual dep auditing doesn't scale, needed automated gates before merge.
+**Action:** pip-audit + gitleaks in CI. Later hardened with timeouts and concurrency controls.
+
+### 2026-03-08 — Supply chain + secrets hardening (#313)
+
+**Context:** Preparing for auth system — unpinned installers are supply chain risk, special chars in DB password broke connections silently, production had no startup guards for required secrets.
+**Action:** Pinned Poetry installer hash, URL-encoded DB password in connection string, `BOT_SECRET` startup guard in production.
+
+### 2026-03-09 — Auth system (#353–#358)
+
+**Context:** Needed closed beta access control before shipping the web app. Re-login is one tap (Telegram Widget), so refresh token rotation complexity unjustified for wine app closed beta.
+**Decision:** Telegram OAuth + JWT + invite codes. HS256 over RS256 (single service, no token sharing). 7-day expiry, no refresh tokens.
+
+### 2026-03-09 — Container image scanning (#360)
+
+**Context:** Auth system shipping — containers now handle user credentials. pip-audit catches Python deps but misses OS-level CVEs.
+**Action:** Trivy scan on built Docker images in CI (PR checks + tag push).
+
+### 2026-03-19 — Deploy secrets encryption (#482)
+
+**Context:** Automated CD pipeline needed secrets on the runner without storing them in plaintext — GitHub Actions secrets are fine for CI, but the deploy script needs the full `.env`.
+**Action:** sops + age encryption for production secrets. Decrypted at deploy time only. Simpler than Vault for a single-VPS setup.

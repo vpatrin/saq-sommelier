@@ -119,7 +119,7 @@ Docker log rotation configured per service (10MB × 3 files = 30MB cap). Platfor
 
 - Build + Trivy + push to GHCR on tag push
 - `docker-compose.prod.yml` — GHCR images, restart policies, no dev volumes
-- Automated deploy on tag push via SSH — see [PRODUCTION.md](PRODUCTION.md)
+- Automated deploy on tag push via SSH — see [DEVELOPMENT.md](DEVELOPMENT.md#deploy)
 - Production secrets encrypted with sops + age, decrypted at deploy time
 - GitHub Release auto-created with changelog on tag push
 - Production environment with main-only deployment branch policy and tag protection
@@ -130,7 +130,7 @@ Docker log rotation configured per service (10MB × 3 files = 30MB cap). Platfor
 - Dev: `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d` (postgres only, services run bare-metal for hot reload)
 - Prod: full compose with GHCR images
 
-See [PRODUCTION.md](PRODUCTION.md) for deploy process. Systemd timers and backup scheduling are documented in the [infra SERVICE_CATALOG.md](https://github.com/vpatrin/infra/blob/main/docs/SERVICE_CATALOG.md).
+See [DEVELOPMENT.md](DEVELOPMENT.md#deploy) for deploy process. Systemd timers and backup scheduling are documented in the [infra SERVICE_CATALOG.md](https://github.com/vpatrin/infra/blob/main/docs/SERVICE_CATALOG.md).
 
 ---
 

@@ -5,7 +5,6 @@
 SAQ.com already lets you browse, search, and filter wines. The bot's value is **proactive intelligence** — things SAQ doesn't do:
 
 - Alert you when a watched wine goes out of stock or comes back
-- Natural language wine recommendations via Claude RAG + pgvector
 - Push a weekly digest of new arrivals and restocks to a group chat (planned)
 
 Target audience: ~20 friends in a private group chat.
@@ -14,7 +13,6 @@ Target audience: ~20 friends in a private group chat.
 
 | Command | Description | Example |
 |---|---|---|
-| `/recommend <query>` | Natural language wine recommendations | `/recommend bold red under 30$` |
 | `/watch <sku or url>` | Get alerts for availability changes | `/watch 10327701` |
 | `/unwatch <sku or url>` | Stop watching a wine | `/unwatch 10327701` |
 | `/alerts` | List your watched wines with inline remove buttons | `/alerts` |
@@ -92,7 +90,6 @@ Endpoints the bot needs from the backend:
 
 | Bot feature | API endpoint | Status |
 |---|---|---|
-| `/recommend` | `POST /recommendations` | Done (#155, #156) |
 | `/watch` | `POST /watches`, `DELETE /watches/{sku}` | Done (#101) |
 | `/alerts` | `GET /watches?user_id=` | Done (#101) |
 | Product lookup (URL paste) | `GET /products/{sku}` | Done (#34) |

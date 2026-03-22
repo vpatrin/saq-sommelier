@@ -1,242 +1,257 @@
-# Development Guide
+# Development & Operations
 
-## Prerequisites
+Cold-start guide + production ops. If you're back after months away, start here.
 
-- Python 3.12+
-- [Poetry](https://python-poetry.org/docs/#installation)
-- Node.js 24+ and [Yarn](https://classic.yarnpkg.com/) (for frontend)
-- Docker (for PostgreSQL)
+VPS-level infrastructure (firewall, SSH, TLS, networking) lives in the [infra repo](https://github.com/vpatrin/infra/blob/main/docs/INFRASTRUCTURE.md).
 
-## Setup
+---
 
-```bash
-make install              # install all Python + frontend dependencies
-cp .env.example .env      # fill in required values (see Environment below)
-make run-db               # start PostgreSQL (localhost:5432)
-make migrate              # create database tables
-make create-admin         # seed admin user (required — backend won't start without it)
-make dev-scraper          # populate the database (~14k wine products)
-make dev-backend          # start the backend (localhost:8001)
-make dev-frontend         # start the frontend (localhost:5173)
-```
+## Getting running
 
-Or skip Poetry entirely and run everything in Docker:
+Prerequisites: Python 3.12+, [Poetry](https://python-poetry.org/docs/#installation), Node.js 24+, [Yarn](https://classic.yarnpkg.com/), Docker.
 
 ```bash
-cp .env.example .env      # fill in required values
-make run                  # postgres + backend + bot (with hot reload)
-make migrate              # create database tables
-make create-admin         # seed admin user
-make run-scraper          # populate the database
+make install              # Python + frontend deps
+cp .env.example .env      # fill in values — the file documents itself
+make run-db               # PostgreSQL on localhost:5432
+make migrate              # create tables
+make create-admin         # seed admin user (backend won't start without it)
+make dev-scraper          # populate DB (~14k products)
+make dev-backend          # API on localhost:8001
+make dev-frontend         # SPA on localhost:5173
 ```
 
-Note: the frontend runs bare-metal only (`yarn dev`) — not in Docker. Hot reload matters.
+Or skip Poetry and run everything in Docker: `make run` (see `make help` for all targets).
 
-## Environment
+Frontend always runs bare-metal (`yarn dev`) — hot reload matters.
 
-All services read from a single root `.env` file. See [.env.example](../.env.example) for all available variables.
+## How the pieces connect
 
-### Required
+Each service is a separate Poetry project with its own Dockerfile. They share a PostgreSQL database and a `core/` package (models, Alembic, settings).
 
-| Variable | Description |
-|----------|-------------|
-| `DB_USER` | PostgreSQL username |
-| `DB_PASSWORD` | PostgreSQL password |
-| `DB_NAME` | Database name |
-| `ADMIN_TELEGRAM_ID` | Your Telegram user ID (for admin bootstrap) |
+- **Backend** (FastAPI) — API on `:8001`, needs `ANTHROPIC_API_KEY` + `OPENAI_API_KEY` for AI features
+- **Bot** (python-telegram-bot) — polls Telegram in dev, calls backend API. Needs `TELEGRAM_BOT_TOKEN`
+- **Scraper** — one-shot batch job, not a service. See [Scraper](#scraper)
+- **Frontend** (React/Vite) — SPA on `:5173`, proxies to backend
 
-### Optional (with defaults)
+All env vars are in `.env.example` with descriptions.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DB_HOST` | `localhost` | Database host |
-| `DB_PORT` | `5432` | Database port |
-| `ENVIRONMENT` | `development` | `development` or `production` |
-| `LOG_LEVEL` | `INFO` | Logging level |
-| `DEBUG` | `false` | Debug mode |
-| `DATABASE_ECHO` | `false` | Log SQL queries |
-| `SCRAPE_LIMIT` | `500` | Max products to scrape per run (0 = full catalog) |
+## Infra coupling
 
-### Service-specific
+This repo and [`empire/infra`](https://github.com/vpatrin/infra) share a VPS (Hetzner CX22, Debian 13). They're coupled through:
 
-| Variable | Required for | Description |
-|----------|-------------|-------------|
-| `TELEGRAM_BOT_TOKEN` | bot | Token from @BotFather |
-| `BOT_SECRET` | bot + backend | Shared secret for bot → backend auth |
-| `BACKEND_URL` | bot | API URL (default: `http://localhost:8001`) |
-| `NOTIFICATION_POLL_INTERVAL` | bot | Notification poll interval in seconds |
-| `ANTHROPIC_API_KEY` | backend | Claude API key (intent parsing, curation, chat) |
-| `OPENAI_API_KEY` | backend + scraper | OpenAI API key (embeddings) |
-| `JWT_SECRET_KEY` | backend | JWT signing key |
-| `CORS_ORIGINS` | backend | Allowed origins (default: `["http://localhost:5173"]`) |
-| `VITE_TELEGRAM_BOT_USERNAME` | frontend | Bot username for Telegram Login Widget |
+- **Docker network**: `internal` (external, defined in infra's compose). All containers communicate by name.
+- **Caddy routing** (infra's `services/caddy/Caddyfile`): `coupette.club/api/*` → `coupette-backend:8001`, `coupette.club/*` → static SPA from `/srv/coupette`
+- **shared-postgres**: container defined in infra, used by coupette services
 
-## Make targets
+| | coupette/ | infra/ |
+| --- | --------- | ------ |
+| **Owns** | App containers, docker-compose.yml, CI, Alembic, deploy | Caddy, DNS, shared-postgres, Docker network, backups |
+| **Deploys** | Build → GHCR → restart app containers | `git pull && docker compose up -d` |
+
+**Cross-repo changes:** new route/subdomain → Caddyfile PR in infra. Container name or port change → update both compose files. New systemd timer → infra owns the timer inventory.
+
+## Testing
 
 ```bash
-# Development
-make install         # poetry install (all Python services) + yarn install (frontend)
-make dev-backend     # uvicorn backend on localhost:8001
-make dev-bot         # telegram bot in polling mode
-make dev-scraper     # run the scraper
-make dev-frontend    # vite dev server on localhost:5173
-make migrate         # alembic upgrade head
-make create-admin    # seed admin user
-make reset-db        # wipe all data and recreate tables
-
-# Quality
-make lint            # ruff check (Python) + eslint + typecheck (frontend)
-make format          # ruff format (Python) + prettier (frontend)
-make test            # pytest (all Python services)
-make coverage        # tests + coverage badges
-
-# Docker
-make build           # build all service images
-make run             # full Docker dev stack (postgres + backend + bot)
-make run-db          # postgres only (for bare-metal dev)
-make run-scraper     # one-shot scrape (Docker)
-make down            # stop all containers
-
-# Cleanup
-make clean           # remove __pycache__, .pytest_cache, .ruff_cache
+make test          # all Python services (mocked DB, no live deps)
+make test-backend  # single service
+make coverage      # with badges
+make lint          # ruff + eslint + typecheck
+make format        # ruff + prettier
 ```
 
-## Working on the frontend
+---
 
-The frontend is a React SPA built with Vite, TypeScript, Tailwind CSS, and shadcn/ui. It runs bare-metal (not in Docker) for fast hot reload.
+## Deploy
+
+Two deploy paths via [cd.yml](../.github/workflows/cd.yml):
+
+### Feature release (tag push)
+
+For user-facing changes. Tag on main, push the tag.
 
 ```bash
-make dev-frontend         # vite dev server on localhost:5173
+git tag -a v1.6.0 -m "v1.6.0"
+git push origin main --tags
 ```
 
-The frontend expects the backend running on `localhost:8001`. Run `make dev-backend` in another terminal.
+**Flow:** tag push → build + scan + push to GHCR → GitHub Release (from CHANGELOG) → deploy to VPS
+
+Tags are semver, reflect user-facing releases only. Internal changes (CI, observability, infra) don't get tags.
+
+### Infra deploy (workflow dispatch)
+
+For CI/CD, observability, deploy script, or config changes that don't affect users.
 
 ```bash
-# Lint and format
-make lint-frontend        # eslint + typecheck + format check
-make format-frontend      # prettier
-
-# Build for production
-make build-frontend       # typecheck + vite build
+gh workflow run CD -f commit=<SHA>
 ```
 
-## Working on the scraper
+**Flow:** dispatch → build from commit + push to GHCR (tagged `sha-<SHA>`) → deploy to VPS (no GitHub Release)
 
-The scraper is a one-shot batch job (not a long-running service). It fetches the SAQ sitemap and upserts products into PostgreSQL. See [OPERATIONS.md](OPERATIONS.md) for production scheduling.
+### What the deploy does
+
+`deploy_backend.sh`: decrypt secrets → pull GHCR images → sync systemd units → migrate → bootstrap admin → restart → health check
+
+Frontend: `yarn build` with version as `VITE_APP_VERSION`, SCP to `/srv/coupette`
+
+### Verify
 
 ```bash
-make dev-scraper          # run the scraper (upserts ~14k wine products)
+curl -s localhost:8001/health     # backend responds
+# message the bot on Telegram    # bot responds
+systemctl status coupette-scraper.timer       # timer active, next run scheduled
+systemctl status coupette-availability.timer  # timer active, next run scheduled
 ```
 
-When iterating on parser logic, wipe the database first to test from a clean state:
+### Rollback
 
 ```bash
-make reset-db && make dev-scraper
+# Tag release — redeploy previous tag (images already in GHCR)
+cd /opt/coupette && git checkout vPREVIOUS && IMAGE_TAG=vPREVIOUS SOPS_AGE_KEY=... ./deploy/deploy_backend.sh
+
+# Dispatch deploy — redeploy previous commit
+gh workflow run CD -f commit=<previous-SHA>
 ```
 
-`make reset-db` runs `alembic downgrade base && alembic upgrade head` — drops all tables and recreates them. This also validates that your migrations work in both directions.
+Migrations are forward-only — never run `downgrade()` in production. See [Migrations](#migrations).
 
-## Working on the backend
+---
 
-The backend runs with hot reload — edit code, save, and uvicorn restarts automatically.
+## Scraper
+
+The scraper is a one-shot batch job, not a long-running service. Each run:
+
+1. Fetches the SAQ sitemap index and all sub-sitemaps
+2. Validates URLs against SAQ's `robots.txt` via `urllib.robotparser` — disallowed URLs are skipped, and the run aborts if `robots.txt` is unreachable
+3. Filters non-product URLs (only numeric SKU paths are scraped)
+4. Compares sitemap `lastmod` dates against DB `updated_at` (incremental — skips unchanged products)
+5. Scrapes only new/updated product pages, upserts to PostgreSQL
+6. Detects delisted products (in DB but not in sitemap) and marks them with `delisted_at`
+7. Relists products that reappear in the sitemap
+8. Exits with a named status code: `EXIT_OK` (0), `EXIT_PARTIAL` (1), `EXIT_FATAL` (2)
+
+A typical incremental run scrapes ~50-200 products instead of the full ~38k catalog.
+
+### Store directory
+
+Store population is separate from the weekly product scrape:
 
 ```bash
-make dev-backend          # start on localhost:8001
+docker compose run --rm scraper python -m scraper stores
 ```
 
-API docs (Swagger UI) are available at [localhost:8001/docs](http://localhost:8001/docs).
+SAQ stores rarely change. Run on first deploy and again whenever a store opens or closes. Upsert is idempotent.
 
-The backend expects a populated database. If you see empty responses, run `make dev-scraper` first.
+### Production scheduling
 
-## Working on the bot
-
-The Telegram bot runs in polling mode locally — no webhook or public URL needed.
+Weekly via **systemd timer**. Source files: [`deploy/systemd/coupette-scraper.service`](../deploy/systemd/coupette-scraper.service) and [`deploy/systemd/coupette-scraper.timer`](../deploy/systemd/coupette-scraper.timer).
 
 ```bash
-make dev-bot              # start polling (requires TELEGRAM_BOT_TOKEN in .env)
+# Install
+sudo cp deploy/systemd/coupette-scraper.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now coupette-scraper.timer
+
+# Status
+systemctl status coupette-scraper.timer
+journalctl -u coupette-scraper.service -n 50 --no-pager
+
+# Manual trigger
+sudo systemctl start coupette-scraper.service
 ```
 
-Get a token from [@BotFather](https://t.me/BotFather) on Telegram and add it to `.env`. The bot calls the backend API, so run `make dev-backend` in another terminal first.
+`Persistent=true` means if the VPS was off during the scheduled time, it runs on next boot.
 
-## Docker
+The service assumes `WorkingDirectory=/opt/coupette`. If your repo lives elsewhere, symlink it or edit the installed service file.
 
-Two workflows, choose whichever fits:
+### Failure recovery
 
-### Full stack in Docker (no Poetry required)
+The scraper is **idempotent**. If a run crashes at product 1000/38000, the next run's incremental filter skips already-saved products and picks up the rest.
+
+**No auto-retry by design.** Weekly cadence is sufficient — retrying every 5 minutes when SAQ is down wastes resources and isn't ethical scraping.
+
+### Exit codes
+
+Defined in `scraper/src/constants.py`.
+
+| Code | Constant | Meaning | Action |
+| ---- | -------- | ------- | ------ |
+| `0` | `EXIT_OK` | Clean run | None |
+| `1` | `EXIT_PARTIAL` | Some products failed | Check logs, usually transient |
+| `2` | `EXIT_FATAL` | Nothing saved | Investigate — SAQ down or DB unreachable |
+
+### Robots.txt compliance
+
+The scraper programmatically enforces SAQ's `robots.txt`:
+
+- Fetches and parses `robots.txt` on startup via `urllib.robotparser`
+- Each URL checked with `can_fetch()` — disallowed paths skipped with warning
+- If `robots.txt` is unreachable, the run **aborts** (fail-safe over fail-open)
+
+---
+
+## Availability checker
+
+Daily job that refreshes online and in-store availability from Adobe Live Search, detects transitions for watched products, and emits `StockEvent` alerts. Runs as `python -m scraper availability`.
+
+See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md) § Availability Check for full architecture.
+
+### How it works
+
+1. Queries Adobe `inStock=true` (~4k products) → `online_availability` + `store_availability`
+2. Queries Adobe Montreal stores `in` filter (~9.5k products) → En succursale availability, deduped by SKU
+3. Bulk-updates `online_availability` and `store_availability` on the `products` table
+4. Compares previous vs new availability for watched products → emits `StockEvent` on transitions
+5. Purges stock events older than 7 days
+
+Runtime: ~1 min. Scope: all categories (wine, spirits, beer, cider).
+
+### Scheduling
+
+Daily at 2am via systemd timer. On Mondays, the infra backup timer also runs at 2am — see [infra SERVICE_CATALOG.md](https://github.com/vpatrin/infra/blob/main/docs/SERVICE_CATALOG.md) for the full timer schedule.
+
+Source files: [`deploy/systemd/coupette-availability.service`](../deploy/systemd/coupette-availability.service) and [`deploy/systemd/coupette-availability.timer`](../deploy/systemd/coupette-availability.timer).
 
 ```bash
-make run                  # postgres + backend + bot (hot reload via volume mounts)
-make run-scraper          # one-shot scrape (docker compose run)
-make down                 # stop everything
+# Install
+sudo cp deploy/systemd/coupette-availability.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now coupette-availability.timer
+
+# Status and logs
+systemctl status coupette-availability.timer
+journalctl -u coupette-availability.service -n 50 --no-pager
+
+# Manual trigger
+sudo systemctl start coupette-availability.service
 ```
 
-Volume mounts and `--reload` are baked into `docker-compose.yml`. Edit code locally, changes are picked up in the container. For the bot, restart the container after changes (`docker compose restart bot`).
+### Resilience
 
-### Bare-metal dev (Poetry + containerized postgres)
+Idempotent — if it crashes mid-run, the next run re-diffs from the last saved snapshot. Worst case: a missed transition gets detected 24 hours late. Same no-auto-retry policy as the scraper.
 
-```bash
-make run-db               # postgres only
-make dev-backend          # uvicorn with --reload
-make dev-frontend         # vite with HMR
-make dev-bot              # telegram bot polling
-make dev-scraper          # one-shot scrape
-make down                 # stop postgres
-```
-
-### Building images
-
-```bash
-make build                # build all service images (backend, scraper, bot)
-make build-backend        # build backend only
-make build-scraper        # build scraper only
-make build-bot            # build bot only
-```
-
-## Running tests
-
-```bash
-# All Python services
-make test
-
-# Single service
-make test-backend
-make test-scraper
-make test-bot
-
-# With coverage
-make coverage
-```
-
-Tests use mocked database sessions and external API calls (no live PostgreSQL or API keys required).
+---
 
 ## Migrations
 
-The model (`core/db/models.py`) is the source of truth for the DB schema. Alembic generates migrations by diffing the model against the live database.
-
-### Workflow
-
-```bash
-# 1. Edit the model
-vim core/db/models.py
-
-# 2. Autogenerate migration (requires running DB)
-make revision msg="add alcohol column"
-
-# 3. Review the generated file in core/alembic/versions/
-
-# 4. Apply
-make migrate
-
-# 5. Commit model + migration together
-git add core/db/models.py core/alembic/versions/xxxx_*.py
-```
-
 ### Rules
 
-- **Model = source of truth** — columns, indexes, constraints all defined on the model
+- **Model = source of truth** — columns, indexes, constraints all defined on `core/db/models.py`
 - **Forward-only in production** — never run `downgrade()` in prod; write a new migration to fix mistakes
 - **`downgrade()` is a dev convenience** — `make reset-db` uses it to replay from scratch
-- **Autogenerate detects** new/removed columns, indexes, type changes — but NOT column renames (sees drop+add) or data migrations; hand-add those
+- **Autogenerate limitations** — detects new/removed columns, indexes, type changes; does NOT detect column renames (sees drop+add) or data migrations — hand-add those
+
+### Backward-compatible deploys
+
+If old code and new code run simultaneously during a rolling deploy:
+
+1. Add columns as **nullable** (old code ignores them)
+2. Backfill data in a follow-up migration
+3. Add NOT NULL constraints only after backfill is complete
+
+Never rename or drop a column that old code still reads.
 
 ### Quick reference
 

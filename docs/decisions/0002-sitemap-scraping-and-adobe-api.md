@@ -7,15 +7,19 @@
 
 Coupette needs wine catalog data from the SAQ (Société des alcools du Québec). Web scraping is in a legal grey zone in Canada. We need a strategy that is legally defensible, technically reliable, and provides enough product detail for recommendations.
 
-## How it evolved
-
 Started with **pure sitemap + HTML scraping** (Feb 2026) — legally conservative (only fetching URLs SAQ publishes in `robots.txt`), but brittle. SAQ's markup varied across pages, some attributes were missing from HTML, and in-store availability only rendered via JavaScript.
 
-While debugging availability in the browser's network console, discovered SAQ's frontend calls an **Adobe Live Search GraphQL endpoint** (`livesearch.adobe.io`) — public, no auth, structured data. Pivoted to a hybrid: sitemap for product discovery (legal basis), Adobe API for enrichment (tasting notes, grape varieties) and store-level availability.
+While debugging availability in the browser's network console, discovered SAQ's frontend calls an **Adobe Live Search GraphQL endpoint** (`livesearch.adobe.io`) — public, no auth, structured data. This discovery opened a hybrid approach.
+
+## Options considered
+
+1. **Pure HTML scraping** — sitemap URLs → parse HTML for all product data. Legally conservative but brittle (markup changes break extraction, JS-rendered data inaccessible).
+2. **Adobe API only** — skip sitemap, query Adobe for everything. Structured data but no legal basis (no `robots.txt` reference), and API could change without notice.
+3. **Hybrid: sitemap for discovery, Adobe API for enrichment** — sitemap provides the legal basis and product catalog; Adobe API fills in tasting notes, grape varieties, and store-level availability.
 
 ## Decision
 
-Hybrid approach with staged commands, each independently runnable:
+Option 3: hybrid approach with staged commands, each independently runnable:
 
 1. `scrape-products` — sitemap → HTML → base product data → DB
 2. `scrape-enrich` — Adobe API → wine attributes, tasting notes → DB
@@ -30,16 +34,8 @@ One-shot batch job model: scraper runs via systemd timer (weekly for catalog, da
 - **Legal defensibility.** SAQ's `robots.txt` explicitly lists sitemap URLs. Fetching only those URLs is the most conservative position. Adobe API is a public endpoint called by SAQ's own frontend — no auth bypass, no rate limit evasion.
 - **Reliability.** Structured API responses don't break when SAQ redesigns their HTML. The sitemap still provides the full catalog (~38k SKUs, filtered to ~14k wine post-scrape).
 - **Staged pipeline.** Each command can fail independently — enrichment failure doesn't block base scraping. Each stage is resumable and idempotent.
-- **Batch over daemon.** A one-shot job with systemd `Persistent=true` is simpler to monitor (exit codes), debug (run manually), and schedule than a long-running process with internal timers. No heartbeat, no connection pool lifecycle, no graceful shutdown logic.
-
-## Ethical constraints (self-imposed)
-
-- Rate limit: minimum 2 seconds between requests
-- Transparent User-Agent identification
-- Never copy SAQ descriptions verbatim in user-facing output
-- Always attribute SAQ as the data source
-- Respect all `robots.txt` Disallow rules (`urllib.robotparser`)
-- Abort if `robots.txt` is unreachable (fail-safe)
+- **Batch over daemon.** A one-shot job with systemd `Persistent=true` is simpler to monitor (exit codes), debug (run manually), and schedule than a long-running process with internal timers.
+- **Ethical self-constraints.** Rate limit (min 2s between requests), transparent User-Agent, never copy SAQ descriptions verbatim, always attribute SAQ as data source, respect all `robots.txt` Disallow rules, abort if `robots.txt` is unreachable (fail-safe).
 
 ## Consequences
 
