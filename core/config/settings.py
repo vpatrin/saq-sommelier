@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     # Optional: override the full URL directly (e.g. in Docker Compose)
     DATABASE_URL: str | None = None
 
+    # Connection pool — sized for concurrent queries (e.g., facets runs 5 in parallel)
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_TIMEOUT: int = 5
+
     # Debug / Logging
     LOG_LEVEL: str = "INFO"
     DEBUG: bool = False

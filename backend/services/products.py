@@ -1,6 +1,7 @@
+import asyncio
 from decimal import Decimal
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from backend.exceptions import NotFoundError
 from backend.repositories.products import (
@@ -104,7 +105,7 @@ async def get_random_product(
 
 
 async def get_facets(
-    db: AsyncSession,
+    session_factory: async_sessionmaker[AsyncSession],
     *,
     category: list[str] | None = None,
     available: bool | None = None,
@@ -112,28 +113,30 @@ async def get_facets(
     wine_scope: bool = False,
 ) -> FacetsOut:
     """Fetch distinct filter values and price range for active products."""
-    # ? asyncio.gather would be faster here, but requires separate sessions —
-    # ? a single AsyncSession can't run concurrent queries on the same connection.
     availability_filters = dict(
         available=available,
         in_stores=in_stores,
         wine_scope=wine_scope,
     )
+
+    # Each query gets its own session — asyncio.gather needs independent connections.
+    async def _run(fn, *args, **kwargs):
+        async with session_factory() as s:
+            return await fn(s, *args, **kwargs)
+
+    #! Order must match destructuring — tests mock by position
     # * Categories skip availability filters — chip list shows all categories
     # regardless of online/in-store toggles.
-    categories = await get_distinct_values(db, Product.category, wine_scope=wine_scope)
-    country_rows = await get_distinct_values_by_count(
-        db,
-        Product.country,
-        category=category,
-        **availability_filters,
+    categories, country_rows, regions, grapes, price_result = await asyncio.gather(
+        _run(get_distinct_values, Product.category, wine_scope=wine_scope),
+        _run(
+            get_distinct_values_by_count, Product.country, category=category, **availability_filters
+        ),
+        _run(get_distinct_values, Product.region, category=category, **availability_filters),
+        _run(get_distinct_values, Product.grape, category=category, **availability_filters),
+        _run(get_price_range, category=category, **availability_filters),
     )
     countries = [CountryFacet(name=name, count=cnt) for name, cnt in country_rows]
-    regions = await get_distinct_values(
-        db, Product.region, category=category, **availability_filters
-    )
-    grapes = await get_distinct_values(db, Product.grape, category=category, **availability_filters)
-    price_result = await get_price_range(db, category=category, **availability_filters)
 
     # Build grouped categories — preserves CATEGORY_GROUPS definition order
     grouped = group_facets(categories)

@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Path, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from backend.config import (
     DEFAULT_LIMIT,
@@ -12,7 +12,7 @@ from backend.config import (
     MAX_SEARCH_LENGTH,
     MAX_SKU_LENGTH,
 )
-from backend.db import get_db
+from backend.db import get_db, get_session_factory
 from backend.schemas.product import FacetsOut, PaginatedOut, ProductOut
 from backend.services.products import get_facets, get_product, get_random_product, list_products
 
@@ -67,11 +67,11 @@ async def get_product_facets(
         default=None
     ),
     scope: Literal["wine", "all"] = Query(default="wine"),
-    db: AsyncSession = Depends(get_db),
+    session_factory: async_sessionmaker[AsyncSession] = Depends(get_session_factory),
 ) -> FacetsOut:
     """Return distinct filter values and price range for the catalog."""
     return await get_facets(
-        db,
+        session_factory,
         category=category,
         available=available,
         in_stores=in_stores,

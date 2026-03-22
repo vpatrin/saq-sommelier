@@ -32,6 +32,12 @@ htmlcov/
 # Scripts (exploration tools, not needed in containers)
 scripts/
 
+# Tests, benchmarks, evals (dev-only)
+*/tests/
+backend/benchmarks/
+backend/eval/
+benchmarks/
+
 # Local env files
 .env
 .env.local

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Facets endpoint runs 5 DB queries concurrently via `asyncio.gather` instead of sequentially — ~3.5× faster (p95: 910ms → ~250ms expected)
+- Explicit connection pool config (`pool_size=10, max_overflow=10, pool_timeout=5s`) to prevent pool exhaustion from concurrent facets queries
+
 ## [1.5.0] - 2026-03-19
 
 ### Added

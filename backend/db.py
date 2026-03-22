@@ -7,7 +7,14 @@ from core.config.settings import settings
 
 # Raw SQL async engine and sessionmaker, without ORM models.
 # Used for Alembic migrations and low-level DB checks.
-engine = create_async_engine(settings.database_url, echo=settings.DATABASE_ECHO)
+engine = create_async_engine(
+    settings.database_url,
+    echo=settings.DATABASE_ECHO,
+    pool_size=settings.DB_POOL_SIZE,
+    max_overflow=settings.DB_MAX_OVERFLOW,
+    pool_timeout=settings.DB_POOL_TIMEOUT,
+    pool_pre_ping=True,
+)
 SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -26,3 +33,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
+
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Return the session factory for endpoints that create their own sessions."""
+    return SessionLocal

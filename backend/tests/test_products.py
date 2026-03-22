@@ -11,7 +11,7 @@ from sqlalchemy import select
 
 from backend.app import app
 from backend.config import MAX_FILTER_LENGTH, MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
-from backend.db import get_db
+from backend.db import get_db, get_session_factory
 from backend.repositories.products import (
     _apply_filters,
     find_by_sku,
@@ -410,30 +410,44 @@ def _mock_rows_result(rows: list[tuple]):
     return result
 
 
-def _mock_db_for_facets(
+def _mock_session_factory_for_facets(
     categories: list[str],
     country_rows: list[tuple],
     regions: list[str],
     grapes: list[str],
     price_row: tuple,
 ):
-    """Mock async session for facets — 5 sequential execute calls."""
-    session = AsyncMock()
-    session.execute = AsyncMock(
-        side_effect=[
-            _mock_scalars_result(categories),
-            _mock_rows_result(country_rows),
-            _mock_scalars_result(regions),
-            _mock_scalars_result(grapes),
-            _mock_row_result(price_row),
-        ]
+    """Mock session factory for facets — each call returns a session for one query."""
+    #! Order-sensitive: results map by position to asyncio.gather in get_facets.
+    #! If gather order changes there, update the results list here.
+    results = [
+        _mock_scalars_result(categories),
+        _mock_rows_result(country_rows),
+        _mock_scalars_result(regions),
+        _mock_scalars_result(grapes),
+        _mock_row_result(price_row),
+    ]
+    call_index = 0
+
+    def _make_session():
+        nonlocal call_index
+        session = AsyncMock()
+        session.execute = AsyncMock(return_value=results[call_index])
+        call_index += 1
+        return session
+
+    factory = MagicMock()
+    # session_factory() returns a context manager (async with session_factory() as s)
+    factory.side_effect = lambda: AsyncMock(
+        __aenter__=AsyncMock(side_effect=_make_session),
+        __aexit__=AsyncMock(return_value=False),
     )
-    return session
+    return factory
 
 
 def test_facets_response_shape():
     """Facets endpoint returns all expected keys with sorted values."""
-    session = _mock_db_for_facets(
+    factory = _mock_session_factory_for_facets(
         categories=["Vin blanc", "Vin rouge"],
         country_rows=[("France", 10), ("Italie", 5)],
         regions=["Bordeaux", "Toscane"],
@@ -441,7 +455,7 @@ def test_facets_response_shape():
         price_row=(Decimal("8.99"), Decimal("450.00")),
     )
 
-    app.dependency_overrides[get_db] = lambda: session
+    app.dependency_overrides[get_session_factory] = lambda: factory
     client = TestClient(app)
     resp = client.get("/api/products/facets")
     assert resp.status_code == status.HTTP_200_OK
@@ -460,7 +474,7 @@ def test_facets_response_shape():
 
 def test_facets_empty_catalog():
     """Empty catalog returns empty lists and null price range."""
-    session = _mock_db_for_facets(
+    factory = _mock_session_factory_for_facets(
         categories=[],
         country_rows=[],
         regions=[],
@@ -468,7 +482,7 @@ def test_facets_empty_catalog():
         price_row=(None, None),
     )
 
-    app.dependency_overrides[get_db] = lambda: session
+    app.dependency_overrides[get_session_factory] = lambda: factory
     client = TestClient(app)
     resp = client.get("/api/products/facets")
     assert resp.status_code == status.HTTP_200_OK
@@ -482,7 +496,7 @@ def test_facets_empty_catalog():
 
 def test_facets_no_prices():
     """Products exist but none have prices — lists populated, price_range null."""
-    session = _mock_db_for_facets(
+    factory = _mock_session_factory_for_facets(
         categories=["Vin rouge"],
         country_rows=[("France", 1)],
         regions=["Bordeaux"],
@@ -490,7 +504,7 @@ def test_facets_no_prices():
         price_row=(None, None),
     )
 
-    app.dependency_overrides[get_db] = lambda: session
+    app.dependency_overrides[get_session_factory] = lambda: factory
     client = TestClient(app)
     resp = client.get("/api/products/facets")
     assert resp.status_code == status.HTTP_200_OK
