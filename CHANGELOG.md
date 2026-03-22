@@ -7,10 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-03-21
+
+### Added
+
+- Prometheus metrics endpoint for API observability (#497)
+
 ### Fixed
 
-- Facets endpoint runs 5 DB queries concurrently via `asyncio.gather` instead of sequentially — ~3.5× faster (p95: 910ms → ~250ms expected)
-- Explicit connection pool config (`pool_size=10, max_overflow=10, pool_timeout=5s`) to prevent pool exhaustion from concurrent facets queries
+- Facets endpoint runs 5 DB queries concurrently via `asyncio.gather` instead of sequentially — ~3.5× faster (p95: 910ms → ~250ms expected) (#508)
+- Explicit connection pool config (`pool_size=10, max_overflow=10, pool_timeout=5s`) to prevent pool exhaustion from concurrent facets queries (#508)
+- Frontend deploy: build in CI runner, clear old assets before SCP (#487, #488)
+- Docker healthcheck in deploy script (#496)
+
+### Changed
+
+- Docker Compose refactored into base/prod/dev overlay layers (#491)
+- CD pipeline supports manual infra deploys via workflow_dispatch (#500)
 
 ## [1.5.0] - 2026-03-19
 
@@ -194,7 +207,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker Compose deployment with Caddy reverse proxy
 - CI pipeline with per-service linting, testing, and coverage thresholds
 
-[Unreleased]: https://github.com/vpatrin/coupette/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/vpatrin/coupette/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/vpatrin/coupette/compare/v1.5.0...v1.5.1
+[1.5.0]: https://github.com/vpatrin/coupette/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/vpatrin/coupette/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/vpatrin/coupette/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/vpatrin/coupette/compare/v1.2.0...v1.3.0
