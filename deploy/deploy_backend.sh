@@ -54,7 +54,8 @@ done
 
 if [[ "${UNITS_CHANGED}" -eq 1 ]]; then
   sudo systemctl daemon-reload
-  sudo systemctl enable --now coupette-scraper.timer coupette-availability.timer
+  sudo systemctl enable --now coupette-scraper.timer
+  sudo systemctl enable --now coupette-availability.timer
   echo "  systemd units reloaded"
 else
   echo "  systemd units unchanged"
