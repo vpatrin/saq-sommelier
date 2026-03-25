@@ -210,21 +210,23 @@ coverage: coverage-backend coverage-scraper coverage-bot
 
 # --- Audit ---
 
+PIP_AUDIT_IGNORE := $(shell grep -v '^\#' .pip-audit-ignore 2>/dev/null | sed '/^$$/d' | sed 's/^/--ignore-vuln /')
+
 audit-core:
 	@echo "\n▶ Auditing core/"
-	cd core && poetry run pip-audit
+	cd core && poetry run pip-audit $(PIP_AUDIT_IGNORE)
 
 audit-backend:
 	@echo "\n▶ Auditing backend/"
-	cd backend && poetry run pip-audit
+	cd backend && poetry run pip-audit $(PIP_AUDIT_IGNORE)
 
 audit-scraper:
 	@echo "\n▶ Auditing scraper/"
-	cd scraper && poetry run pip-audit
+	cd scraper && poetry run pip-audit $(PIP_AUDIT_IGNORE)
 
 audit-bot:
 	@echo "\n▶ Auditing bot/"
-	cd bot && poetry run pip-audit
+	cd bot && poetry run pip-audit $(PIP_AUDIT_IGNORE)
 
 audit-frontend:
 	@echo "\n▶ Auditing frontend/"

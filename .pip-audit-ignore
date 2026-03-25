@@ -1,0 +1,6 @@
+# Known vulnerabilities with no fix available yet.
+# Remove entries once a patched version is released.
+# Format: one CVE ID per line, comments start with #.
+
+# pygments 2.19.2 — no fix version available as of 2026-03-25
+CVE-2026-4539
