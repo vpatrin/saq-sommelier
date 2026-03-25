@@ -138,7 +138,7 @@ jobs:
           key: ${{ secrets.SSH_DEPLOY_KEY }}
           envs: SOPS_AGE_KEY,IMAGE_TAG
           script: |
-            cd /opt/coupette
+            cd /home/deploy/coupette
             if [[ "$IMAGE_TAG" == sha-* ]]; then
               git fetch origin main --no-tags
               git checkout "${IMAGE_TAG#sha-}"

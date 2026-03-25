@@ -1,5 +1,14 @@
+# Encrypt as JSON, decrypt as dotenv:
+#   sops encrypt --input-type dotenv --output-type json file.env > file.env.enc
+#   sops --decrypt --input-type json --output-type dotenv file.env.enc > file.env
 creation_rules:
   - path_regex: \.env\.prod(\.enc)?$
+    age:
+      # laptop (disaster recovery + local editing)
+      - age1nv8y4wgg3zlj0f668tk5mhwe05fj5mw9rrqvr832h0gvmvq50ehs469ufn
+      # github actions (continuous deployment)
+      - age13gw838vly2a8nhvrtzs509zq5tzgpmqhvs0skp9n2jnzqg2qmscsy3utra
+  - path_regex: secrets/.*\.env(\.enc)?$
     age:
       # laptop (disaster recovery + local editing)
       - age1nv8y4wgg3zlj0f668tk5mhwe05fj5mw9rrqvr832h0gvmvq50ehs469ufn
