@@ -200,6 +200,13 @@ Phase 3 — Better tooling:
 - [ ] Tier 2 breakpoint script, 10-50 VU ramp (#507)
 - [ ] One-command "run + capture + generate report" workflow
 
+Phase 4 — Cloud benchmarks (#523):
+
+- [ ] Terraform config in `benchmarks/terraform/` to provision ephemeral Hetzner CX23
+- [ ] Restore prod DB from S3 backup on benchmark VPS
+- [ ] Run k6 + evals on prod-like infra (real data, real latency, 14k vectors)
+- [ ] Upload results to S3, download as synthesized reports
+
 ### AI quality
 
 Eval framework in `backend/eval/`, spec in [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md). Measures recommendation relevance, diversity, and prompt adherence against a frozen test set.

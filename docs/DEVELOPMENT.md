@@ -109,7 +109,7 @@ systemctl status coupette-availability.timer  # timer active, next run scheduled
 
 ```bash
 # Tag release — redeploy previous tag (images already in GHCR)
-cd /opt/coupette && git checkout vPREVIOUS && IMAGE_TAG=vPREVIOUS SOPS_AGE_KEY=... ./deploy/deploy_backend.sh
+cd /home/deploy/coupette && git checkout vPREVIOUS && IMAGE_TAG=vPREVIOUS SOPS_AGE_KEY=... ./deploy/deploy_backend.sh
 
 # Dispatch deploy — redeploy previous commit
 gh workflow run CD -f commit=<previous-SHA>
@@ -164,7 +164,7 @@ sudo systemctl start coupette-scraper.service
 
 `Persistent=true` means if the VPS was off during the scheduled time, it runs on next boot.
 
-The service assumes `WorkingDirectory=/opt/coupette`. If your repo lives elsewhere, symlink it or edit the installed service file.
+The service assumes `WorkingDirectory=/home/deploy/coupette`.
 
 ### Failure recovery
 
