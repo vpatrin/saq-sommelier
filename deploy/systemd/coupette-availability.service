@@ -7,6 +7,6 @@ After=docker.service
 Type=oneshot
 WorkingDirectory=/home/deploy/coupette
 EnvironmentFile=/home/deploy/coupette/.image-tag
-EnvironmentFile=/etc/push-monitor/coupette-availability.env
+EnvironmentFile=/home/deploy/coupette/secrets/monitor-availability.env
 ExecStart=/usr/bin/docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm scraper python -m scraper availability
 ExecStartPost=-/home/deploy/infra/scripts/push-monitor.sh ${PUSH_URL}
