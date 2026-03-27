@@ -38,7 +38,7 @@ filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.coverage.run]
 source = ["backend"]
-omit = ["tests/*", "eval/*"]
+omit = ["tests/*", "benchmarks/*"]
 
 [tool.coverage.report]
 show_missing = true
@@ -60,7 +60,7 @@ known-first-party = ["backend", "core"]
 "api/*" = ["B008"]
 "auth.py" = ["B008"]
 "schemas/*" = ["S105"]
-"eval/*" = ["S105"]
+"benchmarks/*" = ["S105"]
 
 [build-system]
 requires = ["poetry-core"]
