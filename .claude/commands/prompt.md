@@ -88,7 +88,7 @@ Evaluate each command against these dimensions:
 
 | # | Command | Section | Current | Suggested | Why |
 |---|---------|---------|---------|-----------|-----|
-| 1 | `/ai` | Context gathering | Doesn't read eval results | Add step to read `backend/eval/results/` | Prior eval scores inform architecture advice |
+| 1 | `/ai` | Context gathering | Doesn't read eval results | Add step to read `backend/benchmarks/eval/results/` | Prior eval scores inform architecture advice |
 
 **Cross-command consistency issues:**
 - Inconsistent severity levels between commands

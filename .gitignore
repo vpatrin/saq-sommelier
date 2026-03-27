@@ -46,10 +46,9 @@ dist/
 .claude/*
 !.claude/commands/
 !.claude/commands/COMMANDS.md
-# Eval results (generated, not versioned)
-backend/eval/results/
-!backend/eval/results/.gitkeep
-# Load test results (generated, not versioned)
+# Benchmark results (generated, not versioned)
+backend/benchmarks/eval/results/
+!backend/benchmarks/eval/results/.gitkeep
 backend/benchmarks/load/results/
 
 # UI/UX ideas - screenshots, mockups, etc.

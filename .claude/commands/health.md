@@ -126,7 +126,7 @@ Additional checks:
 
 Also read:
 
-- `backend/eval/` — framework, rubric, queries, results
+- `backend/benchmarks/eval/` — framework, rubric, queries, results
 - Bot AI integration (`bot/bot/handlers/`)
 
 Additional checks:

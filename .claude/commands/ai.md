@@ -33,8 +33,8 @@ Before reviewing, silently:
 
 1. Read all files in the AI file map below
 2. Read `docs/specs/DATA_PIPELINE.md` for data ingestion context
-3. Read eval results (`backend/eval/results/`) for current quality baseline
-4. Read `backend/eval/levers.md` for optimization surface
+3. Read eval results (`backend/benchmarks/eval/results/`) for current quality baseline
+4. Read `backend/benchmarks/eval/levers.md` for optimization surface
 
 ### AI file map
 
@@ -44,7 +44,7 @@ Before reviewing, silently:
 - **Embeddings:** `backend/services/embeddings.py` (if exists), `core/db/models.py` (vector columns)
 - **Prompts:** any system prompts in `backend/services/` or `backend/prompts/`
 - **Chat:** `backend/services/chat.py`, `backend/api/chat.py` (if exists)
-- **Eval:** `backend/eval/` — framework, rubric, queries, results
+- **Eval:** `backend/benchmarks/eval/` — framework, rubric, queries, results
 - **Bot AI integration:** `bot/bot/handlers/` — how the bot calls the AI pipeline
 - **Config:** `backend/config.py` — model names, API keys, temperature settings
 

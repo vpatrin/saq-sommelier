@@ -67,7 +67,7 @@ diversity) still lag while presentation scores improved
 
 ## 8. Rubric Tuning
 
-**File:** `backend/eval/data/rubric.json`
+**File:** `backend/benchmarks/eval/data/rubric.json`
 **What:** The scoring criteria and weights the judge uses
 **Impact:** Changes what "good" means — adjusting weights shifts optimization priorities
 **When to change:** When you realize a dimension matters more/less than expected
@@ -102,7 +102,7 @@ To rotate: swap 6 train queries (diverse tags) into holdout, move current holdou
 ### Output
 
 - Console: scorecard with per-dimension averages, tag-stratified averages, low-score details
-- JSON: `backend/eval/results/eval_<timestamp>.json` — summary fields at top, bulky query_scores last
+- JSON: `backend/benchmarks/eval/results/eval_<timestamp>.json` — summary fields at top, bulky query_scores last
 - Diff mode: auto-compares with the most recent previous result file
 
 ## `/eval-pipeline` flow

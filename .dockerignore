@@ -36,7 +36,6 @@ scripts/
 # Tests, benchmarks, evals (dev-only)
 */tests/
 backend/benchmarks/
-backend/eval/
 benchmarks/
 
 # Local env files

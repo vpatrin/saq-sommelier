@@ -22,12 +22,12 @@ Before starting, silently read the implementation files you may need to modify:
 1. `backend/services/intent.py` — intent parsing prompts and logic
 2. `backend/services/recommendations.py` — recommendation orchestration
 3. `backend/repositories/recommendations.py` — pgvector queries, hybrid search
-4. `backend/eval/levers.md` — available optimization levers
-5. `backend/eval/data/rubric.json` — scoring dimensions and weights
+4. `backend/benchmarks/eval/levers.md` — available optimization levers
+5. `backend/benchmarks/eval/data/rubric.json` — scoring dimensions and weights
 
 ## Steps
 
-1. Run `make eval` and read the full output (console + latest JSON in `backend/eval/results/`).
+1. Run `make eval` and read the full output (console + latest JSON in `backend/benchmarks/eval/results/`).
    - This runs the **train split only** (14 queries) with deterministic judging (temp=0, 1 run).
 2. Analyze the results:
    - Sort queries by overall score, focus on bottom quartile.
@@ -58,7 +58,7 @@ Do NOT stop just because one change worked. Keep going — stack improvements.
 - Change ONE lever at a time — never change intent prompt AND retrieval query simultaneously.
 - Always iterate on the **train split only** (`make eval`, the default). Never peek at holdout during iteration.
 - Never modify `queries.json` or `rubric.json` — those are the fixed benchmark.
-- Never modify the eval framework itself (`backend/eval/`) — you're optimizing the pipeline, not the measurement.
+- Never modify the eval framework itself (`backend/benchmarks/eval/`) — you're optimizing the pipeline, not the measurement.
 - Show the score diff after each iteration in a clear table.
 - Check that improvements are **distributed** across queries, not concentrated in 1-2 queries while others regress.
 - If a prompt change adds a rule that maps 1:1 to a specific test query, that's overfitting — the rule should help 3+ unseen queries.

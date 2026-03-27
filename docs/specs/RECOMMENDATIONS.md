@@ -322,20 +322,20 @@ Key pattern: a **stronger model** (Sonnet) evaluates a **weaker model's** (Haiku
 
 ### Eval Framework
 
-See `backend/eval/` for implementation.
+See `backend/benchmarks/eval/` for implementation.
 
-- **Rubric** (`backend/eval/data/rubric.json`) — scoring dimensions with weights, changeable without code
-- **Benchmark queries** (`backend/eval/data/queries.json`) — fixed test set, MW-quality queries
+- **Rubric** (`backend/benchmarks/eval/data/rubric.json`) — scoring dimensions with weights, changeable without code
+- **Benchmark queries** (`backend/benchmarks/eval/data/queries.json`) — fixed test set, MW-quality queries
 - **Judge** — Sonnet evaluates each query's results on all rubric dimensions (1-5 scale)
 - **Report** — per-query scores, weighted averages, diff vs previous run
-- **Levers** (`backend/eval/levers.md`) — documents which files to change and their impact/risk
+- **Levers** (`backend/benchmarks/eval/levers.md`) — documents which files to change and their impact/risk
 
 ### Automated Pipeline Iteration
 
 Claude Code workflow (not a feature to build — it's a prompt pattern):
 
 1. Run `make eval` → read scored JSON output
-2. Read `backend/eval/levers.md` to understand available levers
+2. Read `backend/benchmarks/eval/levers.md` to understand available levers
 3. Identify worst-scoring queries, read judge justifications for root cause
 4. Change ONE lever (intent prompt, retrieval query, embedding composition, etc.)
 5. Re-run `make eval`, compare scores via built-in diff mode
@@ -354,7 +354,7 @@ Not yet built. Enables comparing runs across code versions:
 
 ### Human Feedback
 
-Override file (`backend/eval/data/overrides.json`) for manual score corrections:
+Override file (`backend/benchmarks/eval/data/overrides.json`) for manual score corrections:
 
 - Map `query_id` → human scores + justification
 - Eval report shows both judge and human scores when they differ

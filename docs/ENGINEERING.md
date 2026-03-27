@@ -209,7 +209,7 @@ Phase 4 — Cloud benchmarks (#523):
 
 ### AI quality
 
-Eval framework in `backend/eval/`, spec in [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md). Measures recommendation relevance, diversity, and prompt adherence against a frozen test set.
+Eval framework in `backend/benchmarks/eval/`, spec in [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md). Measures recommendation relevance, diversity, and prompt adherence against a frozen test set.
 
 **Backlog:**
 
