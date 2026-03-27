@@ -1,7 +1,7 @@
 .PHONY: help install \
 	dev-backend dev-frontend dev-bot \
 	scrape-stores scrape-products scrape-enrich scrape-availability scrape-all embed-sync \
-	eval \
+	eval load \
 	migrate revision \
 	lint lint-backend lint-scraper lint-core lint-bot lint-frontend \
 	format format-backend format-scraper format-core format-bot format-frontend \
@@ -25,7 +25,7 @@ help:
 	@echo "Setup:     install"
 	@echo "Dev:       dev-backend  dev-frontend  dev-bot"
 	@echo "Scraper:   scrape-stores  scrape-products  scrape-enrich  scrape-availability  scrape-all  embed-sync"
-	@echo "Eval:      eval"
+	@echo "Benchmarks: eval  load  load SKIP_CHAT=1  load VUS=5"
 	@echo "Database:  migrate  revision"
 	@echo "Lint:      lint  lint-{backend,scraper,core,bot,frontend}"
 	@echo "Format:    format  format-{backend,scraper,core,bot,frontend}"
@@ -82,6 +82,9 @@ embed-sync:
 
 eval:
 	cd backend && HAIKU_TEMPERATURE=0 poetry run python -m backend.benchmarks.eval $(if $(QUERY),--query "$(QUERY)",) $(if $(SPLIT),--split $(SPLIT),) $(if $(JUDGE_RUNS),--judge-runs $(JUDGE_RUNS),) $(if $(JUDGE_TEMP),--judge-temp $(JUDGE_TEMP),) $(if $(PIPELINE_RUNS),--pipeline-runs $(PIPELINE_RUNS),)
+
+load:
+	./backend/benchmarks/load/runners/tier1-baseline.sh $(if $(SKIP_CHAT),--skip-chat,) $(if $(VUS),--virtual-users $(VUS),)
 
 # --- Database ---
 
