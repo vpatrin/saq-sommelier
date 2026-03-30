@@ -152,9 +152,7 @@ function AppShell() {
                   <div
                     key={session.id}
                     className={`group relative flex items-center gap-1 px-(--spacing-sidebar-x) py-1.5 text-(--text-sidebar) ${
-                      isActive
-                        ? 'bg-accent-glow'
-                        : 'hover:bg-surface-hover'
+                      isActive ? 'bg-accent-glow' : 'hover:bg-surface-hover'
                     }`}
                   >
                     {isActive && (

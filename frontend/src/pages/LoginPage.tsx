@@ -62,9 +62,7 @@ function LoginPage() {
       <div className="flex flex-col items-center gap-4">
         <TelegramLoginButton botUsername={BOT_USERNAME} onAuth={handleAuth} />
 
-        {error && (
-          <p className="text-destructive text-sm max-w-xs text-center">{error}</p>
-        )}
+        {error && <p className="text-destructive text-sm max-w-xs text-center">{error}</p>}
       </div>
 
       <footer className="text-xs text-muted-foreground flex flex-col items-center gap-1 mt-4">

@@ -214,7 +214,9 @@ function StoresPage() {
                         {store.postcode && <span>{store.postcode}</span>}
                       </div>
                       {store.telephone && (
-                        <p className="text-sm text-muted-foreground font-mono mt-1">{store.telephone}</p>
+                        <p className="text-sm text-muted-foreground font-mono mt-1">
+                          {store.telephone}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-3">

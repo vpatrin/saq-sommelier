@@ -503,9 +503,7 @@ function SearchPage() {
             </div>
 
             <div>
-              <p className="text-xs text-muted-foreground mb-2">
-                {t('search.availability')}
-              </p>
+              <p className="text-xs text-muted-foreground mb-2">{t('search.availability')}</p>
               <div className="flex flex-col gap-1.5">
                 <button
                   type="button"
