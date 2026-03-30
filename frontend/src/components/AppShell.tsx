@@ -4,15 +4,24 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient } from '@/lib/api'
 import { timeAgo } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import {
+  Clock,
+  MagnifyingGlass,
+  Eye,
+  MapPin,
+  ChatCircle,
+  Plus,
+  X,
+  CaretUp,
+} from '@phosphor-icons/react'
 import type { ChatSessionOut } from '@/lib/types'
 
 const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string
 
 const NAV_ITEMS = [
-  { to: '/search', labelKey: 'nav.search' },
-  { to: '/watches', labelKey: 'nav.myWatches' },
-  { to: '/stores', labelKey: 'nav.myStores' },
+  { to: '/search', labelKey: 'nav.search', icon: MagnifyingGlass },
+  { to: '/watches', labelKey: 'nav.myWatches', icon: Eye },
+  { to: '/stores', labelKey: 'nav.myStores', icon: MapPin },
 ] as const
 
 export interface ChatOutletContext {
@@ -107,42 +116,50 @@ function AppShell() {
   return (
     <div className="h-screen bg-background text-foreground flex">
       {/* Sidebar */}
-      <aside className="w-60 shrink-0 border-r border-border bg-sidebar text-sidebar-foreground flex flex-col h-full">
+      <aside className="w-65 shrink-0 border-r border-border bg-sidebar text-sidebar-foreground flex flex-col h-full">
         {/* Brand */}
-        <div className="p-4 border-b border-sidebar-border">
-          <Link to="/chat" className="text-lg font-mono font-bold text-primary">
-            {t('brand')}
+        <div className="px-(--spacing-sidebar-x) pt-5 pb-3.5">
+          <Link to="/chat" className="flex items-center gap-2.5">
+            <div className="w-7.5 h-7.5 rounded-lg bg-gradient-to-br from-primary/35 to-primary/15 flex items-center justify-center text-sm font-semibold text-primary shrink-0">
+              C
+            </div>
+            <span className="text-base font-medium text-foreground">{t('brand')}</span>
           </Link>
+
+          {/* New chat button */}
+          <button
+            type="button"
+            onClick={() => navigate('/chat')}
+            className="mt-4 flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-(--text-sidebar) font-light text-muted-foreground hover:border-border-warm hover:text-sidebar-foreground hover:bg-accent-glow transition-colors"
+          >
+            <Plus size={16} weight="regular" className="text-muted-foreground" />
+            {t('nav.newChat')}
+          </button>
         </div>
 
-        {/* Chat section — only when on /chat */}
-        {isOnChat && (
-          <div className="flex flex-col border-b border-sidebar-border">
-            <button
-              type="button"
-              onClick={() => navigate('/chat')}
-              className="mx-2 mt-2 mb-1 px-3 py-1.5 text-sm font-mono text-left border border-border hover:bg-sidebar-accent/50"
-            >
-              {t('nav.newChat')}
-            </button>
-            <div className="overflow-y-auto max-h-48 px-2 pb-2">
-              {sessions.length === 0 && (
-                <p className="px-3 py-1.5 text-xs text-muted-foreground">
-                  {t('nav.noConversations')}
-                </p>
-              )}
+        {/* Chat history — only when on /chat */}
+        {isOnChat && sessions.length > 0 && (
+          <div className="border-b border-sidebar-border">
+            <div className="px-(--spacing-sidebar-x) pt-3 pb-1.5 flex items-center gap-1.5 text-(--text-sidebar-xs) font-normal tracking-wider uppercase text-muted-foreground">
+              <Clock size={14} className="opacity-70" />
+              {t('nav.history')}
+            </div>
+            <div className="overflow-y-auto max-h-48 pb-2">
               {sessions.map((session) => {
                 const isActive = activeSessionId === String(session.id)
                 const isConfirming = confirmDeleteId === session.id
                 return (
                   <div
                     key={session.id}
-                    className={`group flex items-center gap-1 px-3 py-1.5 text-sm font-mono ${
+                    className={`group relative flex items-center gap-1 px-(--spacing-sidebar-x) py-1.5 text-(--text-sidebar) ${
                       isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                        : 'hover:bg-sidebar-accent/50'
+                        ? 'bg-accent-glow'
+                        : 'hover:bg-surface-hover'
                     }`}
                   >
+                    {isActive && (
+                      <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-primary" />
+                    )}
                     {isConfirming ? (
                       <div className="flex-1 flex items-center gap-2 min-w-0">
                         <span className="text-xs text-muted-foreground truncate">
@@ -174,13 +191,13 @@ function AppShell() {
                         }}
                         onBlur={() => handleRename(session.id)}
                         maxLength={50}
-                        className="flex-1 min-w-0 bg-transparent border-b border-primary text-sm font-mono outline-none"
+                        className="flex-1 min-w-0 bg-transparent border-b border-primary text-sm outline-none"
                       />
                     ) : (
                       <>
                         <Link
                           to={`/chat/${session.id}`}
-                          className="flex-1 min-w-0 truncate"
+                          className={`flex-1 min-w-0 truncate ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
                           title={session.title ?? t('nav.untitled')}
                           onDoubleClick={(e) => {
                             e.preventDefault()
@@ -190,7 +207,7 @@ function AppShell() {
                         >
                           {session.title ?? t('nav.untitled')}
                         </Link>
-                        <span className="shrink-0 text-xs text-muted-foreground hidden group-hover:inline">
+                        <span className="shrink-0 text-(--text-sidebar-xs) font-mono text-muted-foreground hidden group-hover:inline">
                           {timeAgo(session.updated_at, t)}
                         </span>
                         <button
@@ -199,7 +216,7 @@ function AppShell() {
                           className="shrink-0 text-xs text-muted-foreground hover:text-destructive hidden group-hover:inline"
                           title={t('nav.deleteSession')}
                         >
-                          x
+                          <X size={12} />
                         </button>
                       </>
                     )}
@@ -211,17 +228,18 @@ function AppShell() {
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 flex flex-col gap-0.5">
-          {/* Chat link — only when NOT on /chat (collapsed to single link) */}
+        <nav className="flex-1 px-2 py-2 flex flex-col gap-0.5">
+          {/* Chat link — only when NOT on /chat */}
           {!isOnChat && (
             <Link
               to="/chat"
-              className="block px-3 py-2 text-sm font-mono transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50"
+              className="flex items-center gap-2.5 px-3 py-2 text-(--text-sidebar) rounded-lg transition-colors text-sidebar-foreground hover:bg-surface-hover"
             >
+              <ChatCircle size={16} className="opacity-70" />
               {t('nav.chat')}
             </Link>
           )}
-          {NAV_ITEMS.map(({ to, labelKey }) => {
+          {NAV_ITEMS.map(({ to, labelKey, icon: Icon }) => {
             const active =
               location.pathname === to ||
               (to === '/stores' && location.pathname === '/stores/nearby')
@@ -229,29 +247,22 @@ function AppShell() {
               <Link
                 key={to}
                 to={to}
-                className={`block px-3 py-2 text-sm font-mono transition-colors ${
+                className={`relative flex items-center gap-2.5 px-3 py-2 text-(--text-sidebar) rounded-lg transition-colors ${
                   active
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-bold'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                    ? 'bg-accent-glow text-primary'
+                    : 'text-sidebar-foreground hover:bg-surface-hover'
                 }`}
               >
+                <Icon size={16} weight={active ? 'fill' : 'regular'} className="opacity-70" />
                 {t(labelKey)}
               </Link>
             )
           })}
         </nav>
 
-        {/* Bottom section */}
-        <div className="p-4 border-t border-sidebar-border flex flex-col gap-3">
-          <a
-            href={`https://t.me/${BOT_USERNAME}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted-foreground hover:text-primary font-mono"
-          >
-            @{BOT_USERNAME}
-          </a>
-          <div className="flex items-center gap-2 text-xs font-mono">
+        {/* Profile trigger at bottom */}
+        <div className="mt-auto border-t border-sidebar-border px-4 py-3.5">
+          <div className="flex items-center gap-2 text-xs mb-3">
             <button
               type="button"
               onClick={() => i18n.changeLanguage('fr')}
@@ -276,11 +287,30 @@ function AppShell() {
               EN
             </button>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-mono truncate">{user?.first_name}</span>
-            <Button variant="ghost" size="xs" className="w-20" onClick={handleLogout}>
-              {t('nav.logout')}
-            </Button>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-(--text-sidebar) font-medium text-primary shrink-0">
+              {user?.first_name?.charAt(0) ?? '?'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-(--text-sidebar) font-medium truncate">{user?.first_name}</div>
+              <a
+                href={`https://t.me/${BOT_USERNAME}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-(--text-sidebar-xs) text-muted-foreground hover:text-primary"
+              >
+                @{BOT_USERNAME}
+              </a>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title={t('nav.logout')}
+              aria-label={t('nav.logout')}
+            >
+              <CaretUp size={12} />
+            </button>
           </div>
         </div>
       </aside>

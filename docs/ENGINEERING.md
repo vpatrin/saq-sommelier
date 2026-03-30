@@ -182,7 +182,7 @@ Results land in `backend/benchmarks/load/results/tier1-<ref>-<datetime>/` (gitig
 Phase 0 — Run the test:
 
 - [ ] Fix k6 scripts against localhost (default to `localhost:8001`, prod opt-in, validate response shapes)
-- [ ] Run first Tier 1 baseline, eyeball results + Grafana (#502)
+- [x] Run first Tier 1 baseline, eyeball results + Grafana (#502) — search p95=328ms, detail p95=138ms, facets p95=863ms
 
 Phase 1 — Capture (make results useful):
 

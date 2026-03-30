@@ -6,100 +6,47 @@ Product phases below. Engineering discipline targets (testing, security, observa
 
 ## Product
 
-### Phase 0 — Scaffolding ✅
+### Phases 0–10 ✅
 
-Project structure, env config, Docker Compose baseline. (#1, #3–#5)
+Scaffolding, scraping, data layer, API, Telegram bot, AI layer (RAG + Claude), auth & security, React frontend shell, chat endpoint + interface, intent router. See git history and closed issues for details.
 
-### Phase 1 — Scraping Exploration ✅
+### Visual Identity Rework *(milestone: Visual Identity Rework)*
 
-Sitemap fetch, HTML sampling, BeautifulSoup extraction, findings doc. (#6–#9)
+Premium warm theme replacing the brutalist/terminal aesthetic. Cross-cutting UX effort before Phase 11.
 
-### Phase 2 — Data Layer ✅
+- [x] Theme foundation — tokens, fonts, sidebar (#534)
+- [ ] Landing page + login restyle + age gate (#536, #535)
+- [ ] Chat page + wine card restyle (#537)
+- [ ] Search, watchlist, stores restyle + empty states (#538)
+- [ ] Wine detail slide panel (#539)
+- [ ] User menu dropdown (#540)
 
-SQLAlchemy + Alembic in `core/`, Product model, DB writer. (#16–#18, #42)
+Design mockups in `ui/` — organized by feature. Screenshots in `ui/screenshots/`.
 
-### Phase 3 — Production Scraper ✅
-
-Incremental sitemap scraper with delist detection, error handling, systemd timer. (#13–#15, #19, #49–#52, #83–#86)
-
-### Phase 4 — API for Bot ✅
-
-Search, filtering, facets, watches CRUD, structured exceptions. See [specs/TELEGRAM_BOT.md](specs/TELEGRAM_BOT.md). (#26, #33–#35, #41, #55, #98–#101)
-
-### Phase 5 — Telegram Bot ✅
-
-Bot scaffold, watch/alert system, store availability, UX polish, deep links. See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md). (#115–#121, #128, #138, #144, #149, #183, #212, #231–#233, #240, #243, #254, #273, #285, #345)
-
-### Phase 6 — AI Layer (RAG + Claude) ✅
-
-Adobe Live Search client, pgvector embeddings, Claude Haiku recommendations. See [specs/DATA_PIPELINE.md](specs/DATA_PIPELINE.md), [specs/RECOMMENDATIONS.md](specs/RECOMMENDATIONS.md). (#154–#156, #287–#289, #327)
-
-### Phase 7 — Auth & Security ✅
-
-Prerequisite for web app and protecting expensive endpoints.
-
-- [x] Users table + Alembic migration — `role` column for admin gate (#353)
-- [x] Telegram OAuth login endpoint (#354)
-- [x] JWT token middleware (#355)
-- [x] Guard all routes behind JWT except `/health` (#356)
-- [x] Invite code access gate — admin-only `/api/admin/invites` endpoint, `invite_codes` table (#357)
-- [x] Migrate bot allowlist from .env to users table (#358)
-- [x] Admin bootstrap + user management — `make create-admin`, startup guard, list/deactivate endpoints
-
-### Phase 8 — React Frontend (shell)
-
-Web app ships before chat — auth, watches, and stores are already API-complete.
-
-- [x] Scaffold + auth — Vite + React + Tailwind, Telegram OAuth login (invite code → Login Widget → JWT) (#382, #383, #384)
-- [x] Watch dashboard — watch list, availability status, remove (#385)
-- [x] Store picker — map or list view, add/remove preferred stores (replaces bot `/mystores`) (#388)
-- [x] "Enable Telegram alerts" onboarding — deep link to bot on dashboard (#412)
-- [x] Product search + add watch — search, filter (category/country/price/availability), watch from results (#386)
-
-### Phase 9 — Chat Endpoint
-
-Wraps existing Haiku RAG pipeline for web consumption. No new AI architecture.
-
-- [x] Chat session + endpoints — session CRUD, single-turn message flow wrapping recommendations service (#425, #429)
-- [x] Multi-turn context — conversation history as pipeline context, sliding window (#428, #434)
-- [ ] SSE streaming endpoint — `text/event-stream` backend transport (#427)
-
-### Phase 9b — Chat Interface
-
-- [x] Chat UI — message input, response display, conversation history (#426)
-- [x] Session history sidebar — list sessions, resume, rename, delete
-- [x] Wine card component — structured recommendation display inline in chat (#440)
-
-SSE (#427) and SSE rendering are deferred — current response times (2-3s) are fine with a loading state, and streaming structured JSON (RecommendationOut) is awkward. Revisit when/if freeform conversational responses ship (Phase 10).
-
-### Phase 10 — Intent Router ✅
-
-Chat becomes the primary interface. Claude picks from three tools (`search_wines`, `wine_chat`, `off_topic`) to route queries — recommendations go through the RAG pipeline, wine knowledge goes to the sommelier service, off-topic gets deflected.
-
-- [x] Chat-only path — non-recommendation wine queries skip the RAG pipeline, respond via Claude directly (#472, #473)
-- [x] Structured data in chat — wine cards rendered inline when the sommelier references a product (#440)
-- [x] Conversation starters — clickable prompt chips on empty chat state ("Blind tasting challenge", "What pairs with...", "Compare two wines", "Explore a region") (#474)
-
-### Phase 11 — Tasting Journal
+### Tasting Journal *(milestone: Tasting Journal)*
 
 Log wines you've tasted with 100-point ratings and tasting notes. SAQ catalog wines only (select by SKU). "Log tasting" action on product cards in search results and chat. Dedicated "My Tastings" page in sidebar.
 
-- [ ] TastingNote model + migration — user_id, sku (FK), rating (0-100), notes, tasted_at
-- [ ] Tasting CRUD endpoints — create, list (paginated, reverse-chronological), update, delete
-- [ ] "Log tasting" inline form on product cards (search + chat)
-- [ ] My Tastings page — reverse-chronological list, inline edit
-- [ ] Surface "You rated: 92" on product cards in search results
+- [ ] TastingNote model + migration (#442)
+- [ ] Tasting CRUD endpoints (#443)
+- [ ] "Log tasting" inline form on product cards (#444)
+- [ ] My Tastings page (#445)
+- [ ] Surface "You rated: 92" on product cards in search results (#446)
 
-### Phase 12 — Taste Profile
+Design reference: `ui/journal/journal.html`, `ui/journal/notif-noteview.html`
+
+### Taste Profile *(milestone: Taste Profile)*
 
 Build a user taste profile from watches, recommendation feedback, and tasting journal scores. MVP signals — no cellar data needed yet. Inject into recommendation prompts for personalization. Displayed as a sidebar widget, not a standalone page.
 
 - [ ] Taste profile computation — aggregate signals into structured preferences (regions, grapes, price range, style)
-- [ ] Adventure temperature — controls how exploratory vs conservative recommendations are (resolve UX scope — chat only, digest only, or both — during phase planning, before implementation)
+- [ ] Adventure temperature — controls how exploratory vs conservative recommendations are
 - [ ] Profile context injection — pass taste profile + adventure setting to Claude for personalized recommendations
-- [ ] Sidebar taste profile card — only shown after threshold (5+ tastings or 3+ watches), not before
+- [ ] Sidebar taste profile card — only shown after threshold (5+ tastings or 3+ watches)
 
-### Phase 13 — Weekly Digest
+Design reference: `ui/taste-profile/palais.html`
+
+### Weekly Digest
 
 Automated personalized summary of new/restocked wines matching user's taste profile. Delivered via Telegram DM (per-user, not group chat — #120 scope updated). This reintroduces the bot as a content delivery channel beyond alerts.
 
@@ -109,7 +56,7 @@ Automated personalized summary of new/restocked wines matching user's taste prof
 - [ ] Telegram delivery — summary + link to full digest on web app
 - [ ] Digest web page — weekly picks with full wine cards and tasting/cellar actions
 
-### Phase 14 — Cellar
+### Cellar *(milestone: Cellar)*
 
 Track wines you have at home. SAQ catalog wines only. "Add to cellar" action on product cards. Quantity management on dedicated "My Cellar" page. Auto-remove when quantity hits 0. Cellar data feeds back into taste profile for richer signals.
 
@@ -118,6 +65,9 @@ Track wines you have at home. SAQ catalog wines only. "Add to cellar" action on 
 - [ ] "Add to cellar" button on product cards
 - [ ] My Cellar page — list with quantity +1/−1 controls
 - [ ] Surface "In your cellar (×2)" on product cards in search results
+- [ ] Remove bottle flow — "Tu l'as bue?" → journal prompt or just remove
+
+Design reference: `ui/cellar/cellar.html`, `ui/cellar/add-bottle.html`, `ui/cellar/remove-bottle.html`
 
 ### Side Projects (not product phases)
 
@@ -145,6 +95,9 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 - [ ] Wine tech sheets — external data enrichment beyond SAQ catalog (fiches techniques, critic notes)
 - [ ] Bot `/recommend` deprecation — remove command, bot is alerts-only (cross-cutting chore, not a product idea)
 - [ ] Data retention policy — define TTL for chat sessions, user data lifecycle, and compliance posture (GDPR-adjacent)
+- [ ] Settings page — language, notifications, data export, account management (most items need backend work)
+- [ ] Sidebar collapse/expand — icon-only 60px sidebar with tooltips
+- [ ] Notification panel — in-app availability alerts (currently Telegram-only)
 
 ---
 
@@ -153,7 +106,6 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 ### UX Improvements
 
 - [ ] Sidebar restructure — grouped nav (Discover / My Wines / My Stores) to scale for future phases
-- [ ] Chat history in sidebar — recent session titles + "New chat" (Perplexity/ChatGPT pattern)
 - [ ] Product card action overflow — expandable row for 3+ actions (Watch visible, tasting/cellar on expand) when tasting + cellar ship
 
 ### DevOps & CD Pipeline
@@ -177,4 +129,3 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 - [ ] Environment-scoped secrets — move deploy secrets from repo-level to production environment (prerequisite: automated CD or k3s migration)
 
 Platform-level concerns (monitoring alerts, secrets management, IaC, staging, K8s) are tracked in the [infra ROADMAP](https://github.com/vpatrin/infra/blob/main/docs/ROADMAP.md). Engineering backlog (testing, observability, SRE) is tracked in [ENGINEERING.md](ENGINEERING.md#backlog).
-

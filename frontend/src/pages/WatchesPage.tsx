@@ -167,7 +167,7 @@ function WatchesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground font-mono">{t('watches.loading')}</p>
+        <p className="text-muted-foreground">{t('watches.loading')}</p>
       </div>
     )
   }
@@ -175,23 +175,23 @@ function WatchesPage() {
   return (
     <div className="p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-mono font-bold mb-6">{t('watches.title')}</h1>
+        <h1 className="text-3xl font-bold mb-6">{t('watches.title')}</h1>
 
-        {error && <p className="text-destructive text-sm font-mono mb-4">{error}</p>}
+        {error && <p className="text-destructive text-sm mb-4">{error}</p>}
 
         {watches.length === 0 ? (
-          <p className="text-muted-foreground font-mono">{t('watches.empty')}</p>
+          <p className="text-muted-foreground">{t('watches.empty')}</p>
         ) : (
           <ul className="flex flex-col gap-4">
             {watches.map(({ watch, product }) => (
               <li
                 key={watch.sku}
-                className="border border-border p-4 flex justify-between items-start gap-4"
+                className="border border-border p-4 rounded-lg flex justify-between items-start gap-4"
               >
                 <div className="flex-1 min-w-0">
                   {product ? (
                     <>
-                      <p className="font-mono font-bold truncate">
+                      <p className="font-bold truncate">
                         {product.url ? (
                           <a
                             href={product.url}
@@ -220,7 +220,7 @@ function WatchesPage() {
                       />
                     </>
                   ) : (
-                    <p className="text-muted-foreground font-mono">
+                    <p className="text-muted-foreground">
                       {t('watches.delisted', { sku: watch.sku })}
                     </p>
                   )}

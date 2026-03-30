@@ -172,17 +172,17 @@ function StoresPage() {
   return (
     <div className="p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-mono font-bold mb-6">{t('editStores.title')}</h1>
+        <h1 className="text-3xl font-bold mb-6">{t('editStores.title')}</h1>
 
-        {error && <p className="text-destructive text-sm font-mono mb-4">{error}</p>}
+        {error && <p className="text-destructive text-sm mb-4">{error}</p>}
 
         {(geo.status === 'idle' || geo.status === 'requesting') && (
-          <p className="text-muted-foreground font-mono">{t('editStores.requestingLocation')}</p>
+          <p className="text-muted-foreground">{t('editStores.requestingLocation')}</p>
         )}
 
         {geo.status === 'denied' && (
           <div className="flex flex-col gap-4">
-            <p className="text-muted-foreground font-mono">
+            <p className="text-muted-foreground">
               {t(GEO_ERROR_KEYS[geo.errorCode] ?? 'editStores.geoUnavailable')}
             </p>
             <div>
@@ -193,10 +193,10 @@ function StoresPage() {
           </div>
         )}
 
-        {loading && <p className="text-muted-foreground font-mono">{t('editStores.loading')}</p>}
+        {loading && <p className="text-muted-foreground">{t('editStores.loading')}</p>}
 
         {geo.status === 'granted' && !loading && stores.length === 0 && !error && (
-          <p className="text-muted-foreground font-mono">{t('editStores.noStores')}</p>
+          <p className="text-muted-foreground">{t('editStores.noStores')}</p>
         )}
 
         {stores.length > 0 && (
@@ -204,17 +204,17 @@ function StoresPage() {
             {stores.map((store) => {
               const isSaved = savedIds.has(store.saq_store_id)
               return (
-                <li key={store.saq_store_id} className="border border-border p-4">
+                <li key={store.saq_store_id} className="border border-border p-4 rounded-lg">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono font-bold truncate">{store.name}</p>
+                      <p className="font-bold truncate">{store.name}</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
                         {store.address && <span>{store.address}</span>}
                         <span>{store.city}</span>
                         {store.postcode && <span>{store.postcode}</span>}
                       </div>
                       {store.telephone && (
-                        <p className="text-sm text-muted-foreground mt-1">{store.telephone}</p>
+                        <p className="text-sm text-muted-foreground font-mono mt-1">{store.telephone}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
@@ -236,7 +236,7 @@ function StoresPage() {
                     </div>
                   </div>
                   {store.temporarily_closed && (
-                    <p className="text-sm text-destructive mt-2 font-mono">
+                    <p className="text-sm text-destructive mt-2">
                       {t('editStores.temporarilyClosed')}
                     </p>
                   )}

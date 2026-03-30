@@ -471,12 +471,24 @@ Frontend dev workflow:
 
 Design direction:
 
-- Brutalist, clean, minimalist — terminal vibes but accessible to mainstream users
-- Mono font for headings/labels, sans-serif for body text
-- Sharp borders, no rounded corners, high contrast, flat colors
+- Premium, warm, approachable — upscale wine bar mood, not terminal/developer aesthetic
+- Typography: Outfit Variable for all body/heading text, JetBrains Mono only for data values (prices, SKUs, timestamps, counts)
+- Rounded corners (--radius: 0.625rem / 10px), subtle warm borders
 - Generous whitespace, no clutter
-- Color palette: dark orange (#F97316-ish) + black — wine/amber warmth on dark background
-- shadcn/ui Base + Lyra preset (JetBrains Mono, Phosphor icons)
+- Color palette: golden amber (#c89248) on warm near-black (#08080c) — warm-tinted borders (rgba(255,255,255,0.06)), accent glow on hover
+- Sidebar: slightly darker bg than main, "C" brand mark with amber gradient, Phosphor icons on nav items, active indicator bar
+- Wine cards: warm gradient overlay, tags as pills, price in mono, inline actions (Watch, Cellar, Journal)
+- shadcn/ui + Tailwind CSS (Phosphor icons, Outfit + JetBrains Mono fonts)
+
+Design reference — `ui/`:
+
+`ui/` contains standalone HTML mockups organized by feature (chat/, search/, watches/, stores/, journal/, cellar/, etc.). Screenshots in `ui/screenshots/`. These serve the same role as Figma files — **visual direction, not implementation specs.**
+
+- **Do:** Match the feel, layout intent, color usage, and information hierarchy
+- **Don't:** Pixel-match the mockups or replicate their CSS patterns — they use inline styles and flat HTML, the React app uses component composition, theme tokens, and Tailwind utilities
+- When a mockup shows a pattern that exists in a shared component (WineCard, availability dots, tag pills), reuse the component — don't duplicate the HTML
+- When a mockup adds complexity that doesn't justify a new component (one-off layout, decorative detail), skip it
+- Good frontend engineering (reusable components, theme tokens, semantic HTML, accessibility) always wins over visual fidelity to the mockup
 
 UX reference apps:
 

@@ -358,7 +358,7 @@ function SearchPage() {
   return (
     <div className="p-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-mono font-bold mb-6">{t('search.title')}</h1>
+        <h1 className="text-3xl font-bold mb-6">{t('search.title')}</h1>
 
         {/* Search input */}
         <input
@@ -367,7 +367,7 @@ function SearchPage() {
           onChange={(e) => handleInputChange(e.target.value)}
           placeholder={t('search.placeholder')}
           aria-label={t('search.placeholder')}
-          className="w-full bg-background border border-border px-3 py-2 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:border-ring mb-4"
+          className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:border-ring mb-4"
         />
 
         {/* Category chips — top level (groups) */}
@@ -392,7 +392,7 @@ function SearchPage() {
                         onClick={() =>
                           setFilter('category', isActive ? '' : `${GROUP_PREFIX}${groupKey}`)
                         }
-                        className={`border px-2 py-1 text-xs font-mono transition-colors ${
+                        className={`border rounded-full px-2 py-1 text-xs transition-colors ${
                           isActive
                             ? 'border-primary bg-primary/10 text-primary'
                             : 'border-border text-muted-foreground hover:text-foreground'
@@ -421,7 +421,7 @@ function SearchPage() {
                     <button
                       type="button"
                       onClick={() => setFilter('category', `${GROUP_PREFIX}${groupKey}`)}
-                      className={`border px-2 py-1 text-xs font-mono transition-colors ${
+                      className={`border rounded-full px-2 py-1 text-xs transition-colors ${
                         isAllActive
                           ? 'border-primary bg-primary/10 text-primary'
                           : 'border-border text-muted-foreground hover:text-foreground'
@@ -434,7 +434,7 @@ function SearchPage() {
                       onChange={(e) =>
                         setFilter('category', e.target.value || `${GROUP_PREFIX}${groupKey}`)
                       }
-                      className="bg-background border border-border px-2 py-1 text-xs font-mono focus:outline-none focus:border-ring"
+                      className="bg-background border border-border rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-ring"
                     >
                       <option value="">{t('search.narrow')}</option>
                       {group.categories.map((cat) => (
@@ -452,7 +452,7 @@ function SearchPage() {
                   <button
                     type="button"
                     onClick={() => setFilter('category', `${GROUP_PREFIX}${groupKey}`)}
-                    className={`border px-2 py-1 text-xs font-mono transition-colors ${
+                    className={`border rounded-full px-2 py-1 text-xs transition-colors ${
                       category === `${GROUP_PREFIX}${groupKey}`
                         ? 'border-primary bg-primary/10 text-primary'
                         : 'border-border text-muted-foreground hover:text-foreground'
@@ -465,7 +465,7 @@ function SearchPage() {
                       key={cat}
                       type="button"
                       onClick={() => setFilter('category', cat)}
-                      className={`border px-2 py-1 text-xs font-mono transition-colors ${
+                      className={`border rounded-full px-2 py-1 text-xs transition-colors ${
                         category === cat
                           ? 'border-primary bg-primary/10 text-primary'
                           : 'border-border text-muted-foreground hover:text-foreground'
@@ -487,11 +487,11 @@ function SearchPage() {
           {/* Filters sidebar */}
           <aside className="w-44 shrink-0 flex flex-col gap-4">
             <div>
-              <p className="text-xs font-mono text-muted-foreground mb-2">{t('search.country')}</p>
+              <p className="text-xs text-muted-foreground mb-2">{t('search.country')}</p>
               <select
                 value={country}
                 onChange={(e) => setFilter('country', e.target.value)}
-                className="w-full bg-background border border-border px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-ring"
+                className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-ring"
               >
                 <option value="">{t('search.all')}</option>
                 {facets?.countries.map((c) => (
@@ -503,14 +503,14 @@ function SearchPage() {
             </div>
 
             <div>
-              <p className="text-xs font-mono text-muted-foreground mb-2">
+              <p className="text-xs text-muted-foreground mb-2">
                 {t('search.availability')}
               </p>
               <div className="flex flex-col gap-1.5">
                 <button
                   type="button"
                   onClick={() => toggleFilter('online')}
-                  className={`border px-2 py-1.5 text-xs font-mono text-left transition-colors ${
+                  className={`border rounded-lg px-2 py-1.5 text-xs text-left transition-colors ${
                     onlineOnly
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border text-muted-foreground hover:text-foreground'
@@ -523,7 +523,7 @@ function SearchPage() {
                   type="button"
                   onClick={() => toggleFilter('in_stores')}
                   disabled={savedStoreIds.length === 0}
-                  className={`border px-2 py-1.5 text-xs font-mono text-left transition-colors ${
+                  className={`border rounded-lg px-2 py-1.5 text-xs text-left transition-colors ${
                     savedStoreIds.length === 0
                       ? 'border-border text-muted-foreground/50 cursor-not-allowed'
                       : inStoresOnly
@@ -537,7 +537,7 @@ function SearchPage() {
             </div>
 
             <div>
-              <p className="text-xs font-mono text-muted-foreground mb-2">{t('search.price')}</p>
+              <p className="text-xs text-muted-foreground mb-2">{t('search.price')}</p>
               <div className="flex gap-2">
                 <input
                   key={`min-${minPrice}`}
@@ -551,7 +551,7 @@ function SearchPage() {
                     if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
                   }}
                   aria-label={t('search.minPrice')}
-                  className="w-full bg-background border border-border px-2 py-1.5 text-xs font-mono placeholder:text-muted-foreground focus:outline-none focus:border-ring"
+                  className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:border-ring"
                 />
                 <input
                   key={`max-${maxPrice}`}
@@ -565,7 +565,7 @@ function SearchPage() {
                     if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
                   }}
                   aria-label={t('search.maxPrice')}
-                  className="w-full bg-background border border-border px-2 py-1.5 text-xs font-mono placeholder:text-muted-foreground focus:outline-none focus:border-ring"
+                  className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:border-ring"
                 />
               </div>
             </div>
@@ -575,7 +575,7 @@ function SearchPage() {
           <div className="flex-1 min-w-0">
             {/* Error */}
             {error && (
-              <p className="text-destructive text-sm font-mono mb-4">
+              <p className="text-destructive text-sm mb-4">
                 {error}
                 {' — '}
                 <button
@@ -589,7 +589,7 @@ function SearchPage() {
             )}
 
             {loading ? (
-              <p className="text-muted-foreground font-mono">{t('search.loading')}</p>
+              <p className="text-muted-foreground">{t('search.loading')}</p>
             ) : results && displayProducts.length > 0 ? (
               <>
                 <div className="flex items-center justify-between mb-4">
@@ -600,7 +600,7 @@ function SearchPage() {
                   <select
                     value={sort}
                     onChange={(e) => setFilter('sort', e.target.value)}
-                    className="bg-background border border-border px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-ring"
+                    className="bg-background border border-border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-ring"
                   >
                     <option value="recent">{t('search.sortRecent')}</option>
                     <option value="price_asc">{t('search.sortPriceAsc')}</option>
@@ -623,7 +623,7 @@ function SearchPage() {
                     return (
                       <li
                         key={product.sku}
-                        className={`border border-border p-4 flex justify-between items-start gap-4${hasAvailability ? '' : ' opacity-50'}`}
+                        className={`border border-border rounded-lg p-4 flex justify-between items-start gap-4${hasAvailability ? '' : ' opacity-50'}`}
                       >
                         <WineCard
                           product={product}
@@ -638,7 +638,7 @@ function SearchPage() {
                           onClick={() =>
                             isWatched ? handleUnwatch(product.sku) : handleWatch(product.sku)
                           }
-                          className={`border px-3 py-1.5 text-xs font-mono transition-colors shrink-0 ${
+                          className={`border rounded-lg px-3 py-1.5 text-xs transition-colors shrink-0 ${
                             isWatched
                               ? 'border-primary bg-primary/10 text-primary'
                               : 'border-border text-muted-foreground hover:text-foreground'
@@ -714,7 +714,7 @@ function SearchPage() {
                 )}
               </>
             ) : (
-              <p className="text-muted-foreground font-mono">{t('search.noResults')}</p>
+              <p className="text-muted-foreground">{t('search.noResults')}</p>
             )}
           </div>
         </div>

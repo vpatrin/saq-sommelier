@@ -53,7 +53,7 @@ function WineCard({ product, reason, storeNames, storesExpanded, onToggleStores 
   return (
     <div className="flex-1 min-w-0">
       {/* Line 1: Name (links to SAQ) */}
-      <p className="font-mono font-bold text-sm line-clamp-2">
+      <p className="font-bold text-sm line-clamp-2">
         {product.url ? (
           <a
             href={product.url}

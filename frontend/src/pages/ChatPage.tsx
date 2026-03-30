@@ -225,14 +225,14 @@ function ChatPage() {
         <div className="max-w-2xl mx-auto flex flex-col gap-6">
           {messages.length === 0 && !sending && !loading && (
             <div className="flex flex-col items-center justify-center h-full min-h-[40vh] gap-6">
-              <h1 className="text-2xl font-mono font-bold">{t('chat.welcome')}</h1>
+              <h1 className="text-2xl font-bold">{t('chat.welcome')}</h1>
               <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
                 {(t('chat.starters', { returnObjects: true }) as string[]).map((starter) => (
                   <button
                     key={starter}
                     type="button"
                     onClick={() => submitMessage(starter)}
-                    className="border border-border px-4 py-3 text-sm font-mono text-left hover:bg-muted"
+                    className="border border-border rounded-lg px-4 py-3 text-sm text-left hover:bg-muted"
                   >
                     {starter}
                   </button>
@@ -243,7 +243,7 @@ function ChatPage() {
 
           {loading && (
             <div className="flex flex-col items-center justify-center min-h-[20vh]">
-              <p className="text-sm text-muted-foreground font-mono">{t('chat.loading')}</p>
+              <p className="text-sm text-muted-foreground">{t('chat.loading')}</p>
             </div>
           )}
 
@@ -254,7 +254,7 @@ function ChatPage() {
             >
               <div
                 className={`max-w-[85%] ${
-                  msg.role === 'user' ? 'bg-primary/10 border border-primary/20 px-4 py-2' : ''
+                  msg.role === 'user' ? 'bg-primary/10 border border-primary/20 rounded-2xl px-4 py-2' : ''
                 }`}
               >
                 {msg.role === 'user' ? (
@@ -274,7 +274,7 @@ function ChatPage() {
           {sending && (
             <div className="flex flex-col gap-1 items-start">
               <div className="max-w-[85%]">
-                <p className="text-sm text-muted-foreground font-mono">{t('chat.thinking')}</p>
+                <p className="text-sm text-muted-foreground">{t('chat.thinking')}</p>
               </div>
             </div>
           )}
@@ -334,12 +334,12 @@ function ChatPage() {
             maxLength={MAX_MESSAGE_LENGTH}
             rows={1}
             disabled={sending}
-            className="flex-1 max-h-32 bg-background border border-border px-3 py-2 text-sm font-mono resize-none overflow-y-auto focus:outline-none focus:border-ring disabled:opacity-50"
+            className="flex-1 max-h-32 bg-background border border-border rounded-2xl px-3 py-2 text-sm resize-none overflow-y-auto focus:outline-none focus:border-ring disabled:opacity-50"
           />
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="self-end border border-border px-4 py-2 text-sm font-mono hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+            className="self-end border border-border rounded-lg px-4 py-2 text-sm hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('chat.send')}
           </button>
