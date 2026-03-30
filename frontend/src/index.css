@@ -62,7 +62,7 @@
   /* Subtle warm borders — rgba(255,255,255,0.06) equivalent */
   --border: oklch(1 0 0 / 6%);
   --input: oklch(1 0 0 / 8%);
-  --ring: oklch(0.7 0.13 65);
+  --ring: var(--primary);
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
@@ -71,12 +71,12 @@
   /* Sidebar slightly darker than main bg — #06060a */
   --sidebar: oklch(0.11 0.005 280);
   --sidebar-foreground: oklch(0.92 0.01 60);
-  --sidebar-primary: oklch(0.7 0.13 65);
+  --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: oklch(0.92 0.01 60);
-  --sidebar-accent: oklch(0.7 0.13 65 / 8%);
+  --sidebar-accent: var(--accent-glow);
   --sidebar-accent-foreground: oklch(0.8 0.1 65);
   --sidebar-border: oklch(1 0 0 / 6%);
-  --sidebar-ring: oklch(0.7 0.13 65);
+  --sidebar-ring: var(--primary);
 }
 
 @theme inline {
@@ -120,10 +120,11 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  /* Warm border hover — rgba(200,146,72,0.18) from mockups */
+  /* Warm border hover — rgba(200,146,72,0.18) */
   --color-border-warm: oklch(0.7 0.13 65 / 18%);
-  /* Accent glow — rgba(200,146,72,0.08) from mockups */
-  --color-accent-glow: oklch(0.7 0.13 65 / 8%);
+  /* Accent glow — rgba(200,146,72,0.08) */
+  --accent-glow: oklch(0.7 0.13 65 / 8%);
+  --color-accent-glow: var(--accent-glow);
   /* Subtle surface hover — rgba(255,255,255,0.02) */
   --color-surface-hover: oklch(1 0 0 / 2%);
   /* Sidebar typography scale */

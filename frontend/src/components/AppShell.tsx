@@ -12,7 +12,7 @@ import {
   ChatCircle,
   Plus,
   X,
-  CaretUp,
+  SignOutIcon,
 } from '@phosphor-icons/react'
 import type { ChatSessionOut } from '@/lib/types'
 
@@ -118,7 +118,7 @@ function AppShell() {
       {/* Sidebar */}
       <aside className="w-65 shrink-0 border-r border-border bg-sidebar text-sidebar-foreground flex flex-col h-full">
         {/* Brand */}
-        <div className="px-(--spacing-sidebar-x) pt-5 pb-3.5">
+        <div className="px-[var(--spacing-sidebar-x)] pt-5 pb-3.5">
           <Link to="/chat" className="flex items-center gap-2.5">
             <div className="w-7.5 h-7.5 rounded-lg bg-gradient-to-br from-primary/35 to-primary/15 flex items-center justify-center text-sm font-semibold text-primary shrink-0">
               C
@@ -126,11 +126,10 @@ function AppShell() {
             <span className="text-base font-medium text-foreground">{t('brand')}</span>
           </Link>
 
-          {/* New chat button */}
           <button
             type="button"
             onClick={() => navigate('/chat')}
-            className="mt-4 flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-(--text-sidebar) font-light text-muted-foreground hover:border-border-warm hover:text-sidebar-foreground hover:bg-accent-glow transition-colors"
+            className="mt-4 flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground hover:border-border-warm hover:text-sidebar-foreground hover:bg-accent-glow transition-colors"
           >
             <Plus size={16} weight="regular" className="text-muted-foreground" />
             {t('nav.newChat')}
@@ -140,7 +139,7 @@ function AppShell() {
         {/* Chat history — only when on /chat */}
         {isOnChat && sessions.length > 0 && (
           <div className="border-b border-sidebar-border">
-            <div className="px-(--spacing-sidebar-x) pt-3 pb-1.5 flex items-center gap-1.5 text-(--text-sidebar-xs) font-normal tracking-wider uppercase text-muted-foreground">
+            <div className="px-[var(--spacing-sidebar-x)] pt-3 pb-1.5 flex items-center gap-1.5 text-[length:var(--text-sidebar-xs)] font-normal tracking-wider uppercase text-muted-foreground">
               <Clock size={14} className="opacity-70" />
               {t('nav.history')}
             </div>
@@ -151,7 +150,7 @@ function AppShell() {
                 return (
                   <div
                     key={session.id}
-                    className={`group relative flex items-center gap-1 px-(--spacing-sidebar-x) py-1.5 text-(--text-sidebar) ${
+                    className={`group relative flex items-center gap-1 px-[var(--spacing-sidebar-x)] py-1.5 text-[length:var(--text-sidebar)] ${
                       isActive ? 'bg-accent-glow' : 'hover:bg-surface-hover'
                     }`}
                   >
@@ -205,7 +204,7 @@ function AppShell() {
                         >
                           {session.title ?? t('nav.untitled')}
                         </Link>
-                        <span className="shrink-0 text-(--text-sidebar-xs) font-mono text-muted-foreground hidden group-hover:inline">
+                        <span className="shrink-0 text-[length:var(--text-sidebar-xs)] font-mono text-muted-foreground hidden group-hover:inline">
                           {timeAgo(session.updated_at, t)}
                         </span>
                         <button
@@ -231,7 +230,7 @@ function AppShell() {
           {!isOnChat && (
             <Link
               to="/chat"
-              className="flex items-center gap-2.5 px-3 py-2 text-(--text-sidebar) rounded-lg transition-colors text-sidebar-foreground hover:bg-surface-hover"
+              className="flex items-center gap-2.5 px-3 py-2 text-[length:var(--text-sidebar)] rounded-lg transition-colors text-sidebar-foreground hover:bg-surface-hover"
             >
               <ChatCircle size={16} className="opacity-70" />
               {t('nav.chat')}
@@ -245,7 +244,7 @@ function AppShell() {
               <Link
                 key={to}
                 to={to}
-                className={`relative flex items-center gap-2.5 px-3 py-2 text-(--text-sidebar) rounded-lg transition-colors ${
+                className={`relative flex items-center gap-2.5 px-3 py-2 text-[length:var(--text-sidebar)] rounded-lg transition-colors ${
                   active
                     ? 'bg-accent-glow text-primary'
                     : 'text-sidebar-foreground hover:bg-surface-hover'
@@ -286,16 +285,16 @@ function AppShell() {
             </button>
           </div>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-(--text-sidebar) font-medium text-primary shrink-0">
+            <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-[length:var(--text-sidebar)] font-medium text-primary shrink-0">
               {user?.first_name?.charAt(0) ?? '?'}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-(--text-sidebar) font-medium truncate">{user?.first_name}</div>
+              <div className="text-[length:var(--text-sidebar)] font-medium truncate">{user?.first_name}</div>
               <a
                 href={`https://t.me/${BOT_USERNAME}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-(--text-sidebar-xs) text-muted-foreground hover:text-primary"
+                className="text-[length:var(--text-sidebar-xs)] text-muted-foreground hover:text-primary"
               >
                 @{BOT_USERNAME}
               </a>
@@ -307,7 +306,7 @@ function AppShell() {
               title={t('nav.logout')}
               aria-label={t('nav.logout')}
             >
-              <CaretUp size={12} />
+              <SignOutIcon size={14} />
             </button>
           </div>
         </div>

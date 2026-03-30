@@ -74,7 +74,7 @@ function WineCard({ product, reason, storeNames, storesExpanded, onToggleStores 
       {/* Line 3: Price + availability */}
       <div className="flex items-center gap-3 mt-1">
         {product.price && (
-          <span className="text-sm">
+          <span className="text-sm font-mono">
             {product.price} ${' '}
             {product.size && (
               <span className="text-muted-foreground text-xs">/ {product.size}</span>
