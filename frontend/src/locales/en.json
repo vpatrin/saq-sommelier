@@ -113,6 +113,16 @@
     "backToLanding": "Home",
     "legal": "18+ only · Drink responsibly"
   },
+  "chats": {
+    "emptyDesc": "Start a conversation with the sommelier.",
+    "select": "Select",
+    "cancel": "Cancel",
+    "selectAll": "Select all",
+    "selectedCount": "{{count}} selected",
+    "deleteSelected": "Delete {{count}}",
+    "deleteConfirm": "Delete {{count}} conversation(s)?",
+    "deleting": "Deleting..."
+  },
   "chat": {
     "welcome": "What are you drinking tonight?",
     "placeholder": "Ask the sommelier...",
@@ -131,8 +141,9 @@
     ]
   },
   "search": {
-    "title": "Search",
+    "title": "Catalog",
     "placeholder": "Search wines by name...",
+    "type": "Type",
     "country": "Country",
     "all": "All",
     "availability": "Availability",
@@ -150,6 +161,9 @@
     "sortPriceDesc": "Price: high → low",
     "sortAlpha": "Alphabetically",
     "noResults": "No wines match your filters.",
+    "noResultsDesc": "Try adjusting your filters or broadening your search.",
+    "reset": "Reset filters",
+    "askSommelier": "Ask the sommelier",
     "watch": "Watch",
     "watching": "Watching",
     "first": "First",
@@ -167,6 +181,11 @@
     "title": "My Watches",
     "loading": "Loading watches...",
     "empty": "No watches yet. Search for wines and add them to your watch list.",
+    "emptyTitle": "No wines watched yet",
+    "emptyDesc": "Follow wines to get notified when they're available.",
+    "emptyCta": "Search wines",
+    "noMatch": "No wines match your search",
+    "filterPlaceholder": "Filter my watches...",
     "remove": "Remove",
     "removing": "Removing...",
     "delisted": "Product delisted (SKU: {{sku}})",
@@ -178,6 +197,9 @@
     "edit": "Edit",
     "loading": "Loading saved stores...",
     "empty": "No saved stores yet. Tap Edit to find nearby stores.",
+    "emptyTitle": "No stores saved yet",
+    "emptyDesc": "Save nearby stores to filter availability across your watchlist.",
+    "emptyCta": "Find nearby stores",
     "failedToLoad": "Failed to load saved stores"
   },
   "editStores": {
@@ -198,20 +220,27 @@
     "failedToLoad": "Failed to load stores"
   },
   "nav": {
-    "chat": "Chat",
-    "search": "Search",
+    "chat": "Chats",
+    "search": "Catalog",
     "myWatches": "My Watches",
     "myStores": "My Stores",
     "newChat": "+ New chat",
     "history": "History",
     "noConversations": "No conversations yet",
+    "noMatch": "No conversations match",
+    "searchHistory": "Search history...",
     "untitled": "Untitled",
     "rename": "Rename",
     "deleteSession": "Delete session",
     "deleteConfirm": "Delete?",
     "yes": "yes",
     "no": "no",
-    "logout": "Logout"
+    "logout": "Logout",
+    "recents": "Recents",
+    "hide": "Hide",
+    "show": "Show",
+    "delete": "Delete",
+    "allChats": "All chats"
   },
   "availability": {
     "online": "Online",
