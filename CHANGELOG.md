@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Search, watchlist, and stores pages restyled — horizontal filter bar on search, availability dots on watchlist, card layout on stores, empty states on all three
 - Login route moved to `/login`; `/` now serves the public landing page
 - "Watchlist" renamed to "Favoris" throughout the French UI
 - Chat UI restyle — Claude-style message bubbles, inline message actions (copy, thumbs, regenerate), session title bar with rename/delete, scroll-to-bottom button
