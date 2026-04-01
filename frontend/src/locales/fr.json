@@ -269,6 +269,7 @@
   "wineDetail": {
     "failedToLoad": "Impossible de charger les détails",
     "retry": "réessayer",
+    "close": "Fermer",
     "region": "Région",
     "appellation": "Appellation",
     "alcohol": "Alcool",

@@ -1,3 +1,5 @@
+import { WineDetailProvider, useWineDetail } from '@/contexts/WineDetailContext'
+import WineDetailPanel from '@/components/WineDetailPanel'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
@@ -532,11 +534,34 @@ function AppShell() {
         )}
       </aside>
 
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <Outlet context={outletContext} />
-      </main>
+      <MainArea outletContext={outletContext} />
     </div>
   )
 }
 
-export default AppShell
+function MainArea({ outletContext }: { outletContext: ChatOutletContext }) {
+  const location = useLocation()
+  const { selectedSku, setSelectedSku } = useWineDetail()
+  const handleClosePanel = useCallback(() => setSelectedSku(null), [setSelectedSku])
+
+  useEffect(() => {
+    if (selectedSku !== null) setSelectedSku(null)
+  }, [location.pathname, setSelectedSku])
+
+  return (
+    <main className="flex-1 min-w-0 flex flex-col overflow-hidden relative">
+      <Outlet context={outletContext} />
+      <WineDetailPanel sku={selectedSku} onClose={handleClosePanel} />
+    </main>
+  )
+}
+
+function AppShellWithProvider() {
+  return (
+    <WineDetailProvider>
+      <AppShell />
+    </WineDetailProvider>
+  )
+}
+
+export default AppShellWithProvider

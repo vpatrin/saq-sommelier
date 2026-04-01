@@ -223,7 +223,20 @@ Synthesized reports and cross-cutting analysis live in [benchmarks/](../benchmar
 
 Unscheduled engineering improvements — not product features, not infra. Picked up opportunistically or when they unblock product work.
 
-**Testing:**
+**Testing — Frontend:**
+
+- [ ] Test infrastructure setup — add Vitest + React Testing Library + jsdom, wire `yarn test` script, configure CI step
+- [ ] Shared components — `WineCard`, `EmptyState`, `FilterChips` (render + props variants)
+- [ ] Auth components — `ProtectedRoute` (redirects unauthenticated), `TelegramLoginButton` (renders, calls callback)
+- [ ] `UserMenu` — open/close, logout action
+- [ ] `WineDetailPanel` — renders wine data, open/close state
+- [ ] `AppShell` — sidebar collapsed/expanded state
+- [ ] Pages (API-mocked) — `SearchPage`, `WatchesPage`, `SavedStoresPage` (loading state, empty state, populated state)
+- [ ] `LoginPage` / `LandingPage` — render + CTA presence
+- [ ] `ChatPage` — basic render + message list (SSE streaming deferred — high complexity, low ROI)
+- [ ] Frontend coverage threshold — add once meaningful coverage exists (~60% floor)
+
+**Testing — Python:**
 
 - [ ] Alembic migration smoke test — `upgrade head && check` against test DB (#316)
 - [ ] Migrate backend tests from `TestClient` to `httpx.AsyncClient` (#430)

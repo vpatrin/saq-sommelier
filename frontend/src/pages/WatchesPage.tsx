@@ -7,6 +7,7 @@ import { useApiClient, ApiError } from '@/lib/api'
 import type { ProductOut, WatchWithProduct, UserStorePreferenceOut } from '@/lib/types'
 import { formatOrigin, CATEGORY_DOT } from '@/lib/utils'
 import EmptyState from '@/components/EmptyState'
+import { useWineDetail } from '@/contexts/WineDetailContext'
 
 function AvailabilityStatus({
   product,
@@ -92,6 +93,7 @@ function WatchesPage() {
   const { user } = useAuth()
   const apiClient = useApiClient()
   const navigate = useNavigate()
+  const { selectedSku, setSelectedSku } = useWineDetail()
 
   const [watches, setWatches] = useState<WatchWithProduct[]>([])
   const [loading, setLoading] = useState(true)
@@ -207,148 +209,158 @@ function WatchesPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-baseline gap-2.5 mb-6">
-          <h1 className="text-2xl font-light">{t('watches.title')}</h1>
-          {watches.length > 0 && (
-            <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
-              {watches.length}
-            </span>
+    <div className="flex-1 relative overflow-hidden">
+      <div
+        className={`h-full overflow-y-auto p-8 transition-[padding-right] duration-300 ease-out ${selectedSku ? 'pr-[376px]' : ''}`}
+      >
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="flex items-baseline gap-2.5 mb-6">
+            <h1 className="text-2xl font-light">{t('watches.title')}</h1>
+            {watches.length > 0 && (
+              <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+                {watches.length}
+              </span>
+            )}
+          </div>
+
+          {error && (
+            <p className="text-destructive text-[13px] mb-4">
+              {error}{' '}
+              <button
+                type="button"
+                className="underline underline-offset-4 hover:text-destructive/80"
+                onClick={() => setError(null)}
+              >
+                {t('watches.failedToRemove')}
+              </button>
+            </p>
           )}
-        </div>
 
-        {error && (
-          <p className="text-destructive text-[13px] mb-4">
-            {error}{' '}
-            <button
-              type="button"
-              className="underline underline-offset-4 hover:text-destructive/80"
-              onClick={() => setError(null)}
-            >
-              {t('watches.failedToRemove')}
-            </button>
-          </p>
-        )}
+          {watches.length === 0 ? (
+            <EmptyState
+              icon={<BookmarkSimple size={28} />}
+              title={t('watches.emptyTitle')}
+              description={t('watches.emptyDesc')}
+              cta={{ label: t('watches.emptyCta'), onClick: () => navigate('/search') }}
+            />
+          ) : (
+            <>
+              {/* Local search filter */}
+              <div className="relative mb-5">
+                <MagnifyingGlass
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+                />
+                <input
+                  type="text"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  placeholder={t('watches.filterPlaceholder')}
+                  className="w-full h-9 pl-8 pr-3 rounded-lg bg-white/[0.04] border border-border text-[13px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
+                />
+              </div>
 
-        {watches.length === 0 ? (
-          <EmptyState
-            icon={<BookmarkSimple size={28} />}
-            title={t('watches.emptyTitle')}
-            description={t('watches.emptyDesc')}
-            cta={{ label: t('watches.emptyCta'), onClick: () => navigate('/search') }}
-          />
-        ) : (
-          <>
-            {/* Local search filter */}
-            <div className="relative mb-5">
-              <MagnifyingGlass
-                size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
-              />
-              <input
-                type="text"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                placeholder={t('watches.filterPlaceholder')}
-                className="w-full h-9 pl-8 pr-3 rounded-lg bg-white/[0.04] border border-border text-[13px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
-              />
-            </div>
+              {filtered.length === 0 ? (
+                <EmptyState icon={<MagnifyingGlass size={28} />} title={t('watches.noMatch')} />
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {filtered.map(({ watch, product }) => {
+                    const dotColor = product?.category
+                      ? (CATEGORY_DOT[product.category] ?? 'bg-muted-foreground/30')
+                      : 'bg-muted-foreground/30'
+                    const origin = product ? formatOrigin(product) : null
+                    const meta = product
+                      ? [origin, product.vintage].filter(Boolean).join(' · ')
+                      : null
 
-            {filtered.length === 0 ? (
-              <EmptyState icon={<MagnifyingGlass size={28} />} title={t('watches.noMatch')} />
-            ) : (
-              <ul className="flex flex-col gap-2">
-                {filtered.map(({ watch, product }) => {
-                  const dotColor = product?.category
-                    ? (CATEGORY_DOT[product.category] ?? 'bg-muted-foreground/30')
-                    : 'bg-muted-foreground/30'
-                  const origin = product ? formatOrigin(product) : null
-                  const meta = product
-                    ? [origin, product.vintage].filter(Boolean).join(' · ')
-                    : null
+                    return (
+                      <li
+                        key={watch.sku}
+                        onClick={() =>
+                          product && setSelectedSku(selectedSku === watch.sku ? null : watch.sku)
+                        }
+                        className={`group relative overflow-hidden rounded-xl border border-border bg-white/[0.025] transition-colors hover:border-primary/20 px-[18px] py-3.5 ${product ? 'cursor-pointer' : ''}`}
+                      >
+                        {/* Warm gradient overlay */}
+                        <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.02] to-transparent" />
 
-                  return (
-                    <li
-                      key={watch.sku}
-                      className="group relative overflow-hidden rounded-xl border border-border bg-white/[0.025] transition-colors hover:border-primary/20 px-[18px] py-3.5"
-                    >
-                      {/* Warm gradient overlay */}
-                      <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.02] to-transparent" />
+                        <div className="relative flex items-start gap-2.5">
+                          {/* Availability dot */}
+                          <span
+                            className={`mt-[5px] w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`}
+                          />
 
-                      <div className="relative flex items-start gap-2.5">
-                        {/* Availability dot */}
-                        <span
-                          className={`mt-[5px] w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`}
-                        />
-
-                        <div className="flex-1 min-w-0">
-                          {product ? (
-                            <>
-                              {/* Name + price row */}
-                              <div className="flex items-start justify-between gap-3">
-                                <p className="text-[14px] font-medium leading-snug min-w-0 flex-1 truncate">
-                                  {product.url ? (
-                                    <a
-                                      href={product.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="hover:text-primary transition-colors"
-                                    >
-                                      {product.name}
-                                    </a>
-                                  ) : (
-                                    product.name
+                          <div className="flex-1 min-w-0">
+                            {product ? (
+                              <>
+                                {/* Name + price row */}
+                                <div className="flex items-start justify-between gap-3">
+                                  <p className="text-[14px] font-medium leading-snug min-w-0 flex-1 truncate">
+                                    {product.url ? (
+                                      <a
+                                        href={product.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="hover:text-primary transition-colors"
+                                      >
+                                        {product.name}
+                                      </a>
+                                    ) : (
+                                      product.name
+                                    )}
+                                  </p>
+                                  {product.price && (
+                                    <p className="font-mono text-[14px] font-light text-primary/90 whitespace-nowrap flex-shrink-0">
+                                      {product.price} $
+                                    </p>
                                   )}
-                                </p>
-                                {product.price && (
-                                  <p className="font-mono text-[14px] font-light text-primary/90 whitespace-nowrap flex-shrink-0">
-                                    {product.price} $
+                                </div>
+
+                                {/* Meta */}
+                                {meta && (
+                                  <p className="text-[11px] text-muted-foreground/60 mt-0.5 leading-snug">
+                                    {meta}
                                   </p>
                                 )}
-                              </div>
 
-                              {/* Meta */}
-                              {meta && (
-                                <p className="text-[11px] text-muted-foreground/60 mt-0.5 leading-snug">
-                                  {meta}
-                                </p>
-                              )}
+                                <AvailabilityStatus
+                                  product={product}
+                                  sku={watch.sku}
+                                  storeNames={storeNames}
+                                  expandedStores={expandedStores}
+                                  onToggleExpand={handleToggleExpand}
+                                />
+                              </>
+                            ) : (
+                              <p className="text-[13px] text-muted-foreground">
+                                {t('watches.delisted', { sku: watch.sku })}
+                              </p>
+                            )}
+                          </div>
 
-                              <AvailabilityStatus
-                                product={product}
-                                sku={watch.sku}
-                                storeNames={storeNames}
-                                expandedStores={expandedStores}
-                                onToggleExpand={handleToggleExpand}
-                              />
-                            </>
-                          ) : (
-                            <p className="text-[13px] text-muted-foreground">
-                              {t('watches.delisted', { sku: watch.sku })}
-                            </p>
-                          )}
+                          {/* Remove button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRemove(watch.sku)
+                            }}
+                            disabled={removing === watch.sku}
+                            className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
+                            aria-label={t('watches.remove')}
+                          >
+                            <X size={13} weight="bold" />
+                          </button>
                         </div>
-
-                        {/* Remove button */}
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(watch.sku)}
-                          disabled={removing === watch.sku}
-                          className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
-                          aria-label={t('watches.remove')}
-                        >
-                          <X size={13} weight="bold" />
-                        </button>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </>
-        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

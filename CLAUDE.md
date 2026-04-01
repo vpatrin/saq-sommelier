@@ -432,6 +432,23 @@ Comfortable with: ES6+ (arrow functions, destructuring, async/await, modules), y
 New to: TypeScript, React, CSS/layout, frontend architecture.
 Explain all of: TS syntax, React concepts, CSS/Tailwind patterns. Reintroduce ES6 concepts when relevant (don't assume instant recall after 5 years). Skip only basic JS and yarn.
 
+### Didactic workflow
+
+The goal is to ship good code AND build Victor's React mental model. Follow this pattern on every frontend task:
+
+**Before writing code** — if a non-obvious React concept drives the implementation (context vs props, component boundaries, hook dependencies, derived state), explain it in 2–3 sentences *before* touching any file. Don't explain everything — only what's relevant to the decision being made.
+
+**While writing code** — when a pattern is used for the first time or in a non-obvious way, add a one-line inline comment explaining *why*, not *what*. Examples:
+- `// useCallback so this doesn't re-register the Escape listener on every render`
+- `// eslint-disable-next-line — intentionally only re-run when panel opens, not on every sku change`
+
+**After a non-trivial change** — if a React concept came up that Victor likely hasn't seen before (scope isolation between components, hook dependency rules, context vs prop drilling, optimistic updates, derived state), explain it in plain language after the code is done. Use the backend analogy if it helps (e.g. "context is like a request-scoped singleton — any component in the tree can read it without passing it down").
+
+**What to explain vs skip:**
+- Explain: hook rules, component scope isolation, state vs derived values, context mechanics, why `useCallback`/`useMemo` matter here
+- Skip: JSX syntax, basic useState, things already explained in a prior session unless it comes up again in a confusing way
+- If unsure: explain it — better to over-explain than leave Victor copying patterns he doesn't understand
+
 Stack: React 19 + TypeScript + Vite + Tailwind CSS 4 + shadcn/ui
 
 - Package manager: yarn (classic v1 — Victor used it in 2019-2021, stick with familiar)

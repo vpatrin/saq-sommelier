@@ -20,6 +20,7 @@ Premium warm theme replacing the brutalist/terminal aesthetic. Cross-cutting UX 
 - [x] Search, watchlist, stores restyle + empty states (#538)
 - [x] Wine detail slide panel (#539)
 - [x] User menu dropdown (#540)
+- [x] Global wine detail panel — accessible from chat, watchlist, search (#562)
 
 Design mockups in `ui/` — organized by feature. Screenshots in `ui/screenshots/`.
 
