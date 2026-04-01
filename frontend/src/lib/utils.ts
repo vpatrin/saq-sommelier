@@ -57,14 +57,27 @@ export const CATEGORY_DOT: Record<string, string> = {
 
 import type { TFunction } from 'i18next'
 
+export function timeAgoPrecise(dateStr: string, t: TFunction): string {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return t('time.minutesAgoPrecise', { count: Math.max(minutes, 1) })
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return t('time.hoursAgoPrecise', { count: hours })
+  const days = Math.floor(hours / 24)
+  if (days < 30) return t('time.daysAgoPrecise', { count: days })
+  const months = Math.floor(days / 30)
+  if (months < 12) return t('time.monthsAgoPrecise', { count: months })
+  return t('time.yearsAgoPrecise', { count: Math.floor(months / 12) })
+}
+
 export function timeAgo(dateStr: string, t: TFunction): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-  if (seconds < 60) return t('time.justNow')
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return t('time.minutesAgo', { count: minutes })
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return t('time.hoursAgo', { count: hours })
-  const days = Math.floor(hours / 24)
-  if (days < 30) return t('time.daysAgo', { count: days })
+  if (seconds < 120) return t('time.justNow')
+  const hours = Math.floor(seconds / 3600)
+  if (hours < 24) return t('time.today')
+  if (hours < 48) return t('time.yesterday')
+  if (hours < 168) return t('time.pastWeek')
+  if (hours < 720) return t('time.pastMonth')
+  if (hours < 8760) return t('time.pastYear')
   return new Date(dateStr).toLocaleDateString()
 }

@@ -115,13 +115,15 @@
   },
   "chats": {
     "emptyDesc": "Commence une conversation avec le sommelier.",
+    "yourChats": "Vos discussions avec Coupette",
     "select": "Sélectionner",
     "cancel": "Annuler",
     "selectAll": "Tout sélectionner",
     "selectedCount": "{{count}} sélectionnée(s)",
     "deleteSelected": "Supprimer {{count}}",
     "deleteConfirm": "Supprimer {{count}} discussion(s) ?",
-    "deleting": "Suppression..."
+    "deleting": "Suppression...",
+    "showMore": "Afficher plus"
   },
   "chat": {
     "welcome": "Qu'est-ce qu'on boit ce soir ?",
@@ -241,6 +243,9 @@
     "show": "Afficher",
     "delete": "Supprimer",
     "allChats": "Toutes les discussions",
+    "kbdSelect": "Naviguer",
+    "kbdOpen": "Ouvrir",
+    "kbdClose": "Ouvrir le menu",
     "collapseSidebar": "Réduire la barre latérale",
     "expandSidebar": "Agrandir la barre latérale",
     "journal": "Journal de dégustation",
@@ -284,6 +289,16 @@
     "justNow": "à l'instant",
     "minutesAgo": "il y a {{count}} min",
     "hoursAgo": "il y a {{count}} h",
-    "daysAgo": "il y a {{count}} j"
+    "daysAgo": "il y a {{count}} j",
+    "minutesAgoPrecise": "Dernier message il y a {{count}} min",
+    "hoursAgoPrecise": "Dernier message il y a {{count}} h",
+    "daysAgoPrecise": "Dernier message il y a {{count}} jour",
+    "monthsAgoPrecise": "Dernier message il y a {{count}} mois",
+    "yearsAgoPrecise": "Dernier message il y a {{count}} an",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "pastWeek": "Cette semaine",
+    "pastMonth": "Ce mois",
+    "pastYear": "Cette année"
   }
 }

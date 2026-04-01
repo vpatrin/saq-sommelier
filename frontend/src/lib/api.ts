@@ -3,6 +3,24 @@ import { useAuth } from '@/contexts/AuthContext'
 
 const BASE_URL = '/api'
 
+// Matches MAX_LIMIT in backend/config.py
+export const API_PAGE_SIZE = 100
+
+export async function fetchAllPages<T>(
+  endpoint: string,
+  client: (path: string) => Promise<T[]>,
+): Promise<T[]> {
+  const result: T[] = []
+  let pageOffset = 0
+  while (true) {
+    const page = await client(`${endpoint}?limit=${API_PAGE_SIZE}&offset=${pageOffset}`)
+    result.push(...page)
+    if (page.length < API_PAGE_SIZE) break
+    pageOffset += API_PAGE_SIZE
+  }
+  return result
+}
+
 export class ApiError extends Error {
   status: number
   detail: string

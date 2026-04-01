@@ -1,10 +1,11 @@
 import { WineDetailProvider, useWineDetail } from '@/contexts/WineDetailContext'
 import WineDetailPanel from '@/components/WineDetailPanel'
+import ChatSearchModal from '@/components/ChatSearchModal'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
-import { useApiClient } from '@/lib/api'
+import { useApiClient, fetchAllPages } from '@/lib/api'
 import {
   MagnifyingGlassIcon as MagnifyingGlass,
   EyeIcon as Eye,
@@ -40,6 +41,7 @@ export interface ChatOutletContext {
   sessions: ChatSessionOut[]
   renameSession: (id: number, title: string) => Promise<void>
   deleteSession: (id: number) => Promise<void>
+  setSending: (sending: boolean) => void
 }
 
 function getInitialCollapsed(): boolean {
@@ -63,8 +65,9 @@ function AppShell() {
   const [collapsed, setCollapsed] = useState(getInitialCollapsed)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
 
-  const [sessions, setSessions] = useState<ChatSessionOut[]>([])
-  const [sessionFilter, setSessionFilter] = useState('')
+  const [allSessions, setAllSessions] = useState<ChatSessionOut[]>([])
+  const [isSending, setIsSending] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [historyHidden, setHistoryHidden] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editTitle, setEditTitle] = useState('')
@@ -93,8 +96,8 @@ function AppShell() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const data = await apiClient<ChatSessionOut[]>('/chat/sessions')
-      setSessions(data)
+      const data = await fetchAllPages<ChatSessionOut>('/chat/sessions', apiClient)
+      setAllSessions(data)
     } catch {
       // Silently fail — sidebar is non-critical
     }
@@ -102,9 +105,9 @@ function AppShell() {
 
   useEffect(() => {
     let cancelled = false
-    apiClient<ChatSessionOut[]>('/chat/sessions')
+    fetchAllPages<ChatSessionOut>('/chat/sessions', apiClient)
       .then((data) => {
-        if (!cancelled) setSessions(data)
+        if (!cancelled) setAllSessions(data)
       })
       .catch(() => {})
     return () => {
@@ -151,7 +154,7 @@ function AppShell() {
         method: 'PATCH',
         body: JSON.stringify({ title }),
       })
-      setSessions((prev) => prev.map((s) => (s.id === id ? updated : s)))
+      setAllSessions((prev) => prev.map((s) => (s.id === id ? updated : s)))
     },
     [apiClient],
   )
@@ -159,7 +162,7 @@ function AppShell() {
   const deleteSession = useCallback(
     async (id: number) => {
       await apiClient(`/chat/sessions/${id}`, { method: 'DELETE' })
-      setSessions((prev) => prev.filter((s) => s.id !== id))
+      setAllSessions((prev) => prev.filter((s) => s.id !== id))
       if (activeSessionId === String(id)) navigate('/chat', { replace: true })
     },
     [apiClient, activeSessionId, navigate],
@@ -167,9 +170,10 @@ function AppShell() {
 
   const outletContext: ChatOutletContext = {
     refreshSessions: fetchSessions,
-    sessions,
+    sessions: allSessions,
     renameSession,
     deleteSession,
+    setSending: setIsSending,
   }
 
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -198,12 +202,18 @@ function AppShell() {
     return () => document.removeEventListener('mousedown', handler)
   }, [openMenuId])
 
-  const filterQuery = sessionFilter.trim().toLowerCase()
-  const filteredSessions = filterQuery
-    ? sessions.filter((s) => (s.title ?? '').toLowerCase().includes(filterQuery))
-    : sessions
-  const visibleSessions = filteredSessions.slice(0, 20)
-  const hasMore = filteredSessions.length > 20
+  const visibleSessions = allSessions.slice(0, 20)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setSearchOpen((v) => !v)
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
 
   const isNavActive = useCallback(
     (to: string) =>
@@ -244,10 +254,20 @@ function AppShell() {
             <button
               type="button"
               onClick={() => navigate('/chat')}
+              disabled={isSending}
               title={t('nav.newChat')}
-              className="w-[38px] h-[38px] rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground hover:bg-surface-hover transition-colors"
+              className="w-[38px] h-[38px] rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
             >
               <Plus size={18} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              title={t('nav.searchHistory')}
+              className="w-[38px] h-[38px] rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground hover:bg-surface-hover transition-colors"
+            >
+              <MagnifyingGlass size={17} />
             </button>
 
             <div className="w-6 h-px bg-border my-1" />
@@ -323,25 +343,21 @@ function AppShell() {
               <button
                 type="button"
                 onClick={() => navigate('/chat')}
-                className="flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground hover:border-border-warm hover:text-sidebar-foreground hover:bg-accent-glow transition-colors mb-2"
+                disabled={isSending}
+                className="flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground hover:border-border-warm hover:text-sidebar-foreground hover:bg-accent-glow transition-colors mb-2 disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
               >
                 <Plus size={16} weight="regular" className="text-muted-foreground" />
                 {t('nav.newChat')}
               </button>
 
-              <div className="relative">
-                <MagnifyingGlass
-                  size={12}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none"
-                />
-                <input
-                  type="text"
-                  value={sessionFilter}
-                  onChange={(e) => setSessionFilter(e.target.value)}
-                  placeholder={t('nav.searchHistory')}
-                  className="w-full px-3.5 py-2 pl-8 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/20 transition-colors"
-                />
-              </div>
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className="flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground/40 hover:text-muted-foreground hover:border-primary/20 transition-colors"
+              >
+                <MagnifyingGlass size={12} className="shrink-0" />
+                {t('nav.searchHistory')}
+              </button>
             </div>
 
             <div className="border-t border-sidebar-border mx-[var(--spacing-sidebar-x)]" />
@@ -378,7 +394,7 @@ function AppShell() {
               ))}
             </nav>
 
-            <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+            <div className="flex-1 overflow-y-auto min-h-0 flex flex-col scrollbar-none">
               <div className="group/recents flex items-center justify-between px-[var(--spacing-sidebar-x)] pt-2 pb-1 shrink-0">
                 <span className="text-[length:var(--text-sidebar-xs)] font-medium text-muted-foreground/40 uppercase tracking-wider">
                   {t('nav.recents')}
@@ -394,7 +410,7 @@ function AppShell() {
 
               {!historyHidden && visibleSessions.length === 0 && (
                 <p className="px-[var(--spacing-sidebar-x)] py-2 text-[length:var(--text-sidebar-xs)] text-muted-foreground/40">
-                  {filterQuery ? t('nav.noMatch') : t('nav.noConversations')}
+                  {t('nav.noConversations')}
                 </p>
               )}
 
@@ -487,7 +503,7 @@ function AppShell() {
                   )
                 })}
 
-              {!historyHidden && (sessions.length > 0 || hasMore) && (
+              {!historyHidden && allSessions.length > 0 && (
                 <Link
                   to="/chats"
                   className="flex items-center gap-2 px-[var(--spacing-sidebar-x)] py-2 mt-0.5 text-[length:var(--text-sidebar-xs)] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
@@ -535,6 +551,18 @@ function AppShell() {
       </aside>
 
       <MainArea outletContext={outletContext} />
+
+      {searchOpen && (
+        <ChatSearchModal
+          sessions={allSessions}
+          activeSessionId={activeSessionId}
+          onNavigate={(id) => {
+            navigate(`/chat/${id}`)
+            setSearchOpen(false)
+          }}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
     </div>
   )
 }

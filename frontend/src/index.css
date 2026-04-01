@@ -135,6 +135,13 @@
   --spacing-sidebar-x: 1.125rem; /* 18px */
 }
 
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* RAG pipeline — animated gradient border cards */
 @keyframes border-rotate {
   from {

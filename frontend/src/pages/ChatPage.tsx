@@ -352,8 +352,13 @@ function ChatPage() {
   const navigate = useNavigate()
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>()
   const { selectedSku, setSelectedSku } = useWineDetail()
-  const { refreshSessions, sessions, renameSession, deleteSession } =
-    useOutletContext<ChatOutletContext>()
+  const {
+    refreshSessions,
+    sessions,
+    renameSession,
+    deleteSession,
+    setSending: setOutletSending,
+  } = useOutletContext<ChatOutletContext>()
 
   // Derive sessionId directly from URL — no intermediate state to get stale
   const sessionId = urlSessionId ? Number(urlSessionId) : null
@@ -362,6 +367,13 @@ function ChatPage() {
   const [messages, setMessages] = useState<ChatMessageOut[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const notifySending = useCallback(
+    (value: boolean) => {
+      setSending(value)
+      setOutletSending(value)
+    },
+    [setOutletSending],
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastFailedInput, setLastFailedInput] = useState<string | null>(null)
@@ -467,7 +479,7 @@ function ChatPage() {
 
       setInput('')
       setError(null)
-      setSending(true)
+      notifySending(true)
 
       // Reset textarea height
       if (inputRef.current) inputRef.current.style.height = 'auto'
@@ -518,11 +530,11 @@ function ChatPage() {
         setLastFailedInput(text)
         setError(err instanceof Error ? err.message : t('chat.somethingWentWrong'))
       } finally {
-        setSending(false)
+        notifySending(false)
         inputRef.current?.focus()
       }
     },
-    [apiClient, input, sending, sessionId, navigate, refreshSessions, t],
+    [apiClient, input, sending, sessionId, navigate, refreshSessions, t, notifySending],
   )
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

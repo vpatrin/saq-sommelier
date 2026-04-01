@@ -12,9 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wine detail panel — click any wine in search results to open a side panel with full details: region, alcohol, sugar, grapes, store availability, SAQ link
 - Wine detail panel accessible from chat recommendations and watchlist, not just search
 - Public landing page — bilingual hero, RAG pipeline walkthrough, changelog timeline, open source section with live GitHub commits
+- Chat history search modal (Cmd+K / Ctrl+K) — search across all sessions with keyboard navigation, default view shows 20 most recent
 
 ### Changed
 
+- Chats page redesigned — load-more pagination, bulk select/delete toolbar, new chat button
 - Sidebar is now collapsible — icon-only 60px mode with tooltips, persisted across sessions
 - User menu dropdown — language toggle, Mon palais / Paramètres placeholders (coming soon), sign out
 - Journal and Cellar nav items added as "Soon" placeholders in sidebar

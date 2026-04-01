@@ -115,13 +115,15 @@
   },
   "chats": {
     "emptyDesc": "Start a conversation with the sommelier.",
+    "yourChats": "Your chats with Coupette",
     "select": "Select",
     "cancel": "Cancel",
     "selectAll": "Select all",
     "selectedCount": "{{count}} selected",
     "deleteSelected": "Delete {{count}}",
     "deleteConfirm": "Delete {{count}} conversation(s)?",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "showMore": "Show more"
   },
   "chat": {
     "welcome": "What are you drinking tonight?",
@@ -241,6 +243,9 @@
     "show": "Show",
     "delete": "Delete",
     "allChats": "All chats",
+    "kbdSelect": "Navigate",
+    "kbdOpen": "Open",
+    "kbdClose": "Open menu",
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
     "journal": "Tasting Journal",
@@ -284,6 +289,21 @@
     "justNow": "just now",
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
-    "daysAgo": "{{count}}d ago"
+    "daysAgo": "{{count}}d ago",
+    "minutesAgoPrecise_one": "Last message 1 minute ago",
+    "minutesAgoPrecise_other": "Last message {{count}} minutes ago",
+    "hoursAgoPrecise_one": "Last message 1 hour ago",
+    "hoursAgoPrecise_other": "Last message {{count}} hours ago",
+    "daysAgoPrecise_one": "Last message 1 day ago",
+    "daysAgoPrecise_other": "Last message {{count}} days ago",
+    "monthsAgoPrecise_one": "Last message 1 month ago",
+    "monthsAgoPrecise_other": "Last message {{count}} months ago",
+    "yearsAgoPrecise_one": "Last message 1 year ago",
+    "yearsAgoPrecise_other": "Last message {{count}} years ago",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "pastWeek": "Past week",
+    "pastMonth": "Past month",
+    "pastYear": "Past year"
   }
 }
