@@ -482,7 +482,6 @@ function SearchPage() {
           </select>
 
           <input
-            key={`min-${minPrice}`}
             type="number"
             min="0"
             step="1"
@@ -499,7 +498,6 @@ function SearchPage() {
           />
           <span className="text-[11px] text-muted-foreground/50">–</span>
           <input
-            key={`max-${maxPrice}`}
             type="number"
             min="0"
             step="1"

@@ -68,16 +68,8 @@ function AppShell() {
   }, [apiClient])
 
   useEffect(() => {
-    let cancelled = false
-    apiClient<ChatSessionOut[]>('/chat/sessions')
-      .then((data) => {
-        if (!cancelled) setSessions(data)
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [apiClient])
+    fetchSessions()
+  }, [fetchSessions])
 
   const handleRename = async (id: number) => {
     if (renamingRef.current) return
