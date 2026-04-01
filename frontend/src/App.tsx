@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell'
 import LandingPage from '@/pages/LandingPage'
 import LoginPage from '@/pages/LoginPage'
 import ChatPage from '@/pages/ChatPage'
+import ChatsPage from '@/pages/ChatsPage'
 import SearchPage from '@/pages/SearchPage'
 import WatchesPage from '@/pages/WatchesPage'
 import SavedStoresPage from '@/pages/SavedStoresPage'
@@ -25,6 +26,7 @@ function App() {
       <Route path="/invite/:code" element={<LoginPage />} />
       <Route element={<AuthedLayout />}>
         <Route path="/dashboard" element={<Navigate to="/chat" replace />} />
+        <Route path="/chats" element={<ChatsPage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/chat/:sessionId" element={<ChatPage />} />
         <Route path="/search" element={<SearchPage />} />

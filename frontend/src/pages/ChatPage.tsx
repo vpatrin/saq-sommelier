@@ -4,16 +4,17 @@ import { useTranslation } from 'react-i18next'
 
 const ReactMarkdown = lazy(() => import('react-markdown'))
 import {
-  ArrowClockwise,
-  ArrowDown,
-  ArrowUp,
-  CaretDown,
-  Check,
-  Copy,
-  PencilSimple,
-  ThumbsDown,
-  ThumbsUp,
-  Trash,
+  ArrowClockwiseIcon as ArrowClockwise,
+  ArrowDownIcon as ArrowDown,
+  ArrowUpIcon as ArrowUp,
+  CaretDownIcon as CaretDown,
+  CheckIcon as Check,
+  CopyIcon as Copy,
+  PencilSimpleIcon as PencilSimple,
+  ThumbsDownIcon as ThumbsDown,
+  ThumbsUpIcon as ThumbsUp,
+  TrashIcon as Trash,
+  WineIcon as Wine,
 } from '@phosphor-icons/react'
 import { useApiClient } from '@/lib/api'
 import type { ChatOutletContext } from '@/components/AppShell'
@@ -206,13 +207,9 @@ function UserMessageActions({
 function AssistantMessage({
   content,
   storeNames,
-  expandedStores,
-  onToggleStores,
 }: {
   content: string | RecommendationOut
   storeNames: Map<string, string>
-  expandedStores: Set<string>
-  onToggleStores: (sku: string) => void
 }) {
   const proseClass =
     'prose prose-sm prose-invert max-w-none text-foreground/80 font-light [&_p]:leading-relaxed [&_ul]:mt-1 [&_ol]:mt-1 [&_li]:my-0.5 [&_strong]:text-foreground [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm'
@@ -240,14 +237,7 @@ function AssistantMessage({
           }}
         >
           {content.products.map(({ product, reason }) => (
-            <WineCard
-              key={product.sku}
-              product={product}
-              reason={reason}
-              storeNames={storeNames}
-              storesExpanded={expandedStores.has(product.sku)}
-              onToggleStores={() => onToggleStores(product.sku)}
-            />
+            <WineCard key={product.sku} product={product} reason={reason} storeNames={storeNames} />
           ))}
         </div>
       </div>
@@ -363,15 +353,6 @@ function ChatPage() {
   const [error, setError] = useState<string | null>(null)
   const [lastFailedInput, setLastFailedInput] = useState<string | null>(null)
   const [storeNames, setStoreNames] = useState<Map<string, string>>(new Map())
-  const [expandedStores, setExpandedStores] = useState<Set<string>>(new Set())
-  const toggleStoreExpand = useCallback((sku: string) => {
-    setExpandedStores((prev) => {
-      const next = new Set(prev)
-      if (next.has(sku)) next.delete(sku)
-      else next.add(sku)
-      return next
-    })
-  }, [])
   const { lastAssistantIdx, lastUserIdx, lastUserMsg } = useMemo(() => {
     let lastAssistantIdx = -1
     let lastUserIdx = -1
@@ -543,6 +524,70 @@ function ChatPage() {
     }
   }
 
+  const isEmpty = messages.length === 0 && !sending && !loading
+
+  if (isEmpty) {
+    return (
+      <div className="relative flex flex-col h-full items-center justify-center px-8">
+        <div className="w-full max-w-[680px] flex flex-col items-center gap-6">
+          {/* Greeting */}
+          <div className="flex flex-col items-center gap-3 mb-2">
+            <div className="w-14 h-14 rounded-2xl bg-primary/[0.12] border border-primary/[0.22] flex items-center justify-center text-primary/70">
+              <Wine size={28} />
+            </div>
+            <p className="text-[17px] font-light text-foreground/75">{t('chat.welcome')}</p>
+          </div>
+
+          {/* Composer */}
+          <form
+            onSubmit={handleSubmit}
+            className="w-full flex flex-col rounded-xl bg-white/[0.05] border border-border transition-colors"
+          >
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value)
+                e.target.style.height = 'auto'
+                e.target.style.height = `${e.target.scrollHeight}px`
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={t('chat.placeholder')}
+              maxLength={MAX_MESSAGE_LENGTH}
+              rows={1}
+              disabled={sending}
+              className="bg-transparent text-sm font-light resize-none overflow-y-auto focus:outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 px-4 pt-3 pb-1.5 max-h-32"
+            />
+            <div className="flex items-center justify-end px-2.5 pb-2.5">
+              <button
+                type="submit"
+                disabled={sending || !input.trim()}
+                className="w-7 h-7 rounded-full bg-primary/80 text-background flex items-center justify-center hover:bg-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                aria-label={t('chat.send')}
+              >
+                <ArrowUp size={14} weight="bold" />
+              </button>
+            </div>
+          </form>
+
+          {/* Starter chips */}
+          <div className="flex flex-wrap justify-center gap-2">
+            {(t('chat.starters', { returnObjects: true }) as string[]).map((starter) => (
+              <button
+                key={starter}
+                type="button"
+                onClick={() => submitMessage(starter)}
+                className="px-3.5 py-1.5 rounded-full border border-border/70 bg-white/[0.03] text-[12px] text-foreground/60 hover:border-primary/40 hover:text-foreground hover:bg-accent-glow transition-colors"
+              >
+                {starter}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative flex flex-col h-full">
       {/* Sticky title bar */}
@@ -559,13 +604,6 @@ function ChatPage() {
       {/* Messages area */}
       <div ref={scrollAreaRef} className="flex-1 overflow-y-auto py-10">
         <div className="max-w-[680px] mx-auto px-8 flex flex-col gap-7">
-          {/* Empty state */}
-          {messages.length === 0 && !sending && !loading && (
-            <div className="flex items-center justify-center min-h-[40vh]">
-              <p className="text-lg font-light text-foreground/40">{t('chat.welcome')}</p>
-            </div>
-          )}
-
           {loading && (
             <div className="flex items-center justify-center min-h-[20vh]">
               <p className="text-sm text-muted-foreground">{t('chat.loading')}</p>
@@ -579,7 +617,7 @@ function ChatPage() {
             >
               {msg.role === 'user' ? (
                 <>
-                  <div className="max-w-[72%] bg-primary/[0.08] border border-primary/[0.1] rounded-[16px_16px_4px_16px] px-4 py-3">
+                  <div className="max-w-[72%] bg-primary/[0.08] border border-primary/[0.1] rounded-2xl px-4 py-3">
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
                       {msg.content as string}
                     </p>
@@ -596,13 +634,8 @@ function ChatPage() {
                 </>
               ) : (
                 <>
-                  <div className="w-full bg-white/[0.025] border border-border rounded-[4px_16px_16px_16px] px-5 py-[18px]">
-                    <AssistantMessage
-                      content={msg.content}
-                      storeNames={storeNames}
-                      expandedStores={expandedStores}
-                      onToggleStores={toggleStoreExpand}
-                    />
+                  <div className="w-full bg-white/[0.025] border border-border rounded-2xl px-5 py-[18px]">
+                    <AssistantMessage content={msg.content} storeNames={storeNames} />
                   </div>
                   <AssistantMessageActions
                     content={msg.content}
@@ -620,7 +653,7 @@ function ChatPage() {
 
           {sending && (
             <div className="flex items-start">
-              <div className="w-full bg-white/[0.025] border border-border rounded-[4px_16px_16px_16px]">
+              <div className="w-full bg-white/[0.025] border border-border rounded-2xl">
                 <ThinkingIndicator />
               </div>
             </div>

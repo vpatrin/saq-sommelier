@@ -113,6 +113,16 @@
     "backToLanding": "Accueil",
     "legal": "Réservé aux 18 ans et plus · La modération a bien meilleur goût"
   },
+  "chats": {
+    "emptyDesc": "Commence une conversation avec le sommelier.",
+    "select": "Sélectionner",
+    "cancel": "Annuler",
+    "selectAll": "Tout sélectionner",
+    "selectedCount": "{{count}} sélectionnée(s)",
+    "deleteSelected": "Supprimer {{count}}",
+    "deleteConfirm": "Supprimer {{count}} discussion(s) ?",
+    "deleting": "Suppression..."
+  },
   "chat": {
     "welcome": "Qu'est-ce qu'on boit ce soir ?",
     "placeholder": "Demandez au sommelier...",
@@ -131,8 +141,9 @@
     ]
   },
   "search": {
-    "title": "Recherche",
+    "title": "Catalogue",
     "placeholder": "Rechercher un vin par nom...",
+    "type": "Type",
     "country": "Pays",
     "all": "Tous",
     "availability": "Disponibilité",
@@ -150,6 +161,9 @@
     "sortPriceDesc": "Prix : décroissant",
     "sortAlpha": "Alphabétique",
     "noResults": "Aucun vin ne correspond à vos filtres.",
+    "noResultsDesc": "Essayez d'élargir vos filtres ou d'ajuster votre recherche.",
+    "reset": "Réinitialiser les filtres",
+    "askSommelier": "Demander au sommelier",
     "watch": "Favoris",
     "watching": "En favoris",
     "first": "Début",
@@ -167,6 +181,11 @@
     "title": "Mes favoris",
     "loading": "Chargement des favoris...",
     "empty": "Aucun favori pour l'instant. Recherchez des vins et ajoutez-les à vos favoris.",
+    "emptyTitle": "Aucun vin surveillé",
+    "emptyDesc": "Suivez des vins pour être alerté quand ils sont disponibles.",
+    "emptyCta": "Chercher un vin",
+    "noMatch": "Aucun vin ne correspond à votre recherche",
+    "filterPlaceholder": "Filtrer mes favoris...",
     "remove": "Retirer",
     "removing": "Retrait...",
     "delisted": "Produit retiré (SKU : {{sku}})",
@@ -178,6 +197,9 @@
     "edit": "Modifier",
     "loading": "Chargement des succursales...",
     "empty": "Aucune succursale enregistrée. Appuyez sur Modifier pour en trouver.",
+    "emptyTitle": "Aucune succursale enregistrée",
+    "emptyDesc": "Enregistrez des succursales pour filtrer la disponibilité dans vos favoris.",
+    "emptyCta": "Trouver des succursales",
     "failedToLoad": "Impossible de charger les succursales"
   },
   "editStores": {
@@ -198,20 +220,27 @@
     "failedToLoad": "Impossible de charger les succursales"
   },
   "nav": {
-    "chat": "Discussion",
-    "search": "Recherche",
+    "chat": "Discussions",
+    "search": "Catalogue",
     "myWatches": "Mes favoris",
     "myStores": "Mes succursales",
     "newChat": "+ Nouvelle discussion",
     "history": "Historique",
     "noConversations": "Aucune conversation",
+    "noMatch": "Aucune conversation trouvée",
+    "searchHistory": "Rechercher...",
     "untitled": "Sans titre",
     "rename": "Renommer",
     "deleteSession": "Supprimer la session",
     "deleteConfirm": "Supprimer ?",
     "yes": "oui",
     "no": "non",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "recents": "Récents",
+    "hide": "Masquer",
+    "show": "Afficher",
+    "delete": "Supprimer",
+    "allChats": "Toutes les discussions"
   },
   "availability": {
     "online": "En ligne",

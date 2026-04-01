@@ -44,7 +44,8 @@ fi
 
 if $frontend_changed; then
   echo "🔍 Linting frontend/"
-  make lint-frontend
+  cd frontend && yarn format && yarn lint && yarn typecheck && cd ..
+  git add frontend/src
 fi
 
 echo ""

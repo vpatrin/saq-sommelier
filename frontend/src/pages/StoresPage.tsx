@@ -1,9 +1,16 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
 import type { StoreWithDistance, UserStorePreferenceOut } from '@/lib/types'
 import { Button } from '@/components/ui/button'
+import {
+  MapPinIcon as MapPin,
+  BuildingsIcon as Buildings,
+  ArrowLeftIcon as ArrowLeft,
+} from '@phosphor-icons/react'
+import EmptyState from '@/components/EmptyState'
 
 type GeoState =
   | { status: 'idle' }
@@ -170,57 +177,99 @@ function StoresPage() {
   )
 
   return (
-    <div className="p-8">
+    <div className="flex-1 overflow-y-auto p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">{t('editStores.title')}</h1>
+        <div className="flex items-center gap-3 mb-6">
+          <Link
+            to="/stores"
+            className="text-muted-foreground/50 hover:text-foreground transition-colors"
+            aria-label={t('login.backToLanding')}
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <h1 className="text-2xl font-light">{t('editStores.title')}</h1>
+        </div>
 
-        {error && <p className="text-destructive text-sm mb-4">{error}</p>}
+        {error && <p className="text-destructive text-[13px] mb-4">{error}</p>}
 
+        {/* Geolocation states */}
         {(geo.status === 'idle' || geo.status === 'requesting') && (
-          <p className="text-muted-foreground">{t('editStores.requestingLocation')}</p>
-        )}
-
-        {geo.status === 'denied' && (
-          <div className="flex flex-col gap-4">
-            <p className="text-muted-foreground">
-              {t(GEO_ERROR_KEYS[geo.errorCode] ?? 'editStores.geoUnavailable')}
-            </p>
-            <div>
-              <Button variant="outline" size="sm" onClick={requestLocation}>
-                {t('editStores.tryAgain')}
-              </Button>
+          <div className="flex items-start gap-3 rounded-xl border border-green-500/20 bg-green-500/[0.06] px-4 py-3.5 mb-6">
+            <MapPin size={16} weight="fill" className="text-green-500 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] text-green-400/90 leading-snug">
+                {t('editStores.requestingLocation')}
+              </p>
             </div>
           </div>
         )}
 
-        {loading && <p className="text-muted-foreground">{t('editStores.loading')}</p>}
+        {geo.status === 'denied' && (
+          <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3.5 mb-6">
+            <MapPin size={16} weight="fill" className="text-destructive mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] text-destructive/80 leading-snug mb-2.5">
+                {t(GEO_ERROR_KEYS[geo.errorCode] ?? 'editStores.geoUnavailable')}
+              </p>
+              {geo.errorCode !== 'denied' && (
+                <Button variant="outline" size="sm" onClick={requestLocation}>
+                  {t('editStores.tryAgain')}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
 
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="flex flex-col gap-3">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="h-[76px] rounded-xl bg-white/[0.025] border border-border animate-pulse"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Empty: location granted but no stores */}
         {geo.status === 'granted' && !loading && stores.length === 0 && !error && (
-          <p className="text-muted-foreground">{t('editStores.noStores')}</p>
+          <EmptyState icon={<Buildings size={28} />} title={t('editStores.noStores')} />
         )}
 
         {stores.length > 0 && (
-          <ul className="flex flex-col gap-4">
+          <ul className="flex flex-col gap-2">
             {stores.map((store) => {
               const isSaved = savedIds.has(store.saq_store_id)
+              const addressLine = [store.address, store.city, store.postcode]
+                .filter(Boolean)
+                .join(', ')
+
               return (
-                <li key={store.saq_store_id} className="border border-border p-4 rounded-lg">
-                  <div className="flex justify-between items-start gap-4">
+                <li
+                  key={store.saq_store_id}
+                  className="relative overflow-hidden rounded-xl border border-border bg-white/[0.025] transition-colors hover:border-primary/20 px-[18px] py-3.5"
+                >
+                  {/* Warm gradient overlay */}
+                  <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.02] to-transparent" />
+
+                  <div className="relative flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold truncate">{store.name}</p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
-                        {store.address && <span>{store.address}</span>}
-                        <span>{store.city}</span>
-                        {store.postcode && <span>{store.postcode}</span>}
-                      </div>
-                      {store.telephone && (
-                        <p className="text-sm text-muted-foreground font-mono mt-1">
-                          {store.telephone}
+                      <p className="text-[14px] font-medium leading-snug truncate">{store.name}</p>
+                      {addressLine && (
+                        <p className="text-[11px] text-muted-foreground/60 mt-0.5 leading-snug truncate">
+                          {addressLine}
+                        </p>
+                      )}
+                      {store.temporarily_closed && (
+                        <p className="text-[10px] text-destructive/70 mt-0.5">
+                          {t('editStores.temporarilyClosed')}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-mono text-muted-foreground whitespace-nowrap">
+
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="font-mono text-[11px] text-muted-foreground/50 whitespace-nowrap">
                         {t('editStores.km', { distance: store.distance_km.toFixed(1) })}
                       </span>
                       <Button
@@ -237,11 +286,6 @@ function StoresPage() {
                       </Button>
                     </div>
                   </div>
-                  {store.temporarily_closed && (
-                    <p className="text-sm text-destructive mt-2">
-                      {t('editStores.temporarilyClosed')}
-                    </p>
-                  )}
                 </li>
               )
             })}

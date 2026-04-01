@@ -15,6 +15,46 @@ export function formatOrigin(product: ProductOut): string {
   return region || product.country || ''
 }
 
+// One color per wine group — all subcategories inherit their group's color.
+// Only the 6 groups shown as chips in Search are mapped; everything else gets no dot.
+const FORTIFIED_COLOR = 'bg-amber-800/80'
+const SPARKLING_COLOR = 'bg-stone-200/80'
+
+export const CATEGORY_DOT: Record<string, string> = {
+  // Rouge
+  'Vin rouge': 'bg-red-500/80',
+  // Blanc
+  'Vin blanc': 'bg-yellow-400/80',
+  // Rosé
+  'Vin rosé': 'bg-pink-400/80',
+  'Vin rosé effervescent': 'bg-pink-400/80',
+  // Champagne & Mousseux
+  Champagne: SPARKLING_COLOR,
+  'Vin mousseux': SPARKLING_COLOR,
+  'Vin blanc effervescent': SPARKLING_COLOR,
+  // Fortifié — all subcategories inherit tuilé/brun
+  Porto: FORTIFIED_COLOR,
+  Madère: FORTIFIED_COLOR,
+  Xérès: FORTIFIED_COLOR,
+  Marsala: FORTIFIED_COLOR,
+  Sauternes: FORTIFIED_COLOR,
+  Muscat: FORTIFIED_COLOR,
+  Pineau: FORTIFIED_COLOR,
+  Banyuls: FORTIFIED_COLOR,
+  Maury: FORTIFIED_COLOR,
+  Rivesaltes: FORTIFIED_COLOR,
+  Macvin: FORTIFIED_COLOR,
+  Floc: FORTIFIED_COLOR,
+  Moscatel: FORTIFIED_COLOR,
+  Montilla: FORTIFIED_COLOR,
+  'Vin de dessert': FORTIFIED_COLOR,
+  'Vin de glace': FORTIFIED_COLOR,
+  'Vin fortifié': FORTIFIED_COLOR,
+  'Vin doux naturel': FORTIFIED_COLOR,
+  // Saké
+  Saké: 'bg-emerald-700/80',
+}
+
 import type { TFunction } from 'i18next'
 
 export function timeAgo(dateStr: string, t: TFunction): string {

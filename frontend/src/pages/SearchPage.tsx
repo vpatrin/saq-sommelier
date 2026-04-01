@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
-import { useSearchParams } from 'react-router'
+import { useSearchParams, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { MagnifyingGlassIcon as MagnifyingGlass, WineIcon as Wine } from '@phosphor-icons/react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
 import type {
@@ -11,7 +12,9 @@ import type {
   UserStorePreferenceOut,
 } from '@/lib/types'
 import { Button } from '@/components/ui/button'
+import { CATEGORY_DOT } from '@/lib/utils'
 import WineCard from '@/components/WineCard'
+import EmptyState from '@/components/EmptyState'
 
 const DEBOUNCE_MS = 300
 const LIMIT = 20
@@ -39,6 +42,7 @@ function SearchPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const apiClient = useApiClient()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Filters from URL params (source of truth)
@@ -78,15 +82,6 @@ function SearchPage() {
   // Watch state — track which SKUs the user is already watching
   const [watchedSkus, setWatchedSkus] = useState<Set<string>>(new Set())
   const [watchingInProgress, setWatchingInProgress] = useState<string | null>(null)
-  const [expandedStores, setExpandedStores] = useState<Set<string>>(new Set())
-  const toggleStoreExpand = useCallback((sku: string) => {
-    setExpandedStores((prev) => {
-      const next = new Set(prev)
-      if (next.has(sku)) next.delete(sku)
-      else next.add(sku)
-      return next
-    })
-  }, [])
 
   // Saved store IDs + names — for "In my stores" filter and availability display
   const [savedStoreIdsRaw, setSavedStoreIds] = useState<string[]>([])
@@ -272,22 +267,6 @@ function SearchPage() {
     [setSearchParams],
   )
 
-  const toggleFilter = useCallback(
-    (key: string) => {
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev)
-        if (next.get(key) === '1') {
-          next.delete(key)
-        } else {
-          next.set(key, '1')
-        }
-        next.delete('page')
-        return next
-      })
-    },
-    [setSearchParams],
-  )
-
   const setPage = useCallback(
     (p: number) => {
       setSearchParams((prev) => {
@@ -302,6 +281,16 @@ function SearchPage() {
     },
     [setSearchParams],
   )
+
+  const resetFilters = useCallback(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams()
+      // Keep the search query only
+      const q = prev.get('q')
+      if (q) next.set('q', q)
+      return next
+    })
+  }, [setSearchParams])
 
   const handleWatch = useCallback(
     async (sku: string) => {
@@ -354,369 +343,343 @@ function SearchPage() {
 
   const displayProducts = results?.products ?? []
   const pages = results ? Math.ceil(results.total / results.limit) : 0
-  const hasStores = storeNames.size > 0
+
+  // Category chips built from facet groups
+  const categoryChips = facets
+    ? facets.category_families.flatMap((family) =>
+        family.children.flatMap((groupKey) => {
+          const group = facets.grouped_categories.find((g) => g.key === groupKey)
+          if (!group) return []
+          const dotColor = CATEGORY_DOT[group.categories[0]] ?? 'bg-muted-foreground/30'
+          return [{ label: group.label, value: `${GROUP_PREFIX}${groupKey}`, dotColor }]
+        }),
+      )
+    : []
+
+  // Active category chip value (normalize raw category → group prefix form)
+  const activeCategoryChip = (() => {
+    if (!category || !facets) return ''
+    if (category.startsWith(GROUP_PREFIX)) return category
+    const parent = facets.grouped_categories.find((g) => g.categories.includes(category))
+    return parent ? `${GROUP_PREFIX}${parent.key}` : ''
+  })()
+
+  // Active sub-category group (shown as secondary chips or dropdown)
+  const activeSubGroup = facets
+    ? facets.grouped_categories.find(
+        (g) => g.key === activeGroupKey(category, facets.grouped_categories),
+      )
+    : null
+
+  // Any secondary filter is active (not counting category chips)
+  const hasSecondaryFilters = !!(country || onlineOnly || inStoresOnly || minPrice || maxPrice)
 
   return (
-    <div className="p-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">{t('search.title')}</h1>
+    <div className="flex-1 overflow-y-auto p-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-2xl font-light mb-6">{t('search.title')}</h1>
 
         {/* Search input */}
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => handleInputChange(e.target.value)}
-          placeholder={t('search.placeholder')}
-          aria-label={t('search.placeholder')}
-          className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:border-ring mb-4"
-        />
+        <div className="relative mb-4">
+          <MagnifyingGlass
+            size={15}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+          />
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => handleInputChange(e.target.value)}
+            placeholder={t('search.placeholder')}
+            aria-label={t('search.placeholder')}
+            className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.04] border border-border text-[14px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
+          />
+        </div>
 
-        {/* Category chips — top level (groups) */}
-        {facets && (
-          <div className="flex flex-col gap-2 mb-4">
-            <div className="flex flex-wrap gap-1.5">
-              {facets.category_families.map((family, fi) => (
-                <span key={family.key} className="contents">
-                  {fi > 0 && <span className="w-px bg-border self-stretch mx-1" />}
-                  {family.children.map((groupKey) => {
-                    const group = facets.grouped_categories.find((g) => g.key === groupKey)
-                    if (!group) return null
-                    const isActive =
-                      category === `${GROUP_PREFIX}${groupKey}` ||
-                      (!category.startsWith(GROUP_PREFIX) &&
-                        category !== '' &&
-                        group.categories.includes(category))
-                    return (
-                      <button
-                        key={groupKey}
-                        type="button"
-                        onClick={() =>
-                          setFilter('category', isActive ? '' : `${GROUP_PREFIX}${groupKey}`)
-                        }
-                        className={`border rounded-full px-2 py-1 text-xs transition-colors ${
-                          isActive
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-border text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        {group.label}
-                      </button>
-                    )
-                  })}
-                </span>
-              ))}
-            </div>
-
-            {/* Sub-categories — chips for small groups, dropdown for large ones */}
-            {(() => {
-              const groupKey = activeGroupKey(category, facets.grouped_categories)
-              if (!groupKey) return null
-              const group = facets.grouped_categories.find((g) => g.key === groupKey)
-              if (!group || group.categories.length < 2) return null
-
-              // Large groups: "All" chip + dropdown to narrow
-              if (group.categories.length > 5) {
-                const isAllActive = category === `${GROUP_PREFIX}${groupKey}`
-                return (
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setFilter('category', `${GROUP_PREFIX}${groupKey}`)}
-                      className={`border rounded-full px-2 py-1 text-xs transition-colors ${
-                        isAllActive
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {t('search.all')}
-                    </button>
-                    <select
-                      value={category.startsWith(GROUP_PREFIX) ? '' : category}
-                      onChange={(e) =>
-                        setFilter('category', e.target.value || `${GROUP_PREFIX}${groupKey}`)
-                      }
-                      className="bg-background border border-border rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-ring"
-                    >
-                      <option value="">{t('search.narrow')}</option>
-                      {group.categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )
-              }
-
-              return (
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setFilter('category', `${GROUP_PREFIX}${groupKey}`)}
-                    className={`border rounded-full px-2 py-1 text-xs transition-colors ${
-                      category === `${GROUP_PREFIX}${groupKey}`
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    All
-                  </button>
-                  {group.categories.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setFilter('category', cat)}
-                      className={`border rounded-full px-2 py-1 text-xs transition-colors ${
-                        category === cat
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              )
-            })()}
+        {/* Category chips */}
+        {categoryChips.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {categoryChips.map((chip) => (
+              <button
+                key={chip.value}
+                type="button"
+                onClick={() =>
+                  setFilter('category', activeCategoryChip === chip.value ? '' : chip.value)
+                }
+                className={`flex items-center gap-1.5 border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+                  activeCategoryChip === chip.value
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full shrink-0 ${chip.dotColor}`} />
+                {chip.label}
+              </button>
+            ))}
           </div>
         )}
 
-        <hr className="border-border mb-4" />
-
-        {/* Two-column layout: filters sidebar + results */}
-        <div className="flex gap-6">
-          {/* Filters sidebar */}
-          <aside className="w-44 shrink-0 flex flex-col gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">{t('search.country')}</p>
-              <select
-                value={country}
-                onChange={(e) => setFilter('country', e.target.value)}
-                className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-ring"
+        {/* Sub-category chips */}
+        {activeSubGroup && activeSubGroup.categories.length >= 2 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            <button
+              type="button"
+              onClick={() => setFilter('category', `${GROUP_PREFIX}${activeSubGroup.key}`)}
+              className={`border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+                category === `${GROUP_PREFIX}${activeSubGroup.key}`
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
+              }`}
+            >
+              {t('search.all')}
+            </button>
+            {activeSubGroup.categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setFilter('category', cat)}
+                className={`border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+                  category === cat
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
+                }`}
               >
-                <option value="">{t('search.all')}</option>
-                {facets?.countries.map((c) => (
-                  <option key={c.name} value={c.name}>
-                    {c.name} ({c.count})
-                  </option>
-                ))}
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <p className="text-destructive text-[13px] mb-4">
+            {error}
+            {' — '}
+            <button
+              type="button"
+              onClick={() => setRetryCount((c) => c + 1)}
+              className="underline hover:text-destructive/80"
+            >
+              {t('search.retry')}
+            </button>
+          </p>
+        )}
+
+        {/* Inline filter bar */}
+        <div className="flex items-center gap-2 mb-4">
+          <select
+            value={country}
+            onChange={(e) => setFilter('country', e.target.value)}
+            className={`w-44 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] focus:outline-none focus:border-primary/30 transition-colors ${
+              country ? 'border-primary/40 text-primary' : 'border-border text-muted-foreground'
+            }`}
+          >
+            <option value="">{t('search.country')}</option>
+            {facets?.countries.map((c) => (
+              <option key={c.name} value={c.name}>
+                {c.name} ({c.count})
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="number"
+            min="0"
+            step="1"
+            placeholder="0"
+            defaultValue={minPrice}
+            onBlur={(e) => setFilter('min_price', e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+            }}
+            aria-label={t('search.minPrice')}
+            className={`w-20 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors ${
+              minPrice ? 'border-primary/40' : 'border-border'
+            }`}
+          />
+          <span className="text-[11px] text-muted-foreground/50">–</span>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            placeholder="∞"
+            defaultValue={maxPrice}
+            onBlur={(e) => setFilter('max_price', e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+            }}
+            aria-label={t('search.maxPrice')}
+            className={`w-20 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors ${
+              maxPrice ? 'border-primary/40' : 'border-border'
+            }`}
+          />
+
+          <button
+            type="button"
+            onClick={() => setFilter('online', onlineOnly ? '' : '1')}
+            className={`border rounded-lg px-2.5 py-1.5 text-[12px] transition-colors ${
+              onlineOnly
+                ? 'border-primary/40 bg-primary/10 text-primary'
+                : 'border-border text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t('search.availableOnline')}
+          </button>
+
+          {savedStoreIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setFilter('in_stores', inStoresOnly ? '' : '1')}
+              className={`border rounded-lg px-2.5 py-1.5 text-[12px] transition-colors ${
+                inStoresOnly
+                  ? 'border-primary/40 bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {t('search.inMyStores')}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={resetFilters}
+            disabled={!hasSecondaryFilters && !category}
+            className="border rounded-lg px-2.5 py-1.5 text-[12px] border-border text-muted-foreground/40 disabled:opacity-30 hover:text-foreground hover:border-border/80 transition-colors"
+          >
+            {t('search.reset')}
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 gap-2">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-[88px] rounded-xl bg-white/[0.025] border border-border animate-pulse"
+              />
+            ))}
+          </div>
+        ) : results && displayProducts.length > 0 ? (
+          <>
+            {/* Count + sort */}
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+                {t('search.result', { count: results.total })}
+              </p>
+              <select
+                value={sort}
+                onChange={(e) => setFilter('sort', e.target.value)}
+                className="bg-white/[0.04] border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:border-primary/30 transition-colors"
+              >
+                <option value="recent">{t('search.sortRecent')}</option>
+                <option value="price_asc">{t('search.sortPriceAsc')}</option>
+                <option value="price_desc">{t('search.sortPriceDesc')}</option>
+                <option value="alpha">{t('search.sortAlpha')}</option>
               </select>
             </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">{t('search.availability')}</p>
-              <div className="flex flex-col gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => toggleFilter('online')}
-                  className={`border rounded-lg px-2 py-1.5 text-xs text-left transition-colors ${
-                    onlineOnly
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {t('search.availableOnline')}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => toggleFilter('in_stores')}
-                  disabled={savedStoreIds.length === 0}
-                  className={`border rounded-lg px-2 py-1.5 text-xs text-left transition-colors ${
-                    savedStoreIds.length === 0
-                      ? 'border-border text-muted-foreground/50 cursor-not-allowed'
-                      : inStoresOnly
-                        ? 'border-primary bg-primary/10 text-primary'
+            <ul className="grid grid-cols-2 gap-2">
+              {displayProducts.map((product) => {
+                const isWatched = watchedSkus.has(product.sku)
+                const isBusy = watchingInProgress === product.sku
+                const watchButton = (
+                  <button
+                    type="button"
+                    disabled={isBusy}
+                    onClick={() =>
+                      isWatched ? handleUnwatch(product.sku) : handleWatch(product.sku)
+                    }
+                    className={`w-24 border rounded-lg py-1.5 text-[12px] text-center transition-colors ${
+                      isWatched
+                        ? 'border-primary/40 bg-primary/10 text-primary'
                         : 'border-border text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {savedStoreIds.length > 0 ? t('search.inMyStores') : t('search.inMyStoresNone')}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">{t('search.price')}</p>
-              <div className="flex gap-2">
-                <input
-                  key={`min-${minPrice}`}
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder={facets?.price_range?.min ?? '0'}
-                  defaultValue={minPrice}
-                  onBlur={(e) => setFilter('min_price', e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                  }}
-                  aria-label={t('search.minPrice')}
-                  className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:border-ring"
-                />
-                <input
-                  key={`max-${maxPrice}`}
-                  type="number"
-                  min="0"
-                  step="1"
-                  placeholder={facets?.price_range?.max ?? '∞'}
-                  defaultValue={maxPrice}
-                  onBlur={(e) => setFilter('max_price', e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                  }}
-                  aria-label={t('search.maxPrice')}
-                  className="w-full bg-background border border-border rounded-lg px-2 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:border-ring"
-                />
-              </div>
-            </div>
-          </aside>
-
-          {/* Results */}
-          <div className="flex-1 min-w-0">
-            {/* Error */}
-            {error && (
-              <p className="text-destructive text-sm mb-4">
-                {error}
-                {' — '}
-                <button
-                  type="button"
-                  onClick={() => setRetryCount((c) => c + 1)}
-                  className="underline hover:text-destructive/80"
-                >
-                  {t('search.retry')}
-                </button>
-              </p>
-            )}
-
-            {loading ? (
-              <p className="text-muted-foreground">{t('search.loading')}</p>
-            ) : results && displayProducts.length > 0 ? (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-xs text-muted-foreground font-mono">
-                    {t('search.result', { count: results.total })}
-                    {pages > 1 && ` · ${t('search.pageOf', { page, pages })}`}
-                  </p>
-                  <select
-                    value={sort}
-                    onChange={(e) => setFilter('sort', e.target.value)}
-                    className="bg-background border border-border rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-ring"
+                    } ${isBusy ? 'opacity-50' : ''}`}
                   >
-                    <option value="recent">{t('search.sortRecent')}</option>
-                    <option value="price_asc">{t('search.sortPriceAsc')}</option>
-                    <option value="price_desc">{t('search.sortPriceDesc')}</option>
-                    <option value="alpha">{t('search.sortAlpha')}</option>
-                  </select>
-                </div>
+                    {isBusy ? '...' : isWatched ? t('search.watching') : t('search.watch')}
+                  </button>
+                )
+                return (
+                  <li key={product.sku}>
+                    <WineCard product={product} storeNames={storeNames} watchSlot={watchButton} />
+                  </li>
+                )
+              })}
+            </ul>
 
-                <ul className="flex flex-col gap-3">
-                  {displayProducts.map((product) => {
-                    const isWatched = watchedSkus.has(product.sku)
-                    const isBusy = watchingInProgress === product.sku
-                    const isOnline = product.online_availability === true
-                    const storeAvail = product.store_availability ?? []
-                    const matchingIds = storeAvail.filter((id) => storeNames.has(id))
-                    const hasAvailability =
-                      isOnline ||
-                      (hasStores && matchingIds.length > 0) ||
-                      (!hasStores && storeAvail.length > 0)
-                    return (
-                      <li
-                        key={product.sku}
-                        className={`border border-border rounded-lg p-4 flex justify-between items-start gap-4${hasAvailability ? '' : ' opacity-50'}`}
-                      >
-                        <WineCard
-                          product={product}
-                          storeNames={storeNames}
-                          storesExpanded={expandedStores.has(product.sku)}
-                          onToggleStores={() => toggleStoreExpand(product.sku)}
-                        />
-
-                        <button
-                          type="button"
-                          disabled={isBusy}
-                          onClick={() =>
-                            isWatched ? handleUnwatch(product.sku) : handleWatch(product.sku)
-                          }
-                          className={`border rounded-lg px-3 py-1.5 text-xs transition-colors shrink-0 ${
-                            isWatched
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-border text-muted-foreground hover:text-foreground'
-                          } ${isBusy ? 'opacity-50' : ''}`}
-                        >
-                          {isBusy ? '...' : isWatched ? t('search.watching') : t('search.watch')}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-
-                {/* Pagination */}
-                {pages > 1 && (
-                  <div className="flex items-center gap-2 mt-6 font-mono text-sm">
-                    <Button
-                      variant="outline"
-                      size="xs"
-                      disabled={page <= 1}
-                      onClick={() => setPage(1)}
+            {/* Pagination */}
+            {pages > 1 && (
+              <div className="flex items-center gap-1.5 mt-6 font-mono text-[12px]">
+                <Button variant="outline" size="xs" disabled={page <= 1} onClick={() => setPage(1)}>
+                  {t('search.first')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="xs"
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                >
+                  {t('search.prev')}
+                </Button>
+                {Array.from({ length: Math.min(pages, 7) }, (_, i) => {
+                  let p: number
+                  if (pages <= 7) p = i + 1
+                  else if (page <= 4) p = i + 1
+                  else if (page >= pages - 3) p = pages - 6 + i
+                  else p = page - 3 + i
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPage(p)}
+                      className={`w-7 h-7 rounded-lg text-[11px] transition-colors ${
+                        p === page
+                          ? 'bg-primary/10 text-primary border border-primary/30'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
+                      }`}
                     >
-                      {t('search.first')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="xs"
-                      disabled={page <= 1}
-                      onClick={() => setPage(page - 1)}
-                    >
-                      {t('search.prev')}
-                    </Button>
-                    {Array.from({ length: Math.min(pages, 7) }, (_, i) => {
-                      let p: number
-                      if (pages <= 7) {
-                        p = i + 1
-                      } else if (page <= 4) {
-                        p = i + 1
-                      } else if (page >= pages - 3) {
-                        p = pages - 6 + i
-                      } else {
-                        p = page - 3 + i
-                      }
-                      return (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setPage(p)}
-                          className={`px-2 py-1 text-xs ${
-                            p === page ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                          }`}
-                        >
-                          {p}
-                        </button>
-                      )
-                    })}
-                    <Button
-                      variant="outline"
-                      size="xs"
-                      disabled={page >= pages}
-                      onClick={() => setPage(page + 1)}
-                    >
-                      {t('search.next')}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="xs"
-                      disabled={page >= pages}
-                      onClick={() => setPage(pages)}
-                    >
-                      {t('search.last')}
-                    </Button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-muted-foreground">{t('search.noResults')}</p>
+                      {p}
+                    </button>
+                  )
+                })}
+                <Button
+                  variant="outline"
+                  size="xs"
+                  disabled={page >= pages}
+                  onClick={() => setPage(page + 1)}
+                >
+                  {t('search.next')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="xs"
+                  disabled={page >= pages}
+                  onClick={() => setPage(pages)}
+                >
+                  {t('search.last')}
+                </Button>
+              </div>
             )}
-          </div>
-        </div>
+          </>
+        ) : (
+          !loading && (
+            <EmptyState
+              icon={<Wine size={28} />}
+              title={t('search.noResults')}
+              description={t('search.noResultsDesc')}
+              cta={
+                hasSecondaryFilters || category
+                  ? { label: t('search.reset'), onClick: resetFilters }
+                  : undefined
+              }
+              secondaryCta={
+                !query
+                  ? {
+                      label: t('search.askSommelier'),
+                      onClick: () => navigate('/chat'),
+                    }
+                  : undefined
+              }
+            />
+          )
+        )}
       </div>
     </div>
   )
