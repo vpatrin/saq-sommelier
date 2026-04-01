@@ -3,22 +3,24 @@ import { Link, Outlet, useLocation, useMatch, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient } from '@/lib/api'
-import { timeAgo } from '@/lib/utils'
 import {
-  Clock,
-  MagnifyingGlass,
-  Eye,
-  MapPin,
-  ChatCircle,
-  Plus,
-  X,
+  MagnifyingGlassIcon as MagnifyingGlass,
+  EyeIcon as Eye,
+  MapPinIcon as MapPin,
+  ChatCircleIcon as ChatCircle,
+  PlusIcon as Plus,
+  DotsThreeIcon as DotsThree,
+  PencilSimpleIcon as PencilSimple,
+  TrashIcon as Trash,
   SignOutIcon,
+  WineIcon,
 } from '@phosphor-icons/react'
 import type { ChatSessionOut } from '@/lib/types'
 
 const BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string
 
 const NAV_ITEMS = [
+  { to: '/chats', labelKey: 'nav.chat', icon: ChatCircle },
   { to: '/search', labelKey: 'nav.search', icon: MagnifyingGlass },
   { to: '/watches', labelKey: 'nav.myWatches', icon: Eye },
   { to: '/stores', labelKey: 'nav.myStores', icon: MapPin },
@@ -38,14 +40,17 @@ function AppShell() {
   const navigate = useNavigate()
   const apiClient = useApiClient()
 
-  const isOnChat = location.pathname.startsWith('/chat')
   const sessionMatch = useMatch('/chat/:sessionId')
   const activeSessionId = sessionMatch?.params.sessionId ?? null
 
   const [sessions, setSessions] = useState<ChatSessionOut[]>([])
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [sessionFilter, setSessionFilter] = useState('')
+  const [historyHidden, setHistoryHidden] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editTitle, setEditTitle] = useState('')
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null)
+  const [menuAbove, setMenuAbove] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const renamingRef = useRef(false)
 
   const handleLogout = useCallback(() => {
@@ -62,9 +67,7 @@ function AppShell() {
     }
   }, [apiClient])
 
-  // Load sessions when navigating to chat
   useEffect(() => {
-    if (!isOnChat) return
     let cancelled = false
     apiClient<ChatSessionOut[]>('/chat/sessions')
       .then((data) => {
@@ -74,7 +77,7 @@ function AppShell() {
     return () => {
       cancelled = true
     }
-  }, [isOnChat, apiClient])
+  }, [apiClient])
 
   const handleRename = async (id: number) => {
     if (renamingRef.current) return
@@ -95,12 +98,19 @@ function AppShell() {
   }
 
   const handleDelete = async (id: number) => {
+    setOpenMenuId(null)
     try {
       await deleteSession(id)
-      setConfirmDeleteId(null)
     } catch {
       // Silently fail
     }
+  }
+
+  const openMenu = (id: number, triggerEl: HTMLButtonElement) => {
+    const rect = triggerEl.getBoundingClientRect()
+    // Open above if less than 120px below the trigger
+    setMenuAbove(window.innerHeight - rect.bottom < 120)
+    setOpenMenuId(id)
   }
 
   const renameSession = useCallback(
@@ -130,15 +140,34 @@ function AppShell() {
     deleteSession,
   }
 
+  // Close menu on outside click
+  useEffect(() => {
+    if (openMenuId === null) return
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [openMenuId])
+
+  const filterQuery = sessionFilter.trim().toLowerCase()
+  const filteredSessions = filterQuery
+    ? sessions.filter((s) => (s.title ?? '').toLowerCase().includes(filterQuery))
+    : sessions
+  const visibleSessions = filteredSessions.slice(0, 20)
+  const hasMore = filteredSessions.length > 20
+
   return (
     <div className="h-screen bg-background text-foreground flex">
       {/* Sidebar */}
       <aside className="w-65 shrink-0 border-r border-border bg-sidebar text-sidebar-foreground flex flex-col h-full">
-        {/* Brand */}
-        <div className="px-[var(--spacing-sidebar-x)] pt-5 pb-3.5">
-          <Link to="/chat" className="flex items-center gap-2.5">
-            <div className="w-7.5 h-7.5 rounded-lg bg-gradient-to-br from-primary/35 to-primary/15 flex items-center justify-center text-sm font-semibold text-primary shrink-0">
-              C
+        {/* Brand + new chat + session search */}
+        <div className="px-[var(--spacing-sidebar-x)] pt-5 pb-3 shrink-0">
+          <Link to="/chat" className="flex items-center gap-2.5 mb-4">
+            <div className="w-7.5 h-7.5 rounded-lg bg-gradient-to-br from-primary/35 to-primary/15 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+              <WineIcon size={15} weight="regular" />
             </div>
             <span className="text-base font-medium text-foreground">{t('brand')}</span>
           </Link>
@@ -146,116 +175,35 @@ function AppShell() {
           <button
             type="button"
             onClick={() => navigate('/chat')}
-            className="mt-4 flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground hover:border-border-warm hover:text-sidebar-foreground hover:bg-accent-glow transition-colors"
+            className="flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground hover:border-border-warm hover:text-sidebar-foreground hover:bg-accent-glow transition-colors mb-2"
           >
             <Plus size={16} weight="regular" className="text-muted-foreground" />
             {t('nav.newChat')}
           </button>
+
+          <div className="relative">
+            <MagnifyingGlass
+              size={12}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={sessionFilter}
+              onChange={(e) => setSessionFilter(e.target.value)}
+              placeholder={t('nav.searchHistory')}
+              className="w-full px-3.5 py-2 pl-8 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/20 transition-colors"
+            />
+          </div>
         </div>
 
-        {/* Chat history — only when on /chat */}
-        {isOnChat && sessions.length > 0 && (
-          <div className="border-b border-sidebar-border">
-            <div className="px-[var(--spacing-sidebar-x)] pt-3 pb-1.5 flex items-center gap-1.5 text-[length:var(--text-sidebar-xs)] font-normal tracking-wider uppercase text-muted-foreground">
-              <Clock size={14} className="opacity-70" />
-              {t('nav.history')}
-            </div>
-            <div className="overflow-y-auto max-h-48 pb-2">
-              {sessions.map((session) => {
-                const isActive = activeSessionId === String(session.id)
-                const isConfirming = confirmDeleteId === session.id
-                return (
-                  <div
-                    key={session.id}
-                    className={`group relative flex items-center gap-1 px-[var(--spacing-sidebar-x)] py-1.5 text-[length:var(--text-sidebar)] ${
-                      isActive ? 'bg-accent-glow' : 'hover:bg-surface-hover'
-                    }`}
-                  >
-                    {isActive && (
-                      <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-primary" />
-                    )}
-                    {isConfirming ? (
-                      <div className="flex-1 flex items-center gap-2 min-w-0">
-                        <span className="text-xs text-muted-foreground truncate">
-                          {t('nav.deleteConfirm')}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(session.id)}
-                          className="text-xs text-destructive hover:text-destructive/80"
-                        >
-                          {t('nav.yes')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="text-xs text-muted-foreground hover:text-foreground"
-                        >
-                          {t('nav.no')}
-                        </button>
-                      </div>
-                    ) : editingId === session.id ? (
-                      <input
-                        autoFocus
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleRename(session.id)
-                          if (e.key === 'Escape') setEditingId(null)
-                        }}
-                        onBlur={() => handleRename(session.id)}
-                        maxLength={50}
-                        className="flex-1 min-w-0 bg-transparent border-b border-primary text-sm outline-none"
-                      />
-                    ) : (
-                      <>
-                        <Link
-                          to={`/chat/${session.id}`}
-                          className={`flex-1 min-w-0 truncate ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
-                          title={session.title ?? t('nav.untitled')}
-                          onDoubleClick={(e) => {
-                            e.preventDefault()
-                            setEditTitle(session.title ?? '')
-                            setEditingId(session.id)
-                          }}
-                        >
-                          {session.title ?? t('nav.untitled')}
-                        </Link>
-                        <span className="shrink-0 text-[length:var(--text-sidebar-xs)] font-mono text-muted-foreground hidden group-hover:inline">
-                          {timeAgo(session.updated_at, t)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteId(session.id)}
-                          className="shrink-0 text-xs text-muted-foreground hover:text-destructive hidden group-hover:inline"
-                          title={t('nav.deleteSession')}
-                        >
-                          <X size={12} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+        <div className="border-t border-sidebar-border mx-[var(--spacing-sidebar-x)]" />
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-2 flex flex-col gap-0.5">
-          {/* Chat link — only when NOT on /chat */}
-          {!isOnChat && (
-            <Link
-              to="/chat"
-              className="flex items-center gap-2.5 px-3 py-2 text-[length:var(--text-sidebar)] rounded-lg transition-colors text-sidebar-foreground hover:bg-surface-hover"
-            >
-              <ChatCircle size={16} className="opacity-70" />
-              {t('nav.chat')}
-            </Link>
-          )}
+        <nav className="shrink-0 px-2 py-2 flex flex-col gap-0.5 border-b border-sidebar-border">
           {NAV_ITEMS.map(({ to, labelKey, icon: Icon }) => {
             const active =
               location.pathname === to ||
+              (to === '/chats' && /^\/chat\/\d+/.test(location.pathname)) ||
               (to === '/stores' && location.pathname === '/stores/nearby')
             return (
               <Link
@@ -274,8 +222,131 @@ function AppShell() {
           })}
         </nav>
 
-        {/* Profile trigger at bottom */}
-        <div className="mt-auto border-t border-sidebar-border px-4 py-3.5">
+        {/* Session history — flex-1, scrollable */}
+        <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+          {/* Recents header */}
+          <div className="group/recents flex items-center justify-between px-[var(--spacing-sidebar-x)] pt-2 pb-1 shrink-0">
+            <span className="text-[length:var(--text-sidebar-xs)] font-medium text-muted-foreground/40 uppercase tracking-wider">
+              {t('nav.recents')}
+            </span>
+            <button
+              type="button"
+              onClick={() => setHistoryHidden((v) => !v)}
+              className="text-[length:var(--text-sidebar-xs)] text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover/recents:opacity-100 transition-opacity"
+            >
+              {historyHidden ? t('nav.show') : t('nav.hide')}
+            </button>
+          </div>
+
+          {!historyHidden && visibleSessions.length === 0 && (
+            <p className="px-[var(--spacing-sidebar-x)] py-2 text-[length:var(--text-sidebar-xs)] text-muted-foreground/40">
+              {filterQuery ? t('nav.noMatch') : t('nav.noConversations')}
+            </p>
+          )}
+
+          {!historyHidden &&
+            visibleSessions.map((session) => {
+              const isActive = activeSessionId === String(session.id)
+              const menuOpen = openMenuId === session.id
+              return (
+                <div
+                  key={session.id}
+                  className={`group relative flex items-center gap-1 px-[var(--spacing-sidebar-x)] py-1.5 text-[length:var(--text-sidebar)] ${
+                    isActive ? 'bg-accent-glow' : 'hover:bg-surface-hover'
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-primary" />
+                  )}
+                  {editingId === session.id ? (
+                    <input
+                      autoFocus
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleRename(session.id)
+                        if (e.key === 'Escape') setEditingId(null)
+                      }}
+                      onBlur={() => handleRename(session.id)}
+                      maxLength={50}
+                      className="flex-1 min-w-0 bg-transparent border-b border-primary text-sm outline-none"
+                    />
+                  ) : (
+                    <>
+                      <Link
+                        to={`/chat/${session.id}`}
+                        className={`flex-1 min-w-0 truncate ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+                        title={session.title ?? t('nav.untitled')}
+                        onDoubleClick={(e) => {
+                          e.preventDefault()
+                          setEditTitle(session.title ?? '')
+                          setEditingId(session.id)
+                        }}
+                      >
+                        {session.title ?? t('nav.untitled')}
+                      </Link>
+                      <div ref={menuOpen ? menuRef : null} className="relative shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            if (menuOpen) {
+                              setOpenMenuId(null)
+                            } else {
+                              openMenu(session.id, e.currentTarget)
+                            }
+                          }}
+                          className={`flex items-center justify-center w-6 h-6 rounded text-muted-foreground/50 hover:text-foreground hover:bg-white/[0.06] transition-colors ${menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                        >
+                          <DotsThree size={16} weight="bold" />
+                        </button>
+                        {menuOpen && (
+                          <div
+                            className={`absolute right-0 w-36 rounded-xl bg-popover border border-border shadow-lg py-1 z-50 ${menuAbove ? 'bottom-full mb-1' : 'top-full mt-1'}`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditTitle(session.title ?? '')
+                                setEditingId(session.id)
+                                setOpenMenuId(null)
+                              }}
+                              className="flex items-center gap-2.5 w-full px-3 py-1.5 text-[length:var(--text-sidebar)] text-foreground hover:bg-white/[0.04] transition-colors"
+                            >
+                              <PencilSimple size={12} className="opacity-50" />
+                              {t('nav.rename')}
+                            </button>
+                            <div className="mx-3 my-1 border-t border-border" />
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(session.id)}
+                              className="flex items-center gap-2.5 w-full px-3 py-1.5 text-[length:var(--text-sidebar)] text-destructive hover:bg-white/[0.04] transition-colors"
+                            >
+                              <Trash size={12} />
+                              {t('nav.delete')}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+
+          {/* All chats link */}
+          {!historyHidden && (sessions.length > 0 || hasMore) && (
+            <Link
+              to="/chats"
+              className="flex items-center gap-2 px-[var(--spacing-sidebar-x)] py-2 mt-0.5 text-[length:var(--text-sidebar-xs)] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+            >
+              <ChatCircle size={12} className="opacity-60" />
+              {t('nav.allChats')}
+            </Link>
+          )}
+        </div>
+
+        {/* Profile footer */}
+        <div className="shrink-0 border-t border-sidebar-border px-4 py-3.5">
           <div className="flex items-center gap-2 text-xs mb-3">
             <button
               type="button"
@@ -332,7 +403,7 @@ function AppShell() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-w-0 overflow-y-auto">
+      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <Outlet context={outletContext} />
       </main>
     </div>
