@@ -203,10 +203,13 @@ function AppShell() {
   const visibleSessions = filteredSessions.slice(0, 20)
   const hasMore = filteredSessions.length > 20
 
-  const isNavActive = (to: string) =>
-    location.pathname === to ||
-    (to === '/chats' && /^\/chat\/\d+/.test(location.pathname)) ||
-    (to === '/stores' && location.pathname === '/stores/nearby')
+  const isNavActive = useCallback(
+    (to: string) =>
+      location.pathname === to ||
+      (to === '/chats' && /^\/chat\/\d+/.test(location.pathname)) ||
+      (to === '/stores' && location.pathname === '/stores/nearby'),
+    [location.pathname],
+  )
 
   return (
     <div className="h-screen bg-background text-foreground flex">
@@ -217,7 +220,6 @@ function AppShell() {
         }`}
       >
         {collapsed ? (
-          /* ── Collapsed (icon-only) ── */
           <div className="flex flex-col items-center py-4 gap-1 h-full">
             <Link
               to="/chat"
@@ -297,7 +299,6 @@ function AppShell() {
             </div>
           </div>
         ) : (
-          /* ── Expanded ── */
           <>
             <div className="px-[var(--spacing-sidebar-x)] pt-5 pb-3 shrink-0">
               <div className="flex items-center justify-between mb-4">
@@ -495,7 +496,6 @@ function AppShell() {
               )}
             </div>
 
-            {/* Profile trigger */}
             <div
               ref={userMenuRef}
               className="shrink-0 border-t border-sidebar-border px-3 py-3 relative"
@@ -532,7 +532,6 @@ function AppShell() {
         )}
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <Outlet context={outletContext} />
       </main>

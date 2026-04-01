@@ -34,7 +34,6 @@ function UserMenu({
         placement === 'right' ? 'left-full bottom-0 ml-2 w-64' : 'bottom-full left-3 right-3 mb-2'
       }`}
     >
-      {/* User header */}
       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
         <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-[13px] font-medium text-primary shrink-0">
           {firstName.charAt(0)}
@@ -47,7 +46,6 @@ function UserMenu({
         </div>
       </div>
 
-      {/* Mon palais — disabled */}
       <div className="py-1 border-b border-border/50">
         <div className="flex items-center gap-3 px-4 py-2.5 opacity-40 cursor-not-allowed">
           <Heart size={15} className="text-muted-foreground shrink-0" />
@@ -60,7 +58,6 @@ function UserMenu({
         </div>
       </div>
 
-      {/* Settings + Language */}
       <div className="py-1 border-b border-border/50">
         <div className="flex items-center gap-3 px-4 py-2.5 opacity-40 cursor-not-allowed">
           <Gear size={15} className="text-muted-foreground shrink-0" />
@@ -81,7 +78,6 @@ function UserMenu({
         </button>
       </div>
 
-      {/* Logout */}
       <div className="py-1">
         <button
           type="button"
