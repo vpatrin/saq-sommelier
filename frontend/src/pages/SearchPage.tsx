@@ -14,6 +14,7 @@ import type {
 import { Button } from '@/components/ui/button'
 import { CATEGORY_DOT } from '@/lib/utils'
 import WineCard from '@/components/WineCard'
+import WineDetailPanel from '@/components/WineDetailPanel'
 import EmptyState from '@/components/EmptyState'
 
 const DEBOUNCE_MS = 300
@@ -78,6 +79,9 @@ function SearchPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
+
+  // Selected wine for detail panel
+  const [selectedSku, setSelectedSku] = useState<string | null>(null)
 
   // Watch state — track which SKUs the user is already watching
   const [watchedSkus, setWatchedSkus] = useState<Set<string>>(new Set())
@@ -341,6 +345,8 @@ function SearchPage() {
     [apiClient, userId, t],
   )
 
+  const handleClosePanel = useCallback(() => setSelectedSku(null), [])
+
   const displayProducts = results?.products ?? []
   const pages = results ? Math.ceil(results.total / results.limit) : 0
 
@@ -375,312 +381,349 @@ function SearchPage() {
   const hasSecondaryFilters = !!(country || onlineOnly || inStoresOnly || minPrice || maxPrice)
 
   return (
-    <div className="flex-1 overflow-y-auto p-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-light mb-6">{t('search.title')}</h1>
+    <div className="flex-1 relative overflow-hidden">
+      <div
+        className={`h-full overflow-y-auto p-8 transition-[padding-right] duration-300 ease-out ${selectedSku ? 'pr-[376px]' : ''}`}
+      >
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-2xl font-light mb-6">{t('search.title')}</h1>
 
-        {/* Search input */}
-        <div className="relative mb-4">
-          <MagnifyingGlass
-            size={15}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
-          />
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => handleInputChange(e.target.value)}
-            placeholder={t('search.placeholder')}
-            aria-label={t('search.placeholder')}
-            className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.04] border border-border text-[14px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
-          />
-        </div>
+          {/* Search input */}
+          <div className="relative mb-4">
+            <MagnifyingGlass
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => handleInputChange(e.target.value)}
+              placeholder={t('search.placeholder')}
+              aria-label={t('search.placeholder')}
+              className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.04] border border-border text-[14px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
+            />
+          </div>
 
-        {/* Category chips */}
-        {categoryChips.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {categoryChips.map((chip) => (
+          {/* Category chips */}
+          {categoryChips.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {categoryChips.map((chip) => (
+                <button
+                  key={chip.value}
+                  type="button"
+                  onClick={() =>
+                    setFilter('category', activeCategoryChip === chip.value ? '' : chip.value)
+                  }
+                  className={`flex items-center gap-1.5 border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+                    activeCategoryChip === chip.value
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${chip.dotColor}`} />
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Sub-category chips */}
+          {activeSubGroup && activeSubGroup.categories.length >= 2 && (
+            <div className="flex flex-wrap gap-1.5 mb-4">
               <button
-                key={chip.value}
                 type="button"
-                onClick={() =>
-                  setFilter('category', activeCategoryChip === chip.value ? '' : chip.value)
-                }
-                className={`flex items-center gap-1.5 border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
-                  activeCategoryChip === chip.value
+                onClick={() => setFilter('category', `${GROUP_PREFIX}${activeSubGroup.key}`)}
+                className={`border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+                  category === `${GROUP_PREFIX}${activeSubGroup.key}`
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
                 }`}
               >
-                <span className={`w-2 h-2 rounded-full shrink-0 ${chip.dotColor}`} />
-                {chip.label}
+                {t('search.all')}
               </button>
-            ))}
-          </div>
-        )}
+              {activeSubGroup.categories.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setFilter('category', cat)}
+                  className={`border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+                    category === cat
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
 
-        {/* Sub-category chips */}
-        {activeSubGroup && activeSubGroup.categories.length >= 2 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            <button
-              type="button"
-              onClick={() => setFilter('category', `${GROUP_PREFIX}${activeSubGroup.key}`)}
-              className={`border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
-                category === `${GROUP_PREFIX}${activeSubGroup.key}`
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
+          {/* Error */}
+          {error && (
+            <p className="text-destructive text-[13px] mb-4">
+              {error}
+              {' — '}
+              <button
+                type="button"
+                onClick={() => setRetryCount((c) => c + 1)}
+                className="underline hover:text-destructive/80"
+              >
+                {t('search.retry')}
+              </button>
+            </p>
+          )}
+
+          {/* Inline filter bar */}
+          <div className="flex items-center gap-2 mb-4">
+            <select
+              value={country}
+              onChange={(e) => setFilter('country', e.target.value)}
+              className={`w-44 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] focus:outline-none focus:border-primary/30 transition-colors ${
+                country ? 'border-primary/40 text-primary' : 'border-border text-muted-foreground'
               }`}
             >
-              {t('search.all')}
-            </button>
-            {activeSubGroup.categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setFilter('category', cat)}
-                className={`border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
-                  category === cat
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
+              <option value="">{t('search.country')}</option>
+              {facets?.countries.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.name} ({c.count})
+                </option>
+              ))}
+            </select>
 
-        {/* Error */}
-        {error && (
-          <p className="text-destructive text-[13px] mb-4">
-            {error}
-            {' — '}
+            <input
+              type="number"
+              min="0"
+              step="1"
+              placeholder="0"
+              defaultValue={minPrice}
+              onBlur={(e) => setFilter('min_price', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              }}
+              aria-label={t('search.minPrice')}
+              className={`w-20 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors ${
+                minPrice ? 'border-primary/40' : 'border-border'
+              }`}
+            />
+            <span className="text-[11px] text-muted-foreground/50">–</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              placeholder="∞"
+              defaultValue={maxPrice}
+              onBlur={(e) => setFilter('max_price', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              }}
+              aria-label={t('search.maxPrice')}
+              className={`w-20 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors ${
+                maxPrice ? 'border-primary/40' : 'border-border'
+              }`}
+            />
+
             <button
               type="button"
-              onClick={() => setRetryCount((c) => c + 1)}
-              className="underline hover:text-destructive/80"
-            >
-              {t('search.retry')}
-            </button>
-          </p>
-        )}
-
-        {/* Inline filter bar */}
-        <div className="flex items-center gap-2 mb-4">
-          <select
-            value={country}
-            onChange={(e) => setFilter('country', e.target.value)}
-            className={`w-44 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] focus:outline-none focus:border-primary/30 transition-colors ${
-              country ? 'border-primary/40 text-primary' : 'border-border text-muted-foreground'
-            }`}
-          >
-            <option value="">{t('search.country')}</option>
-            {facets?.countries.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.name} ({c.count})
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="number"
-            min="0"
-            step="1"
-            placeholder="0"
-            defaultValue={minPrice}
-            onBlur={(e) => setFilter('min_price', e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-            }}
-            aria-label={t('search.minPrice')}
-            className={`w-20 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors ${
-              minPrice ? 'border-primary/40' : 'border-border'
-            }`}
-          />
-          <span className="text-[11px] text-muted-foreground/50">–</span>
-          <input
-            type="number"
-            min="0"
-            step="1"
-            placeholder="∞"
-            defaultValue={maxPrice}
-            onBlur={(e) => setFilter('max_price', e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-            }}
-            aria-label={t('search.maxPrice')}
-            className={`w-20 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors ${
-              maxPrice ? 'border-primary/40' : 'border-border'
-            }`}
-          />
-
-          <button
-            type="button"
-            onClick={() => setFilter('online', onlineOnly ? '' : '1')}
-            className={`border rounded-lg px-2.5 py-1.5 text-[12px] transition-colors ${
-              onlineOnly
-                ? 'border-primary/40 bg-primary/10 text-primary'
-                : 'border-border text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {t('search.availableOnline')}
-          </button>
-
-          {savedStoreIds.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setFilter('in_stores', inStoresOnly ? '' : '1')}
+              onClick={() => setFilter('online', onlineOnly ? '' : '1')}
               className={`border rounded-lg px-2.5 py-1.5 text-[12px] transition-colors ${
-                inStoresOnly
+                onlineOnly
                   ? 'border-primary/40 bg-primary/10 text-primary'
                   : 'border-border text-muted-foreground hover:text-foreground'
               }`}
             >
-              {t('search.inMyStores')}
+              {t('search.availableOnline')}
             </button>
-          )}
 
-          <button
-            type="button"
-            onClick={resetFilters}
-            disabled={!hasSecondaryFilters && !category}
-            className="border rounded-lg px-2.5 py-1.5 text-[12px] border-border text-muted-foreground/40 disabled:opacity-30 hover:text-foreground hover:border-border/80 transition-colors"
-          >
-            {t('search.reset')}
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-2 gap-2">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="h-[88px] rounded-xl bg-white/[0.025] border border-border animate-pulse"
-              />
-            ))}
-          </div>
-        ) : results && displayProducts.length > 0 ? (
-          <>
-            {/* Count + sort */}
-            <div className="flex items-center justify-between mb-3">
-              <p className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
-                {t('search.result', { count: results.total })}
-              </p>
-              <select
-                value={sort}
-                onChange={(e) => setFilter('sort', e.target.value)}
-                className="bg-white/[0.04] border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:border-primary/30 transition-colors"
+            {savedStoreIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setFilter('in_stores', inStoresOnly ? '' : '1')}
+                className={`border rounded-lg px-2.5 py-1.5 text-[12px] transition-colors ${
+                  inStoresOnly
+                    ? 'border-primary/40 bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground'
+                }`}
               >
-                <option value="recent">{t('search.sortRecent')}</option>
-                <option value="price_asc">{t('search.sortPriceAsc')}</option>
-                <option value="price_desc">{t('search.sortPriceDesc')}</option>
-                <option value="alpha">{t('search.sortAlpha')}</option>
-              </select>
-            </div>
-            <ul className="grid grid-cols-2 gap-2">
-              {displayProducts.map((product) => {
-                const isWatched = watchedSkus.has(product.sku)
-                const isBusy = watchingInProgress === product.sku
-                const watchButton = (
-                  <button
-                    type="button"
-                    disabled={isBusy}
-                    onClick={() =>
-                      isWatched ? handleUnwatch(product.sku) : handleWatch(product.sku)
-                    }
-                    className={`w-24 border rounded-lg py-1.5 text-[12px] text-center transition-colors ${
-                      isWatched
-                        ? 'border-primary/40 bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:text-foreground'
-                    } ${isBusy ? 'opacity-50' : ''}`}
-                  >
-                    {isBusy ? '...' : isWatched ? t('search.watching') : t('search.watch')}
-                  </button>
-                )
-                return (
-                  <li key={product.sku}>
-                    <WineCard product={product} storeNames={storeNames} watchSlot={watchButton} />
-                  </li>
-                )
-              })}
-            </ul>
+                {t('search.inMyStores')}
+              </button>
+            )}
 
-            {/* Pagination */}
-            {pages > 1 && (
-              <div className="flex items-center gap-1.5 mt-6 font-mono text-[12px]">
-                <Button variant="outline" size="xs" disabled={page <= 1} onClick={() => setPage(1)}>
-                  {t('search.first')}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
+            <button
+              type="button"
+              onClick={resetFilters}
+              disabled={!hasSecondaryFilters && !category}
+              className="border rounded-lg px-2.5 py-1.5 text-[12px] border-border text-muted-foreground/40 disabled:opacity-30 hover:text-foreground hover:border-border/80 transition-colors"
+            >
+              {t('search.reset')}
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 gap-2">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[88px] rounded-xl bg-white/[0.025] border border-border animate-pulse"
+                />
+              ))}
+            </div>
+          ) : results && displayProducts.length > 0 ? (
+            <>
+              {/* Count + sort */}
+              <div className="flex items-center justify-between mb-3">
+                <p className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+                  {t('search.result', { count: results.total })}
+                </p>
+                <select
+                  value={sort}
+                  onChange={(e) => setFilter('sort', e.target.value)}
+                  className="bg-white/[0.04] border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:border-primary/30 transition-colors"
                 >
-                  {t('search.prev')}
-                </Button>
-                {Array.from({ length: Math.min(pages, 7) }, (_, i) => {
-                  let p: number
-                  if (pages <= 7) p = i + 1
-                  else if (page <= 4) p = i + 1
-                  else if (page >= pages - 3) p = pages - 6 + i
-                  else p = page - 3 + i
-                  return (
+                  <option value="recent">{t('search.sortRecent')}</option>
+                  <option value="price_asc">{t('search.sortPriceAsc')}</option>
+                  <option value="price_desc">{t('search.sortPriceDesc')}</option>
+                  <option value="alpha">{t('search.sortAlpha')}</option>
+                </select>
+              </div>
+              <ul className="grid grid-cols-2 gap-2">
+                {displayProducts.map((product) => {
+                  const isWatched = watchedSkus.has(product.sku)
+                  const isBusy = watchingInProgress === product.sku
+                  const watchButton = (
                     <button
-                      key={p}
                       type="button"
-                      onClick={() => setPage(p)}
-                      className={`w-7 h-7 rounded-lg text-[11px] transition-colors ${
-                        p === page
-                          ? 'bg-primary/10 text-primary border border-primary/30'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
-                      }`}
+                      disabled={isBusy}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (isWatched) handleUnwatch(product.sku)
+                        else handleWatch(product.sku)
+                      }}
+                      className={`w-24 border rounded-lg py-1.5 text-[12px] text-center transition-colors ${
+                        isWatched
+                          ? 'border-primary/40 bg-primary/10 text-primary'
+                          : 'border-border text-muted-foreground hover:text-foreground'
+                      } ${isBusy ? 'opacity-50' : ''}`}
                     >
-                      {p}
+                      {isBusy ? '...' : isWatched ? t('search.watching') : t('search.watch')}
                     </button>
                   )
+                  const isSelected = selectedSku === product.sku
+                  return (
+                    <li key={product.sku}>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => setSelectedSku(isSelected ? null : product.sku)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ')
+                            setSelectedSku(isSelected ? null : product.sku)
+                        }}
+                        className={`cursor-pointer rounded-xl transition-colors ${isSelected ? 'ring-1 ring-primary/60' : ''}`}
+                      >
+                        <WineCard
+                          product={product}
+                          storeNames={storeNames}
+                          watchSlot={watchButton}
+                        />
+                      </div>
+                    </li>
+                  )
                 })}
-                <Button
-                  variant="outline"
-                  size="xs"
-                  disabled={page >= pages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  {t('search.next')}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  disabled={page >= pages}
-                  onClick={() => setPage(pages)}
-                >
-                  {t('search.last')}
-                </Button>
-              </div>
-            )}
-          </>
-        ) : (
-          !loading && (
-            <EmptyState
-              icon={<Wine size={28} />}
-              title={t('search.noResults')}
-              description={t('search.noResultsDesc')}
-              cta={
-                hasSecondaryFilters || category
-                  ? { label: t('search.reset'), onClick: resetFilters }
-                  : undefined
-              }
-              secondaryCta={
-                !query
-                  ? {
-                      label: t('search.askSommelier'),
-                      onClick: () => navigate('/chat'),
-                    }
-                  : undefined
-              }
-            />
-          )
-        )}
+              </ul>
+
+              {/* Pagination */}
+              {pages > 1 && (
+                <div className="flex items-center gap-1.5 mt-6 font-mono text-[12px]">
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    disabled={page <= 1}
+                    onClick={() => setPage(1)}
+                  >
+                    {t('search.first')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    disabled={page <= 1}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    {t('search.prev')}
+                  </Button>
+                  {Array.from({ length: Math.min(pages, 7) }, (_, i) => {
+                    let p: number
+                    if (pages <= 7) p = i + 1
+                    else if (page <= 4) p = i + 1
+                    else if (page >= pages - 3) p = pages - 6 + i
+                    else p = page - 3 + i
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPage(p)}
+                        className={`w-7 h-7 rounded-lg text-[11px] transition-colors ${
+                          p === page
+                            ? 'bg-primary/10 text-primary border border-primary/30'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  })}
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    disabled={page >= pages}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    {t('search.next')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    disabled={page >= pages}
+                    onClick={() => setPage(pages)}
+                  >
+                    {t('search.last')}
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            !loading && (
+              <EmptyState
+                icon={<Wine size={28} />}
+                title={t('search.noResults')}
+                description={t('search.noResultsDesc')}
+                cta={
+                  hasSecondaryFilters || category
+                    ? { label: t('search.reset'), onClick: resetFilters }
+                    : undefined
+                }
+                secondaryCta={
+                  !query
+                    ? {
+                        label: t('search.askSommelier'),
+                        onClick: () => navigate('/chat'),
+                      }
+                    : undefined
+                }
+              />
+            )
+          )}
+        </div>
       </div>
+      <WineDetailPanel
+        sku={selectedSku}
+        storeIds={savedStoreIds}
+        storeNames={storeNames}
+        watchedSkus={watchedSkus}
+        watchingInProgress={watchingInProgress}
+        onWatch={handleWatch}
+        onUnwatch={handleUnwatch}
+        onClose={handleClosePanel}
+      />
     </div>
   )
 }

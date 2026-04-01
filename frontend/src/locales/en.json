@@ -266,6 +266,19 @@
     "more": "more",
     "less": "less"
   },
+  "wineDetail": {
+    "failedToLoad": "Couldn't load wine details",
+    "retry": "retry",
+    "region": "Region",
+    "appellation": "Appellation",
+    "alcohol": "Alcohol",
+    "sugar": "Sugar",
+    "grapes": "Grapes",
+    "availability": "Availability",
+    "noStores": "Save stores to see availability —",
+    "saveStores": "go to My Stores",
+    "viewOnSaq": "View on SAQ.com"
+  },
   "time": {
     "justNow": "just now",
     "minutesAgo": "{{count}}m ago",

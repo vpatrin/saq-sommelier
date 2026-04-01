@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Wine detail panel — click any wine in search results to open a side panel with full details: region, alcohol, sugar, grapes, store availability, SAQ link
 - Public landing page — bilingual hero, RAG pipeline walkthrough, changelog timeline, open source section with live GitHub commits
 
 ### Changed
