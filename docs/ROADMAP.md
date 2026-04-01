@@ -70,7 +70,29 @@ Track wines you have at home. SAQ catalog wines only. "Add to cellar" action on 
 
 Design reference: `ui/cellar/cellar.html`, `ui/cellar/add-bottle.html`, `ui/cellar/remove-bottle.html`
 
-### Side Projects (not product phases)
+### Side Quests (not product phases)
+
+Self-contained, user-facing additions that don't belong to a product phase. Can ship any time without blocking the roadmap.
+
+#### Extended Auth — GitHub + Google OAuth (#565)
+
+Let users sign up and log in with GitHub or Google in addition to Telegram. Clean multi-provider identity model with silent email-based account linking. Invite code gate stays in place for new users.
+
+**Identity model:**
+
+- `oauth_accounts` join table — `(provider, provider_user_id)` unique, links to `users.id`
+- `users.email` — nullable, unique; populated from provider; enables silent account linking across providers
+- `users.telegram_id` — removed from `users`, moved to `oauth_accounts`
+- Login flow: find by `(provider, provider_user_id)` → else find by email → else new user + invite gate
+
+- [ ] DB migration — add `oauth_accounts` table, add `email` to `users`, drop `telegram_id` from `users`
+- [ ] `OAuthAccount` model + `find_by_provider` / `find_by_email` repo queries
+- [ ] Migrate existing Telegram users — backfill `oauth_accounts` rows from current `telegram_id` data
+- [ ] JWT refactor — drop `telegram_id` claim, use generic `user_id` only
+- [ ] Update bot `/api/auth/telegram/check` — query via `oauth_accounts` instead of `users.telegram_id`
+- [ ] GitHub OAuth — `/api/auth/github/callback`, standard code exchange, register OAuth app on GitHub
+- [ ] Google OAuth — `/api/auth/google/callback`, standard code exchange, register OAuth app on Google Console
+- [ ] Frontend — GitHub + Google login buttons on login page, handle redirect-based flow
 
 #### MCP Server / Sonnet + Tools
 

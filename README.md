@@ -75,6 +75,7 @@ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for setup and local workflow.
 - [Security](docs/SECURITY.md) — auth model, threat model, CI scanning
 - [Engineering](docs/ENGINEERING.md) — testing, observability, SRE, ML/MLOps
 - [Scaling](docs/SCALING.md) — performance journey: measure, optimize, scale up, scale out
+- [Product Vision](docs/PRODUCT_VISION.md) — positioning, core loop, monetization hypotheses
 - [Roadmap](docs/ROADMAP.md) — product phases
 - [Decisions](docs/decisions/) — ADRs for key technical choices
 - [Changelog](CHANGELOG.md) — release history
