@@ -19,7 +19,7 @@ Premium warm theme replacing the brutalist/terminal aesthetic. Cross-cutting UX 
 - [ ] Chat page + wine card restyle (#537)
 - [ ] Search, watchlist, stores restyle + empty states (#538)
 - [ ] Wine detail slide panel (#539)
-- [ ] User menu dropdown (#540)
+- [x] User menu dropdown (#540)
 
 Design mockups in `ui/` — organized by feature. Screenshots in `ui/screenshots/`.
 
@@ -96,7 +96,7 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 - [ ] Bot `/recommend` deprecation — remove command, bot is alerts-only (cross-cutting chore, not a product idea)
 - [ ] Data retention policy — define TTL for chat sessions, user data lifecycle, and compliance posture (GDPR-adjacent)
 - [ ] Settings page — language, notifications, data export, account management (most items need backend work)
-- [ ] Sidebar collapse/expand — icon-only 60px sidebar with tooltips
+- [x] Sidebar collapse/expand — icon-only 60px sidebar with tooltips (#556)
 - [ ] Notification panel — in-app availability alerts (currently Telegram-only)
 
 ---

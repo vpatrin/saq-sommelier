@@ -9,7 +9,6 @@ import {
 
 interface UserMenuProps {
   firstName: string
-  onClose: () => void
   onLogout: () => void
   currentLanguage: string
   onLanguageChange: (lang: string) => void

@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Sidebar is now collapsible — icon-only 60px mode with tooltips, persisted across sessions
+- User menu dropdown — language toggle, Mon palais / Paramètres placeholders (coming soon), sign out
+- Journal and Cellar nav items added as "Soon" placeholders in sidebar
 - Search, watchlist, and stores pages restyled — horizontal filter bar on search, availability dots on watchlist, card layout on stores, empty states on all three
 - Login route moved to `/login`; `/` now serves the public landing page
 - "Watchlist" renamed to "Favoris" throughout the French UI

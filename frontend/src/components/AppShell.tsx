@@ -276,7 +276,7 @@ function AppShell() {
               </div>
             ))}
 
-            <div ref={userMenuRef} className="mt-auto relative" style={{ overflow: 'visible' }}>
+            <div ref={userMenuRef} className="mt-auto relative overflow-visible">
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((v) => !v)}
@@ -288,7 +288,6 @@ function AppShell() {
               {userMenuOpen && (
                 <UserMenu
                   firstName={user?.first_name ?? ''}
-                  onClose={() => setUserMenuOpen(false)}
                   onLogout={handleLogout}
                   currentLanguage={i18n.resolvedLanguage ?? 'fr'}
                   onLanguageChange={(lang) => i18n.changeLanguage(lang)}
@@ -504,7 +503,6 @@ function AppShell() {
               {userMenuOpen && (
                 <UserMenu
                   firstName={user?.first_name ?? ''}
-                  onClose={() => setUserMenuOpen(false)}
                   onLogout={handleLogout}
                   currentLanguage={i18n.resolvedLanguage ?? 'fr'}
                   onLanguageChange={(lang) => i18n.changeLanguage(lang)}
