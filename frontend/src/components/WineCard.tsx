@@ -59,9 +59,13 @@ function WineCard({ product, reason, storeNames, watchSlot }: WineCardProps) {
                   className="hover:text-primary transition-colors"
                 >
                   {product.name}
+                  {product.vintage && ` ${product.vintage}`}
                 </a>
               ) : (
-                product.name
+                <>
+                  {product.name}
+                  {product.vintage && ` ${product.vintage}`}
+                </>
               )}
             </p>
             {product.price && (

@@ -266,6 +266,19 @@
     "more": "de plus",
     "less": "réduire"
   },
+  "wineDetail": {
+    "failedToLoad": "Impossible de charger les détails",
+    "retry": "réessayer",
+    "region": "Région",
+    "appellation": "Appellation",
+    "alcohol": "Alcool",
+    "sugar": "Sucre",
+    "grapes": "Cépages",
+    "availability": "Disponibilité",
+    "noStores": "Enregistrez des succursales pour voir la disponibilité —",
+    "saveStores": "Mes succursales",
+    "viewOnSaq": "Voir sur SAQ.com"
+  },
   "time": {
     "justNow": "à l'instant",
     "minutesAgo": "il y a {{count}} min",

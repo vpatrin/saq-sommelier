@@ -16,9 +16,9 @@ Premium warm theme replacing the brutalist/terminal aesthetic. Cross-cutting UX 
 
 - [x] Theme foundation — tokens, fonts, sidebar (#534)
 - [x] Landing page + login restyle (#536, #535)
-- [ ] Chat page + wine card restyle (#537)
-- [ ] Search, watchlist, stores restyle + empty states (#538)
-- [ ] Wine detail slide panel (#539)
+- [x] Chat page + wine card restyle (#537)
+- [x] Search, watchlist, stores restyle + empty states (#538)
+- [x] Wine detail slide panel (#539)
 - [x] User menu dropdown (#540)
 
 Design mockups in `ui/` — organized by feature. Screenshots in `ui/screenshots/`.
@@ -126,6 +126,6 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 - [x] Automated deploy on tag push (`deploy_frontend.sh` + `deploy_backend.sh` via SSH)
 - [x] Auto-create GitHub Release with changelog on tag push
 - [x] Production environment — GitHub Environment with main-only deployment branch policy, tag protection ruleset
-- [ ] Environment-scoped secrets — move deploy secrets from repo-level to production environment (prerequisite: automated CD or k3s migration)
+- [x] Environment-scoped secrets — move deploy secrets from repo-level to production environment (prerequisite: automated CD or k3s migration)
 
 Platform-level concerns (monitoring alerts, secrets management, IaC, staging, K8s) are tracked in the [infra ROADMAP](https://github.com/vpatrin/infra/blob/main/docs/ROADMAP.md). Engineering backlog (testing, observability, SRE) is tracked in [ENGINEERING.md](ENGINEERING.md#backlog).
