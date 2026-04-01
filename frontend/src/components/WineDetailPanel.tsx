@@ -8,18 +8,13 @@ import {
   ChartDonutIcon as ChartDonut,
   ArrowLeftIcon as ArrowLeft,
 } from '@phosphor-icons/react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
-import type { ProductOut } from '@/lib/types'
+import type { ProductOut, UserStorePreferenceOut, WatchWithProduct } from '@/lib/types'
 import { CATEGORY_DOT, formatOrigin } from '@/lib/utils'
 
 interface WineDetailPanelProps {
   sku: string | null
-  storeIds: string[]
-  storeNames: Map<string, string>
-  watchedSkus: Set<string>
-  watchingInProgress: string | null
-  onWatch: (sku: string) => void
-  onUnwatch: (sku: string) => void
   onClose: () => void
 }
 
@@ -28,24 +23,60 @@ type PanelState =
   | { status: 'error'; message: string }
   | { status: 'loaded'; product: ProductOut }
 
-function WineDetailPanel({
-  sku,
-  storeIds,
-  storeNames,
-  watchedSkus,
-  watchingInProgress,
-  onWatch,
-  onUnwatch,
-  onClose,
-}: WineDetailPanelProps) {
+function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const apiClient = useApiClient()
+
+  const userId = `tg:${user?.telegram_id}`
 
   const [loadedSku, setLoadedSku] = useState<string | null>(null)
   const [panelState, setPanelState] = useState<PanelState>({ status: 'idle' })
 
+  const [watchedSkus, setWatchedSkus] = useState<Set<string>>(new Set())
+  const [watchingInProgress, setWatchingInProgress] = useState<string | null>(null)
+  const [storeIds, setStoreIds] = useState<string[]>([])
+  const [storeNames, setStoreNames] = useState<Map<string, string>>(new Map())
+
   // loadedSku tracks what's currently shown; when sku differs, show skeleton
   const isLoading = sku !== null && loadedSku !== sku
+
+  // Fetch watches + store prefs when panel first opens (sku goes from null → value)
+  useEffect(() => {
+    if (!sku) return
+    let cancelled = false
+
+    async function fetchWatches() {
+      try {
+        const data = await apiClient<WatchWithProduct[]>(
+          `/watches?user_id=${encodeURIComponent(userId)}`,
+        )
+        if (!cancelled) setWatchedSkus(new Set(data.map((w) => w.watch.sku)))
+      } catch {
+        // Non-critical — watch button defaults to "Watch"
+      }
+    }
+
+    async function fetchStores() {
+      try {
+        const prefs = await apiClient<UserStorePreferenceOut[]>('/stores/preferences')
+        if (!cancelled) {
+          setStoreIds(prefs.map((p) => p.saq_store_id).sort())
+          setStoreNames(new Map(prefs.map((p) => [p.saq_store_id, p.store.name])))
+        }
+      } catch {
+        // Non-critical — availability section shows "save stores" prompt
+      }
+    }
+
+    fetchWatches()
+    fetchStores()
+    return () => {
+      cancelled = true
+    }
+    // Only re-fetch when panel opens (sku goes null → value), not on every sku change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!sku])
 
   const fetchProduct = useCallback(
     (targetSku: string) => {
@@ -99,6 +130,49 @@ function WineDetailPanel({
     return () => document.removeEventListener('keydown', handler)
   }, [sku, onClose])
 
+  const handleWatch = useCallback(
+    async (targetSku: string) => {
+      setWatchingInProgress(targetSku)
+      setWatchedSkus((prev) => new Set([...prev, targetSku]))
+      try {
+        await apiClient(`/watches?user_id=${encodeURIComponent(userId)}`, {
+          method: 'POST',
+          body: JSON.stringify({ sku: targetSku }),
+        })
+      } catch {
+        setWatchedSkus((prev) => {
+          const next = new Set(prev)
+          next.delete(targetSku)
+          return next
+        })
+      } finally {
+        setWatchingInProgress(null)
+      }
+    },
+    [apiClient, userId],
+  )
+
+  const handleUnwatch = useCallback(
+    async (targetSku: string) => {
+      setWatchingInProgress(targetSku)
+      setWatchedSkus((prev) => {
+        const next = new Set(prev)
+        next.delete(targetSku)
+        return next
+      })
+      try {
+        await apiClient(`/watches/${targetSku}?user_id=${encodeURIComponent(userId)}`, {
+          method: 'DELETE',
+        })
+      } catch {
+        setWatchedSkus((prev) => new Set([...prev, targetSku]))
+      } finally {
+        setWatchingInProgress(null)
+      }
+    },
+    [apiClient, userId],
+  )
+
   const isWatched = sku ? watchedSkus.has(sku) : false
   const isBusy = sku ? watchingInProgress === sku : false
 
@@ -148,7 +222,7 @@ function WineDetailPanel({
           <button
             type="button"
             disabled={isBusy}
-            onClick={() => sku && (isWatched ? onUnwatch(sku) : onWatch(sku))}
+            onClick={() => sku && (isWatched ? handleUnwatch(sku) : handleWatch(sku))}
             className={`w-28 justify-center flex items-center gap-1.5 border rounded-lg px-3 py-1.5 text-[12px] transition-colors shrink-0 ${
               isWatched
                 ? 'border-primary/40 bg-primary/10 text-primary'
@@ -176,18 +250,20 @@ function WineDetailPanel({
           </button>
         </div>
 
-        <div className="px-5 py-4 border-b border-border/50">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-            {details.map(({ label, value }) => (
-              <div key={label}>
-                <dt className="text-[10px] text-muted-foreground/40 uppercase tracking-wider mb-0.5">
-                  {label}
-                </dt>
-                <dd className="text-[13px]">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+        {details.length > 0 && (
+          <div className="px-5 py-4 border-b border-border/50">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+              {details.map(({ label, value }) => (
+                <div key={label}>
+                  <dt className="text-[10px] text-muted-foreground/40 uppercase tracking-wider mb-0.5">
+                    {label}
+                  </dt>
+                  <dd className="text-[13px]">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
 
         {grapes && (
           <div className="px-5 py-4 border-b border-border/50">
@@ -274,7 +350,7 @@ function WineDetailPanel({
           className="flex items-center gap-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors text-[12px]"
         >
           <ArrowLeft size={13} />
-          {t('search.title')}
+          {t('wineDetail.close')}
         </button>
         <div className="flex-1" />
       </div>

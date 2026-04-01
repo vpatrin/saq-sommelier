@@ -19,6 +19,7 @@ import {
 import { useApiClient } from '@/lib/api'
 import type { ChatOutletContext } from '@/components/AppShell'
 import WineCard from '@/components/WineCard'
+import { useWineDetail } from '@/contexts/WineDetailContext'
 import type {
   ChatSessionOut,
   ChatMessageOut,
@@ -211,6 +212,7 @@ function AssistantMessage({
   content: string | RecommendationOut
   storeNames: Map<string, string>
 }) {
+  const { selectedSku, setSelectedSku } = useWineDetail()
   const proseClass =
     'prose prose-sm prose-invert max-w-none text-foreground/80 font-light [&_p]:leading-relaxed [&_ul]:mt-1 [&_ol]:mt-1 [&_li]:my-0.5 [&_strong]:text-foreground [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm'
 
@@ -237,7 +239,14 @@ function AssistantMessage({
           }}
         >
           {content.products.map(({ product, reason }) => (
-            <WineCard key={product.sku} product={product} reason={reason} storeNames={storeNames} />
+            <button
+              key={product.sku}
+              type="button"
+              onClick={() => setSelectedSku(selectedSku === product.sku ? null : product.sku)}
+              className="text-left w-full"
+            >
+              <WineCard product={product} reason={reason} storeNames={storeNames} />
+            </button>
           ))}
         </div>
       </div>
@@ -339,6 +348,7 @@ function ChatPage() {
   const apiClient = useApiClient()
   const navigate = useNavigate()
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>()
+  const { selectedSku } = useWineDetail()
   const { refreshSessions, sessions, renameSession, deleteSession } =
     useOutletContext<ChatOutletContext>()
 
@@ -602,7 +612,10 @@ function ChatPage() {
       )}
 
       {/* Messages area */}
-      <div ref={scrollAreaRef} className="flex-1 overflow-y-auto py-10">
+      <div
+        ref={scrollAreaRef}
+        className={`flex-1 overflow-y-auto py-10 transition-[padding-right] duration-300 ease-out ${selectedSku ? 'pr-[376px]' : ''}`}
+      >
         <div className="max-w-[680px] mx-auto px-8 flex flex-col gap-7">
           {loading && (
             <div className="flex items-center justify-center min-h-[20vh]">
@@ -712,7 +725,9 @@ function ChatPage() {
       )}
 
       {/* Input area — bg-background covers scrolled content beneath */}
-      <div className="flex-shrink-0 w-full pb-6 pt-2 bg-background relative before:absolute before:inset-x-0 before:-top-8 before:h-8 before:bg-gradient-to-t before:from-background before:to-transparent before:pointer-events-none">
+      <div
+        className={`flex-shrink-0 w-full pb-6 pt-2 bg-background relative before:absolute before:inset-x-0 before:-top-8 before:h-8 before:bg-gradient-to-t before:from-background before:to-transparent before:pointer-events-none transition-[padding-right] duration-300 ease-out ${selectedSku ? 'pr-[376px]' : ''}`}
+      >
         <div className="max-w-[680px] w-full mx-auto px-8">
           <form
             onSubmit={handleSubmit}

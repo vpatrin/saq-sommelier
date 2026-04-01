@@ -14,8 +14,8 @@ import type {
 import { Button } from '@/components/ui/button'
 import { CATEGORY_DOT } from '@/lib/utils'
 import WineCard from '@/components/WineCard'
-import WineDetailPanel from '@/components/WineDetailPanel'
 import EmptyState from '@/components/EmptyState'
+import { useWineDetail } from '@/contexts/WineDetailContext'
 
 const DEBOUNCE_MS = 300
 const LIMIT = 20
@@ -80,8 +80,7 @@ function SearchPage() {
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
 
-  // Selected wine for detail panel
-  const [selectedSku, setSelectedSku] = useState<string | null>(null)
+  const { selectedSku, setSelectedSku } = useWineDetail()
 
   // Watch state — track which SKUs the user is already watching
   const [watchedSkus, setWatchedSkus] = useState<Set<string>>(new Set())
@@ -344,8 +343,6 @@ function SearchPage() {
     },
     [apiClient, userId, t],
   )
-
-  const handleClosePanel = useCallback(() => setSelectedSku(null), [])
 
   const displayProducts = results?.products ?? []
   const pages = results ? Math.ceil(results.total / results.limit) : 0
@@ -714,16 +711,6 @@ function SearchPage() {
           )}
         </div>
       </div>
-      <WineDetailPanel
-        sku={selectedSku}
-        storeIds={savedStoreIds}
-        storeNames={storeNames}
-        watchedSkus={watchedSkus}
-        watchingInProgress={watchingInProgress}
-        onWatch={handleWatch}
-        onUnwatch={handleUnwatch}
-        onClose={handleClosePanel}
-      />
     </div>
   )
 }
