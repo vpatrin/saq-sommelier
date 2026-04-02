@@ -173,7 +173,7 @@ def test_get_ratings_returns_rated_skus():
         new_callable=AsyncMock,
         return_value=rows,
     ):
-        resp = client.get("/api/tastings/ratings?skus=SKU001,SKU002,SKU999")
+        resp = client.get("/api/tastings/ratings?skus=SKU001&skus=SKU002&skus=SKU999")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["SKU001"] == {"rating": 88, "note_id": 1}
@@ -186,7 +186,7 @@ def test_get_ratings_empty_skus_returns_empty_without_db_call():
         "backend.services.tastings.repo.ratings_by_skus",
         new_callable=AsyncMock,
     ) as mock_repo:
-        resp = client.get("/api/tastings/ratings?skus=")
+        resp = client.get("/api/tastings/ratings")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == {}
     mock_repo.assert_not_called()

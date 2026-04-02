@@ -86,7 +86,6 @@ function SearchPage() {
   // Watch state — track which SKUs the user is already watching
   const [watchedSkus, setWatchedSkus] = useState<Set<string>>(new Set())
 
-  // User ratings for SKUs in the current search results page
   const [userRatings, setUserRatings] = useState<Record<string, TastingRatingOut>>({})
   const [watchingInProgress, setWatchingInProgress] = useState<string | null>(null)
 
@@ -236,18 +235,20 @@ function SearchPage() {
     t,
   ])
 
-  // Fetch user ratings for the current page of results — runs after products load
   useEffect(() => {
-    if (!results || results.items.length === 0) {
+    if (!results || results.products.length === 0) {
       setUserRatings({})
       return
     }
     let cancelled = false
-    const skus = results.items.map((p) => p.sku).join(',')
+    const params = new URLSearchParams()
+    for (const item of results.products) {
+      params.append('skus', item.sku)
+    }
     async function fetchRatings() {
       try {
         const data = await apiClient<Record<string, TastingRatingOut>>(
-          `/tastings/ratings?skus=${encodeURIComponent(skus)}`,
+          `/tastings/ratings?${params}`,
         )
         if (!cancelled) setUserRatings(data)
       } catch {
@@ -649,7 +650,7 @@ function SearchPage() {
                           product={product}
                           storeNames={storeNames}
                           watchSlot={watchButton}
-                          userRating={userRatings[product.sku] ?? null}
+                          userRating={userRatings[product.sku]}
                         />
                       </div>
                     </li>
