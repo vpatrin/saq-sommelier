@@ -28,10 +28,10 @@ Design mockups in `ui/` — organized by feature. Screenshots in `ui/screenshots
 
 Log wines you've tasted with 100-point ratings and tasting notes. SAQ catalog wines only (select by SKU). "Log tasting" action on product cards in search results and chat. Dedicated "My Tastings" page in sidebar.
 
-- [ ] TastingNote model + migration (#442)
-- [ ] Tasting CRUD endpoints (#443)
+- [x] TastingNote model + migration (#442)
+- [x] Tasting CRUD endpoints (#443)
 - [ ] "Log tasting" inline form on product cards (#444)
-- [ ] My Tastings page (#445)
+- [x] My Tastings page (#445)
 - [ ] Surface "You rated: 92" on product cards in search results (#446)
 
 Design reference: `ui/journal/journal.html`, `ui/journal/notif-noteview.html`

@@ -72,6 +72,21 @@ export interface ProductOut {
   updated_at: string
 }
 
+// --- Tasting Journal ---
+
+export interface TastingNoteOut {
+  id: number
+  sku: string
+  rating: number
+  notes: string | null
+  pairing: string | null
+  tasted_at: string // ISO date YYYY-MM-DD
+  created_at: string
+  updated_at: string
+  product_name: string | null
+  product_image_url: string | null
+}
+
 export interface WatchOut {
   id: number
   user_id: string

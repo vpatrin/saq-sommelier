@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Tasting journal page — date-grouped list of tasting notes with ratings, notes, pairing, optimistic delete, and load-more pagination
 - Wine detail panel — click any wine in search results to open a side panel with full details: region, alcohol, sugar, grapes, store availability, SAQ link
 - Wine detail panel accessible from chat recommendations and watchlist, not just search
 - Public landing page — bilingual hero, RAG pipeline walkthrough, changelog timeline, open source section with live GitHub commits

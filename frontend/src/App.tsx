@@ -9,6 +9,7 @@ import SearchPage from '@/pages/SearchPage'
 import WatchesPage from '@/pages/WatchesPage'
 import SavedStoresPage from '@/pages/SavedStoresPage'
 import NearbyStoresPage from '@/pages/StoresPage'
+import TastingsPage from '@/pages/TastingsPage'
 
 function AuthedLayout() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/watches" element={<WatchesPage />} />
         <Route path="/stores" element={<SavedStoresPage />} />
         <Route path="/stores/nearby" element={<NearbyStoresPage />} />
+        <Route path="/tastings" element={<TastingsPage />} />
       </Route>
       <Route path="*" element={<LandingPage />} />
     </Routes>

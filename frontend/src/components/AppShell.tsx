@@ -29,12 +29,10 @@ const NAV_ITEMS = [
   { to: '/search', labelKey: 'nav.search', icon: MagnifyingGlass },
   { to: '/watches', labelKey: 'nav.myWatches', icon: Eye },
   { to: '/stores', labelKey: 'nav.myStores', icon: MapPin },
+  { to: '/tastings', labelKey: 'nav.journal', icon: NotePencil },
 ] as const
 
-const SOON_ITEMS = [
-  { labelKey: 'nav.journal', icon: NotePencil },
-  { labelKey: 'nav.cellar', icon: ChartDonut },
-] as const
+const SOON_ITEMS = [{ labelKey: 'nav.cellar', icon: ChartDonut }] as const
 
 export interface ChatOutletContext {
   refreshSessions: () => void
