@@ -42,6 +42,8 @@ async def get_tasting_ratings(
 ) -> dict[str, TastingRatingOut]:
     """Return user ratings for the given SKUs. Only rated SKUs appear in the response."""
     sku_list = [s.strip() for s in skus.split(",") if s.strip()]
+    if not sku_list:
+        return {}
     return await get_ratings_by_skus(db, user_id=user_id, skus=sku_list)
 
 
