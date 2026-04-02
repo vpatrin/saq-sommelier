@@ -34,3 +34,7 @@ class TastingOut(BaseModel):
     # Denormalized product fields for the list view — avoids N+1 on the frontend
     product_name: str | None = None
     product_image_url: str | None = None
+    product_category: str | None = None
+    product_region: str | None = None
+    product_grape: str | None = None
+    product_price: str | None = None

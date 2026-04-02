@@ -223,6 +223,16 @@ Synthesized reports and cross-cutting analysis live in [benchmarks/](../benchmar
 
 Unscheduled engineering improvements — not product features, not infra. Picked up opportunistically or when they unblock product work.
 
+### Frontend Quality — Production-ready to interview-defensible
+
+Five actionables identified from a full frontend audit (2026-04-02). In priority order:
+
+1. **Error boundaries** — wrap pages in a single `<ErrorBoundary>` component; any unhandled throw currently takes down the whole app
+2. **Kill silent failures** — replace `catch(() => {})` in `AppShell`, `TastingsPage`, and others with inline error state; users currently see a blank list with no explanation
+3. **Extract components from large pages** — `SearchPage.tsx` (720 lines) and `AppShell.tsx` (594 lines) are untestable as-is; extract `SearchFilters`, `SearchResults`, `CategoryChips`, `NavigationSidebar` — prerequisite for meaningful tests
+4. **Write tests for the API layer** — `lib/api.ts` (`ApiError`, `fetchAllPages`, `useApiClient`) is pure logic, easy to test; start here before touching components
+5. **Add `tanstack/react-query`** — eliminates manual cancellation token pattern, adds caching (no re-fetch on nav), deduplication, and retry; net code deletion
+
 **Testing — Frontend:**
 
 - [ ] Test infrastructure setup — add Vitest + React Testing Library + jsdom, wire `yarn test` script, configure CI step

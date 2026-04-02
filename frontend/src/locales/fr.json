@@ -1,5 +1,59 @@
 {
   "brand": "Coupette",
+  "journal": {
+    "title": "Journal",
+    "subtitle": "Vos impressions construisent votre profil gustatif.",
+    "addNote": "Ajouter une note",
+    "addFirstNote": "Ajouter ma première note",
+    "emptyTitle": "Aucune note pour l'instant",
+    "emptyDesc": "Commencez par ajouter la première dégustation.",
+    "emptySearch": "Aucun résultat",
+    "searchPlaceholder": "Rechercher…",
+    "sortNewest": "Les plus récentes",
+    "sortOldest": "Les plus anciennes",
+    "sortRatingDesc": "Notes décroissantes",
+    "sortRatingAsc": "Notes croissantes",
+    "failedToLoad": "Impossible de charger le journal",
+    "retry": "réessayer",
+    "loadMore": "Afficher plus",
+    "loading": "Chargement…",
+    "editNote": "Modifier la note"
+  },
+  "tastingForm": {
+    "addTitle": "Ajouter une note",
+    "wine": "Vin",
+    "rating": "Évaluation",
+    "notes": "Impressions",
+    "notesPlaceholder": "Vos impressions…",
+    "pairing": "Accord",
+    "pairingPlaceholder": "Accord mets-vins…",
+    "date": "Date",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "cancel": "Annuler",
+    "changeWine": "Changer de vin",
+    "failedToSave": "Impossible d'enregistrer —",
+    "retry": "réessayer"
+  },
+  "wineSearch": {
+    "placeholder": "Rechercher un vin…",
+    "noResults": "Aucun résultat",
+    "failedToSearch": "Impossible de rechercher —",
+    "retry": "réessayer"
+  },
+  "noteView": {
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "back": "Retour",
+    "deleteConfirmTitle": "Supprimer cette note ?",
+    "deleteConfirmDesc": "Cette action est irréversible.",
+    "failedToDelete": "Impossible de supprimer —",
+    "retry": "réessayer",
+    "viewOnSaq": "Voir sur SAQ.com",
+    "watching": "En favoris",
+    "watch": "Suivre"
+  },
   "landing": {
     "mailto": {
       "subject": "Coupette — Demande d'accès",

@@ -85,6 +85,10 @@ export interface TastingNoteOut {
   updated_at: string
   product_name: string | null
   product_image_url: string | null
+  product_category: string | null
+  product_region: string | null
+  product_grape: string | null
+  product_price: string | null
 }
 
 export interface WatchOut {

@@ -1,5 +1,59 @@
 {
   "brand": "Coupette",
+  "journal": {
+    "title": "Journal",
+    "subtitle": "Your impressions build your taste profile.",
+    "addNote": "Add a note",
+    "addFirstNote": "Add my first note",
+    "emptyTitle": "No notes yet",
+    "emptyDesc": "Start by logging your first tasting.",
+    "emptySearch": "No results",
+    "searchPlaceholder": "Search…",
+    "sortNewest": "Most recent",
+    "sortOldest": "Oldest first",
+    "sortRatingDesc": "Highest rated",
+    "sortRatingAsc": "Lowest rated",
+    "failedToLoad": "Couldn't load the journal",
+    "retry": "retry",
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "editNote": "Edit note"
+  },
+  "tastingForm": {
+    "addTitle": "Add a note",
+    "wine": "Wine",
+    "rating": "Rating",
+    "notes": "Impressions",
+    "notesPlaceholder": "Your impressions…",
+    "pairing": "Pairing",
+    "pairingPlaceholder": "Food pairing…",
+    "date": "Date",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "changeWine": "Change wine",
+    "failedToSave": "Couldn't save —",
+    "retry": "retry"
+  },
+  "wineSearch": {
+    "placeholder": "Search a wine…",
+    "noResults": "No results",
+    "failedToSearch": "Search failed —",
+    "retry": "retry"
+  },
+  "noteView": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "back": "Back",
+    "deleteConfirmTitle": "Delete this note?",
+    "deleteConfirmDesc": "This action is irreversible.",
+    "failedToDelete": "Couldn't delete —",
+    "retry": "retry",
+    "viewOnSaq": "View on SAQ.com",
+    "watching": "Watching",
+    "watch": "Watch"
+  },
   "landing": {
     "mailto": {
       "subject": "Coupette — Access request",

@@ -451,6 +451,17 @@ The goal is to ship good code AND build Victor's React mental model. Follow this
 
 Stack: React 19 + TypeScript + Vite + Tailwind CSS 4 + shadcn/ui
 
+### Internationalisation (i18n)
+
+The app is bilingual: **French (fr) and English (en)**. French is the default locale.
+
+- All user-facing strings must use `react-i18next` — never hardcode text directly in JSX
+- Use the `useTranslation` hook: `const { t } = useTranslation()`
+- Translation keys live in `frontend/src/locales/fr.json` and `frontend/src/locales/en.json`
+- When adding a new component or page, add all string keys to both locale files before opening the PR
+- Key naming: flat dot-notation scoped by feature — e.g. `journal.addNote`, `journal.emptyTitle`, `auth.login`
+- Never use inline fallback strings like `t('key') || 'fallback'` — if the key is missing the translation file is broken, fix it
+
 - Package manager: yarn (classic v1 — Victor used it in 2019-2021, stick with familiar)
 - Node.js: v24.10.0 (local bare-metal dev, NOT Docker — hot reload matters)
 - UI components: shadcn/ui (copy-paste, not a dependency — industry standard)
@@ -485,6 +496,7 @@ Frontend dev workflow:
 - Docker only for CI and prod builds
 - Desktop-first layout (1200px+), dark mode default — no responsive breakpoints yet
 - VSCode with TS/React extensions
+- **Visual review:** Claude cannot take screenshots. When working on UI together, always ask Victor to open the page in a browser (`open <file>` or `yarn dev`) and paste a screenshot into the chat. Reading HTML/CSS is not a substitute — rendered output is the ground truth for visual feedback.
 
 Design direction:
 

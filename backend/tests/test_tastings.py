@@ -35,7 +35,9 @@ def _fake_note(**overrides):
 
 
 def _fake_product(**overrides):
-    defaults = dict(name="Château Test", image=None)
+    defaults = dict(
+        name="Château Test", image=None, category=None, region=None, grape=None, price=None
+    )
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 
