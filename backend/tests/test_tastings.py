@@ -161,3 +161,32 @@ def test_delete_tasting_wrong_owner_returns_403():
     ):
         resp = client.delete("/api/tastings/1")
     assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
+# ── GET /tastings/ratings ─────────────────────────────────────
+
+
+def test_get_ratings_returns_rated_skus():
+    rows = {"SKU001": (88, 1), "SKU002": (95, 2)}
+    with patch(
+        "backend.services.tastings.repo.ratings_by_skus",
+        new_callable=AsyncMock,
+        return_value=rows,
+    ):
+        resp = client.get("/api/tastings/ratings?skus=SKU001,SKU002,SKU999")
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data["SKU001"] == {"rating": 88, "note_id": 1}
+    assert data["SKU002"] == {"rating": 95, "note_id": 2}
+    assert "SKU999" not in data
+
+
+def test_get_ratings_empty_skus_returns_empty_without_db_call():
+    with patch(
+        "backend.services.tastings.repo.ratings_by_skus",
+        new_callable=AsyncMock,
+    ) as mock_repo:
+        resp = client.get("/api/tastings/ratings?skus=")
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json() == {}
+    mock_repo.assert_not_called()

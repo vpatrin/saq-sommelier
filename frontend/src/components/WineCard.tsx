@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatOrigin, CATEGORY_DOT } from '@/lib/utils'
-import type { ProductOut } from '@/lib/types'
+import type { ProductOut, TastingRatingOut } from '@/lib/types'
 
 interface WineCardProps {
   product: ProductOut
   reason?: string
   storeNames?: Map<string, string>
   watchSlot?: ReactNode
-  userRating?: { rating: number; note_id: number } | null
+  userRating?: TastingRatingOut | null
 }
 
 function WineCard({ product, reason, storeNames, watchSlot, userRating }: WineCardProps) {
