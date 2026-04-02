@@ -20,6 +20,11 @@ class TastingUpdateIn(BaseModel):
     tasted_at: date | None = None
 
 
+class TastingRatingOut(BaseModel):
+    rating: int
+    note_id: int
+
+
 class TastingOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

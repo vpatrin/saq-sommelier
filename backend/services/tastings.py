@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.exceptions import ForbiddenError, NotFoundError
 from backend.repositories import tastings as repo
-from backend.schemas.tasting import TastingOut
+from backend.schemas.tasting import TastingOut, TastingRatingOut
 from core.db.models import TastingNote
 
 
@@ -75,3 +75,15 @@ async def update_tasting(
 async def delete_tasting(db: AsyncSession, user_id: str | None, note_id: int) -> None:
     note = await _get_owned_note(db, user_id, note_id)
     await repo.delete(db, note)
+
+
+async def get_ratings_by_skus(
+    db: AsyncSession,
+    user_id: str | None,
+    skus: list[str],
+) -> dict[str, TastingRatingOut]:
+    rows = await repo.ratings_by_skus(db, user_id, skus)
+    return {
+        sku: TastingRatingOut(rating=rating, note_id=note_id)
+        for sku, (rating, note_id) in rows.items()
+    }

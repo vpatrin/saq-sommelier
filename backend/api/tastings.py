@@ -4,10 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.auth import get_caller_user_id
 from backend.config import MAX_LIMIT
 from backend.db import get_db
-from backend.schemas.tasting import TastingIn, TastingOut, TastingUpdateIn
+from backend.schemas.tasting import TastingIn, TastingOut, TastingRatingOut, TastingUpdateIn
 from backend.services.tastings import (
     create_tasting,
     delete_tasting,
+    get_ratings_by_skus,
     list_tastings,
     update_tasting,
 )
@@ -31,6 +32,17 @@ async def post_tasting(
         pairing=body.pairing,
         tasted_at=body.tasted_at,
     )
+
+
+@router.get("/ratings", response_model=dict[str, TastingRatingOut])
+async def get_tasting_ratings(
+    skus: str = Query(description="Comma-separated list of SKUs"),
+    user_id: str | None = Depends(get_caller_user_id),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, TastingRatingOut]:
+    """Return user ratings for the given SKUs. Only rated SKUs appear in the response."""
+    sku_list = [s.strip() for s in skus.split(",") if s.strip()]
+    return await get_ratings_by_skus(db, user_id=user_id, skus=sku_list)
 
 
 @router.get("", response_model=list[TastingOut])

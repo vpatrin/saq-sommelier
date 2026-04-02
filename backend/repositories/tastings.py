@@ -75,3 +75,17 @@ async def update(
 async def delete(db: AsyncSession, note: TastingNote) -> None:
     await db.delete(note)
     await db.flush()
+
+
+async def ratings_by_skus(
+    db: AsyncSession,
+    user_id: str | None,
+    skus: list[str],
+) -> dict[str, tuple[int, int]]:
+    """Return {sku: (rating, note_id)} for the given SKUs the user has rated."""
+    stmt = select(TastingNote.sku, TastingNote.rating, TastingNote.id).where(
+        TastingNote.user_id == user_id,
+        TastingNote.sku.in_(skus),
+    )
+    result = await db.execute(stmt)
+    return {row.sku: (row.rating, row.id) for row in result.all()}
