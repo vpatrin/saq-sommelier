@@ -8,9 +8,10 @@ interface WineCardProps {
   reason?: string
   storeNames?: Map<string, string>
   watchSlot?: ReactNode
+  userRating?: { rating: number; note_id: number } | null
 }
 
-function WineCard({ product, reason, storeNames, watchSlot }: WineCardProps) {
+function WineCard({ product, reason, storeNames, watchSlot, userRating }: WineCardProps) {
   const { t } = useTranslation()
   const origin = formatOrigin(product)
   const hasOnline = product.online_availability === true
@@ -103,7 +104,7 @@ function WineCard({ product, reason, storeNames, watchSlot }: WineCardProps) {
           </p>
         )}
 
-        {/* Bottom row: availability left, watch right */}
+        {/* Bottom row: availability left, user rating + watch right */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             {hasOnline && (
@@ -114,7 +115,14 @@ function WineCard({ product, reason, storeNames, watchSlot }: WineCardProps) {
             )}
             {storeNode}
           </div>
-          {watchSlot}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {userRating && (
+              <span className="font-mono text-[10px] text-muted-foreground/60">
+                {t('wineCard.yourRating', { rating: userRating.rating })}
+              </span>
+            )}
+            {watchSlot}
+          </div>
         </div>
       </div>
     </div>

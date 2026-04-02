@@ -10,6 +10,7 @@ import type {
   CategoryGroupOut,
   WatchWithProduct,
   UserStorePreferenceOut,
+  TastingRatingOut,
 } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { CATEGORY_DOT } from '@/lib/utils'
@@ -84,6 +85,9 @@ function SearchPage() {
 
   // Watch state — track which SKUs the user is already watching
   const [watchedSkus, setWatchedSkus] = useState<Set<string>>(new Set())
+
+  // User ratings for SKUs in the current search results page
+  const [userRatings, setUserRatings] = useState<Record<string, TastingRatingOut>>({})
   const [watchingInProgress, setWatchingInProgress] = useState<string | null>(null)
 
   // Saved store IDs + names — for "In my stores" filter and availability display
@@ -231,6 +235,30 @@ function SearchPage() {
     storesLoaded,
     t,
   ])
+
+  // Fetch user ratings for the current page of results — runs after products load
+  useEffect(() => {
+    if (!results || results.items.length === 0) {
+      setUserRatings({})
+      return
+    }
+    let cancelled = false
+    const skus = results.items.map((p) => p.sku).join(',')
+    async function fetchRatings() {
+      try {
+        const data = await apiClient<Record<string, TastingRatingOut>>(
+          `/tastings/ratings?skus=${encodeURIComponent(skus)}`,
+        )
+        if (!cancelled) setUserRatings(data)
+      } catch {
+        // Non-critical — cards just won't show ratings
+      }
+    }
+    fetchRatings()
+    return () => {
+      cancelled = true
+    }
+  }, [apiClient, results])
 
   // Debounced search input
   const handleInputChange = useCallback(
@@ -621,6 +649,7 @@ function SearchPage() {
                           product={product}
                           storeNames={storeNames}
                           watchSlot={watchButton}
+                          userRating={userRatings[product.sku] ?? null}
                         />
                       </div>
                     </li>

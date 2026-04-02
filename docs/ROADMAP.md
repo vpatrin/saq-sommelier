@@ -15,7 +15,8 @@ Scaffolding, scraping, data layer, API, Telegram bot, AI layer (RAG + Claude), a
 Premium warm theme replacing the brutalist/terminal aesthetic. Cross-cutting UX effort before Phase 11.
 
 - [x] Theme foundation — tokens, fonts, sidebar (#534)
-- [x] Landing page + login restyle (#536, #535)
+- [x] Landing page + login restyle (#536)
+- [ ] Age gate (18+) on first visit (#535)
 - [x] Chat page + wine card restyle (#537)
 - [x] Search, watchlist, stores restyle + empty states (#538)
 - [x] Wine detail slide panel (#539)

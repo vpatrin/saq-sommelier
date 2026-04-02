@@ -74,6 +74,11 @@ export interface ProductOut {
 
 // --- Tasting Journal ---
 
+export interface TastingRatingOut {
+  rating: number
+  note_id: number
+}
+
 export interface TastingNoteOut {
   id: number
   sku: string
