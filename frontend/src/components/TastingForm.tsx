@@ -42,7 +42,6 @@ function TastingForm({
 
   const [product, setProduct] = useState<ProductOut | null>(initialProduct ?? null)
 
-  // Slider is 0–100 for smooth dragging; bucket lookup drives the description + stored value
   const [rating, setRating] = useState(initialRating ?? DEFAULT_RATING)
   const bucket = getBucket(rating)
   const [notes, setNotes] = useState(initialNotes ?? '')
@@ -115,10 +114,8 @@ function TastingForm({
         )}
       </div>
 
-      {/* Rest of the form — only shown once a wine is selected */}
       {product && (
         <>
-          {/* Rating slider — step-based, one stop per MW bucket */}
           <div className="mb-4">
             <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-2">
               {t('tastingForm.rating')}
@@ -143,7 +140,6 @@ function TastingForm({
             </p>
           </div>
 
-          {/* Notes */}
           <div className="mb-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-1.5">
               {t('tastingForm.notes')}
@@ -158,7 +154,6 @@ function TastingForm({
             />
           </div>
 
-          {/* Pairing */}
           <div className="mb-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-1.5">
               {t('tastingForm.pairing')}
@@ -173,7 +168,6 @@ function TastingForm({
             />
           </div>
 
-          {/* Date */}
           <div className="mb-4">
             <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-1.5">
               {t('tastingForm.date')}
@@ -186,7 +180,6 @@ function TastingForm({
             />
           </div>
 
-          {/* Footer */}
           <div className="flex items-center justify-end gap-4 mt-2">
             {saveError && (
               <p className="text-[11px] text-destructive mr-auto">
@@ -211,7 +204,7 @@ function TastingForm({
         </>
       )}
 
-      {/* Footer when no wine selected yet */}
+      {/* Cancel-only footer shown while searching for a wine */}
       {!product && (
         <div className="flex justify-end mt-2">
           <button

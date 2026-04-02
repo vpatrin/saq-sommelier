@@ -78,7 +78,6 @@ function WineSearch({ onSelect, onCancel }: WineSearchProps) {
 
   return (
     <div>
-      {/* Search input */}
       <div className="relative mb-2">
         <MagnifyingGlass
           size={14}
@@ -98,7 +97,6 @@ function WineSearch({ onSelect, onCancel }: WineSearchProps) {
         />
       </div>
 
-      {/* Results area */}
       {searchState.status === 'loading' && (
         <div className="flex flex-col gap-1 mt-1">
           {[...Array(3)].map((_, i) => (

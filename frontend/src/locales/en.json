@@ -13,16 +13,11 @@
     "sortOldest": "Oldest first",
     "sortRatingDesc": "Highest rated",
     "sortRatingAsc": "Lowest rated",
-    "deleteNote": "Delete this note?",
-    "deleteConfirm": "This action is irreversible.",
-    "delete": "Delete",
-    "cancel": "Cancel",
     "failedToLoad": "Couldn't load the journal",
     "retry": "retry",
     "loadMore": "Load more",
     "loading": "Loading…",
-    "editNote": "Edit note",
-    "deleteNoteAria": "Delete note"
+    "editNote": "Edit note"
   },
   "tastingForm": {
     "addTitle": "Add a note",
@@ -34,7 +29,7 @@
     "pairingPlaceholder": "Food pairing…",
     "date": "Date",
     "save": "Save",
-    "saving": "…",
+    "saving": "Saving…",
     "cancel": "Cancel",
     "changeWine": "Change wine",
     "failedToSave": "Couldn't save —",

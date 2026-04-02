@@ -30,7 +30,7 @@ Log wines you've tasted with 100-point ratings and tasting notes. SAQ catalog wi
 
 - [x] TastingNote model + migration (#442)
 - [x] Tasting CRUD endpoints (#443)
-- [ ] "Log tasting" inline form on product cards (#444)
+- [x] "Log tasting" inline form on product cards (#444)
 - [x] My Tastings page (#445)
 - [ ] Surface "You rated: 92" on product cards in search results (#446)
 

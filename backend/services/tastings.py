@@ -51,7 +51,7 @@ async def list_tastings(
                 "product_category": product.category if product else None,
                 "product_region": product.region if product else None,
                 "product_grape": product.grape if product else None,
-                "product_price": str(product.price) if product and product.price else None,
+                "product_price": f"{product.price:.2f}" if product and product.price else None,
             }
         )
         for note, product in rows

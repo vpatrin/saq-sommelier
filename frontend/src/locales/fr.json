@@ -13,16 +13,11 @@
     "sortOldest": "Les plus anciennes",
     "sortRatingDesc": "Notes décroissantes",
     "sortRatingAsc": "Notes croissantes",
-    "deleteNote": "Supprimer la note ?",
-    "deleteConfirm": "Cette action est irréversible.",
-    "delete": "Supprimer",
-    "cancel": "Annuler",
     "failedToLoad": "Impossible de charger le journal",
     "retry": "réessayer",
     "loadMore": "Afficher plus",
     "loading": "Chargement…",
-    "editNote": "Modifier la note",
-    "deleteNoteAria": "Supprimer la note"
+    "editNote": "Modifier la note"
   },
   "tastingForm": {
     "addTitle": "Ajouter une note",
@@ -34,7 +29,7 @@
     "pairingPlaceholder": "Accord mets-vins…",
     "date": "Date",
     "save": "Enregistrer",
-    "saving": "…",
+    "saving": "Enregistrement…",
     "cancel": "Annuler",
     "changeWine": "Changer de vin",
     "failedToSave": "Impossible d'enregistrer —",

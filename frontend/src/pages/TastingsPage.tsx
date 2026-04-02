@@ -2,9 +2,10 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { CaretDown, MagnifyingGlass, NotePencil, PencilSimple, Plus } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { useApiClient, ApiError } from '@/lib/api'
 import type { TastingNoteOut } from '@/lib/types'
-import { BUCKETS, ratingColor } from '@/lib/rating'
+import { getBucket, ratingColor } from '@/lib/rating'
 import { CATEGORY_DOT } from '@/lib/utils'
 import EmptyState from '@/components/EmptyState'
 import TastingForm from '@/components/TastingForm'
@@ -22,15 +23,15 @@ const noteDateFmt = new Intl.DateTimeFormat('fr-CA', { day: 'numeric', month: 's
 
 // Groups an ordered list of tasting notes by their tasted_at date label.
 // Returns pairs of [label, notes[]] in the order they first appear.
-function groupByDate(notes: TastingNoteOut[]): [string, TastingNoteOut[]][] {
+function groupByDate(notes: TastingNoteOut[], t: TFunction): [string, TastingNoteOut[]][] {
   const today = new Date().toISOString().slice(0, 10)
   const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
 
   const map = new Map<string, TastingNoteOut[]>()
   for (const note of notes) {
     let label: string
-    if (note.tasted_at === today) label = "Aujourd'hui"
-    else if (note.tasted_at === yesterday) label = 'Hier'
+    if (note.tasted_at === today) label = t('time.today')
+    else if (note.tasted_at === yesterday) label = t('time.yesterday')
     else label = groupLabelFmt.format(new Date(note.tasted_at + 'T00:00:00'))
     const group = map.get(label) ?? []
     group.push(note)
@@ -106,17 +107,26 @@ function TastingsPage() {
   const handleDelete = useCallback(
     async (id: number) => {
       setViewNote(null)
-      // Capture removed inside the updater so this callback doesn't depend on `notes`
+      // Capture removed item + index inside the updater so this callback doesn't depend on `notes`
       let removed: TastingNoteOut | undefined
+      let removedIdx = -1
       setNotes((prev) => {
-        removed = prev.find((n) => n.id === id)
+        removedIdx = prev.findIndex((n) => n.id === id)
+        removed = prev[removedIdx]
         return prev.filter((n) => n.id !== id)
       })
 
       try {
         await apiClient(`/tastings/${id}`, { method: 'DELETE' })
       } catch (err) {
-        if (removed) setNotes((prev) => [removed!, ...prev.filter((n) => n.id !== id)])
+        // Restore at original position so the list doesn't visibly reorder on rollback
+        if (removed) {
+          setNotes((prev) => {
+            const next = [...prev]
+            next.splice(removedIdx, 0, removed!)
+            return next
+          })
+        }
         console.error('Delete failed', err instanceof ApiError ? err.detail : err)
       }
     },
@@ -133,8 +143,9 @@ function TastingsPage() {
     setViewNote({ note: updated, mode: 'view' })
   }, [])
 
-  const openModal = () => setAddNoteOpen(true)
-  const closeModal = () => setAddNoteOpen(false)
+  // useCallback so WineSearch's Escape handler (which has onCancel in its dep array) doesn't re-register on every render
+  const openModal = useCallback(() => setAddNoteOpen(true), [])
+  const closeModal = useCallback(() => setAddNoteOpen(false), [])
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase()
@@ -162,8 +173,8 @@ function TastingsPage() {
     () =>
       sort === 'rating-desc' || sort === 'rating-asc'
         ? [['', filtered] as [string, TastingNoteOut[]]]
-        : groupByDate(filtered),
-    [filtered, sort],
+        : groupByDate(filtered, t),
+    [filtered, sort, t],
   )
 
   if (loading) {
@@ -288,10 +299,8 @@ function TastingsPage() {
                     <ul className="flex flex-col gap-3">
                       {group.map((note) => {
                         const name = note.product_name ?? note.sku
-                        const bucket =
-                          BUCKETS.find((b) => note.rating >= b.min && note.rating <= b.max) ??
-                          BUCKETS[0]
-                        const hasCategoryColor = note.product_category
+                        const bucket = getBucket(note.rating)
+                        const isKnownCategory = note.product_category
                           ? !!CATEGORY_DOT[note.product_category]
                           : false
                         return (
@@ -299,6 +308,7 @@ function TastingsPage() {
                             key={note.id}
                             role="button"
                             tabIndex={0}
+                            aria-label={name}
                             onClick={() => setViewNote({ note, mode: 'view' })}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ')
@@ -347,7 +357,7 @@ function TastingsPage() {
                                   <span
                                     className="text-[11px] px-1.5 py-0.5 rounded border"
                                     style={
-                                      hasCategoryColor
+                                      isKnownCategory
                                         ? {
                                             color: 'var(--color-primary)',
                                             borderColor: 'rgba(200,146,72,0.25)',
