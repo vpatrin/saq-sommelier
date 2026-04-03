@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams, Navigate, Link } from 'react-router'
+import { useNavigate, Navigate, Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { TelegramLoginButton, type TelegramLoginData } from '@/components/TelegramLoginButton'
@@ -16,19 +16,14 @@ function LoginPage() {
   const { t, i18n } = useTranslation()
   const { token, login } = useAuth()
   const navigate = useNavigate()
-  const { code } = useParams<{ code: string }>()
   const [error, setError] = useState<string | null>(null)
 
   const handleAuth = async (telegramData: TelegramLoginData) => {
     setError(null)
     try {
-      const body = {
-        ...telegramData,
-        ...(code ? { invite_code: code } : {}),
-      }
       const { access_token } = await api<TokenResponse>('/auth/telegram', {
         method: 'POST',
-        body: JSON.stringify(body),
+        body: JSON.stringify(telegramData),
       })
       login(access_token)
       navigate('/dashboard', { replace: true })
@@ -67,25 +62,6 @@ function LoginPage() {
           </div>
           <h1 className="text-2xl font-semibold">{t('brand')}</h1>
         </div>
-
-        {/* Invite badge */}
-        {code && (
-          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/8 border border-green-500/15 text-green-500 text-sm">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {t('login.invited')}
-          </div>
-        )}
 
         <div className="flex flex-col items-center gap-3 w-full">
           <div className="w-[320px] max-w-full flex justify-center overflow-hidden">

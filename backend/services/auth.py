@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import backend_settings
 from backend.exceptions import ForbiddenError, InvalidCredentialsError
-from backend.repositories import invites as invites_repo
 from backend.repositories import users as users_repo
 from backend.schemas.auth import TelegramLoginIn, TokenOut
 
@@ -24,7 +23,7 @@ def _verify_telegram_hash(data: TelegramLoginIn, bot_token: str) -> bool:
     # Build check string: sorted key=value pairs, excluding "hash"
     check_pairs = []
     for key in sorted(type(data).model_fields):
-        if key in ("hash", "invite_code"):
+        if key == "hash":
             continue
         value = getattr(data, key)
         if value is not None:
@@ -62,19 +61,7 @@ async def authenticate_telegram(db: AsyncSession, data: TelegramLoginIn) -> Toke
     if existing and not existing.is_active:
         raise ForbiddenError("Account is deactivated")
 
-    # New users must present a valid invite code
-    invite = None
-    if not existing:
-        if not data.invite_code:
-            raise ForbiddenError("Invite code required for new users")
-        invite = await invites_repo.find_unused_by_code(db, data.invite_code)
-        if not invite:
-            raise InvalidCredentialsError("Invalid or already used invite code")
-
     user = await users_repo.upsert(db, data.id, data.first_name, data.username)
-
-    if invite:
-        await invites_repo.redeem(db, invite, user.id)
 
     logger.info("Telegram auth: telegram_id={} user_id={}", data.id, user.id)
 

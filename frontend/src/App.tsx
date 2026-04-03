@@ -25,7 +25,6 @@ function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/invite/:code" element={<LoginPage />} />
       <Route element={<AuthedLayout />}>
         <Route path="/dashboard" element={<Navigate to="/chat" replace />} />
         <Route path="/chats" element={<ChatsPage />} />
