@@ -70,5 +70,11 @@ class BackendSettings(BaseSettings):
     # Telegram ID of the admin user — verified at startup.
     ADMIN_TELEGRAM_ID: int = 0
 
+    # Resend API key — required in production. Leave empty to skip email (dev mode).
+    RESEND_API_KEY: str = ""
+
+    # From address for transactional emails — must match a verified Resend domain.
+    RESEND_FROM_EMAIL: str = "Coupette <noreply@coupette.club>"
+
 
 backend_settings = BackendSettings()

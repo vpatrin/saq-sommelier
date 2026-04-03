@@ -81,10 +81,18 @@ Replace invite codes with a waitlist + admin approval flow. Landing page collect
 
 - [x] `POST /api/waitlist` — public endpoint, email only, silent 201 on duplicate, IP rate limited (#580)
 - [x] Admin waitlist endpoints — list pending, approve, reject (#581)
-- [ ] Resend integration — approval email on approve, `email_sent_at` tracking, resend action (#582)
+- [x] Resend integration — approval email on approve, `email_sent_at` tracking, resend action (#582)
 - [x] Frontend — landing page waitlist form, replace invite code input (#583)
 - [ ] Frontend — admin panel: pending queue, approve/reject, active users (#584)
 - [ ] Remove invite codes — model, migration, repo, endpoints, frontend (#585)
+
+#### Custom Email Domain
+
+Add `contact@coupette.club` via Proton Mail custom domain (requires Proton Unlimited). After Waitlist & Admin Panel milestone.
+
+- [ ] Add `coupette.club` as custom domain in Proton Mail dashboard
+- [ ] Update MX records on Hetzner DNS
+- [ ] Update `noreply@coupette.club` → `contact@coupette.club` as reply-to (optional)
 
 #### Extended Auth — GitHub + Google OAuth
 
