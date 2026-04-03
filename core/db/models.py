@@ -24,7 +24,7 @@ from core.embedding_constants import EMBEDDING_DIMENSIONS
 
 
 class User(Base):
-    """Registered user — identity linked via Telegram OAuth."""
+    """Registered user — identity linked via OAuth providers (oauth_accounts table)."""
 
     __tablename__ = "users"
 
@@ -45,7 +45,10 @@ class User(Base):
         comment="Authorization role: user or admin",
     )
     is_active = Column(
-        Boolean, nullable=False, default=True, comment="Active flag (replaces bot allowlist)"
+        Boolean,
+        nullable=False,
+        default=True,
+        comment="Admin kill-switch — False blocks login regardless of status",
     )
     created_at = Column(
         DateTime(timezone=True),
@@ -61,6 +64,56 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User(id={self.id!r}, telegram_id={self.telegram_id!r}, role={self.role!r})>"
+
+
+class WaitlistRequest(Base):
+    """Pre-auth waitlist request — exists before a User row is created.
+
+    A User row is only created on first OAuth login after approval.
+    status: pending (awaiting admin review) | approved (can log in) | rejected
+    """
+
+    __tablename__ = "waitlist_requests"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'approved', 'rejected')",
+            name="ck_waitlist_requests_status",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(
+        String(254),
+        unique=True,
+        nullable=False,
+        index=True,
+        comment="Applicant email — lowercased at write time",
+    )
+    status = Column(
+        String(20),
+        nullable=False,
+        default="pending",
+        comment="pending | approved | rejected",
+    )
+    email_sent_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When the approval email was last sent (NULL = not sent yet)",
+    )
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        comment="When the request was submitted",
+    )
+    approved_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="When the request was approved",
+    )
+
+    def __repr__(self) -> str:
+        return f"<WaitlistRequest(id={self.id!r}, email={self.email!r}, status={self.status!r})>"
 
 
 class InviteCode(Base):
