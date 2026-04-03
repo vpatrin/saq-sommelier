@@ -33,7 +33,6 @@ class User(Base):
         String(254),
         unique=True,
         nullable=False,
-        index=True,
         comment="Primary email from OAuth provider (lowercased)",
     )
     display_name = Column(String, nullable=True, comment="User-set display name")

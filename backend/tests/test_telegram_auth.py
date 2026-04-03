@@ -50,7 +50,7 @@ def _mock_user(telegram_id: int = 12345, role: str = ROLE_USER, is_active: bool 
     user.telegram_id = telegram_id
     user.role = role
     user.is_active = is_active
-    user.first_name = "Test"
+    user.display_name = "Test"
     return user
 
 
@@ -73,7 +73,7 @@ class TestTelegramLogin:
             mock_settings.TELEGRAM_BOT_TOKEN = BOT_TOKEN
             mock_settings.JWT_SECRET_KEY = JWT_SECRET
             mock_repo.find_by_telegram_id = AsyncMock(return_value=_mock_user())
-            mock_repo.upsert = AsyncMock(return_value=_mock_user())
+            mock_repo.upsert_telegram = AsyncMock(return_value=_mock_user())
             resp = client.post("/api/auth/telegram", json=payload)
 
         assert resp.status_code == status.HTTP_200_OK
@@ -81,7 +81,7 @@ class TestTelegramLogin:
         assert "access_token" in data
         assert data["token_type"] == "bearer"
         payload = pyjwt.decode(data["access_token"], JWT_SECRET, algorithms=["HS256"])
-        assert payload["first_name"] == "Test"
+        assert payload["display_name"] == "Test"
 
     def test_invalid_hash_returns_401(self, client: TestClient):
         payload = _make_telegram_payload()
@@ -130,7 +130,7 @@ class TestTelegramLogin:
             mock_settings.TELEGRAM_BOT_TOKEN = BOT_TOKEN
             mock_settings.JWT_SECRET_KEY = JWT_SECRET
             mock_repo.find_by_telegram_id = AsyncMock(return_value=None)
-            mock_repo.upsert = AsyncMock(return_value=_mock_user())
+            mock_repo.upsert_telegram = AsyncMock(return_value=_mock_user())
             resp = client.post("/api/auth/telegram", json=payload)
 
         assert resp.status_code == status.HTTP_200_OK

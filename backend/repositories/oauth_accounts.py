@@ -15,16 +15,6 @@ async def find_by_provider(
     return result.scalar_one_or_none()
 
 
-async def find_by_email(db: AsyncSession, provider: str, email: str) -> OAuthAccount | None:
-    """Find an existing account by provider + email — used for auto-merge on first login."""
-    stmt = select(OAuthAccount).where(
-        OAuthAccount.provider == provider,
-        OAuthAccount.email == email,
-    )
-    result = await db.execute(stmt)
-    return result.scalar_one_or_none()
-
-
 async def create(
     db: AsyncSession,
     *,

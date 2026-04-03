@@ -108,8 +108,8 @@ OAuth-only login (no email/password, no Telegram login). Clean multi-provider id
 
 **Security:** PKCE (S256) + AES-256-GCM encrypted + HMAC-SHA256 signed state + Redis single-use nonce.
 
-- [ ] `oauth_accounts` table + `email` / `display_name` on `users` + backfill migration (#586)
-- [ ] `OAuthAccount` repository — `find_by_provider`, `find_by_email`, `create`, `list_by_user` (#587)
+- [x] `oauth_accounts` table + `email` / `display_name` on `users` + backfill migration (#586)
+- [x] `OAuthAccount` repository — `find_by_provider`, `find_by_email`, `create`, `list_by_user` (#587)
 - [ ] JWT refactor — drop `telegram_id` claim, add `display_name`, update frontend callers (#588)
 - [ ] Redis setup — async client, state storage helpers (#589)
 - [ ] GitHub OAuth — `/api/auth/github` + `/api/auth/github/callback`, PKCE + encrypted state (#590)
