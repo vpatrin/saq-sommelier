@@ -59,7 +59,7 @@ function WaitlistTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retry, setRetry] = useState(0)
-  const [rowLoading, setRowLoading] = useState<Record<number, WaitlistAction>>({})
+  const [rowLoading, setRowLoading] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
     let cancelled = false
@@ -84,7 +84,7 @@ function WaitlistTab() {
   }, [apiClient, t, retry])
 
   const handleAction = async (id: number, action: WaitlistAction) => {
-    setRowLoading((prev) => ({ ...prev, [id]: action }))
+    setRowLoading((prev) => ({ ...prev, [id]: true }))
     try {
       await apiClient(`/admin/waitlist/${id}/${action}`, { method: 'POST' })
       if (action === 'approve' || action === 'reject') {
@@ -125,7 +125,7 @@ function WaitlistTab() {
   return (
     <div className="flex flex-col gap-2">
       {entries.map((entry) => {
-        const action = rowLoading[entry.id]
+        const busy = rowLoading[entry.id]
         return (
           <div
             key={entry.id}
@@ -148,34 +148,30 @@ function WaitlistTab() {
                 <>
                   <button
                     type="button"
-                    disabled={!!action}
+                    disabled={busy}
                     onClick={() => handleAction(entry.id, 'approve')}
                     className="px-3 py-1.5 text-xs rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {action === 'approve'
-                      ? t('admin.waitlist.approving')
-                      : t('admin.waitlist.approve')}
+                    {t('admin.waitlist.approve')}
                   </button>
                   <button
                     type="button"
-                    disabled={!!action}
+                    disabled={busy}
                     onClick={() => handleAction(entry.id, 'reject')}
                     className="px-3 py-1.5 text-xs rounded-lg text-muted-foreground border border-border hover:text-destructive hover:border-destructive/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {action === 'reject'
-                      ? t('admin.waitlist.rejecting')
-                      : t('admin.waitlist.reject')}
+                    {t('admin.waitlist.reject')}
                   </button>
                 </>
               )}
               {entry.status === 'approved' && (
                 <button
                   type="button"
-                  disabled={!!action}
+                  disabled={busy}
                   onClick={() => handleAction(entry.id, 'resend')}
                   className="px-3 py-1.5 text-xs rounded-lg text-muted-foreground border border-border hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {action === 'resend' ? t('admin.waitlist.resending') : t('admin.waitlist.resend')}
+                  {t('admin.waitlist.resend')}
                 </button>
               )}
             </div>
