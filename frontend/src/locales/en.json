@@ -167,7 +167,6 @@
     }
   },
   "login": {
-    "invited": "Invitation accepted",
     "authFailed": "Authentication failed",
     "backToLanding": "Home",
     "legal": "18+ only · Drink responsibly"

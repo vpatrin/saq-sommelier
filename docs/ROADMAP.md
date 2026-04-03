@@ -84,7 +84,7 @@ Replace invite codes with a waitlist + admin approval flow. Landing page collect
 - [x] Resend integration — approval email on approve, `email_sent_at` tracking, resend action (#582)
 - [x] Frontend — landing page waitlist form, replace invite code input (#583)
 - [x] Frontend — admin panel: pending queue, approve/reject, active users (#584)
-- [ ] Remove invite codes — model, migration, repo, endpoints, frontend (#585)
+- [x] Remove invite codes — model, migration, repo, endpoints, frontend (#585)
 
 #### Custom Email Domain
 

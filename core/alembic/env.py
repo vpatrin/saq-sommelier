@@ -49,7 +49,7 @@ def _is_comment_only_alter(op: object) -> bool:
     )
 
 
-def _strip_comment_only_alters(directives, _context, _heads, _run_args):
+def _strip_comment_only_alters(_context, _revision, directives):
     # Alembic has no compare_comments=False option (silently ignored in 1.x).
     # Use process_revision_directives to drop alter_column ops that only
     # change a column comment — these re-appear on every autogenerate from

@@ -167,7 +167,6 @@
     }
   },
   "login": {
-    "invited": "Invitation validée",
     "authFailed": "Échec de l'authentification",
     "backToLanding": "Accueil",
     "legal": "Réservé aux 18 ans et plus · La modération a bien meilleur goût"

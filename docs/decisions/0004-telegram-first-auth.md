@@ -33,6 +33,12 @@ Option 3: Telegram Login Widget for web auth, JWT tokens for API sessions, invit
 4. JWT used for all subsequent API calls (15-day expiry)
 5. Bot authenticates via `X-Bot-Secret` header (shared secret, not JWT)
 
+## Migration history
+
+**2026-04-03 — Invite codes removed (#585).** The invite code gate was replaced by a waitlist + admin approval flow (#580–#584). New users no longer need a single-use code; instead they submit their email on the landing page and an admin approves them, triggering a Resend confirmation email. The `invite_codes` table was dropped. The `TelegramLoginIn` schema no longer includes `invite_code`, and the HMAC exclusion list simplified to just `hash`.
+
+The path: *invite-code closed beta (Telegram SSO only)* → *waitlist closed beta (Telegram SSO + pending OAuth)* — see ADR 0008 for the OAuth2 design that comes next.
+
 ## Consequences
 
 - **Telegram dependency.** If Telegram goes down or changes their OAuth, auth breaks. Acceptable — the entire bot UX already depends on Telegram.

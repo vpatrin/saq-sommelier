@@ -2,33 +2,16 @@ from fastapi import APIRouter, Depends, status
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.auth import verify_admin
 from backend.config import ROLE_ADMIN, WAITLIST_APPROVED
 from backend.db import get_db
 from backend.exceptions import ConflictError, NotFoundError
-from backend.repositories import invites as invites_repo
 from backend.repositories import users as users_repo
 from backend.repositories import waitlist as waitlist_repo
-from backend.schemas.invite import InviteCodeOut
 from backend.schemas.user import UserOut, UserUpdateIn
 from backend.schemas.waitlist import WaitlistRequestOut
 from backend.services.email import send_approval_email
-from core.db.models import User
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-
-
-@router.post("/invites", response_model=InviteCodeOut, status_code=status.HTTP_201_CREATED)
-async def create_invite(
-    user: User = Depends(verify_admin),
-    db: AsyncSession = Depends(get_db),
-) -> InviteCodeOut:
-    return await invites_repo.create(db, created_by_id=user.id)
-
-
-@router.get("/invites", response_model=list[InviteCodeOut])
-async def list_invites(db: AsyncSession = Depends(get_db)) -> list[InviteCodeOut]:
-    return await invites_repo.list_all(db)
 
 
 @router.get("/users", response_model=list[UserOut])
