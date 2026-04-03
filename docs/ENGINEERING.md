@@ -296,3 +296,154 @@ Five actionables identified from a full frontend audit (2026-04-02). In priority
 
 - [ ] Rename database `saq_sommelier` → `coupette` (coordination with infra required) (#423)
 - [ ] Rotate all production secrets (#406)
+
+---
+
+## Side Quests
+
+Exploratory ideas worth revisiting — not scheduled, not blocking anything. Picked up when curiosity strikes or when a product feature makes them natural.
+
+### Temporal.io — Durable workflow orchestration
+
+Multi-step async jobs with per-step retry semantics, crash recovery, and built-in observability.
+
+Natural fit for: Sonnet profile synthesis (debounce + LLM), scraper pipeline (fan-out over ~14k products), weekly digest (per-user curation + Telegram delivery). Revisit at k3s migration — adding a Temporal server deployment at that point has low marginal cost and amortizes setup across 3+ workflows.
+
+### NATS JetStream — Pub/Sub for notifications and signal triggers
+
+Today: scraper writes `stock_events`, bot polls and ACKs via DB queue. Works at current scale. As notification channels multiply (Telegram, email, in-app) and signal triggers grow (ADR 0007 trigger inventory), the DB queue pattern duplicates per-channel logic and makes fan-out harder to reason about.
+
+**Chosen approach:** NATS JetStream — single binary, ~50MB RAM, persistent streams, at-least-once delivery, consumer groups. Simpler than Kafka, purpose-built for messaging unlike Redis.
+
+**Confirmed use cases:**
+
+| Event | Publisher | Subscribers |
+| --- | --- | --- |
+| `product.restocked` / `product.delisted` | Scraper | Bot (Telegram alert), future email, future in-app |
+| `tasting.saved` | Backend | Haiku signal extraction, profile update queue |
+| `chat.session_closed` | Backend | Haiku signal extraction |
+| `watch.fired` | Backend/Bot | Profile signal (SQL), future email |
+
+**What stays as-is (not pub/sub):**
+
+- `user.registered` — synchronous, no fan-out needed
+- `search.query` — analytics log, not an event
+- Profile update queue (`profile_update_jobs`) — already a debounce queue, Temporal handles this better when adopted
+
+**Natural fit with Temporal:** when Temporal is adopted at k3s migration, Temporal workers become the JetStream subscribers — workflows triggered by events, not by polling.
+
+Worth revisiting when: adding a second notification channel (email or in-app), or when the bot polling interval becomes a real latency problem.
+
+### OpenTelemetry — Unified observability
+
+Replace ad-hoc Loguru + Prometheus with structured traces that span the full request path: API → intent router → RAG pipeline → Claude call → DB query. Today each stage is logged independently — no single trace shows end-to-end latency breakdown per request.
+
+OTel is the industry standard (every company uses it). For Coupette: instrument the recommendation pipeline first (highest value — multiple LLM + DB calls per request), then add to scraper and bot. Export to Grafana Tempo (already in infra) or Jaeger.
+
+### LangSmith / Braintrust — LLM observability
+
+Dedicated tracing for Claude calls: inputs, outputs, latency, token usage, cost per call. Today this lives in `recommendation_logs` (manual, partial). LangSmith/Braintrust adds a UI for browsing traces, comparing prompt versions, and catching regressions in LLM behavior.
+
+Most useful when: iterating on prompts for profile synthesis or the intent router, or debugging why a recommendation run produced unexpected results.
+
+### Pydantic AI — Structured LLM outputs
+
+Type-safe Claude responses with automatic validation and retry on schema mismatch. Replaces manual JSON parsing from Claude tool_use responses. Directly applicable to: intent router (structured intent + parameters), profile synthesis (structured signal extraction from Haiku), recommendation curation (structured wine list with explanations).
+
+### TanStack Query — Server state for React
+
+Replaces manual `fetch + useState + useEffect` patterns with a cache-aware, deduplication-aware, retry-aware data layer. Already flagged in the Frontend Quality backlog above — worth learning as the canonical React data fetching pattern.
+
+### SSE — Chat streaming
+
+Today `send_message` waits for the full Claude response before returning. SSE (`text/event-stream`) streams tokens as they arrive — the browser renders the response word-by-word, which feels instant vs a 2–3s blank wait.
+
+FastAPI supports this natively via `StreamingResponse`. Frontend uses the browser's `EventSource` API. Natural next step once the chat endpoint is working end-to-end.
+
+### WebSockets + JetStream — In-app notifications
+
+SSE covers chat streaming (server → browser, one stream). For notifications (watch fired, digest ready), the same push pattern applies but across multiple event types on a persistent connection — WebSocket is the cleaner fit.
+
+The pairing:
+
+```text
+Scraper
+  → NATS JetStream (product.restocked)
+    → Backend JetStream subscriber
+      → WebSocket push to connected browser
+        → notification bell lights up
+```
+
+Each layer does one job: JetStream is the durable event bus with fan-out (bot + backend both subscribe), WebSocket is the browser delivery bridge. Backend holds an in-memory `user_id → WebSocket` map and forwards relevant events.
+
+The gap is intentional: if the user's tab is closed, the WebSocket push is lost — Telegram is the reliable fallback channel. In-app is best-effort, which is fine for notifications.
+
+Worth building when: adding a notification bell to the React app, or when a second notification channel (email, in-app) makes JetStream worth deploying.
+
+### Storybook — Component development in isolation
+
+Visual sandbox for building and testing UI components without running the full app. Useful when the component library grows (WineCard variants, EmptyState, FilterChips) and for catching visual regressions. Low priority until the component count justifies it.
+
+### Sentry — Error tracking
+
+Complements Loguru, doesn't replace it. Loguru is verbose structured logs — Sentry is signal: groups repeated errors (1 issue, 47 occurrences), captures stack traces with local variables, links errors to users, and alerts on new error types or spikes after a release. Your try/except and graceful degradation logic stays unchanged — Sentry observes the exceptions they produce. Free tier covers current scale. Most useful for: catching Claude API failures in the wild, tracking which users hit 500s, and correlating error spikes to deploys.
+
+### Prompt versioning
+
+Today a prompt change is invisible in `recommendation_logs` — no way to know which prompt version produced a given recommendation. Prompt versioning stores each prompt with a version hash and logs it alongside every LLM call. Enables: before/after quality comparison when prompts change, rollback to a known-good version, and audit trail for why a recommendation looked different last week. Natural prerequisite for A/B testing prompts. Can start simple — a constant in code with a short hash, logged to `recommendation_logs`.
+
+### Rate limiting per user
+
+No per-user rate limiting today on chat or recommendation endpoints. `slowapi` (FastAPI wrapper around `limits`) adds this in ~20 lines, backed by Redis (already in infra). Critical before opening to more users — a single user hammering the chat endpoint runs up Claude API costs with no ceiling. Start with: 20 chat messages/minute per user, 100 recommendations/hour per user.
+
+### Background task queue — procrastinate / pgqueuer
+
+Lighter than Temporal for simple fire-and-forget jobs (Haiku signal extraction, sending a single email). Backed by PostgreSQL — zero new infra. `procrastinate` and `pgqueuer` both implement a reliable task queue on top of `LISTEN/NOTIFY` + a jobs table. Natural stepping stone before Temporal: build Haiku extraction as a queued task first, migrate to a Temporal activity later if the workflow grows complex.
+
+### React Query Devtools
+
+Browser devtools panel that shows TanStack Query cache state, query status, stale/fresh indicators, and refetch counts in real time. Zero config, dev-only, ships as a floating panel in the corner. Add alongside TanStack Query — they're a package deal.
+
+### Playwright — E2E tests
+
+End-to-end browser tests for critical user flows: login → search → add watch, send a chat message, log a tasting. Vitest + RTL covers unit and component, Playwright covers the full stack against a real server. One test per critical journey is enough — not aiming for coverage, aiming for confidence that the happy path works after a deploy. Pairs well with the staging environment.
+
+### Embedding caching
+
+You re-embed the same query strings repeatedly — every search, every chat message that triggers a RAG lookup. OpenAI charges per token regardless of repetition. Cache embeddings by content hash in Redis (already in infra): hash the input string → check Redis → on miss, call OpenAI and store result with a TTL. Common queries ("Bordeaux rouge", "vin blanc sec") hit cache on every subsequent request. Cuts OpenAI embedding costs and shaves 100–200ms off search latency.
+
+### Semantic search on tasting notes
+
+User asks "find wines I liked with steak" → embed the query → search their own `tasting_notes` by vector similarity. pgvector is already there, just a new index on the `tasting_notes` table. Complements the existing catalog search — instead of searching what's available, searching what you've already experienced. Natural Phase 13+ feature once tasting data accumulates.
+
+### Idempotency keys on mutations
+
+Standard API hygiene for retry safety. Client generates a UUID before the request, sends it as `Idempotency-Key` header. Server caches the response against that key (Redis, 24h TTL) — duplicate requests replay the cached response without re-inserting.
+
+Relevant endpoints: `POST /tastings` (no unique constraint — can legitimately log same wine twice, so DB can't catch accidental duplicates), `POST /chat/sessions`, future digest send.
+
+Honest priority: low today. The practical fix for double-submit is disabling the button after first click — 2 lines of React state, covers 95% of the problem without backend changes. Idempotency keys become worth building when you have mobile users on flaky connections or a public API with external clients retrying. Worth knowing as a pattern.
+
+### Prompt playground
+
+Internal admin-only page to test prompts against real catalog data without touching prod. Input a query, see intent classification + RAG results + curation output side by side. Faster iteration than editing code and redeploying. Natural companion to prompt versioning — test a new version before shipping it.
+
+### DB read replica
+
+Scraper reads + recommendation queries on replica, writes on primary. Hetzner CX11 as read replica is €4/month — PostgreSQL streaming replication, Caddy or SQLAlchemy routes reads vs writes. Relevant at 100+ concurrent users, not now. Worth knowing the pattern before you need it.
+
+### Progressive Web App (PWA)
+
+Installable on mobile (Add to Home Screen), offline shell, push notifications via the Web Push API. ServiceWorker + `manifest.json` — Vite has a plugin (`vite-plugin-pwa`). Natural fit if you want mobile users without building a native app. Push notifications could eventually replace Telegram for users who prefer the web app.
+
+### Dark / light mode toggle
+
+Dark-only today. Tailwind supports this natively via `dark:` prefix + a class on `<html>`. Store preference in `localStorage`, respect `prefers-color-scheme` as default. Low effort, removes friction for users on light mode. Worth doing once the design is stable.
+
+### Infinite scroll
+
+Replace manual pagination on search results and journal with scroll-triggered fetch. TanStack Query's `useInfiniteQuery` handles cursor management and deduplication cleanly — the component just calls `fetchNextPage` when the sentinel element enters the viewport (`IntersectionObserver`). Natural companion to TanStack Query adoption.
+
+### Architecture diagram as code
+
+`diagrams` (Python library) or Mermaid generates service topology from code — stays in sync with reality, renders in GitHub. Replaces the mental model you explain in every interview with something you can point to. A single diagram showing: Caddy → backend → PostgreSQL / pgvector, scraper → DB, bot → backend, Temporal worker, JetStream — covers the whole system in one view.

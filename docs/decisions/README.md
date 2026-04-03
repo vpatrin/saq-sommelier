@@ -12,3 +12,5 @@ Use [TEMPLATE.md](TEMPLATE.md) for new ADRs.
 | [0004](0004-telegram-first-auth.md) | Telegram OAuth as Primary Auth | Accepted |
 | [0005](0005-rag-pipeline.md) | RAG Pipeline Architecture | Accepted |
 | [0006](0006-react-shadcn-frontend.md) | React + shadcn/ui for Frontend | Accepted |
+| [0007](0007-sommelier-memory-architecture.md) | Sommelier Memory Architecture | Accepted |
+| [0008](0008-oauth2-security-design.md) | OAuth2 Security Design | Accepted |

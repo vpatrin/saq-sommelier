@@ -103,6 +103,39 @@ Total injected context: ~1,200 tokens. Wrapped in `<user_profile>` tags, positio
 - **Reflection-based over retrieval-based memory.** Vector retrieval of past conversation fragments is unpredictable — you don't know what gets retrieved or whether it's coherent. Furthermore, retrieved fragments lack synthesis: contradictions surface raw at every query and the model must re-reason them every time. A synthesized portrait is stable, predictable, and improves monotonically. The tradeoff is that specific episodic memories ("that bottle on Valentine's Day") are not retrievable — this is acceptable at this stage and addressed by the episodic layer below.
 - **Living document over versioned snapshots.** The profile should get richer over time, not replaced. Each Sonnet update incorporates new signals while preserving existing understanding — the document accumulates nuance rather than resetting to a new snapshot. Git commit history provides the audit trail if needed.
 
+## Implementation notes
+
+These patterns were validated against the Claude Code source (2026-04-03) and add precision to the design above.
+
+**1. Inject profile as a synthetic first user message, not in the system prompt.**
+The system prompt must stay byte-identical across all turns to maximize prompt cache hits (up to 90% cost reduction on cached tokens). Inject `<user_profile>` as a prepended synthetic user message with `<system-reminder>` tags instead:
+
+```python
+def prepend_user_profile(messages: list, profile: str) -> list:
+    system_reminder = {
+        "role": "user",
+        "content": f"<system-reminder>\n{profile}\nIMPORTANT: use this context only when relevant.\n</system-reminder>"
+    }
+    return [system_reminder, *messages]
+```
+
+This keeps the system prompt stable while the profile can change per-session. At 100 active users × 5 turns/session, cache hits on turns 2-5 materially reduce Claude API costs.
+
+**2. Three-layer context separation.**
+Separate context into three layers injected at different points in the API call:
+
+- **System prompt** — static: sommelier persona, wine knowledge guidelines, response format. Never changes per-user.
+- **User context** — dynamic: `<user_profile>` injected as synthetic first user message. Changes per-session as profile updates.
+- **Query context** — per-request: RAG results, intent classification output, current session history. Changes per-turn.
+
+This separation is what makes prompt caching viable — only the system prompt needs to be stable, not the full context.
+
+**3. Trust current signals over profile when they conflict.**
+Memory drift is real: a profile synthesized last week may contradict what the user says today. Rule: if a signal in the current conversation conflicts with the profile, trust the current signal and flag the profile section for update on the next Sonnet synthesis run. Do not silently override — the contradiction is itself a signal (e.g. "asked for oaky Chardonnay despite avoidance — likely gift context" already handled by contradiction detection above, but applies at inference time too).
+
+**4. Per-section token budget enforcement.**
+The word caps per document (500/250/250/200 words) need an enforcement mechanism at synthesis time. The Sonnet overseer prompt must include current section sizes and explicit condensation instructions when a section exceeds its budget — otherwise the profile grows unbounded across synthesis runs. Instruct Sonnet to aggressively shorten oversized sections by removing low-confidence signals and merging related entries, prioritizing recent signals over older ones.
+
 ## Consequences
 
 - Every feature is now a signal source. New features get memory integration for free by writing to `user_signals` on their save events.

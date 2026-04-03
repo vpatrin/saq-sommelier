@@ -75,25 +75,46 @@ Design reference: `ui/cellar/cellar.html`, `ui/cellar/add-bottle.html`, `ui/cell
 
 Self-contained, user-facing additions that don't belong to a product phase. Can ship any time without blocking the roadmap.
 
-#### Extended Auth — GitHub + Google OAuth (#565)
+#### Waitlist & Admin Panel
 
-Let users sign up and log in with GitHub or Google in addition to Telegram. Clean multi-provider identity model with silent email-based account linking. Invite code gate stays in place for new users.
+Replace invite codes with a waitlist + admin approval flow. Landing page collects email only. Admin approves in-app, Resend sends approval email with login link. Lays the foundation for the admin panel.
+
+- [ ] `users.status` field — `pending | active | rejected` (#579)
+- [ ] `POST /api/waitlist` — public endpoint, email only, silent 200 on duplicate, IP rate limited (#580)
+- [ ] Admin waitlist endpoints — list pending, approve, reject (#581)
+- [ ] Resend integration — approval email on approve, `email_sent_at` tracking, resend action (#582)
+- [ ] Frontend — landing page waitlist form, replace invite code input (#583)
+- [ ] Frontend — admin panel: pending queue, approve/reject, active users (#584)
+- [ ] Remove invite codes — model, migration, repo, endpoints, frontend (#585)
+
+#### Extended Auth — GitHub + Google OAuth
+
+OAuth-only login (no email/password, no Telegram login). Clean multi-provider identity model, RFC 6749 + RFC 9700 compliant. Telegram stays as a notification channel (link from Settings). See `docs/decisions/0008-oauth2-security-design.md`.
 
 **Identity model:**
 
-- `oauth_accounts` join table — `(provider, provider_user_id)` unique, links to `users.id`
-- `users.email` — nullable, unique; populated from provider; enables silent account linking across providers
-- `users.telegram_id` — removed from `users`, moved to `oauth_accounts`
-- Login flow: find by `(provider, provider_user_id)` → else find by email → else new user + invite gate
+- `oauth_accounts` — `(provider, provider_user_id)` unique, links to `users.id`
+- `users.email` — NOT NULL, always from OAuth provider (lowercased), secondary merge key
+- `users.telegram_id` — nullable, notification channel only (not an auth credential)
+- `users.display_name` — user-set at first login
+- Login flow: find by `(provider, provider_user_id)` → find by email (auto-merge) → 403 if pending/rejected/unknown
 
-- [ ] DB migration — add `oauth_accounts` table, add `email` to `users`, drop `telegram_id` from `users`
-- [ ] `OAuthAccount` model + `find_by_provider` / `find_by_email` repo queries
-- [ ] Migrate existing Telegram users — backfill `oauth_accounts` rows from current `telegram_id` data
-- [ ] JWT refactor — drop `telegram_id` claim, use generic `user_id` only
-- [ ] Update bot `/api/auth/telegram/check` — query via `oauth_accounts` instead of `users.telegram_id`
-- [ ] GitHub OAuth — `/api/auth/github/callback`, standard code exchange, register OAuth app on GitHub
-- [ ] Google OAuth — `/api/auth/google/callback`, standard code exchange, register OAuth app on Google Console
-- [ ] Frontend — GitHub + Google login buttons on login page, handle redirect-based flow
+**Security:** PKCE (S256) + AES-256-GCM encrypted + HMAC-SHA256 signed state + Redis single-use nonce.
+
+- [ ] `oauth_accounts` table + `email` / `display_name` on `users` + backfill migration (#586)
+- [ ] `OAuthAccount` repository — `find_by_provider`, `find_by_email`, `create`, `list_by_user` (#587)
+- [ ] JWT refactor — drop `telegram_id` claim, add `display_name`, update frontend callers (#588)
+- [ ] Redis setup — async client, state storage helpers (#589)
+- [ ] GitHub OAuth — `/api/auth/github` + `/api/auth/github/callback`, PKCE + encrypted state (#590)
+- [ ] Google OAuth — `/api/auth/google` + `/api/auth/google/callback`, same pattern (#591)
+- [ ] Display name collection on first login (#592)
+- [ ] Update bot `/api/auth/telegram/check` — query via `oauth_accounts` (#593)
+- [ ] Linked Accounts API — list, disconnect (last-provider guard), link Telegram (#594)
+- [ ] Frontend — GitHub + Google login buttons, `/auth/callback` route (#595)
+- [ ] Frontend — Settings: Linked Accounts section (#596)
+- [ ] Account deletion — `DELETE /api/users/me` + cascade (#597)
+- [ ] Remove `ADMIN_TELEGRAM_ID` + remaining invite code auth logic (#598)
+- [ ] CSP headers (infra) + rate limiting on OAuth + waitlist endpoints (#599)
 
 #### MCP Server / Sonnet + Tools
 
