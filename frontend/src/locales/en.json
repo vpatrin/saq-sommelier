@@ -74,7 +74,12 @@
       "subtitle": "Tell it what you're cooking, your budget, your mood — it combs 14,000+ SAQ wines and surfaces the right bottle.",
       "cta": "Request access",
       "signin": "Already have access? Sign in",
-      "betaNote": "Closed beta — invite only"
+      "betaNote": "Closed beta — invite only",
+      "formPlaceholder": "your@email.com",
+      "formSubmit": "Join the waitlist",
+      "formSubmitting": "Sending…",
+      "formSuccess": "Got it! We'll reach out when a spot opens up.",
+      "formError": "Couldn't send — retry"
     },
     "preview": {
       "userMsg": "A red for pasta tonight, max $25, something a bit spicy",

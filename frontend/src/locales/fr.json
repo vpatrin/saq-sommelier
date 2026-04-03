@@ -74,7 +74,12 @@
       "subtitle": "Dis-lui ce que tu manges, ton budget, l'envie du moment — il passe au crible 14 000+ vins de la SAQ et te sort le bon.",
       "cta": "Demander un accès",
       "signin": "Déjà un accès ? Connecte-toi",
-      "betaNote": "Bêta fermée — accès sur invitation"
+      "betaNote": "Bêta fermée — accès sur invitation",
+      "formPlaceholder": "ton@email.com",
+      "formSubmit": "Rejoindre la liste",
+      "formSubmitting": "Envoi…",
+      "formSuccess": "C'est noté ! On te contacte dès qu'une place se libère.",
+      "formError": "Impossible d'envoyer — réessaie"
     },
     "preview": {
       "userMsg": "Un rouge pour les pâtes ce soir, max 25 $, j'aimerais ça un peu épicé",

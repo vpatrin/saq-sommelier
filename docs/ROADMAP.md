@@ -79,11 +79,10 @@ Self-contained, user-facing additions that don't belong to a product phase. Can 
 
 Replace invite codes with a waitlist + admin approval flow. Landing page collects email only. Admin approves in-app, Resend sends approval email with login link. Lays the foundation for the admin panel.
 
-- [ ] `users.status` field — `pending | active | rejected` (#579)
 - [x] `POST /api/waitlist` — public endpoint, email only, silent 201 on duplicate, IP rate limited (#580)
 - [x] Admin waitlist endpoints — list pending, approve, reject (#581)
 - [ ] Resend integration — approval email on approve, `email_sent_at` tracking, resend action (#582)
-- [ ] Frontend — landing page waitlist form, replace invite code input (#583)
+- [x] Frontend — landing page waitlist form, replace invite code input (#583)
 - [ ] Frontend — admin panel: pending queue, approve/reject, active users (#584)
 - [ ] Remove invite codes — model, migration, repo, endpoints, frontend (#585)
 

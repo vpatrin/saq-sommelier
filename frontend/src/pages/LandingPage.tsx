@@ -2,7 +2,8 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { Navigate } from 'react-router'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { api } from '@/lib/api'
 import {
   MagnifyingGlassIcon,
   EyeIcon,
@@ -181,12 +182,37 @@ function useGitHubData() {
 /* Content width — matches nav container for alignment */
 const SECTION = 'max-w-6xl mx-auto w-full px-8'
 
+// null = form not yet opened; 'idle' | 'loading' | 'success' | 'error' = form visible
+type FormState = 'idle' | 'loading' | 'success' | 'error'
+
 function LandingPage() {
   const { t, i18n } = useTranslation()
   const { token } = useAuth()
   const { repos, deploy } = useGitHubData()
+  const [formState, setFormState] = useState<FormState | null>(null)
+  const [email, setEmail] = useState('')
+  const heroRef = useRef<HTMLElement>(null)
+
   const toggleLang = () => {
     i18n.changeLanguage(i18n.resolvedLanguage === 'fr' ? 'en' : 'fr')
+  }
+
+  const openForm = () => {
+    setFormState('idle')
+    heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (formState === 'loading') return
+    setFormState('loading')
+    try {
+      await api('/waitlist', { method: 'POST', body: JSON.stringify({ email }) })
+      setEmail('')
+      setFormState('success')
+    } catch {
+      setFormState('error')
+    }
   }
 
   if (token) return <Navigate to="/chat" replace />
@@ -218,18 +244,19 @@ function LandingPage() {
             >
               {t('landing.nav.login')}
             </Link>
-            <a
-              href={mailtoHref}
+            <button
+              type="button"
+              onClick={openForm}
               className="min-w-44 text-center px-4 py-2 rounded-xl bg-primary/15 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
             >
               {t('landing.nav.requestAccess')}
-            </a>
+            </button>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="pt-44 pb-28">
+      <section ref={heroRef} className="pt-44 pb-28">
         <div className={`${SECTION}`}>
           <h1 className="text-5xl md:text-7xl font-extralight leading-[1.08] tracking-tight mb-6 max-w-3xl">
             {t('landing.hero.title.before')}{' '}
@@ -245,21 +272,56 @@ function LandingPage() {
           </p>
 
           {/* CTA */}
-          <div className="flex items-center gap-6 mb-3">
-            <a
-              href={mailtoHref}
-              className="px-6 py-3 rounded-xl bg-primary/15 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
-            >
-              {t('landing.hero.cta')}
-            </a>
-            <Link
-              to="/login"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t('landing.hero.signin')}
-            </Link>
-          </div>
-          <p className="text-xs text-muted-foreground mb-12">{t('landing.hero.betaNote')}</p>
+          {formState === null && (
+            <div className="flex items-center gap-6 mb-3">
+              <button
+                type="button"
+                onClick={openForm}
+                className="px-6 py-3 rounded-xl bg-primary/15 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
+              >
+                {t('landing.hero.cta')}
+              </button>
+              <Link
+                to="/login"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {t('landing.hero.signin')}
+              </Link>
+            </div>
+          )}
+          {formState !== null && formState !== 'success' && (
+            <form onSubmit={handleSubmit} className="flex items-center gap-3 mb-3">
+              <input
+                type="email"
+                required
+                autoFocus
+                aria-label={t('landing.hero.formPlaceholder')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t('landing.hero.formPlaceholder')}
+                disabled={formState === 'loading'}
+                className="px-4 py-3 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 disabled:opacity-50 w-72"
+              />
+              <button
+                type="submit"
+                disabled={formState === 'loading'}
+                className="px-5 py-3 rounded-xl bg-primary/15 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/25 transition-colors disabled:opacity-50"
+              >
+                {formState === 'loading'
+                  ? t('landing.hero.formSubmitting')
+                  : t('landing.hero.formSubmit')}
+              </button>
+              {formState === 'error' && (
+                <span className="text-xs text-destructive">{t('landing.hero.formError')}</span>
+              )}
+            </form>
+          )}
+          {formState === 'success' && (
+            <p className="text-sm text-primary mb-3">{t('landing.hero.formSuccess')}</p>
+          )}
+          <p className="text-xs text-muted-foreground mb-12">
+            {formState !== 'success' && t('landing.hero.betaNote')}
+          </p>
         </div>
 
         {/* Chat preview — flush with content, bottom fade */}
