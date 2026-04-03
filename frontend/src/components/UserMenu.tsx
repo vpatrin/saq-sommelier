@@ -10,7 +10,7 @@ import {
 
 interface UserMenuProps {
   firstName: string
-  role?: string
+  role?: 'user' | 'admin'
   onLogout: () => void
   onNavigate?: (to: string) => void
   currentLanguage: string

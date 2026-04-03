@@ -7,6 +7,11 @@ import type { WaitlistRequestOut, UserOut } from '@/lib/types'
 
 type Tab = 'waitlist' | 'users'
 
+const TAB_LABEL_KEYS: Record<Tab, string> = {
+  waitlist: 'admin.tabWaitlist',
+  users: 'admin.tabUsers',
+}
+
 export default function AdminPage() {
   const { user } = useAuth()
   const { t } = useTranslation()
@@ -30,7 +35,7 @@ export default function AdminPage() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              {t(`admin.tab${id.charAt(0).toUpperCase() + id.slice(1)}`)}
+              {t(TAB_LABEL_KEYS[id])}
             </button>
           ))}
         </div>
@@ -53,12 +58,13 @@ function WaitlistTab() {
   const [entries, setEntries] = useState<WaitlistRequestOut[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // per-row loading state: rowLoading[id] = action in progress
+  const [retry, setRetry] = useState(0)
   const [rowLoading, setRowLoading] = useState<Record<number, WaitlistAction>>({})
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setError(null)
     apiClient<WaitlistRequestOut[]>('/admin/waitlist')
       .then((data) => {
         if (!cancelled) {
@@ -75,17 +81,15 @@ function WaitlistTab() {
     return () => {
       cancelled = true
     }
-  }, [apiClient, t])
+  }, [apiClient, t, retry])
 
   const handleAction = async (id: number, action: WaitlistAction) => {
     setRowLoading((prev) => ({ ...prev, [id]: action }))
     try {
       await apiClient(`/admin/waitlist/${id}/${action}`, { method: 'POST' })
       if (action === 'approve' || action === 'reject') {
-        // Remove from pending list after approve/reject
         setEntries((prev) => prev.filter((e) => e.id !== id))
       } else {
-        // resend — update email_sent_at optimistically
         setEntries((prev) =>
           prev.map((e) => (e.id === id ? { ...e, email_sent_at: new Date().toISOString() } : e)),
         )
@@ -108,7 +112,7 @@ function WaitlistTab() {
         {error}{' '}
         <button
           type="button"
-          onClick={() => window.location.reload()}
+          onClick={() => setRetry((n) => n + 1)}
           className="underline text-muted-foreground"
         >
           {t('admin.waitlist.retry')}
@@ -190,12 +194,14 @@ function UsersTab() {
   const [users, setUsers] = useState<UserOut[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [retry, setRetry] = useState(0)
   const [rowErrors, setRowErrors] = useState<Record<number, string>>({})
   const [rowLoading, setRowLoading] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setError(null)
     apiClient<UserOut[]>('/admin/users')
       .then((data) => {
         if (!cancelled) {
@@ -212,12 +218,11 @@ function UsersTab() {
     return () => {
       cancelled = true
     }
-  }, [apiClient, t])
+  }, [apiClient, t, retry])
 
   const toggleActive = async (user: UserOut) => {
     if (user.role === 'admin') return
     const next = !user.is_active
-    // Optimistic update
     setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, is_active: next } : u)))
     setRowLoading((prev) => ({ ...prev, [user.id]: true }))
     setRowErrors((prev) => {
@@ -231,7 +236,6 @@ function UsersTab() {
         body: JSON.stringify({ is_active: next }),
       })
     } catch {
-      // Revert on failure
       setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, is_active: !next } : u)))
       setRowErrors((prev) => ({ ...prev, [user.id]: t('admin.users.failedToUpdate') }))
     } finally {
@@ -250,7 +254,7 @@ function UsersTab() {
         {error}{' '}
         <button
           type="button"
-          onClick={() => window.location.reload()}
+          onClick={() => setRetry((n) => n + 1)}
           className="underline text-muted-foreground"
         >
           {t('admin.users.retry')}
