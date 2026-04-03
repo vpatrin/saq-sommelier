@@ -5,7 +5,7 @@ interface User {
   id: number
   telegram_id: number
   first_name: string
-  role: string
+  role: 'user' | 'admin'
 }
 
 interface AuthContextValue {

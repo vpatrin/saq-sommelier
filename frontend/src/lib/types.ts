@@ -170,6 +170,10 @@ export interface FacetsOut {
   price_range: PriceRange | null
 }
 
+// --- Shared ---
+
+export type UserRole = 'user' | 'admin'
+
 // --- Admin ---
 
 export interface WaitlistRequestOut {
