@@ -269,7 +269,7 @@ function UsersTab() {
         >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium truncate">{u.first_name}</p>
+              <p className="text-sm font-medium truncate">{u.display_name ?? u.email}</p>
               {u.username && (
                 <span className="text-xs text-muted-foreground font-mono">@{u.username}</span>
               )}

@@ -187,9 +187,10 @@ export interface WaitlistRequestOut {
 
 export interface UserOut {
   id: number
-  telegram_id: number
+  email: string
+  display_name: string | null
+  telegram_id: number | null
   username: string | null
-  first_name: string
   role: UserRole
   is_active: boolean
   created_at: string

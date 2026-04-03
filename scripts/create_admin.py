@@ -52,10 +52,10 @@ def main() -> None:
         else:
             conn.execute(
                 text(
-                    "INSERT INTO users (telegram_id, first_name, role, is_active, created_at)"
-                    " VALUES (:tid, 'Admin', 'admin', true, now())"
+                    "INSERT INTO users (telegram_id, email, role, is_active, created_at)"
+                    " VALUES (:tid, :email, 'admin', true, now())"
                 ),
-                {"tid": telegram_id},
+                {"tid": telegram_id, "email": f"admin+{telegram_id}@placeholder.invalid"},
             )
             print(f"Created admin user: telegram_id={telegram_id}")
 

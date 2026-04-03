@@ -15,7 +15,8 @@ def test_list_users_success(admin_client):
     """200 — admin can list all users."""
     users = [_mock_admin(), _mock_regular_user()]
     for i, u in enumerate(users):
-        u.first_name = f"User{i}"
+        u.email = f"user{i}@example.com"
+        u.display_name = f"User{i}"
         u.created_at = NOW
         u.last_login_at = NOW
         u.username = None
