@@ -169,3 +169,25 @@ export interface FacetsOut {
   grapes: string[]
   price_range: PriceRange | null
 }
+
+// --- Admin ---
+
+export interface WaitlistRequestOut {
+  id: number
+  email: string
+  status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+  approved_at: string | null
+  email_sent_at: string | null
+}
+
+export interface UserOut {
+  id: number
+  telegram_id: number
+  username: string | null
+  first_name: string
+  role: 'user' | 'admin'
+  is_active: boolean
+  created_at: string
+  last_login_at: string | null
+}

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Admin panel — waitlist queue with approve/reject/resend actions, user list with activate/deactivate toggles; accessible only to admin role
 - Approval email via Resend — admin approval sends a confirmation email with a login link; admin can resend if delivery failed
 - Waitlist form on landing page — visitors enter their email to request early access; replaces the mailto CTA
 - Waitlist submission — visitors can request early access by email; admins can approve or reject requests via the API

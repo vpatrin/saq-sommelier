@@ -310,7 +310,12 @@ function AppShell() {
               {userMenuOpen && (
                 <UserMenu
                   firstName={user?.first_name ?? ''}
+                  role={user?.role}
                   onLogout={handleLogout}
+                  onNavigate={(to) => {
+                    navigate(to)
+                    setUserMenuOpen(false)
+                  }}
                   currentLanguage={i18n.resolvedLanguage ?? 'fr'}
                   onLanguageChange={(lang) => i18n.changeLanguage(lang)}
                   placement="right"
@@ -519,7 +524,12 @@ function AppShell() {
               {userMenuOpen && (
                 <UserMenu
                   firstName={user?.first_name ?? ''}
+                  role={user?.role}
                   onLogout={handleLogout}
+                  onNavigate={(to) => {
+                    navigate(to)
+                    setUserMenuOpen(false)
+                  }}
                   currentLanguage={i18n.resolvedLanguage ?? 'fr'}
                   onLanguageChange={(lang) => i18n.changeLanguage(lang)}
                 />

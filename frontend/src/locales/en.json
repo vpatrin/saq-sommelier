@@ -280,11 +280,41 @@
     "failedToUpdate": "Failed to update preference",
     "failedToLoad": "Failed to load stores"
   },
+  "admin": {
+    "title": "Console",
+    "tabWaitlist": "Waitlist",
+    "tabUsers": "Users",
+    "waitlist": {
+      "empty": "No pending requests",
+      "approve": "Approve",
+      "reject": "Reject",
+      "resend": "Resend email",
+      "approving": "Approving…",
+      "rejecting": "Rejecting…",
+      "resending": "Resending…",
+      "emailSent": "Email sent",
+      "emailPending": "Email not sent",
+      "failedToLoad": "Couldn't load waitlist",
+      "retry": "retry"
+    },
+    "users": {
+      "empty": "No users",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "active": "Active",
+      "inactive": "Inactive",
+      "admin": "Admin",
+      "failedToLoad": "Couldn't load users",
+      "failedToUpdate": "Couldn't update",
+      "retry": "retry"
+    }
+  },
   "nav": {
     "chat": "Chats",
     "search": "Catalog",
     "myWatches": "My Watches",
     "myStores": "My Stores",
+    "admin": "Console",
     "newChat": "+ New chat",
     "history": "History",
     "noConversations": "No conversations yet",
