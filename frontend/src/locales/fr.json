@@ -280,11 +280,38 @@
     "failedToUpdate": "Impossible de mettre à jour la préférence",
     "failedToLoad": "Impossible de charger les succursales"
   },
+  "admin": {
+    "title": "Console",
+    "tabWaitlist": "Liste d'attente",
+    "tabUsers": "Utilisateurs",
+    "waitlist": {
+      "empty": "Aucune demande en attente",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "resend": "Renvoyer l'email",
+      "emailSent": "Email envoyé",
+      "emailPending": "Email non envoyé",
+      "failedToLoad": "Impossible de charger la liste d'attente",
+      "retry": "réessayer"
+    },
+    "users": {
+      "empty": "Aucun utilisateur",
+      "deactivate": "Désactiver",
+      "activate": "Activer",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "admin": "Admin",
+      "failedToLoad": "Impossible de charger les utilisateurs",
+      "failedToUpdate": "Impossible de mettre à jour",
+      "retry": "réessayer"
+    }
+  },
   "nav": {
     "chat": "Discussions",
     "search": "Catalogue",
     "myWatches": "Mes favoris",
     "myStores": "Mes succursales",
+    "admin": "Console",
     "newChat": "+ Nouvelle discussion",
     "history": "Historique",
     "noConversations": "Aucune conversation",

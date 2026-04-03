@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
+import type { UserRole } from '@/lib/types'
 
 interface User {
   id: number
   telegram_id: number
   first_name: string
-  role: string
+  role: UserRole
 }
 
 interface AuthContextValue {

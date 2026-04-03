@@ -1,15 +1,19 @@
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { UserRole } from '@/lib/types'
 import {
   HeartIcon as Heart,
   GearIcon as Gear,
   GlobeIcon as Globe,
   SignOutIcon,
+  TerminalIcon as Terminal,
 } from '@phosphor-icons/react'
 
 interface UserMenuProps {
   firstName: string
+  role?: UserRole
   onLogout: () => void
+  onNavigate?: (to: string) => void
   currentLanguage: string
   onLanguageChange: (lang: string) => void
   placement?: 'above' | 'right'
@@ -17,7 +21,9 @@ interface UserMenuProps {
 
 function UserMenu({
   firstName,
+  role,
   onLogout,
+  onNavigate,
   currentLanguage,
   onLanguageChange,
   placement = 'above',
@@ -77,6 +83,19 @@ function UserMenu({
           </span>
         </button>
       </div>
+
+      {role === 'admin' && (
+        <div className="py-1 border-b border-border/50">
+          <button
+            type="button"
+            onClick={() => onNavigate?.('/admin')}
+            className="flex items-center gap-3 px-4 py-2.5 w-full hover:bg-white/[0.04] transition-colors"
+          >
+            <Terminal size={15} className="text-muted-foreground shrink-0" />
+            <span className="text-[13px] text-muted-foreground">{t('nav.admin')}</span>
+          </button>
+        </div>
+      )}
 
       <div className="py-1">
         <button
