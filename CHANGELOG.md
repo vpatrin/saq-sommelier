@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Admin panel — waitlist queue with approve/reject/resend actions, user list with activate/deactivate toggles; accessible only to admin role
 
+### Fixed
+
+- User display name now shows correctly in the sidebar and user menu (previously showed "?" for Telegram users)
+
 ### Removed
 
 - Invite codes — new users no longer need an invite code to register; waitlist flow replaces the closed beta gate

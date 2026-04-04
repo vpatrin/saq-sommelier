@@ -89,7 +89,7 @@ def test_inactive_user_jwt_returns_403(_real_auth_client):
     now = datetime.now(UTC)
     payload = {
         "sub": "1",
-        "telegram_id": 12345,
+        "display_name": "Test User",
         "role": ROLE_USER,
         "exp": now + timedelta(days=7),
         "iat": now,
@@ -143,7 +143,7 @@ def test_expired_jwt_returns_401(_real_auth_client):
     expired = datetime.now(UTC) - timedelta(hours=1)
     payload = {
         "sub": "1",
-        "telegram_id": 12345,
+        "display_name": "Test User",
         "role": ROLE_USER,
         "exp": expired,
         "iat": expired - timedelta(days=1),
@@ -165,7 +165,7 @@ def test_jwt_missing_sub_returns_401(_real_auth_client):
     """401 — JWT without sub claim is rejected."""
     now = datetime.now(UTC)
     payload = {
-        "telegram_id": 12345,
+        "display_name": "Test User",
         "role": ROLE_USER,
         "exp": now + timedelta(days=7),
         "iat": now,
@@ -188,7 +188,7 @@ def test_jwt_unknown_user_returns_401(_real_auth_client):
     now = datetime.now(UTC)
     payload = {
         "sub": "99999",
-        "telegram_id": 12345,
+        "display_name": "Test User",
         "role": ROLE_USER,
         "exp": now + timedelta(days=7),
         "iat": now,

@@ -337,7 +337,7 @@
     "cellar": "Cellar"
   },
   "userMenu": {
-    "connectedViaTelegram": "Connected via Telegram",
+    "anonymous": "Anonymous",
     "monPalais": "My Palate",
     "settings": "Settings",
     "language": "Language",

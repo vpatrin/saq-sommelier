@@ -28,7 +28,7 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
   const { user } = useAuth()
   const apiClient = useApiClient()
 
-  const userId = `tg:${user?.telegram_id}`
+  const userId = `user:${user?.id}`
 
   const [loadedSku, setLoadedSku] = useState<string | null>(null)
   const [panelState, setPanelState] = useState<PanelState>({ status: 'idle' })

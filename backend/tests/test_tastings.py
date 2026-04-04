@@ -8,9 +8,9 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.app import app
 
-# conftest._mock_authenticated_user returns telegram_id=12345
-JWT_USER_ID = "tg:12345"
-OTHER_USER_ID = "tg:99999"
+# conftest._mock_authenticated_user returns id=1, _mock_regular_user returns id=2
+JWT_USER_ID = "user:1"
+OTHER_USER_ID = "user:2"
 
 NOW = datetime(2025, 1, 1, tzinfo=UTC)
 TODAY = date(2025, 1, 1)

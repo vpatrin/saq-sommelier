@@ -10,7 +10,7 @@ import {
 } from '@phosphor-icons/react'
 
 interface UserMenuProps {
-  firstName: string
+  displayName: string | null
   role?: UserRole
   onLogout: () => void
   onNavigate?: (to: string) => void
@@ -20,7 +20,7 @@ interface UserMenuProps {
 }
 
 function UserMenu({
-  firstName,
+  displayName,
   role,
   onLogout,
   onNavigate,
@@ -42,12 +42,11 @@ function UserMenu({
     >
       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
         <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-[13px] font-medium text-primary shrink-0">
-          {firstName.charAt(0)}
+          {displayName?.charAt(0) ?? '?'}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-medium truncate">{firstName}</p>
-          <p className="text-[11px] text-muted-foreground/50">
-            {t('userMenu.connectedViaTelegram')}
+          <p className="text-[13px] font-medium truncate">
+            {displayName ?? t('userMenu.anonymous')}
           </p>
         </div>
       </div>

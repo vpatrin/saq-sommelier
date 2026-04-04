@@ -12,8 +12,8 @@ from backend.db import get_db
 
 NOW = datetime(2025, 1, 1, tzinfo=UTC)
 
-# conftest._mock_authenticated_user returns telegram_id=12345
-JWT_USER_ID = "tg:12345"
+# conftest._mock_authenticated_user returns id=1
+JWT_USER_ID = "user:1"
 
 
 def _fake_watch(**overrides):

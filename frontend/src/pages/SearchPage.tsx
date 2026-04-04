@@ -102,7 +102,7 @@ function SearchPage() {
   // (effect reads groups to resolve category param, then sets facets which contains groups)
   const groupsRef = useRef<CategoryGroupOut[]>([])
 
-  const userId = `tg:${user?.telegram_id}`
+  const userId = `user:${user?.id}`
 
   // Shared: append category, availability, and store filters to params
   const appendFilterParams = useCallback(
