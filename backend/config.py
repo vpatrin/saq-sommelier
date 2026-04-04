@@ -76,5 +76,8 @@ class BackendSettings(BaseSettings):
     # From address for transactional emails — must match a verified Resend domain.
     RESEND_FROM_EMAIL: str = "Coupette <noreply@coupette.club>"
 
+    # Redis URL — used for OAuth exchange code storage.
+    REDIS_URL: str = "redis://coupette-redis:6379/0"
+
 
 backend_settings = BackendSettings()

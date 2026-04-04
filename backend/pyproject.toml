@@ -23,6 +23,7 @@ prometheus-client = "^0.24.1"
 prometheus-fastapi-instrumentator = "^7.1.0"
 email-validator = "^2.3.0"
 resend = "^2.27.0"
+redis = {version = ">=5.0", extras = ["asyncio"]}
 
 [tool.poetry.group.dev.dependencies]
 httpx = ">=0.28"

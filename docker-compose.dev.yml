@@ -12,6 +12,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
   bot:
     volumes:
@@ -57,6 +59,18 @@ services:
     # DAC_READ_SEARCH: reads data dir before ownership is transferred.
     cap_drop: [ALL]
     cap_add: [SETUID, SETGID, DAC_READ_SEARCH, CHOWN, FOWNER]
+
+  redis:
+    image: redis:7-bookworm
+    container_name: coupette-redis
+    command: redis-server --save "" --appendonly no --bind 0.0.0.0
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
 volumes:
   pgdata:

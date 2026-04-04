@@ -256,6 +256,10 @@ Five actionables identified from a full frontend audit (2026-04-02). In priority
 - Contract tests — snapshot API response shapes so bot's assumptions are validated on every PR
 - Frontend coverage threshold — add once test coverage is meaningful
 
+**Auth:**
+
+- Migrate JWT storage from `localStorage` to `HttpOnly` cookies — eliminates XSS token theft risk. Backend sets/clears cookie on login/logout, frontend drops manual `Authorization` header, CORS needs `credentials: 'include'`. Do after OAuth is fully shipped and stable.
+
 **Observability:**
 
 - [ ] Request correlation — X-Request-ID middleware across bot → backend → DB (#315)
