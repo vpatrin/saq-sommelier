@@ -33,7 +33,7 @@ function NoteViewModal({
   const apiClient = useApiClient()
   const { user } = useAuth()
   const { t } = useTranslation()
-  const userId = user ? `tg:${user.telegram_id}` : null
+  const userId = user ? `user:${user.id}` : null
 
   const [mode, setMode] = useState<'view' | 'edit'>(initialMode)
   const [currentNote, setCurrentNote] = useState(note)

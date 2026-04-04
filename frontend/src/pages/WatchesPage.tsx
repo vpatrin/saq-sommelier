@@ -103,7 +103,7 @@ function WatchesPage() {
   const [expandedStores, setExpandedStores] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState('')
 
-  const userId = `tg:${user?.telegram_id}`
+  const userId = `user:${user?.id}`
 
   useEffect(() => {
     let cancelled = false

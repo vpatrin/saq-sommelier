@@ -73,7 +73,7 @@ def get_caller_user_id(user: User | None = Depends(verify_auth)) -> str | None:
     """Derive user_id from JWT for authenticated users. Returns None for bot-secret callers."""
     if user is None:
         return None
-    return f"tg:{user.telegram_id}"
+    return f"user:{user.id}"
 
 
 def resolve_user_id(caller_user_id: str | None, target_user_id: str | None) -> str:

@@ -302,14 +302,14 @@ function AppShell() {
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((v) => !v)}
-                title={user?.first_name}
+                title={user?.display_name}
                 className="w-8 h-8 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-[13px] font-medium text-primary hover:opacity-80 transition-opacity"
               >
-                {user?.first_name?.charAt(0) ?? '?'}
+                {user?.display_name?.charAt(0) ?? '?'}
               </button>
               {userMenuOpen && (
                 <UserMenu
-                  firstName={user?.first_name ?? ''}
+                  displayName={user?.display_name ?? null}
                   role={user?.role}
                   onLogout={handleLogout}
                   onNavigate={(to) => {
@@ -523,7 +523,7 @@ function AppShell() {
             >
               {userMenuOpen && (
                 <UserMenu
-                  firstName={user?.first_name ?? ''}
+                  displayName={user?.display_name ?? null}
                   role={user?.role}
                   onLogout={handleLogout}
                   onNavigate={(to) => {
@@ -540,13 +540,10 @@ function AppShell() {
                 className="flex items-center gap-2.5 w-full rounded-lg px-2 py-2 hover:bg-surface-hover transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-[length:var(--text-sidebar)] font-medium text-primary shrink-0">
-                  {user?.first_name?.charAt(0) ?? '?'}
+                  {user?.display_name?.charAt(0) ?? '?'}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-[13px] font-medium truncate">{user?.first_name}</p>
-                  <p className="text-[10px] text-muted-foreground/40">
-                    {t('userMenu.connectedViaTelegram')}
-                  </p>
+                  <p className="text-[13px] font-medium truncate">{user?.display_name}</p>
                 </div>
                 <CaretUp
                   size={12}

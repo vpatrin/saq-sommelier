@@ -4,8 +4,7 @@ import type { UserRole } from '@/lib/types'
 
 interface User {
   id: number
-  telegram_id: number
-  first_name: string
+  display_name: string | null
   role: UserRole
 }
 
@@ -22,8 +21,7 @@ function decodeUser(token: string): User {
   const payload = JSON.parse(atob(token.split('.')[1]))
   return {
     id: Number(payload.sub),
-    telegram_id: payload.telegram_id,
-    first_name: payload.first_name,
+    display_name: payload.display_name ?? null,
     role: payload.role,
   }
 }
@@ -43,8 +41,7 @@ function loadStoredToken(): { token: string; user: User } | null {
       token: stored,
       user: {
         id: Number(payload.sub),
-        telegram_id: payload.telegram_id,
-        first_name: payload.first_name,
+        display_name: payload.display_name ?? null,
         role: payload.role,
       },
     }
