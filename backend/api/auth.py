@@ -64,7 +64,7 @@ async def github_callback(
     access_token = await fetch_github_access_token(code)
     github_user_id, email, display_name = await fetch_github_user(access_token)
     try:
-        exchange = await create_oauth_session(
+        exchange, is_new = await create_oauth_session(
             db,
             redis,
             provider="github",
@@ -76,7 +76,10 @@ async def github_callback(
         return RedirectResponse(
             url=f"{backend_settings.FRONTEND_URL}/auth/callback?error=not_approved"
         )
-    return RedirectResponse(url=f"{backend_settings.FRONTEND_URL}/auth/callback?code={exchange}")
+    url = f"{backend_settings.FRONTEND_URL}/auth/callback?code={exchange}"
+    if is_new:
+        url += "&new=1"
+    return RedirectResponse(url=url)
 
 
 @router.get("/google/login")
@@ -111,7 +114,7 @@ async def google_callback(
     access_token = await fetch_google_access_token(code, redirect_uri)
     google_user_id, email, display_name = await fetch_google_user(access_token)
     try:
-        exchange = await create_oauth_session(
+        exchange, is_new = await create_oauth_session(
             db,
             redis,
             provider="google",
@@ -123,7 +126,10 @@ async def google_callback(
         return RedirectResponse(
             url=f"{backend_settings.FRONTEND_URL}/auth/callback?error=not_approved"
         )
-    return RedirectResponse(url=f"{backend_settings.FRONTEND_URL}/auth/callback?code={exchange}")
+    url = f"{backend_settings.FRONTEND_URL}/auth/callback?code={exchange}"
+    if is_new:
+        url += "&new=1"
+    return RedirectResponse(url=url)
 
 
 @router.get("/exchange", response_model=TokenOut)
