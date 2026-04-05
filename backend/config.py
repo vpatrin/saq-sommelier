@@ -22,6 +22,11 @@ CONTEXT_WINDOW_TURNS = 5
 ROLE_USER = "user"
 ROLE_ADMIN = "admin"
 
+RATE_LIMIT_GLOBAL = "100/minute"
+RATE_LIMIT_AUTH = "10/minute"
+RATE_LIMIT_WAITLIST = "3/minute"
+RATE_LIMIT_LLM = "20/minute"
+
 WAITLIST_PENDING = "pending"
 WAITLIST_APPROVED = "approved"
 WAITLIST_REJECTED = "rejected"
