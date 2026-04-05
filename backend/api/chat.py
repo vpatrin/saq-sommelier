@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.auth import get_current_active_user
-from backend.config import DEFAULT_LIMIT, MAX_LIMIT
+from backend.config import DEFAULT_LIMIT, MAX_LIMIT, RATE_LIMIT_LLM
 from backend.db import get_db
+from backend.rate_limit import get_user_or_ip, limiter
 from backend.schemas.chat import (
     ChatIn,
     ChatMessageOut,
@@ -81,7 +82,9 @@ async def remove_session(
     response_model=ChatMessageOut,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit(RATE_LIMIT_LLM, key_func=get_user_or_ip)
 async def post_message(
+    request: Request,
     session_id: int,
     body: ChatIn,
     user: User = Depends(get_current_active_user),

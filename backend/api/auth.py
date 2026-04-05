@@ -1,14 +1,15 @@
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import RedirectResponse
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.auth import require_bot_secret
-from backend.config import backend_settings
+from backend.config import RATE_LIMIT_AUTH, backend_settings
 from backend.db import get_db
 from backend.exceptions import ForbiddenError, NotFoundError
+from backend.rate_limit import limiter
 from backend.redis_client import (
     consume_exchange_code,
     consume_oauth_state,
@@ -28,7 +29,9 @@ _GOOGLE_AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 
 
 @router.post("/telegram", response_model=TokenOut)
+@limiter.limit(RATE_LIMIT_AUTH)
 async def login_telegram(
+    request: Request,
     body: TelegramLoginIn,
     db: AsyncSession = Depends(get_db),
 ) -> TokenOut:
@@ -36,7 +39,8 @@ async def login_telegram(
 
 
 @router.get("/github/login")
-async def github_login(redis: Redis = Depends(get_redis)) -> RedirectResponse:
+@limiter.limit(RATE_LIMIT_AUTH)
+async def github_login(request: Request, redis: Redis = Depends(get_redis)) -> RedirectResponse:
     """Initiate GitHub OAuth — generate CSRF state, redirect to GitHub."""
     state = await store_oauth_state(redis)
     params = urlencode(
@@ -49,6 +53,8 @@ async def github_login(redis: Redis = Depends(get_redis)) -> RedirectResponse:
     return RedirectResponse(url=f"{_GITHUB_AUTHORIZE_URL}?{params}")
 
 
+# Callbacks are intentionally not rate-limited — a valid state+code pair requires a prior
+# limited initiation request, so they can't be independently abused.
 @router.get("/github/callback")
 async def github_callback(
     code: str = Query(),
@@ -83,7 +89,8 @@ async def github_callback(
 
 
 @router.get("/google/login")
-async def google_login(redis: Redis = Depends(get_redis)) -> RedirectResponse:
+@limiter.limit(RATE_LIMIT_AUTH)
+async def google_login(request: Request, redis: Redis = Depends(get_redis)) -> RedirectResponse:
     """Initiate Google OAuth — generate CSRF state, redirect to Google."""
     state = await store_oauth_state(redis)
     params = urlencode(
@@ -98,6 +105,7 @@ async def google_login(redis: Redis = Depends(get_redis)) -> RedirectResponse:
     return RedirectResponse(url=f"{_GOOGLE_AUTHORIZE_URL}?{params}")
 
 
+# See comment above github_callback — same reasoning applies.
 @router.get("/google/callback")
 async def google_callback(
     code: str = Query(),
