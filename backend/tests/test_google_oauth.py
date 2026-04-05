@@ -59,7 +59,7 @@ def test_google_callback_success(client):
         ),
         patch(
             "backend.api.auth.create_oauth_session",
-            new=AsyncMock(return_value=_EXCHANGE_CODE),
+            new=AsyncMock(return_value=(_EXCHANGE_CODE, False)),
         ),
     ):
         mock_settings.FRONTEND_URL = "https://example.com"

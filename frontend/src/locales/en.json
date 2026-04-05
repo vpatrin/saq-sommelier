@@ -174,6 +174,13 @@
     "backToLanding": "Home",
     "legal": "18+ only · Drink responsibly"
   },
+  "onboarding": {
+    "nameTitle": "Before we begin...",
+    "nameSub": "We like putting a name to a palate.",
+    "namePlaceholder": "First name or nickname",
+    "continue": "Continue",
+    "error": "Couldn't save — try again"
+  },
   "authCallback": {
     "loading": "Signing in…",
     "failed": "Couldn't sign in",

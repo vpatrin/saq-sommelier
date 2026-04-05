@@ -14,6 +14,7 @@ from backend.api.products import router as products_router
 from backend.api.recommendations import router as recommendations_router
 from backend.api.stores import router as stores_router
 from backend.api.tastings import router as tastings_router
+from backend.api.users import router as users_router
 from backend.api.waitlist import router as waitlist_router
 from backend.api.watches import router as watches_router
 from backend.auth import verify_admin, verify_auth
@@ -89,4 +90,5 @@ app.include_router(watches_router, prefix="/api", dependencies=_auth)
 app.include_router(tastings_router, prefix="/api", dependencies=_auth)
 app.include_router(recommendations_router, prefix="/api", dependencies=_auth)
 app.include_router(chat_router, prefix="/api", dependencies=_auth)
+app.include_router(users_router, prefix="/api", dependencies=_auth)
 app.include_router(admin_router, prefix="/api", dependencies=[Depends(verify_admin)])

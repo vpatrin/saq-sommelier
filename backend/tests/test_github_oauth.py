@@ -56,7 +56,7 @@ def test_github_callback_new_user(client):
         ),
         patch(
             "backend.api.auth.create_oauth_session",
-            new=AsyncMock(return_value=_EXCHANGE_CODE),
+            new=AsyncMock(return_value=(_EXCHANGE_CODE, False)),
         ),
         patch("backend.api.auth.backend_settings") as mock_settings,
     ):
@@ -286,7 +286,7 @@ async def test_create_oauth_session_new_user_approved():
             email="v@example.com",
             display_name="Victor",
         )
-    assert result == "code123"
+    assert result == ("code123", True)
 
 
 async def test_create_oauth_session_new_user_not_approved():

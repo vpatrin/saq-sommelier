@@ -16,6 +16,7 @@ function AuthCallbackPage() {
 
   const code = searchParams.get('code')
   const errorParam = searchParams.get('error')
+  const isNew = searchParams.get('new') === '1'
 
   useEffect(() => {
     if (!code || token || errorParam) return
@@ -24,7 +25,10 @@ function AuthCallbackPage() {
     api<TokenResponse>(`/auth/exchange?code=${encodeURIComponent(code)}`, {
       signal: controller.signal,
     })
-      .then(({ access_token }) => login(access_token))
+      .then(({ access_token }) => {
+        if (!isNew) localStorage.setItem('onboarded', '1')
+        login(access_token)
+      })
       .catch((err) => {
         if (controller.signal.aborted) return
         if (err instanceof ApiError) {
@@ -35,9 +39,9 @@ function AuthCallbackPage() {
       })
 
     return () => controller.abort()
-  }, [code, token, login, t, errorParam])
+  }, [code, token, login, t, errorParam, isNew])
 
-  if (token) return <Navigate to="/chat" replace />
+  if (token) return <Navigate to={isNew ? '/onboarding' : '/chat'} replace />
 
   if (errorParam === 'not_approved') {
     return (

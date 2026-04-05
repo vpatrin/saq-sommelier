@@ -16,7 +16,7 @@ Premium warm theme replacing the brutalist/terminal aesthetic. Cross-cutting UX 
 
 - [x] Theme foundation — tokens, fonts, sidebar (#534)
 - [x] Landing page + login restyle (#536)
-- [ ] Age gate (18+) on first visit (#535)
+- ~~Age gate (18+) on first visit (#535) — cancelled~~
 - [x] Chat page + wine card restyle (#537)
 - [x] Search, watchlist, stores restyle + empty states (#538)
 - [x] Wine detail slide panel (#539)
@@ -119,6 +119,7 @@ OAuth-only login (no email/password, no Telegram login). Clean multi-provider id
 - [ ] Linked Accounts API — list, disconnect (last-provider guard), link Telegram (#594)
 - [ ] Frontend — Settings: Linked Accounts section (#596)
 - [ ] CSP headers + rate limiting on OAuth + waitlist endpoints (#599)
+- [ ] Language persistence — save locale preference to user profile, add language toggle to onboarding step 1
 
 #### Passkeys (WebAuthn)
 

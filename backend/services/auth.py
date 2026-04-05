@@ -60,8 +60,9 @@ async def create_oauth_session(
     provider_user_id: str,
     email: str,
     display_name: str | None,
-) -> str:
-    """Upsert user via OAuth, mint JWT, store in Redis. Returns exchange code."""
+) -> tuple[str, bool]:
+    """Upsert user via OAuth, mint JWT, store in Redis. Returns (exchange_code, is_new)."""
+    is_new = False
     account = await oauth_accounts_repo.find_by_provider(db, provider, provider_user_id)
 
     if account:
@@ -83,6 +84,7 @@ async def create_oauth_session(
             if not waitlist_entry or waitlist_entry.status != WAITLIST_APPROVED:
                 raise ForbiddenError("This email has not been approved for access")
             user = await users_repo.create_oauth_user(db, email=email, display_name=display_name)
+            is_new = True
         await oauth_accounts_repo.create(
             db, user_id=user.id, provider=provider, provider_user_id=provider_user_id, email=email
         )
@@ -97,7 +99,8 @@ async def create_oauth_session(
 
     token = _create_jwt(user.id, user.role, user.display_name)
     await db.commit()
-    return await store_exchange_code(redis, token)
+    code = await store_exchange_code(redis, token)
+    return code, is_new
 
 
 async def authenticate_telegram(db: AsyncSession, data: TelegramLoginIn) -> TokenOut:

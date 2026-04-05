@@ -9,5 +9,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/" replace />
   }
 
+  if (!localStorage.getItem('onboarded')) {
+    return <Navigate to="/onboarding" replace />
+  }
+
   return children
 }

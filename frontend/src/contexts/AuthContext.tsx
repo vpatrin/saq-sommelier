@@ -13,6 +13,7 @@ interface AuthContextValue {
   user: User | null
   login: (token: string) => void
   logout: () => void
+  updateUser: (updates: Pick<User, 'display_name'>) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -37,6 +38,8 @@ function loadStoredToken(): { token: string; user: User } | null {
       localStorage.removeItem(TOKEN_KEY)
       return null
     }
+    // Existing sessions predate onboarding — mark as completed
+    if (!localStorage.getItem('onboarded')) localStorage.setItem('onboarded', '1')
     return {
       token: stored,
       user: {
@@ -68,8 +71,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const updateUser = useCallback((updates: Pick<User, 'display_name'>) => {
+    setUser((prev) => (prev ? { ...prev, ...updates } : prev))
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ token, user, login, logout, updateUser }}>
+      {children}
+    </AuthContext.Provider>
   )
 }
 
