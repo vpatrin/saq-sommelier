@@ -56,7 +56,9 @@ async def github_callback(
 ) -> RedirectResponse:
     """GitHub OAuth callback — validate state, exchange code, upsert user, redirect to frontend."""
     if not await consume_oauth_state(redis, state):
-        raise ForbiddenError("Invalid or expired OAuth state")
+        return RedirectResponse(
+            url=f"{backend_settings.FRONTEND_URL}/auth/callback?error=invalid_state"
+        )
     access_token = await fetch_github_access_token(code)
     github_user_id, email, display_name = await fetch_github_user(access_token)
     try:
