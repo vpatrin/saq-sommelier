@@ -13,6 +13,7 @@ import SavedStoresPage from '@/pages/SavedStoresPage'
 import NearbyStoresPage from '@/pages/StoresPage'
 import TastingsPage from '@/pages/TastingsPage'
 import AdminPage from '@/pages/AdminPage'
+import SettingsPage from '@/pages/SettingsPage'
 
 function AuthedLayout() {
   return (
@@ -40,6 +41,7 @@ function App() {
         <Route path="/stores/nearby" element={<NearbyStoresPage />} />
         <Route path="/tastings" element={<TastingsPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<LandingPage />} />
     </Routes>

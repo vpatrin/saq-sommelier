@@ -51,7 +51,7 @@ function getInitialCollapsed(): boolean {
 }
 
 function AppShell() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -315,8 +315,6 @@ function AppShell() {
                     navigate(to)
                     setUserMenuOpen(false)
                   }}
-                  currentLanguage={i18n.resolvedLanguage ?? 'fr'}
-                  onLanguageChange={(lang) => i18n.changeLanguage(lang)}
                   placement="right"
                 />
               )}
@@ -529,8 +527,6 @@ function AppShell() {
                     navigate(to)
                     setUserMenuOpen(false)
                   }}
-                  currentLanguage={i18n.resolvedLanguage ?? 'fr'}
-                  onLanguageChange={(lang) => i18n.changeLanguage(lang)}
                 />
               )}
               <button

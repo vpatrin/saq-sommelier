@@ -185,6 +185,12 @@ export interface WaitlistRequestOut {
   email_sent_at: string | null
 }
 
+export interface OAuthAccountOut {
+  provider: string
+  email: string
+  created_at: string
+}
+
 export interface UserOut {
   id: number
   email: string
