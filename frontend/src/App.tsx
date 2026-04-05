@@ -3,6 +3,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import AppShell from '@/components/AppShell'
 import LandingPage from '@/pages/LandingPage'
 import LoginPage from '@/pages/LoginPage'
+import AuthCallbackPage from '@/pages/AuthCallbackPage'
 import ChatPage from '@/pages/ChatPage'
 import ChatsPage from '@/pages/ChatsPage'
 import SearchPage from '@/pages/SearchPage'
@@ -25,6 +26,7 @@ function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route element={<AuthedLayout />}>
         <Route path="/dashboard" element={<Navigate to="/chat" replace />} />
         <Route path="/chats" element={<ChatsPage />} />

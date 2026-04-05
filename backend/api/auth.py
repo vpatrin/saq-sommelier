@@ -55,19 +55,25 @@ async def github_callback(
     redis: Redis = Depends(get_redis),
 ) -> RedirectResponse:
     """GitHub OAuth callback — validate state, exchange code, upsert user, redirect to frontend."""
-    # For CSRF protection
     if not await consume_oauth_state(redis, state):
-        raise ForbiddenError("Invalid or expired OAuth state")
+        return RedirectResponse(
+            url=f"{backend_settings.FRONTEND_URL}/auth/callback?error=invalid_state"
+        )
     access_token = await fetch_github_access_token(code)
     github_user_id, email, display_name = await fetch_github_user(access_token)
-    exchange = await create_oauth_session(
-        db,
-        redis,
-        provider="github",
-        provider_user_id=github_user_id,
-        email=email,
-        display_name=display_name,
-    )
+    try:
+        exchange = await create_oauth_session(
+            db,
+            redis,
+            provider="github",
+            provider_user_id=github_user_id,
+            email=email,
+            display_name=display_name,
+        )
+    except ForbiddenError:
+        return RedirectResponse(
+            url=f"{backend_settings.FRONTEND_URL}/auth/callback?error=not_approved"
+        )
     return RedirectResponse(url=f"{backend_settings.FRONTEND_URL}/auth/callback?code={exchange}")
 
 
