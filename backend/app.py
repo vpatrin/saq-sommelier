@@ -1,10 +1,13 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from loguru import logger
 from prometheus_fastapi_instrumentator import Instrumentator
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from backend.api.admin import router as admin_router
 from backend.api.auth import router as auth_router
@@ -21,6 +24,7 @@ from backend.auth import verify_admin, verify_auth
 from backend.config import SERVICE_NAME, backend_settings
 from backend.db import SessionLocal, engine, verify_db_connection
 from backend.errors import register_exception_handlers
+from backend.rate_limit import limiter
 from backend.repositories import users as users_repo
 from core.config.settings import settings
 from core.logging import setup_logging
@@ -71,13 +75,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(title="Coupette", version="1.0.0", debug=settings.DEBUG, lifespan=lifespan)
+app.state.limiter = limiter
 
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=backend_settings.CORS_ORIGINS,
     allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={"detail": "Rate limit exceeded"},
+    )
+
 
 register_exception_handlers(app)
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
