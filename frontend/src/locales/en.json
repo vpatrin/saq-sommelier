@@ -315,6 +315,7 @@
       "delete": "Delete",
       "confirmDeleteTitle": "Delete this user?",
       "confirmDeleteDesc": "All user data will be permanently deleted: watches, stores, tasting notes, chats. This cannot be undone.",
+      "cancel": "Cancel",
       "retry": "retry"
     }
   },

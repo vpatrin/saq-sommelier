@@ -315,6 +315,7 @@
       "delete": "Supprimer",
       "confirmDeleteTitle": "Supprimer cet utilisateur ?",
       "confirmDeleteDesc": "Toutes les données de cet utilisateur seront supprimées : favoris, succursales, notes de dégustation, discussions. Cette action est irréversible.",
+      "cancel": "Annuler",
       "retry": "réessayer"
     }
   },

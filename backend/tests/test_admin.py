@@ -88,3 +88,52 @@ def test_deactivate_user_non_admin_rejected(user_client):
     """403 — regular user cannot deactivate users."""
     resp = user_client.patch("/api/admin/users/2", json={"is_active": False})
     assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+
+# ── DELETE /api/admin/users/{id} ──────────────────
+
+
+def test_delete_user_success(admin_client):
+    """204 — admin can permanently delete a regular user."""
+    target = _mock_regular_user()
+    with (
+        patch("backend.repositories.users.find_by_id", new_callable=AsyncMock) as mock_find,
+        patch("backend.repositories.users.hard_delete", new_callable=AsyncMock) as mock_delete,
+    ):
+        mock_find.return_value = target
+        resp = admin_client.delete("/api/admin/users/2")
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+    mock_delete.assert_called_once()
+
+
+def test_delete_user_self_rejected(admin_client):
+    """409 — admin cannot delete themselves."""
+    resp = admin_client.delete("/api/admin/users/1")
+    assert resp.status_code == status.HTTP_409_CONFLICT
+
+
+def test_delete_user_not_found(admin_client):
+    """404 — user does not exist."""
+    with patch("backend.repositories.users.find_by_id", new_callable=AsyncMock) as mock_find:
+        mock_find.return_value = None
+        resp = admin_client.delete("/api/admin/users/999")
+
+    assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_delete_admin_rejected(admin_client):
+    """409 — cannot delete an admin user."""
+    target = _mock_admin()
+    target.id = 99
+    with patch("backend.repositories.users.find_by_id", new_callable=AsyncMock) as mock_find:
+        mock_find.return_value = target
+        resp = admin_client.delete("/api/admin/users/99")
+
+    assert resp.status_code == status.HTTP_409_CONFLICT
+
+
+def test_delete_user_non_admin_rejected(user_client):
+    """403 — regular user cannot delete users."""
+    resp = user_client.delete("/api/admin/users/2")
+    assert resp.status_code == status.HTTP_403_FORBIDDEN

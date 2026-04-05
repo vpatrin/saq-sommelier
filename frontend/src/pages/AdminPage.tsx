@@ -196,6 +196,15 @@ function UsersTab() {
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
 
   useEffect(() => {
+    if (confirmDelete === null) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setConfirmDelete(null)
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [confirmDelete])
+
+  useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError(null)
@@ -361,7 +370,7 @@ function UsersTab() {
                 onClick={() => setConfirmDelete(null)}
                 className="text-[13px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
               >
-                {t('noteView.cancel')}
+                {t('admin.users.cancel')}
               </button>
               <button
                 type="button"
