@@ -4,7 +4,6 @@ import type { UserRole } from '@/lib/types'
 import {
   HeartIcon as Heart,
   GearIcon as Gear,
-  GlobeIcon as Globe,
   SignOutIcon,
   TerminalIcon as Terminal,
 } from '@phosphor-icons/react'
@@ -14,24 +13,12 @@ interface UserMenuProps {
   role?: UserRole
   onLogout: () => void
   onNavigate?: (to: string) => void
-  currentLanguage: string
-  onLanguageChange: (lang: string) => void
   placement?: 'above' | 'right'
 }
 
-function UserMenu({
-  displayName,
-  role,
-  onLogout,
-  onNavigate,
-  currentLanguage,
-  onLanguageChange,
-  placement = 'above',
-}: UserMenuProps) {
+function UserMenu({ displayName, role, onLogout, onNavigate, placement = 'above' }: UserMenuProps) {
   const { t } = useTranslation()
   const ref = useRef<HTMLDivElement>(null)
-
-  const nextLang = currentLanguage === 'fr' ? 'en' : 'fr'
 
   return (
     <div
@@ -64,22 +51,13 @@ function UserMenu({
       </div>
 
       <div className="py-1 border-b border-border/50">
-        <div className="flex items-center gap-3 px-4 py-2.5 opacity-40 cursor-not-allowed">
-          <Gear size={15} className="text-muted-foreground shrink-0" />
-          <span className="text-[13px] text-muted-foreground">{t('userMenu.settings')}</span>
-        </div>
         <button
           type="button"
-          onClick={() => onLanguageChange(nextLang)}
+          onClick={() => onNavigate?.('/settings')}
           className="flex items-center gap-3 px-4 py-2.5 w-full hover:bg-white/[0.04] transition-colors"
         >
-          <Globe size={15} className="text-muted-foreground shrink-0" />
-          <span className="text-[13px] text-muted-foreground flex-1 text-left">
-            {t('userMenu.language')}
-          </span>
-          <span className="font-mono text-[11px] text-muted-foreground/60 uppercase">
-            {currentLanguage}
-          </span>
+          <Gear size={15} className="text-muted-foreground shrink-0" />
+          <span className="text-[13px] text-muted-foreground">{t('userMenu.settings')}</span>
         </button>
       </div>
 

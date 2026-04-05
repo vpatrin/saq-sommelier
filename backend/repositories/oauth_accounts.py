@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db.models import OAuthAccount
@@ -42,3 +42,19 @@ async def list_by_user(db: AsyncSession, user_id: int) -> list[OAuthAccount]:
     )
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def count_by_user(db: AsyncSession, user_id: int) -> int:
+    stmt = select(func.count()).select_from(OAuthAccount).where(OAuthAccount.user_id == user_id)
+    result = await db.execute(stmt)
+    return result.scalar_one()
+
+
+async def delete_by_user_and_provider(db: AsyncSession, user_id: int, provider: str) -> bool:
+    stmt = delete(OAuthAccount).where(
+        OAuthAccount.user_id == user_id,
+        OAuthAccount.provider == provider,
+    )
+    result = await db.execute(stmt)
+    await db.flush()
+    return result.rowcount > 0

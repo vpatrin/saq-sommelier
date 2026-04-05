@@ -174,6 +174,26 @@
     "backToLanding": "Accueil",
     "legal": "Réservé aux 18 ans et plus · La modération a bien meilleur goût"
   },
+  "settings": {
+    "title": "Paramètres",
+    "account": "Compte",
+    "displayName": "Prénom",
+    "connected": "Connecté",
+    "disconnect": "Déconnecter",
+    "connect": "Connecter",
+    "lastAccount": "dernier compte",
+    "preferences": "Préférences",
+    "language": "Langue",
+    "dangerZone": "Zone dangereuse",
+    "deleteAccount": "Supprimer mon compte",
+    "deleteDesc": "Supprime toutes tes données définitivement",
+    "deleteConfirmTitle": "Supprimer ton compte ?",
+    "deleteConfirmDesc": "Toutes tes données seront supprimées : favoris, succursales, notes de dégustation, discussions. Cette action est irréversible.",
+    "deleteConfirmPrompt": "Tape « {{word}} » pour confirmer",
+    "deleteWord": "supprimer",
+    "cancel": "Annuler",
+    "deleteButton": "Supprimer"
+  },
   "onboarding": {
     "nameTitle": "Avant de commencer...",
     "nameSub": "On aime mettre un nom sur un palais.",
@@ -201,7 +221,7 @@
     "showMore": "Afficher plus"
   },
   "chat": {
-    "welcome": "Qu'est-ce qu'on boit ce soir ?",
+    "welcome": "Qu'est-ce qu'on boit ce soir, {{name}} ?",
     "placeholder": "Demandez au sommelier...",
     "send": "Envoyer",
     "thinking": "Réflexion...",

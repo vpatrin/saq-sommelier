@@ -116,8 +116,8 @@ OAuth-only login (no email/password, no Telegram login). Clean multi-provider id
 - [x] Frontend — GitHub + Google login buttons, `/auth/callback` route (#595, #612)
 - [x] Admin user deletion — hard delete with cascade (#597, #613)
 - [ ] Display name collection on first login (#592)
-- [ ] Linked Accounts API — list, disconnect (last-provider guard), link Telegram (#594)
-- [ ] Frontend — Settings: Linked Accounts section (#596)
+- [x] Linked Accounts API — list, disconnect (last-provider guard) (#594)
+- [x] Frontend — Settings page: linked accounts, display name, language, delete account (#596)
 - [ ] CSP headers + rate limiting on OAuth + waitlist endpoints (#599)
 - [ ] Language persistence — save locale preference to user profile, add language toggle to onboarding step 1
 

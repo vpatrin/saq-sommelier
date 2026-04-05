@@ -17,6 +17,7 @@ import {
   WineIcon as Wine,
 } from '@phosphor-icons/react'
 import { useApiClient } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 import type { ChatOutletContext } from '@/components/AppShell'
 import WineCard from '@/components/WineCard'
 import { useWineDetail } from '@/contexts/WineDetailContext'
@@ -349,6 +350,7 @@ function SessionTitleBar({
 function ChatPage() {
   const { t } = useTranslation()
   const apiClient = useApiClient()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const { sessionId: urlSessionId } = useParams<{ sessionId: string }>()
   const { selectedSku, setSelectedSku } = useWineDetail()
@@ -560,7 +562,9 @@ function ChatPage() {
             <div className="w-14 h-14 rounded-2xl bg-primary/[0.12] border border-primary/[0.22] flex items-center justify-center text-primary/70">
               <Wine size={28} />
             </div>
-            <p className="text-[17px] font-light text-foreground/75">{t('chat.welcome')}</p>
+            <p className="text-[17px] font-light text-foreground/75">
+              {t('chat.welcome', { name: user?.display_name })}
+            </p>
           </div>
 
           {/* Composer */}
