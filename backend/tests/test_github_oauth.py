@@ -68,11 +68,16 @@ def test_github_callback_new_user(client):
 
 
 def test_github_callback_invalid_state(client):
-    """Invalid or expired state token — 403."""
-    with patch("backend.api.auth.consume_oauth_state", new=AsyncMock(return_value=False)):
+    """Invalid or expired state token — redirects with error."""
+    with (
+        patch("backend.api.auth.consume_oauth_state", new=AsyncMock(return_value=False)),
+        patch("backend.api.auth.backend_settings") as mock_settings,
+    ):
+        mock_settings.FRONTEND_URL = "https://example.com"
         resp = client.get("/api/auth/github/callback?code=somecode&state=badstate")
 
-    assert resp.status_code == status.HTTP_403_FORBIDDEN
+    assert resp.status_code == status.HTTP_307_TEMPORARY_REDIRECT
+    assert resp.headers["location"] == "https://example.com/auth/callback?error=invalid_state"
 
 
 def test_github_callback_missing_state(client):
