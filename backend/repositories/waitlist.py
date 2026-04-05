@@ -56,7 +56,6 @@ async def reject(db: AsyncSession, request: WaitlistRequest) -> WaitlistRequest:
 
 
 async def mark_email_sent(db: AsyncSession, request: WaitlistRequest) -> WaitlistRequest:
-    # TODO(W-PR2): called after Resend sends approval email
     request.email_sent_at = datetime.now(UTC)
     await db.flush()
     return request
