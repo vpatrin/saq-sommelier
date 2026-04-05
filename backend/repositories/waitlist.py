@@ -14,6 +14,12 @@ async def find_by_id(db: AsyncSession, request_id: int) -> WaitlistRequest | Non
     return result.scalar_one_or_none()
 
 
+async def find_by_email(db: AsyncSession, email: str) -> WaitlistRequest | None:
+    stmt = select(WaitlistRequest).where(WaitlistRequest.email == email)
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
 async def create(db: AsyncSession, email: str) -> WaitlistRequest | None:
     """Create a pending waitlist request. Returns None if email already exists."""
     try:

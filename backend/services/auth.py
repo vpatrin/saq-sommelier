@@ -8,11 +8,12 @@ from loguru import logger
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.config import backend_settings
+from backend.config import WAITLIST_APPROVED, backend_settings
 from backend.exceptions import ForbiddenError, InvalidCredentialsError
 from backend.redis_client import store_exchange_code
 from backend.repositories import oauth_accounts as oauth_accounts_repo
 from backend.repositories import users as users_repo
+from backend.repositories import waitlist as waitlist_repo
 from backend.schemas.auth import TelegramLoginIn, TokenOut
 
 # Telegram login data expires after 1 day
@@ -78,6 +79,10 @@ async def create_oauth_session(
             user.last_login_at = datetime.now(UTC)
             await db.flush()
         else:
+            # New user — must have an approved waitlist entry
+            waitlist_entry = await waitlist_repo.find_by_email(db, email)
+            if not waitlist_entry or waitlist_entry.status != WAITLIST_APPROVED:
+                raise ForbiddenError("This email has not been approved for access")
             user = await users_repo.create_oauth_user(db, email=email, display_name=display_name)
         await oauth_accounts_repo.create(
             db, user_id=user.id, provider=provider, provider_user_id=provider_user_id, email=email
@@ -91,6 +96,7 @@ async def create_oauth_session(
     )
 
     token = _create_jwt(user.id, user.role, user.display_name)
+    await db.commit()
     return await store_exchange_code(redis, token)
 
 

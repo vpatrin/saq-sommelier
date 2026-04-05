@@ -17,7 +17,7 @@ async def test_store_exchange_code_sets_key_with_ttl(mock_redis):
     code = await store_exchange_code(mock_redis, jwt)
 
     assert len(code) > 20
-    mock_redis.set.assert_called_once_with(code, jwt, ex=60)
+    mock_redis.set.assert_called_once_with(f"oauth:exchange:{code}", jwt, ex=60)
 
 
 async def test_consume_exchange_code_returns_jwt(mock_redis):
@@ -26,7 +26,7 @@ async def test_consume_exchange_code_returns_jwt(mock_redis):
     result = await consume_exchange_code(mock_redis, "somecode")
 
     assert result == "header.payload.sig"
-    mock_redis.getdel.assert_called_once_with("somecode")
+    mock_redis.getdel.assert_called_once_with("oauth:exchange:somecode")
 
 
 async def test_consume_exchange_code_returns_none_when_expired(mock_redis):

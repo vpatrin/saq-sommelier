@@ -22,8 +22,14 @@ async def fetch_github_access_token(code: str) -> str:
             },
             headers={"Accept": "application/json"},
         )
-    data = resp.json()
-    token = data.get("access_token")
+    try:
+        resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="GitHub OAuth failed",
+        ) from exc
+    token = resp.json().get("access_token")
     if not token:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="GitHub OAuth failed")
     return token
@@ -37,9 +43,19 @@ async def fetch_github_user(access_token: str) -> tuple[str, str, str | None]:
             client.get(_GITHUB_USER_URL, headers=headers),
             client.get(_GITHUB_EMAILS_URL, headers=headers),
         )
+    try:
+        user_resp.raise_for_status()
+        emails_resp.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="GitHub API error",
+        ) from exc
+
     user_data = user_resp.json()
     github_user_id = str(user_data["id"])
-    display_name: str | None = user_data.get("name") or user_data.get("login")
+    raw_name: str | None = user_data.get("name") or user_data.get("login")
+    display_name: str | None = raw_name[:100] if raw_name else None
 
     emails = emails_resp.json()
     email = next(

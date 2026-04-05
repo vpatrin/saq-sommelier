@@ -38,6 +38,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             raise RuntimeError("JWT_SECRET_KEY must be set in production")
         if not backend_settings.TELEGRAM_BOT_TOKEN:
             raise RuntimeError("TELEGRAM_BOT_TOKEN must be set in production")
+        if not backend_settings.GITHUB_CLIENT_ID:
+            raise RuntimeError("GITHUB_CLIENT_ID must be set in production")
+        if not backend_settings.GITHUB_CLIENT_SECRET:
+            raise RuntimeError("GITHUB_CLIENT_SECRET must be set in production")
+        if not backend_settings.FRONTEND_URL:
+            raise RuntimeError("FRONTEND_URL must be set in production")
     await verify_db_connection()
     logger.info("Database connection verified")
 
