@@ -52,6 +52,18 @@ async def upsert_telegram(
     return user
 
 
+async def create_oauth_user(
+    db: AsyncSession,
+    *,
+    email: str,
+    display_name: str | None,
+) -> User:
+    user = User(email=email, display_name=display_name)
+    db.add(user)
+    await db.flush()
+    return user
+
+
 async def set_active(db: AsyncSession, user: User, *, active: bool) -> User:
     """Set is_active flag on an already-loaded user."""
     user.is_active = active
