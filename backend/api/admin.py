@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.auth import verify_admin
 from backend.config import ROLE_ADMIN, WAITLIST_APPROVED
 from backend.db import get_db
 from backend.exceptions import ConflictError, NotFoundError
@@ -10,6 +11,7 @@ from backend.repositories import waitlist as waitlist_repo
 from backend.schemas.user import UserOut, UserUpdateIn
 from backend.schemas.waitlist import WaitlistRequestOut
 from backend.services.email import send_approval_email
+from core.db.models import User
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -27,6 +29,23 @@ async def update_user(user_id: int, body: UserUpdateIn, db: AsyncSession = Depen
     if not body.is_active and target.role == ROLE_ADMIN:
         raise ConflictError("User", "cannot deactivate an admin")
     await users_repo.set_active(db, target, active=body.is_active)
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(verify_admin),
+) -> None:
+    """Permanently delete a user and all associated data."""
+    if user_id == admin.id:
+        raise ConflictError("User", "cannot delete yourself")
+    target = await users_repo.find_by_id(db, user_id)
+    if target is None:
+        raise NotFoundError("User", str(user_id))
+    if target.role == ROLE_ADMIN:
+        raise ConflictError("User", "cannot delete an admin")
+    await users_repo.hard_delete(db, target)
 
 
 @router.get("/waitlist", response_model=list[WaitlistRequestOut])

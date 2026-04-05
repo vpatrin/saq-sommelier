@@ -1,10 +1,16 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import ROLE_ADMIN
-from core.db.models import User
+from core.db.models import (
+    RecommendationLog,
+    TastingNote,
+    User,
+    UserStorePreference,
+    Watch,
+)
 
 
 async def find_by_id(db: AsyncSession, user_id: int) -> User | None:
@@ -69,3 +75,15 @@ async def set_active(db: AsyncSession, user: User, *, active: bool) -> User:
     user.is_active = active
     await db.flush()
     return user
+
+
+async def hard_delete(db: AsyncSession, user: User) -> None:
+    """Permanently delete a user and all associated data."""
+    caller_id = f"user:{user.id}"
+    await db.execute(delete(Watch).where(Watch.user_id == caller_id))
+    await db.execute(delete(UserStorePreference).where(UserStorePreference.user_id == caller_id))
+    await db.execute(delete(TastingNote).where(TastingNote.user_id == caller_id))
+    await db.execute(delete(RecommendationLog).where(RecommendationLog.user_id == caller_id))
+    # oauth_accounts + chat_sessions + chat_messages cascade via FK
+    await db.delete(user)
+    await db.flush()

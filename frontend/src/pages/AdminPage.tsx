@@ -193,6 +193,7 @@ function UsersTab() {
   const [retry, setRetry] = useState(0)
   const [rowErrors, setRowErrors] = useState<Record<number, string>>({})
   const [rowLoading, setRowLoading] = useState<Record<number, boolean>>({})
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -215,6 +216,28 @@ function UsersTab() {
       cancelled = true
     }
   }, [apiClient, t, retry])
+
+  const handleDelete = async (userId: number) => {
+    setRowLoading((prev) => ({ ...prev, [userId]: true }))
+    setRowErrors((prev) => {
+      const copy = { ...prev }
+      delete copy[userId]
+      return copy
+    })
+    try {
+      await apiClient(`/admin/users/${userId}`, { method: 'DELETE' })
+      setUsers((prev) => prev.filter((u) => u.id !== userId))
+    } catch {
+      setRowErrors((prev) => ({ ...prev, [userId]: t('admin.users.failedToDelete') }))
+    } finally {
+      setConfirmDelete(null)
+      setRowLoading((prev) => {
+        const copy = { ...prev }
+        delete copy[userId]
+        return copy
+      })
+    }
+  }
 
   const toggleActive = async (user: UserOut) => {
     if (user.role === 'admin') return
@@ -261,53 +284,97 @@ function UsersTab() {
     return <p className="text-muted-foreground text-sm">{t('admin.users.empty')}</p>
 
   return (
-    <div className="flex flex-col gap-2">
-      {users.map((u) => (
-        <div
-          key={u.id}
-          className="flex items-center gap-4 px-4 py-3 rounded-lg border border-border bg-card"
-        >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium truncate">{u.display_name ?? u.email}</p>
-              {u.role === 'admin' && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded border border-primary/20 bg-primary/10 text-primary font-mono">
-                  {t('admin.users.admin')}
-                </span>
+    <>
+      <div className="flex flex-col gap-2">
+        {users.map((u) => (
+          <div
+            key={u.id}
+            className="flex items-center gap-4 px-4 py-3 rounded-lg border border-border bg-card"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium truncate">{u.display_name ?? u.email}</p>
+                {u.role === 'admin' && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded border border-primary/20 bg-primary/10 text-primary font-mono">
+                    {t('admin.users.admin')}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-muted-foreground font-mono">
+                  {u.last_login_at
+                    ? new Date(u.last_login_at).toLocaleDateString()
+                    : new Date(u.created_at).toLocaleDateString()}
+                </p>
+                {rowErrors[u.id] && <p className="text-xs text-destructive">{rowErrors[u.id]}</p>}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <span
+                className={`text-xs font-mono ${u.is_active ? 'text-primary/60' : 'text-muted-foreground/40'}`}
+              >
+                {u.is_active ? t('admin.users.active') : t('admin.users.inactive')}
+              </span>
+              {u.role !== 'admin' && (
+                <>
+                  <button
+                    type="button"
+                    disabled={rowLoading[u.id]}
+                    onClick={() => toggleActive(u)}
+                    className={`px-3 py-1.5 text-xs rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      u.is_active
+                        ? 'text-muted-foreground border-border hover:text-destructive hover:border-destructive/30'
+                        : 'text-primary border-primary/20 bg-primary/10 hover:bg-primary/20'
+                    }`}
+                  >
+                    {u.is_active ? t('admin.users.deactivate') : t('admin.users.activate')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={rowLoading[u.id]}
+                    onClick={() => setConfirmDelete(u.id)}
+                    className="px-3 py-1.5 text-xs rounded-lg text-muted-foreground border border-border hover:text-destructive hover:border-destructive/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {t('admin.users.delete')}
+                  </button>
+                </>
               )}
             </div>
-            <div className="flex items-center gap-3">
-              <p className="text-xs text-muted-foreground font-mono">
-                {u.last_login_at
-                  ? new Date(u.last_login_at).toLocaleDateString()
-                  : new Date(u.created_at).toLocaleDateString()}
-              </p>
-              {rowErrors[u.id] && <p className="text-xs text-destructive">{rowErrors[u.id]}</p>}
-            </div>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <span
-              className={`text-xs font-mono ${u.is_active ? 'text-primary/60' : 'text-muted-foreground/40'}`}
-            >
-              {u.is_active ? t('admin.users.active') : t('admin.users.inactive')}
-            </span>
-            {u.role !== 'admin' && (
+        ))}
+      </div>
+
+      {confirmDelete !== null && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setConfirmDelete(null)}
+          />
+          <div className="relative w-full max-w-sm mx-4 rounded-xl bg-[#0e0e12] border border-border shadow-2xl p-6">
+            <p className="text-[14px] font-medium mb-1">{t('admin.users.confirmDeleteTitle')}</p>
+            <p className="text-[13px] text-muted-foreground/50 mb-6">
+              {t('admin.users.confirmDeleteDesc')}
+            </p>
+            <div className="flex justify-end gap-3">
               <button
                 type="button"
-                disabled={rowLoading[u.id]}
-                onClick={() => toggleActive(u)}
-                className={`px-3 py-1.5 text-xs rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  u.is_active
-                    ? 'text-muted-foreground border-border hover:text-destructive hover:border-destructive/30'
-                    : 'text-primary border-primary/20 bg-primary/10 hover:bg-primary/20'
-                }`}
+                onClick={() => setConfirmDelete(null)}
+                className="text-[13px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
               >
-                {u.is_active ? t('admin.users.deactivate') : t('admin.users.activate')}
+                {t('noteView.cancel')}
               </button>
-            )}
+              <button
+                type="button"
+                disabled={rowLoading[confirmDelete]}
+                onClick={() => handleDelete(confirmDelete)}
+                className="px-4 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-[13px] font-medium hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+              >
+                {t('admin.users.delete')}
+              </button>
+            </div>
           </div>
         </div>
-      ))}
-    </div>
+      )}
+    </>
   )
 }

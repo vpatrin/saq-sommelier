@@ -465,7 +465,7 @@ class ChatSession(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(
         Integer,
-        ForeignKey("users.id"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         comment="Owner of this chat session",
     )

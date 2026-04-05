@@ -311,6 +311,10 @@
       "admin": "Admin",
       "failedToLoad": "Couldn't load users",
       "failedToUpdate": "Couldn't update",
+      "failedToDelete": "Couldn't delete",
+      "delete": "Delete",
+      "confirmDeleteTitle": "Delete this user?",
+      "confirmDeleteDesc": "All user data will be permanently deleted: watches, stores, tasting notes, chats. This cannot be undone.",
       "retry": "retry"
     }
   },
