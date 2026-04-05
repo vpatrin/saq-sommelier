@@ -167,9 +167,16 @@
     }
   },
   "login": {
+    "github": "Se connecter avec GitHub",
+    "or": "ou",
     "authFailed": "Échec de l'authentification",
     "backToLanding": "Accueil",
     "legal": "Réservé aux 18 ans et plus · La modération a bien meilleur goût"
+  },
+  "authCallback": {
+    "loading": "Connexion en cours…",
+    "failed": "Impossible de se connecter",
+    "backToLogin": "Retour à la connexion"
   },
   "chats": {
     "emptyDesc": "Commence une conversation avec le sommelier.",

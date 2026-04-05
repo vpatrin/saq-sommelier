@@ -167,9 +167,16 @@
     }
   },
   "login": {
+    "github": "Sign in with GitHub",
+    "or": "or",
     "authFailed": "Authentication failed",
     "backToLanding": "Home",
     "legal": "18+ only · Drink responsibly"
+  },
+  "authCallback": {
+    "loading": "Signing in…",
+    "failed": "Couldn't sign in",
+    "backToLogin": "Back to sign in"
   },
   "chats": {
     "emptyDesc": "Start a conversation with the sommelier.",
