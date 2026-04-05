@@ -167,6 +167,7 @@
     }
   },
   "login": {
+    "google": "Sign in with Google",
     "github": "Sign in with GitHub",
     "or": "or",
     "authFailed": "Authentication failed",
