@@ -22,13 +22,16 @@ def client():
 def test_github_callback_new_user(client):
     """New GitHub user — creates user + oauth_account, redirects with exchange code."""
     with (
-        patch("backend.api.auth.exchange_code", new=AsyncMock(return_value="gh_access_token")),
+        patch(
+            "backend.api.auth.fetch_github_access_token",
+            new=AsyncMock(return_value="gh_access_token"),
+        ),
         patch(
             "backend.api.auth.fetch_github_user",
             new=AsyncMock(return_value=(_GITHUB_USER_ID, _EMAIL, _DISPLAY_NAME)),
         ),
         patch(
-            "backend.api.auth.authenticate_oauth",
+            "backend.api.auth.create_oauth_session",
             new=AsyncMock(return_value=_EXCHANGE_CODE),
         ),
         patch("backend.api.auth.backend_settings") as mock_settings,
@@ -45,7 +48,7 @@ def test_github_callback_github_error(client):
     from fastapi import HTTPException
 
     with patch(
-        "backend.api.auth.exchange_code",
+        "backend.api.auth.fetch_github_access_token",
         new=AsyncMock(side_effect=HTTPException(status_code=400, detail="GitHub OAuth failed")),
     ):
         resp = client.get("/api/auth/github/callback?code=badcode")

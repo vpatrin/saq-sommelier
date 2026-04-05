@@ -1,12 +1,17 @@
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import RedirectResponse
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.auth import require_bot_secret
+from backend.config import backend_settings
 from backend.db import get_db
 from backend.exceptions import ForbiddenError, NotFoundError
+from backend.redis_client import consume_exchange_code, get_redis
 from backend.repositories import users as users_repo
 from backend.schemas.auth import TelegramLoginIn, TokenOut
-from backend.services.auth import authenticate_telegram
+from backend.services.auth import authenticate_telegram, create_oauth_session
+from backend.services.github_oauth import fetch_github_access_token, fetch_github_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -17,6 +22,38 @@ async def login_telegram(
     db: AsyncSession = Depends(get_db),
 ) -> TokenOut:
     return await authenticate_telegram(db, body)
+
+
+@router.get("/github/callback")
+async def github_callback(
+    code: str = Query(),
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> RedirectResponse:
+    """GitHub OAuth callback — exchange code, upsert user, redirect to frontend."""
+    access_token = await fetch_github_access_token(code)
+    github_user_id, email, display_name = await fetch_github_user(access_token)
+    exchange = await create_oauth_session(
+        db,
+        redis,
+        provider="github",
+        provider_user_id=github_user_id,
+        email=email,
+        display_name=display_name,
+    )
+    return RedirectResponse(url=f"{backend_settings.FRONTEND_URL}/auth/callback?code={exchange}")
+
+
+@router.get("/exchange", response_model=TokenOut)
+async def exchange_token(
+    code: str = Query(),
+    redis: Redis = Depends(get_redis),
+) -> TokenOut:
+    """Exchange a single-use code for a JWT. Code expires in 60 seconds."""
+    token = await consume_exchange_code(redis, code)
+    if token is None:
+        raise NotFoundError("exchange code", code)
+    return TokenOut(access_token=token)
 
 
 @router.get(
