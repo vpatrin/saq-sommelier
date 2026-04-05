@@ -25,6 +25,7 @@ email-validator = "^2.3.0"
 resend = "^2.27.0"
 redis = {version = ">=5.0", extras = ["asyncio"]}
 slowapi = "^0.1.9"
+gunicorn = ">=23.0"
 
 [tool.poetry.group.dev.dependencies]
 httpx = ">=0.28"

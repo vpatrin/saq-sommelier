@@ -45,4 +45,10 @@ USER appuser
 
 EXPOSE 8001
 
-CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["gunicorn", "backend.app:app", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--workers", "2", \
+     "--bind", "0.0.0.0:8001", \
+     "--timeout", "120", \
+     "--graceful-timeout", "30", \
+     "--access-logfile", "-"]
