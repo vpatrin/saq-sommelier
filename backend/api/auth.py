@@ -19,10 +19,12 @@ from backend.repositories import users as users_repo
 from backend.schemas.auth import TelegramLoginIn, TokenOut
 from backend.services.auth import authenticate_telegram, create_oauth_session
 from backend.services.github_oauth import fetch_github_access_token, fetch_github_user
+from backend.services.google_oauth import fetch_google_access_token, fetch_google_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 _GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
+_GOOGLE_AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 
 
 @router.post("/telegram", response_model=TokenOut)
@@ -67,6 +69,53 @@ async def github_callback(
             redis,
             provider="github",
             provider_user_id=github_user_id,
+            email=email,
+            display_name=display_name,
+        )
+    except ForbiddenError:
+        return RedirectResponse(
+            url=f"{backend_settings.FRONTEND_URL}/auth/callback?error=not_approved"
+        )
+    return RedirectResponse(url=f"{backend_settings.FRONTEND_URL}/auth/callback?code={exchange}")
+
+
+@router.get("/google/login")
+async def google_login(redis: Redis = Depends(get_redis)) -> RedirectResponse:
+    """Initiate Google OAuth — generate CSRF state, redirect to Google."""
+    state = await store_oauth_state(redis)
+    params = urlencode(
+        {
+            "client_id": backend_settings.GOOGLE_CLIENT_ID,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "state": state,
+            "redirect_uri": f"{backend_settings.BACKEND_URL}/api/auth/google/callback",
+        }
+    )
+    return RedirectResponse(url=f"{_GOOGLE_AUTHORIZE_URL}?{params}")
+
+
+@router.get("/google/callback")
+async def google_callback(
+    code: str = Query(),
+    state: str = Query(),
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> RedirectResponse:
+    """Google OAuth callback — validate state, exchange code, upsert user, redirect to frontend."""
+    if not await consume_oauth_state(redis, state):
+        return RedirectResponse(
+            url=f"{backend_settings.FRONTEND_URL}/auth/callback?error=invalid_state"
+        )
+    redirect_uri = f"{backend_settings.BACKEND_URL}/api/auth/google/callback"
+    access_token = await fetch_google_access_token(code, redirect_uri)
+    google_user_id, email, display_name = await fetch_google_user(access_token)
+    try:
+        exchange = await create_oauth_session(
+            db,
+            redis,
+            provider="google",
+            provider_user_id=google_user_id,
             email=email,
             display_name=display_name,
         )
