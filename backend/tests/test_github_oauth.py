@@ -1,11 +1,15 @@
-from unittest.mock import AsyncMock, patch
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 
 from backend.app import app
+from backend.exceptions import ForbiddenError
 from backend.redis_client import get_redis
+from backend.services.auth import create_oauth_session
+from backend.services.github_oauth import fetch_github_access_token, fetch_github_user
 
 _GITHUB_USER_ID = "12345678"
 _EMAIL = "victor@example.com"
@@ -79,3 +83,122 @@ def test_exchange_token_expired(client):
 
     assert resp.status_code == status.HTTP_404_NOT_FOUND
     app.dependency_overrides.pop(get_redis)
+
+
+# ── Service unit tests ────────────────────────────────────────────────────────
+
+
+async def test_fetch_github_access_token_success():
+    mock_resp = MagicMock()
+    mock_resp.json.return_value = {"access_token": "gha_token123"}
+    with patch("backend.services.github_oauth.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_resp)
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        result = await fetch_github_access_token("github_code")
+    assert result == "gha_token123"
+
+
+async def test_fetch_github_access_token_failure():
+    mock_resp = MagicMock()
+    mock_resp.json.return_value = {"error": "bad_verification_code"}
+    with patch("backend.services.github_oauth.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_resp)
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        with pytest.raises(Exception) as exc_info:
+            await fetch_github_access_token("bad_code")
+    assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+
+
+async def test_fetch_github_user_success():
+    user_resp = MagicMock()
+    user_resp.json.return_value = {"id": 42, "name": "Victor", "login": "vpatrin"}
+    emails_resp = MagicMock()
+    emails_resp.json.return_value = [
+        {"email": "victor@example.com", "primary": True, "verified": True},
+    ]
+    with patch("backend.services.github_oauth.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(side_effect=[user_resp, emails_resp])
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        github_id, email, display_name = await fetch_github_user("gha_token")
+    assert github_id == "42"
+    assert email == "victor@example.com"
+    assert display_name == "Victor"
+
+
+async def test_fetch_github_user_no_verified_email():
+    user_resp = MagicMock()
+    user_resp.json.return_value = {"id": 42, "name": "Victor", "login": "vpatrin"}
+    emails_resp = MagicMock()
+    emails_resp.json.return_value = [
+        {"email": "victor@example.com", "primary": True, "verified": False},
+    ]
+    with patch("backend.services.github_oauth.httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(side_effect=[user_resp, emails_resp])
+        mock_client_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        with pytest.raises(Exception) as exc_info:
+            await fetch_github_user("gha_token")
+    assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+
+
+async def test_create_oauth_session_new_user():
+    db = AsyncMock()
+    redis = AsyncMock()
+    user = SimpleNamespace(
+        id=1, role="user", display_name="Victor", is_active=True, last_login_at=None
+    )
+
+    with (
+        patch(
+            "backend.services.auth.oauth_accounts_repo.find_by_provider",
+            new=AsyncMock(return_value=None),
+        ),
+        patch("backend.services.auth.users_repo.find_by_email", new=AsyncMock(return_value=None)),
+        patch(
+            "backend.services.auth.users_repo.create_oauth_user", new=AsyncMock(return_value=user)
+        ),
+        patch("backend.services.auth.oauth_accounts_repo.create", new=AsyncMock()),
+        patch("backend.services.auth.store_exchange_code", new=AsyncMock(return_value="code123")),
+        patch("backend.services.auth.backend_settings") as mock_settings,
+    ):
+        mock_settings.JWT_SECRET_KEY = "test-secret"
+        result = await create_oauth_session(
+            db,
+            redis,
+            provider="github",
+            provider_user_id="42",
+            email="v@example.com",
+            display_name="Victor",
+        )
+    assert result == "code123"
+
+
+async def test_create_oauth_session_deactivated_user():
+    db = AsyncMock()
+    redis = AsyncMock()
+    account = SimpleNamespace(user_id=1)
+    user = SimpleNamespace(id=1, role="user", display_name="Victor", is_active=False)
+
+    with (
+        patch(
+            "backend.services.auth.oauth_accounts_repo.find_by_provider",
+            new=AsyncMock(return_value=account),
+        ),
+        patch("backend.services.auth.users_repo.find_by_id", new=AsyncMock(return_value=user)),
+        pytest.raises(ForbiddenError),
+    ):
+        await create_oauth_session(
+            db,
+            redis,
+            provider="github",
+            provider_user_id="42",
+            email="v@example.com",
+            display_name=None,
+        )
