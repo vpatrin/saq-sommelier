@@ -176,6 +176,8 @@
   "authCallback": {
     "loading": "Connexion en cours…",
     "failed": "Impossible de se connecter",
+    "notApproved": "Ton adresse courriel n'a pas encore été approuvée.",
+    "requestAccess": "Demander un accès",
     "backToLogin": "Retour à la connexion"
   },
   "chats": {

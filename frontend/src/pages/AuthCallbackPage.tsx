@@ -15,22 +15,40 @@ function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null)
 
   const code = searchParams.get('code')
+  const errorParam = searchParams.get('error')
 
   useEffect(() => {
-    if (!code || token) return
+    if (!code || token || errorParam) return
 
-    api<TokenResponse>(`/auth/exchange?code=${encodeURIComponent(code)}`)
+    const controller = new AbortController()
+    api<TokenResponse>(`/auth/exchange?code=${encodeURIComponent(code)}`, {
+      signal: controller.signal,
+    })
       .then(({ access_token }) => login(access_token))
       .catch((err) => {
+        if (controller.signal.aborted) return
         if (err instanceof ApiError) {
           setError(err.detail)
         } else {
           setError(t('authCallback.failed'))
         }
       })
-  }, [code, token, login, t])
+
+    return () => controller.abort()
+  }, [code, token, login, t, errorParam])
 
   if (token) return <Navigate to="/chat" replace />
+
+  if (errorParam === 'not_approved') {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4">
+        <p className="text-sm text-muted-foreground">{t('authCallback.notApproved')}</p>
+        <a href="/" className="text-sm text-primary hover:underline">
+          {t('authCallback.requestAccess')}
+        </a>
+      </div>
+    )
+  }
 
   if (error || !code) {
     return (
