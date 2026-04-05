@@ -13,7 +13,7 @@ interface AuthContextValue {
   user: User | null
   login: (token: string) => void
   logout: () => void
-  updateUser: (updates: Partial<User>) => void
+  updateUser: (updates: Pick<User, 'display_name'>) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
-  const updateUser = useCallback((updates: Partial<User>) => {
+  const updateUser = useCallback((updates: Pick<User, 'display_name'>) => {
     setUser((prev) => (prev ? { ...prev, ...updates } : prev))
   }, [])
 
