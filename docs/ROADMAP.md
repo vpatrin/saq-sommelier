@@ -108,20 +108,27 @@ OAuth-only login (no email/password, no Telegram login). Clean multi-provider id
 
 **Security:** PKCE (S256) + AES-256-GCM encrypted + HMAC-SHA256 signed state + Redis single-use nonce.
 
-- [x] `oauth_accounts` table + `email` / `display_name` on `users` + backfill migration (#586)
-- [x] `OAuthAccount` repository — `find_by_provider`, `find_by_email`, `create`, `list_by_user` (#587)
-- [ ] JWT refactor — drop `telegram_id` claim, add `display_name`, update frontend callers (#588)
-- [ ] Redis setup — async client, state storage helpers (#589)
-- [ ] GitHub OAuth — `/api/auth/github` + `/api/auth/github/callback`, PKCE + encrypted state (#590)
-- [ ] Google OAuth — `/api/auth/google` + `/api/auth/google/callback`, same pattern (#591)
+- [x] `oauth_accounts` table + `email` / `display_name` on `users` + backfill migration (#586, #587)
+- [x] JWT refactor — drop `telegram_id` claim, add `display_name`, update frontend callers (#588, #608)
+- [x] Redis setup — async client, state storage helpers (#589, #609)
+- [x] GitHub OAuth — `/api/auth/github` + callback, CSRF state, exchange code flow (#590, #610)
+- [x] Google OAuth — `/api/auth/google` + callback, same pattern (#591)
+- [x] Frontend — GitHub + Google login buttons, `/auth/callback` route (#595, #612)
+- [x] Admin user deletion — hard delete with cascade (#597, #613)
 - [ ] Display name collection on first login (#592)
-- [ ] Update bot `/api/auth/telegram/check` — query via `oauth_accounts` (#593)
 - [ ] Linked Accounts API — list, disconnect (last-provider guard), link Telegram (#594)
-- [ ] Frontend — GitHub + Google login buttons, `/auth/callback` route (#595)
 - [ ] Frontend — Settings: Linked Accounts section (#596)
-- [ ] Account deletion — `DELETE /api/users/me` + cascade (#597)
-- [ ] Remove `ADMIN_TELEGRAM_ID` + remaining invite code auth logic (#598)
-- [ ] CSP headers (infra) + rate limiting on OAuth + waitlist endpoints (#599)
+- [ ] CSP headers + rate limiting on OAuth + waitlist endpoints (#599)
+
+#### Passkeys (WebAuthn)
+
+Device-based biometric auth (Face ID, Touch ID, Windows Hello) as an alternative login method for returning users. OAuth still required for initial registration (email from provider). Portfolio flex — demonstrates cutting-edge auth.
+
+- [ ] `webauthn_credentials` table — public key, credential ID, user link
+- [ ] Registration ceremony — `/api/auth/passkeys/register` + `/api/auth/passkeys/register/verify`
+- [ ] Authentication ceremony — `/api/auth/passkeys/login` + `/api/auth/passkeys/login/verify`
+- [ ] Frontend — "Add passkey" in Settings, passkey login button on login page
+- [ ] Device management UI — list/revoke passkeys
 
 #### MCP Server / Sonnet + Tools
 
