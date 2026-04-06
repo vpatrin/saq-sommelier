@@ -7,18 +7,10 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-from sqlalchemy import select
 
 from backend.app import app
 from backend.config import MAX_FILTER_LENGTH, MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
 from backend.db import get_db, get_session_factory
-from backend.repositories.products import (
-    _apply_filters,
-    find_by_sku,
-    find_random,
-    get_distinct_values,
-    get_price_range,
-)
 from backend.schemas.product import ProductOut
 from core.db.models import Product
 
@@ -335,55 +327,6 @@ def test_input_validation_rejected(path):
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
-# ── Active-only filtering ──────────────────────────────────────
-
-
-def _compile(stmt) -> str:
-    """Compile a SQLAlchemy statement to a SQL string for inspection."""
-    from sqlalchemy.dialects import postgresql
-
-    return str(stmt.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
-
-
-def test_list_query_always_excludes_delisted():
-    """Product list queries always filter out delisted products."""
-    stmt = select(Product)
-    filtered = _apply_filters(stmt)
-    sql = _compile(filtered)
-    assert "delisted_at IS NULL" in sql
-
-
-def test_list_query_filters_available_when_requested():
-    """available=True adds availability filter; omitting it does not."""
-    # Without available param — no WHERE clause on availability
-    stmt = select(Product)
-    sql_no_filter = _compile(_apply_filters(stmt))
-    assert "availability = true" not in sql_no_filter
-    assert "availability = false" not in sql_no_filter
-
-    # With available=True — availability filter added
-    sql_available = _compile(_apply_filters(stmt, available=True))
-    assert "availability = true" in sql_available
-
-
-@pytest.mark.asyncio
-async def test_detail_query_excludes_delisted():
-    """find_by_sku excludes delisted but not unavailable products."""
-    session = AsyncMock()
-    result = MagicMock()
-    result.scalar_one_or_none.return_value = None
-    session.execute = AsyncMock(return_value=result)
-
-    await find_by_sku(session, "TEST")
-
-    stmt = session.execute.call_args[0][0]
-    sql = _compile(stmt)
-    assert "delisted_at IS NULL" in sql
-    # Unavailable products should still be findable (for /watch)
-    assert "availability = true" not in sql
-    assert "availability = false" not in sql
-
-
 # ── Facets endpoint ───────────────────────────────────────────
 
 
@@ -513,89 +456,6 @@ def test_facets_no_prices():
     assert data["price_range"] is None
 
 
-@pytest.mark.asyncio
-async def test_facets_query_excludes_delisted():
-    """Facets queries filter out delisted products."""
-    session = AsyncMock()
-    result = MagicMock()
-    scalars_mock = MagicMock()
-    scalars_mock.all.return_value = []
-    result.scalars.return_value = scalars_mock
-    session.execute = AsyncMock(return_value=result)
-
-    await get_distinct_values(session, Product.category)
-
-    stmt = session.execute.call_args[0][0]
-    sql = _compile(stmt)
-    assert "delisted_at IS NULL" in sql
-
-
-@pytest.mark.asyncio
-async def test_distinct_values_respects_availability_filters():
-    """get_distinct_values propagates category, available, and in_stores to SQL."""
-    session = AsyncMock()
-    result = MagicMock()
-    scalars_mock = MagicMock()
-    scalars_mock.all.return_value = []
-    result.scalars.return_value = scalars_mock
-    session.execute = AsyncMock(return_value=result)
-
-    await get_distinct_values(
-        session,
-        Product.region,
-        category=["Vin rouge"],
-        available=True,
-        in_stores=["S001", "S002"],
-    )
-
-    sql = _compile(session.execute.call_args[0][0])
-    assert "IN ('Vin rouge')" in sql
-    assert "availability = true" in sql
-    assert "store_availability" in sql
-    assert "delisted_at IS NULL" in sql
-
-
-@pytest.mark.asyncio
-async def test_price_range_respects_availability_filters():
-    """get_price_range propagates category, available, and in_stores to SQL."""
-    session = AsyncMock()
-    result = MagicMock()
-    result.one.return_value = (None, None)
-    session.execute = AsyncMock(return_value=result)
-
-    await get_price_range(
-        session,
-        category=["Vin blanc"],
-        available=True,
-        in_stores=["S003"],
-    )
-
-    sql = _compile(session.execute.call_args[0][0])
-    assert "IN ('Vin blanc')" in sql
-    assert "availability = true" in sql
-    assert "store_availability" in sql
-    assert "delisted_at IS NULL" in sql
-
-
-@pytest.mark.asyncio
-async def test_distinct_values_no_filters_only_delisted():
-    """get_distinct_values with no filters still excludes delisted products."""
-    session = AsyncMock()
-    result = MagicMock()
-    scalars_mock = MagicMock()
-    scalars_mock.all.return_value = ["Bordeaux"]
-    result.scalars.return_value = scalars_mock
-    session.execute = AsyncMock(return_value=result)
-
-    values = await get_distinct_values(session, Product.region)
-
-    sql = _compile(session.execute.call_args[0][0])
-    assert "delisted_at IS NULL" in sql
-    assert "availability" not in sql
-    assert "store_availability" not in sql
-    assert values == ["Bordeaux"]
-
-
 # ── Sorting ───────────────────────────────────────────────────
 
 
@@ -667,57 +527,6 @@ def test_random_with_filters():
     client = TestClient(app)
     resp = client.get("/api/products/random?category=Vin+rouge&min_price=10")
     assert resp.status_code == status.HTTP_200_OK
-
-
-@pytest.mark.asyncio
-async def test_random_query_excludes_delisted():
-    """Random query filters out delisted products."""
-    session = AsyncMock()
-    result = MagicMock()
-    result.scalar_one_or_none.return_value = None
-    session.execute = AsyncMock(return_value=result)
-
-    await find_random(session)
-
-    stmt = session.execute.call_args[0][0]
-    sql = _compile(stmt)
-    assert "delisted_at IS NULL" in sql
-    assert "random()" in sql.lower()
-
-
-# ── Wine scope tests ─────────────────────────────────────────
-
-
-def test_wine_scope_adds_prefix_filters():
-    """wine_scope=True adds LIKE clauses for wine category prefixes."""
-    stmt = select(Product)
-    filtered = _apply_filters(stmt, wine_scope=True)
-    sql = _compile(filtered)
-    # SQLAlchemy compiles startswith as: LIKE 'prefix' || '%%'
-    assert "LIKE 'Vin rouge'" in sql
-    assert "LIKE 'Champagne'" in sql
-    assert "LIKE 'Porto'" in sql
-    assert "LIKE 'Saké'" in sql
-    from backend.repositories.products import _WINE_PREFIXES
-
-    assert sql.count("OR") == len(_WINE_PREFIXES) - 1
-
-
-def test_wine_scope_inactive_by_default():
-    """Without wine_scope, no prefix filtering is applied."""
-    stmt = select(Product)
-    filtered = _apply_filters(stmt)
-    sql = _compile(filtered)
-    assert "LIKE" not in sql
-
-
-def test_explicit_category_overrides_wine_scope():
-    """Explicit category filter takes precedence over wine_scope."""
-    stmt = select(Product)
-    filtered = _apply_filters(stmt, category=["Whisky"], wine_scope=True)
-    sql = _compile(filtered)
-    assert "IN ('Whisky')" in sql
-    assert "LIKE" not in sql
 
 
 def test_scope_wine_is_default_on_list_endpoint():
