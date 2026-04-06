@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -8,7 +9,18 @@ class UserUpdateIn(BaseModel):
 
 
 class UserUpdateSelfIn(BaseModel):
-    display_name: str = Field(min_length=1, max_length=100)
+    display_name: str | None = Field(default=None, min_length=1, max_length=100)
+    locale: Literal["fr", "en"] | None = None
+
+
+class UserMeOut(BaseModel):
+    id: int
+    email: str
+    display_name: str | None
+    locale: str | None
+    role: str
+
+    model_config = {"from_attributes": True}
 
 
 class OAuthAccountOut(BaseModel):

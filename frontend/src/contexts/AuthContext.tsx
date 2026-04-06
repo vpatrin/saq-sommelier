@@ -1,10 +1,13 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import type { UserRole } from '@/lib/types'
+import type { UserRole, UserMeOut } from '@/lib/types'
+import { api } from '@/lib/api'
+import i18n from '@/i18n'
 
 interface User {
   id: number
   display_name: string | null
+  locale: string | null
   role: UserRole
 }
 
@@ -13,7 +16,7 @@ interface AuthContextValue {
   user: User | null
   login: (token: string) => void
   logout: () => void
-  updateUser: (updates: Pick<User, 'display_name'>) => void
+  updateUser: (updates: Partial<Pick<User, 'display_name' | 'locale'>>) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -23,6 +26,7 @@ function decodeUser(token: string): User {
   return {
     id: Number(payload.sub),
     display_name: payload.display_name ?? null,
+    locale: null,
     role: payload.role,
   }
 }
@@ -45,6 +49,7 @@ function loadStoredToken(): { token: string; user: User } | null {
       user: {
         id: Number(payload.sub),
         display_name: payload.display_name ?? null,
+        locale: null,
         role: payload.role,
       },
     }
@@ -59,6 +64,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(stored?.token ?? null)
   const [user, setUser] = useState<User | null>(stored?.user ?? null)
 
+  // Hydrate profile from server — syncs locale + display_name
+  useEffect(() => {
+    if (!token) return
+    const controller = new AbortController()
+    api<UserMeOut>('/users/me', { token, signal: controller.signal })
+      .then((profile) => {
+        setUser((prev) =>
+          prev ? { ...prev, display_name: profile.display_name, locale: profile.locale } : prev,
+        )
+        if (profile.locale) {
+          i18n.changeLanguage(profile.locale)
+        }
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [token])
+
   const login = useCallback((newToken: string) => {
     localStorage.setItem(TOKEN_KEY, newToken)
     setToken(newToken)
@@ -71,8 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
-  const updateUser = useCallback((updates: Pick<User, 'display_name'>) => {
+  const updateUser = useCallback((updates: Partial<Pick<User, 'display_name' | 'locale'>>) => {
     setUser((prev) => (prev ? { ...prev, ...updates } : prev))
+    // Sync locale to i18n when updated locally
+    if (updates.locale) {
+      i18n.changeLanguage(updates.locale)
+    }
   }, [])
 
   return (

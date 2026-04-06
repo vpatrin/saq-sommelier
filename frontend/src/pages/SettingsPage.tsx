@@ -241,11 +241,22 @@ function SettingsPage() {
                 <span className="text-sm">{t('settings.language')}</span>
               </div>
               <div className="flex rounded-lg border border-border overflow-hidden">
-                {['fr', 'en'].map((lang) => (
+                {(['fr', 'en'] as const).map((lang) => (
                   <button
                     key={lang}
                     type="button"
-                    onClick={() => i18n.changeLanguage(lang)}
+                    onClick={async () => {
+                      if (lang === user?.locale) return
+                      updateUser({ locale: lang })
+                      try {
+                        await apiClient('/users/me', {
+                          method: 'PATCH',
+                          body: JSON.stringify({ locale: lang }),
+                        })
+                      } catch {
+                        // Best-effort — locale already applied locally
+                      }
+                    }}
                     className={`px-3 py-1 text-xs font-mono uppercase transition-colors ${
                       i18n.resolvedLanguage === lang
                         ? 'bg-primary/10 text-primary border-primary/20'

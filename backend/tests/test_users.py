@@ -13,7 +13,9 @@ from core.db.models import User
 def _mock_user() -> MagicMock:
     user = MagicMock(spec=User)
     user.id = 1
+    user.email = "v@example.com"
     user.display_name = "Victor"
+    user.locale = None
     user.role = "user"
     user.is_active = True
     return user
@@ -24,6 +26,35 @@ def _authed_client(user: MagicMock) -> TestClient:
     app.dependency_overrides[get_current_active_user] = lambda: user
     app.dependency_overrides[get_db] = lambda: session
     return TestClient(app)
+
+
+# ── GET /api/users/me ──────────────────
+
+
+def test_get_me_success():
+    """200 — returns authenticated user's profile."""
+    user = _mock_user()
+    user.locale = "fr"
+    client = _authed_client(user)
+    resp = client.get("/api/users/me")
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data["id"] == 1
+    assert data["email"] == "v@example.com"
+    assert data["display_name"] == "Victor"
+    assert data["locale"] == "fr"
+    assert data["role"] == "user"
+
+
+def test_get_me_unauthenticated():
+    """401 — no token."""
+    app.dependency_overrides.clear()
+    client = TestClient(app)
+    resp = client.get("/api/users/me")
+
+    assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 # ── PATCH /api/users/me ──────────────────
@@ -58,6 +89,52 @@ def test_update_me_too_long():
     app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_update_me_locale():
+    """204 — can update locale alone without sending display_name."""
+    user = _mock_user()
+    client = _authed_client(user)
+    resp = client.patch("/api/users/me", json={"locale": "en"})
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+    assert user.locale == "en"
+    assert user.display_name == "Victor"
+
+
+def test_update_me_invalid_locale():
+    """422 — locale must be 'fr' or 'en'."""
+    user = _mock_user()
+    client = _authed_client(user)
+    resp = client.patch("/api/users/me", json={"locale": "de"})
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+
+def test_update_me_null_locale_ignored():
+    """204 — sending locale: null does not wipe existing locale."""
+    user = _mock_user()
+    user.locale = "en"
+    client = _authed_client(user)
+    resp = client.patch("/api/users/me", json={"locale": None})
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+    assert user.locale == "en"
+
+
+def test_update_me_null_display_name_ignored():
+    """204 — sending display_name: null does not wipe existing name."""
+    user = _mock_user()
+    client = _authed_client(user)
+    resp = client.patch("/api/users/me", json={"display_name": None, "locale": "fr"})
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+    assert user.display_name == "Victor"
+    assert user.locale == "fr"
 
 
 def test_update_me_unauthenticated():

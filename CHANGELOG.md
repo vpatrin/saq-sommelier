@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Language persistence — locale preference saved to user profile; synced on login via `GET /users/me`
+
 ## [1.6.0] - 2026-04-05
 
 ### Added

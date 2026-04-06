@@ -7,11 +7,18 @@ from backend.exceptions import ConflictError, NotFoundError
 from backend.repositories import oauth_accounts as oauth_accounts_repo
 from backend.repositories import users as users_repo
 from backend.schemas.auth import TelegramLoginIn
-from backend.schemas.user import OAuthAccountOut, UserUpdateSelfIn
+from backend.schemas.user import OAuthAccountOut, UserMeOut, UserUpdateSelfIn
 from backend.services.auth import verify_telegram_data
 from core.db.models import User
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("/me", response_model=UserMeOut)
+async def get_me(
+    user: User = Depends(get_current_active_user),
+) -> User:
+    return user
 
 
 @router.patch("/me", status_code=status.HTTP_204_NO_CONTENT)
@@ -20,8 +27,11 @@ async def update_me(
     user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    """Update the authenticated user's profile."""
-    user.display_name = body.display_name
+    """Update the authenticated user's profile (partial — only sent fields are updated)."""
+    if "display_name" in body.model_fields_set and body.display_name is not None:
+        user.display_name = body.display_name
+    if "locale" in body.model_fields_set and body.locale is not None:
+        user.locale = body.locale
     await db.flush()
 
 

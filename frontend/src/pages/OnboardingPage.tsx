@@ -21,12 +21,13 @@ function OnboardingPage() {
     if (!trimmed) return
     setSaving(true)
     setError(false)
+    const locale = i18n.resolvedLanguage === 'en' ? 'en' : 'fr'
     try {
       await apiClient('/users/me', {
         method: 'PATCH',
-        body: JSON.stringify({ display_name: trimmed }),
+        body: JSON.stringify({ display_name: trimmed, locale }),
       })
-      updateUser({ display_name: trimmed })
+      updateUser({ display_name: trimmed, locale })
       localStorage.setItem('onboarded', '1')
       navigate('/chat', { replace: true })
     } catch {

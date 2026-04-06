@@ -123,7 +123,7 @@ OAuth-only login (no email/password, no Telegram login). Clean multi-provider id
 - [x] Linked Accounts API — list, disconnect (last-provider guard) (#594)
 - [x] Frontend — Settings page: linked accounts, display name, language, delete account (#596)
 - [x] CSP headers + rate limiting on OAuth + waitlist endpoints (#599, #618, #619)
-- [ ] Language persistence — save locale preference to user profile, add language toggle to onboarding step 1
+- [x] Language persistence — save locale preference to user profile, synced via `GET /users/me`
 
 #### Passkeys (WebAuthn)
 
