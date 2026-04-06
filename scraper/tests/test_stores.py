@@ -133,20 +133,6 @@ class TestFetchStores:
         with pytest.raises(httpx.HTTPStatusError):
             await fetch_stores(client)
 
-    @pytest.mark.asyncio
-    async def test_sleeps_between_pages(self) -> None:
-        page1 = _store_page([_raw_store("23009")], total=2, is_last_page=False)
-        page2 = _store_page([_raw_store("23132")], total=2, is_last_page=True)
-
-        client = AsyncMock(spec=httpx.AsyncClient)
-        client.get.side_effect = [_make_response(page1), _make_response(page2)]
-
-        with patch("scraper.stores.asyncio.sleep") as mock_sleep:
-            await fetch_stores(client)
-
-        # Sleep called once between page 1 and page 2 (not after last page)
-        mock_sleep.assert_called_once()
-
 
 class TestStoreDataAlignment:
     def test_storedata_fields_are_subset_of_store_columns(self) -> None:

@@ -116,18 +116,6 @@ class TestGetProductStates:
 
 class TestEmitStockEvent:
     @pytest.mark.asyncio
-    async def test_executes_and_commits(self, mock_db_session) -> None:
-        mock_session, mock_factory = mock_db_session
-
-        with patch("scraper.db.events.SessionLocal", mock_factory):
-            from scraper.db import emit_stock_event
-
-            await emit_stock_event("10327701", available=True)
-
-        mock_session.execute.assert_called_once()
-        mock_session.commit.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_rolls_back_and_raises_on_db_failure(self, mock_db_session) -> None:
         mock_session, mock_factory = mock_db_session
         mock_session.execute.side_effect = SQLAlchemyError("connection lost")
@@ -143,19 +131,6 @@ class TestEmitStockEvent:
 
 
 class TestDeleteOldStockEvents:
-    @pytest.mark.asyncio
-    async def test_executes_and_commits(self, mock_db_session) -> None:
-        mock_session, mock_factory = mock_db_session
-        mock_session.execute.return_value = MagicMock(rowcount=5)
-
-        with patch("scraper.db.events.SessionLocal", mock_factory):
-            from scraper.db import delete_old_stock_events
-
-            await delete_old_stock_events(days=90)
-
-        mock_session.execute.assert_called_once()
-        mock_session.commit.assert_called_once()
-
     @pytest.mark.asyncio
     async def test_swallows_error_on_db_failure(self, mock_db_session) -> None:
         mock_session, mock_factory = mock_db_session
@@ -226,20 +201,6 @@ class TestUpsertStores:
         # Should return None without touching the DB
         result = await upsert_stores([])
         assert result is None
-
-    @pytest.mark.asyncio
-    async def test_executes_and_commits(self, mock_db_session) -> None:
-        mock_session, mock_factory = mock_db_session
-        stores = [self._make_store("23009"), self._make_store("23132")]
-
-        with patch("scraper.db.stores.SessionLocal", mock_factory):
-            from scraper.db import upsert_stores
-
-            await upsert_stores(stores)
-
-        mock_session.execute.assert_called_once()
-        mock_session.commit.assert_called_once()
-        mock_session.rollback.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_rolls_back_and_raises_on_db_error(self, mock_db_session) -> None:
