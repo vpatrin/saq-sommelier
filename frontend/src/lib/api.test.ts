@@ -69,17 +69,13 @@ describe('api', () => {
     expect(result).toBeUndefined()
   })
 
-  it('throws ApiError with detail from response body', async () => {
+  it('throws ApiError with status and detail from response body', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ detail: 'SKU not found' }, 404))
 
-    await expect(api('/wines/invalid')).rejects.toThrow(ApiError)
-    await fetchMock.mockResolvedValueOnce(jsonResponse({ detail: 'SKU not found' }, 404))
-    try {
-      await api('/wines/invalid')
-    } catch (err) {
-      expect((err as ApiError).status).toBe(404)
-      expect((err as ApiError).detail).toBe('SKU not found')
-    }
+    const err = await api('/wines/invalid').catch((e: ApiError) => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.status).toBe(404)
+    expect(err.detail).toBe('SKU not found')
   })
 
   it('falls back to statusText when response body has no detail', async () => {
@@ -90,11 +86,9 @@ describe('api', () => {
       json: () => Promise.reject(new Error('no body')),
     } as Response)
 
-    try {
-      await api('/explode')
-    } catch (err) {
-      expect((err as ApiError).detail).toBe('Internal Server Error')
-    }
+    const err = await api('/explode').catch((e: ApiError) => e)
+    expect(err).toBeInstanceOf(ApiError)
+    expect(err.detail).toBe('Internal Server Error')
   })
 
   it('calls onUnauthorized on 401', async () => {
