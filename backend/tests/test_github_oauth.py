@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 from fastapi import status
-from fastapi.testclient import TestClient
 
 from backend.app import app
 from backend.exceptions import ForbiddenError
@@ -21,18 +20,23 @@ _STATE = "validstate123"
 
 
 @pytest.fixture
-def client():
-    return TestClient(app, follow_redirects=False)
+async def client():
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app),
+        base_url="http://test",
+        follow_redirects=False,
+    ) as c:
+        yield c
 
 
-def test_github_login_redirects_to_github(client):
+async def test_github_login_redirects_to_github(client):
     """GET /auth/github/login generates state and redirects to GitHub."""
     redis = AsyncMock()
     redis.set = AsyncMock()
     app.dependency_overrides[get_redis] = lambda: redis
 
     with patch("backend.api.auth.store_oauth_state", new=AsyncMock(return_value=_STATE)):
-        resp = client.get("/api/auth/github/login")
+        resp = await client.get("/api/auth/github/login")
 
     app.dependency_overrides.pop(get_redis)
     assert resp.status_code == status.HTTP_307_TEMPORARY_REDIRECT
@@ -42,7 +46,7 @@ def test_github_login_redirects_to_github(client):
     assert "scope=user%3Aemail" in location
 
 
-def test_github_callback_new_user(client):
+async def test_github_callback_new_user(client):
     """New GitHub user with valid state + approved waitlist — redirects with exchange code."""
     with (
         patch("backend.api.auth.consume_oauth_state", new=AsyncMock(return_value=True)),
@@ -61,32 +65,32 @@ def test_github_callback_new_user(client):
         patch("backend.api.auth.backend_settings") as mock_settings,
     ):
         mock_settings.FRONTEND_URL = "https://example.com"
-        resp = client.get(f"/api/auth/github/callback?code=somecode&state={_STATE}")
+        resp = await client.get(f"/api/auth/github/callback?code=somecode&state={_STATE}")
 
     assert resp.status_code == status.HTTP_307_TEMPORARY_REDIRECT
     assert resp.headers["location"] == f"https://example.com/auth/callback?code={_EXCHANGE_CODE}"
 
 
-def test_github_callback_invalid_state(client):
+async def test_github_callback_invalid_state(client):
     """Invalid or expired state token — redirects with error."""
     with (
         patch("backend.api.auth.consume_oauth_state", new=AsyncMock(return_value=False)),
         patch("backend.api.auth.backend_settings") as mock_settings,
     ):
         mock_settings.FRONTEND_URL = "https://example.com"
-        resp = client.get("/api/auth/github/callback?code=somecode&state=badstate")
+        resp = await client.get("/api/auth/github/callback?code=somecode&state=badstate")
 
     assert resp.status_code == status.HTTP_307_TEMPORARY_REDIRECT
     assert resp.headers["location"] == "https://example.com/auth/callback?error=invalid_state"
 
 
-def test_github_callback_missing_state(client):
+async def test_github_callback_missing_state(client):
     """Missing state parameter — 422."""
-    resp = client.get("/api/auth/github/callback?code=somecode")
+    resp = await client.get("/api/auth/github/callback?code=somecode")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_github_callback_github_error(client):
+async def test_github_callback_github_error(client):
     """GitHub returns no access token — 400."""
     from fastapi import HTTPException
 
@@ -97,31 +101,31 @@ def test_github_callback_github_error(client):
             new=AsyncMock(side_effect=HTTPException(status_code=400, detail="GitHub OAuth failed")),
         ),
     ):
-        resp = client.get(f"/api/auth/github/callback?code=badcode&state={_STATE}")
+        resp = await client.get(f"/api/auth/github/callback?code=badcode&state={_STATE}")
 
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
-def test_exchange_token_success(client):
+async def test_exchange_token_success(client):
     """Valid exchange code returns JWT."""
     redis = AsyncMock()
     redis.getdel = AsyncMock(return_value=_JWT)
     app.dependency_overrides[get_redis] = lambda: redis
 
-    resp = client.get(f"/api/auth/exchange?code={_EXCHANGE_CODE}")
+    resp = await client.get(f"/api/auth/exchange?code={_EXCHANGE_CODE}")
 
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["access_token"] == _JWT
     app.dependency_overrides.pop(get_redis)
 
 
-def test_exchange_token_expired(client):
+async def test_exchange_token_expired(client):
     """Expired/unknown exchange code returns 404."""
     redis = AsyncMock()
     redis.getdel = AsyncMock(return_value=None)
     app.dependency_overrides[get_redis] = lambda: redis
 
-    resp = client.get("/api/auth/exchange?code=expiredcode")
+    resp = await client.get("/api/auth/exchange?code=expiredcode")
 
     assert resp.status_code == status.HTTP_404_NOT_FOUND
     app.dependency_overrides.pop(get_redis)

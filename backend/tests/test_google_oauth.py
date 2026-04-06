@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 from fastapi import status
-from fastapi.testclient import TestClient
 
 from backend.app import app
 from backend.redis_client import get_redis
@@ -18,11 +17,16 @@ _REDIRECT_URI = "http://localhost:8001/api/auth/google/callback"
 
 
 @pytest.fixture
-def client():
-    return TestClient(app, follow_redirects=False)
+async def client():
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app),
+        base_url="http://test",
+        follow_redirects=False,
+    ) as c:
+        yield c
 
 
-def test_google_login_redirects_to_google(client):
+async def test_google_login_redirects_to_google(client):
     """GET /auth/google/login generates state and redirects to Google."""
     redis = AsyncMock()
     redis.set = AsyncMock()
@@ -34,7 +38,7 @@ def test_google_login_redirects_to_google(client):
     ):
         mock_settings.GOOGLE_CLIENT_ID = "test-client-id"
         mock_settings.BACKEND_URL = "http://localhost:8001"
-        resp = client.get("/api/auth/google/login")
+        resp = await client.get("/api/auth/google/login")
 
     app.dependency_overrides.pop(get_redis)
     assert resp.status_code == status.HTTP_307_TEMPORARY_REDIRECT
@@ -44,7 +48,7 @@ def test_google_login_redirects_to_google(client):
     assert "scope=openid+email+profile" in location
 
 
-def test_google_callback_success(client):
+async def test_google_callback_success(client):
     """Valid state + approved waitlist — redirects with exchange code."""
     with (
         patch("backend.api.auth.consume_oauth_state", new=AsyncMock(return_value=True)),
@@ -64,28 +68,28 @@ def test_google_callback_success(client):
     ):
         mock_settings.FRONTEND_URL = "https://example.com"
         mock_settings.BACKEND_URL = "http://localhost:8001"
-        resp = client.get(f"/api/auth/google/callback?code=somecode&state={_STATE}")
+        resp = await client.get(f"/api/auth/google/callback?code=somecode&state={_STATE}")
 
     assert resp.status_code == status.HTTP_307_TEMPORARY_REDIRECT
     assert resp.headers["location"] == f"https://example.com/auth/callback?code={_EXCHANGE_CODE}"
 
 
-def test_google_callback_invalid_state(client):
+async def test_google_callback_invalid_state(client):
     """Invalid or expired state — redirects with error."""
     with (
         patch("backend.api.auth.consume_oauth_state", new=AsyncMock(return_value=False)),
         patch("backend.api.auth.backend_settings") as mock_settings,
     ):
         mock_settings.FRONTEND_URL = "https://example.com"
-        resp = client.get("/api/auth/google/callback?code=somecode&state=badstate")
+        resp = await client.get("/api/auth/google/callback?code=somecode&state=badstate")
 
     assert resp.status_code == status.HTTP_307_TEMPORARY_REDIRECT
     assert resp.headers["location"] == "https://example.com/auth/callback?error=invalid_state"
 
 
-def test_google_callback_missing_state(client):
+async def test_google_callback_missing_state(client):
     """Missing state parameter — 422."""
-    resp = client.get("/api/auth/google/callback?code=somecode")
+    resp = await client.get("/api/auth/google/callback?code=somecode")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 

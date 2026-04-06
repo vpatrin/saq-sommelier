@@ -4,7 +4,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import httpx
-import pytest
 from fastapi import status
 
 from backend.app import app
@@ -45,7 +44,6 @@ def _setup() -> httpx.AsyncClient:
 # --- POST /api/chat/sessions (create session) ---
 
 
-@pytest.mark.asyncio
 async def test_create_session_success():
     """201 — session created, titled from message."""
     session = _fake_session()
@@ -63,7 +61,6 @@ async def test_create_session_success():
     assert mock_create.call_args[0][1] == 1  # user.id
 
 
-@pytest.mark.asyncio
 async def test_create_session_empty_message_rejected():
     """422 — empty message fails validation."""
     async with _setup() as client:
@@ -74,7 +71,6 @@ async def test_create_session_empty_message_rejected():
 # --- POST /api/chat/sessions/{id}/messages (send message) ---
 
 
-@pytest.mark.asyncio
 async def test_send_message_success():
     """201 — message sent, assistant response returned."""
     result = ChatMessageOut(
@@ -102,7 +98,6 @@ async def test_send_message_success():
     assert mock_send.call_args[0][2] == 1  # session_id
 
 
-@pytest.mark.asyncio
 async def test_send_message_session_not_found():
     """404 — session doesn't exist."""
     with patch("backend.api.chat.send_message", new_callable=AsyncMock) as mock_send:
@@ -113,7 +108,6 @@ async def test_send_message_session_not_found():
     assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
-@pytest.mark.asyncio
 async def test_send_message_not_owner():
     """403 — session belongs to another user."""
     with patch("backend.api.chat.send_message", new_callable=AsyncMock) as mock_send:
@@ -127,7 +121,6 @@ async def test_send_message_not_owner():
 # --- GET /api/chat/sessions (list) ---
 
 
-@pytest.mark.asyncio
 async def test_list_sessions_success():
     """200 — returns user's sessions."""
     sessions = [_fake_session(id=1), _fake_session(id=2, title="Italian wines")]
@@ -144,7 +137,6 @@ async def test_list_sessions_success():
     assert mock_list.call_args[0][1] == 1  # user.id
 
 
-@pytest.mark.asyncio
 async def test_list_sessions_with_pagination():
     """200 — respects limit and offset params."""
     with patch("backend.api.chat.list_sessions", new_callable=AsyncMock) as mock_list:
@@ -161,7 +153,6 @@ async def test_list_sessions_with_pagination():
 # --- GET /api/chat/sessions/{id} (detail) ---
 
 
-@pytest.mark.asyncio
 async def test_get_session_detail_success():
     """200 — returns session with messages."""
     detail = ChatSessionDetailOut(
@@ -195,7 +186,6 @@ async def test_get_session_detail_success():
     assert data["messages"][1]["role"] == "assistant"
 
 
-@pytest.mark.asyncio
 async def test_get_session_not_found():
     """404 — session doesn't exist."""
     with patch("backend.api.chat.get_session", new_callable=AsyncMock) as mock_get:
@@ -209,7 +199,6 @@ async def test_get_session_not_found():
 # --- PATCH /api/chat/sessions/{id} (update title) ---
 
 
-@pytest.mark.asyncio
 async def test_update_session_title():
     """200 — session title updated."""
     updated = _fake_session(title="New title")
@@ -228,7 +217,6 @@ async def test_update_session_title():
 # --- DELETE /api/chat/sessions/{id} ---
 
 
-@pytest.mark.asyncio
 async def test_delete_session_success():
     """204 — session deleted."""
     with patch("backend.api.chat.delete_session", new_callable=AsyncMock) as mock_del:
@@ -242,7 +230,6 @@ async def test_delete_session_success():
     assert mock_del.call_args[0][2] == 1  # session_id
 
 
-@pytest.mark.asyncio
 async def test_delete_session_not_found():
     """404 — session doesn't exist."""
     with patch("backend.api.chat.delete_session", new_callable=AsyncMock) as mock_del:
@@ -366,7 +353,6 @@ def _fake_chat_message(id: int, role: str, content: str) -> SimpleNamespace:
 class TestSendMessageRouting:
     """Tests for three-way intent routing in send_message()."""
 
-    @pytest.mark.asyncio
     @patch("backend.services.chat.chat_repo")
     @patch("backend.services.chat.recommend", new_callable=AsyncMock)
     @patch("backend.services.chat.parse_intent", new_callable=AsyncMock)
@@ -395,7 +381,6 @@ class TestSendMessageRouting:
         assert mock_recommend.call_args.kwargs["intent"] is intent
         assert isinstance(result.content, RecommendationOut)
 
-    @pytest.mark.asyncio
     @patch("backend.services.chat.chat_repo")
     @patch("backend.services.chat.sommelier_chat", new_callable=AsyncMock)
     @patch("backend.services.chat.parse_intent", new_callable=AsyncMock)
@@ -421,7 +406,6 @@ class TestSendMessageRouting:
         mock_sommelier.assert_called_once()
         assert result.content == "Burgundy is a famous wine region in eastern France."
 
-    @pytest.mark.asyncio
     @patch("backend.services.chat.chat_repo")
     @patch("backend.services.chat.parse_intent", new_callable=AsyncMock)
     async def test_off_topic_path(
@@ -443,7 +427,6 @@ class TestSendMessageRouting:
 
         assert result.content == NON_WINE_MESSAGE
 
-    @pytest.mark.asyncio
     @patch("backend.services.chat.chat_repo")
     @patch("backend.services.chat.sommelier_chat", new_callable=AsyncMock)
     @patch("backend.services.chat.parse_intent", new_callable=AsyncMock)

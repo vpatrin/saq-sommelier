@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import jwt
 import pytest
 from fastapi import Depends, status
-from fastapi.testclient import TestClient
 
 from backend.app import app
 from backend.auth import verify_auth
@@ -12,7 +11,7 @@ from backend.config import ROLE_USER
 from backend.db import get_db
 from core.db.models import User
 
-from .conftest import JWT_SECRET
+from .conftest import JWT_SECRET, make_test_client
 
 
 def _make_token(
@@ -43,7 +42,7 @@ def _mock_user(user_id: int = 1, is_active: bool = True) -> MagicMock:
 
 
 @pytest.fixture()
-def protected_client():
+async def protected_client():
     """Client with a test route protected by verify_auth.
 
     Removes the conftest JWT bypass so real auth logic runs.
@@ -56,14 +55,15 @@ def protected_client():
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session
     app.dependency_overrides.pop(verify_auth, None)
-    yield TestClient(app)
+    async with make_test_client() as client:
+        yield client
     app.dependency_overrides.clear()
     # Clean up test route
     app.routes[:] = [r for r in app.routes if getattr(r, "path", None) != "/test/protected"]
 
 
 class TestJWTMiddleware:
-    def test_valid_token_returns_user(self, protected_client: TestClient):
+    async def test_valid_token_returns_user(self, protected_client):
         token = _make_token()
         with (
             patch("backend.auth.backend_settings") as mock_settings,
@@ -72,7 +72,7 @@ class TestJWTMiddleware:
             mock_settings.JWT_SECRET_KEY = JWT_SECRET
             mock_settings.BOT_SECRET = ""
             mock_repo.find_by_id = AsyncMock(return_value=_mock_user())
-            resp = protected_client.get(
+            resp = await protected_client.get(
                 "/test/protected",
                 headers={"Authorization": f"Bearer {token}"},
             )
@@ -80,18 +80,18 @@ class TestJWTMiddleware:
         assert resp.status_code == status.HTTP_200_OK
         assert resp.json()["user_id"] == 1
 
-    def test_missing_token_returns_401(self, protected_client: TestClient):
+    async def test_missing_token_returns_401(self, protected_client):
         with patch("backend.auth.backend_settings") as mock_settings:
             mock_settings.BOT_SECRET = ""
-            resp = protected_client.get("/test/protected")
+            resp = await protected_client.get("/test/protected")
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_expired_token_returns_401(self, protected_client: TestClient):
+    async def test_expired_token_returns_401(self, protected_client):
         token = _make_token(expired=True)
         with patch("backend.auth.backend_settings") as mock_settings:
             mock_settings.JWT_SECRET_KEY = JWT_SECRET
             mock_settings.BOT_SECRET = ""
-            resp = protected_client.get(
+            resp = await protected_client.get(
                 "/test/protected",
                 headers={"Authorization": f"Bearer {token}"},
             )
@@ -99,18 +99,18 @@ class TestJWTMiddleware:
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
         assert "expired" in resp.json()["detail"].lower()
 
-    def test_invalid_token_returns_401(self, protected_client: TestClient):
+    async def test_invalid_token_returns_401(self, protected_client):
         with patch("backend.auth.backend_settings") as mock_settings:
             mock_settings.JWT_SECRET_KEY = JWT_SECRET
             mock_settings.BOT_SECRET = ""
-            resp = protected_client.get(
+            resp = await protected_client.get(
                 "/test/protected",
                 headers={"Authorization": "Bearer garbage.token.here"},
             )
 
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_user_not_found_returns_401(self, protected_client: TestClient):
+    async def test_user_not_found_returns_401(self, protected_client):
         token = _make_token()
         with (
             patch("backend.auth.backend_settings") as mock_settings,
@@ -119,14 +119,14 @@ class TestJWTMiddleware:
             mock_settings.JWT_SECRET_KEY = JWT_SECRET
             mock_settings.BOT_SECRET = ""
             mock_repo.find_by_id = AsyncMock(return_value=None)
-            resp = protected_client.get(
+            resp = await protected_client.get(
                 "/test/protected",
                 headers={"Authorization": f"Bearer {token}"},
             )
 
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_inactive_user_returns_403(self, protected_client: TestClient):
+    async def test_inactive_user_returns_403(self, protected_client):
         token = _make_token()
         with (
             patch("backend.auth.backend_settings") as mock_settings,
@@ -135,7 +135,7 @@ class TestJWTMiddleware:
             mock_settings.JWT_SECRET_KEY = JWT_SECRET
             mock_settings.BOT_SECRET = ""
             mock_repo.find_by_id = AsyncMock(return_value=_mock_user(is_active=False))
-            resp = protected_client.get(
+            resp = await protected_client.get(
                 "/test/protected",
                 headers={"Authorization": f"Bearer {token}"},
             )

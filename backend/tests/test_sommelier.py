@@ -1,7 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import anthropic
-import pytest
 
 from backend.services.sommelier import _FALLBACK_MESSAGE, _build_messages, sommelier_chat
 
@@ -23,7 +22,6 @@ class TestBuildMessages:
 
 
 class TestSommelierChat:
-    @pytest.mark.asyncio
     @patch("backend.services.sommelier.get_anthropic_client")
     @patch("backend.services.sommelier.backend_settings")
     async def test_successful_response(
@@ -45,14 +43,12 @@ class TestSommelierChat:
         assert result == "Lamb pairs beautifully with Syrah."
         mock_client.messages.create.assert_called_once()
 
-    @pytest.mark.asyncio
     @patch("backend.services.sommelier.backend_settings")
     async def test_no_api_key_returns_fallback(self, mock_settings: MagicMock) -> None:
         mock_settings.ANTHROPIC_API_KEY = ""
         result = await sommelier_chat("Tell me about Bordeaux")
         assert result == _FALLBACK_MESSAGE
 
-    @pytest.mark.asyncio
     @patch("backend.services.sommelier.get_anthropic_client")
     @patch("backend.services.sommelier.backend_settings")
     async def test_api_error_returns_fallback(
@@ -68,7 +64,6 @@ class TestSommelierChat:
         result = await sommelier_chat("What is tannin?")
         assert result == _FALLBACK_MESSAGE
 
-    @pytest.mark.asyncio
     @patch("backend.services.sommelier.get_anthropic_client")
     @patch("backend.services.sommelier.backend_settings")
     async def test_no_text_blocks_returns_fallback(
@@ -85,7 +80,6 @@ class TestSommelierChat:
         result = await sommelier_chat("Hello")
         assert result == _FALLBACK_MESSAGE
 
-    @pytest.mark.asyncio
     @patch("backend.services.sommelier.get_anthropic_client")
     @patch("backend.services.sommelier.backend_settings")
     async def test_passes_conversation_history(

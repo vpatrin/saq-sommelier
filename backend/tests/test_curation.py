@@ -1,7 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from backend.services.curation import (
     ExplanationResult,
     _build_user_message,
@@ -108,14 +106,12 @@ class TestFallback:
 
 
 class TestExplainRecommendations:
-    @pytest.mark.asyncio
     async def test_empty_products_returns_empty(self) -> None:
         result = await explain_recommendations("query", [])
         assert isinstance(result, ExplanationResult)
         assert result.reasons == []
         assert result.summary == ""
 
-    @pytest.mark.asyncio
     @patch("backend.services.curation.backend_settings")
     async def test_no_api_key_returns_fallback(self, mock_settings: MagicMock) -> None:
         mock_settings.ANTHROPIC_API_KEY = ""
@@ -124,7 +120,6 @@ class TestExplainRecommendations:
         assert len(result.reasons) == 1
         assert result.reasons[0] == ""
 
-    @pytest.mark.asyncio
     @patch("backend.services.curation.get_anthropic_client")
     @patch("backend.services.curation.backend_settings")
     async def test_successful_call(
@@ -151,7 +146,6 @@ class TestExplainRecommendations:
         assert result.reasons == ["Great Bordeaux red"]
         assert result.summary == "A solid pick"
 
-    @pytest.mark.asyncio
     @patch("backend.services.curation.get_anthropic_client")
     @patch("backend.services.curation.backend_settings")
     async def test_api_error_returns_fallback(
@@ -171,7 +165,6 @@ class TestExplainRecommendations:
         assert len(result.reasons) == 1
         assert result.reasons[0] == ""
 
-    @pytest.mark.asyncio
     @patch("backend.services.curation.get_anthropic_client")
     @patch("backend.services.curation.backend_settings")
     async def test_no_tool_use_block_returns_fallback(

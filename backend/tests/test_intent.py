@@ -2,7 +2,6 @@ from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import anthropic
-import pytest
 
 from backend.services.intent import parse_intent
 
@@ -30,7 +29,6 @@ def _mock_text_response() -> MagicMock:
 
 
 class TestParseIntent:
-    @pytest.mark.asyncio
     @patch("backend.services.intent.get_anthropic_client")
     @patch("backend.services.intent.backend_settings")
     async def test_extracts_category_and_price(
@@ -59,7 +57,6 @@ class TestParseIntent:
         assert result.country is None
         assert result.semantic_query == "fruité"
 
-    @pytest.mark.asyncio
     @patch("backend.services.intent.get_anthropic_client")
     @patch("backend.services.intent.backend_settings")
     async def test_extracts_country(
@@ -83,7 +80,6 @@ class TestParseIntent:
         assert result.country == "France"
         assert result.semantic_query == "crisp dry white"
 
-    @pytest.mark.asyncio
     @patch("backend.services.intent.get_anthropic_client")
     @patch("backend.services.intent.backend_settings")
     async def test_semantic_only_query(
@@ -109,7 +105,6 @@ class TestParseIntent:
         assert result.max_price is None
         assert result.semantic_query == "something for a BBQ with friends"
 
-    @pytest.mark.asyncio
     @patch("backend.services.intent.get_anthropic_client")
     @patch("backend.services.intent.backend_settings")
     async def test_falls_back_on_api_error(
@@ -130,7 +125,6 @@ class TestParseIntent:
         assert result.intent_type == "recommendation"
         assert result.categories == []
 
-    @pytest.mark.asyncio
     @patch("backend.services.intent.backend_settings")
     async def test_falls_back_when_no_api_key(self, mock_settings: MagicMock) -> None:
         mock_settings.ANTHROPIC_API_KEY = ""
@@ -141,7 +135,6 @@ class TestParseIntent:
         assert result.intent_type == "recommendation"
         assert result.categories == []
 
-    @pytest.mark.asyncio
     @patch("backend.services.intent.get_anthropic_client")
     @patch("backend.services.intent.backend_settings")
     async def test_handles_missing_optional_fields(
@@ -163,7 +156,6 @@ class TestParseIntent:
         assert result.country is None
         assert result.semantic_query == "bold red"
 
-    @pytest.mark.asyncio
     @patch("backend.services.intent.get_anthropic_client")
     @patch("backend.services.intent.backend_settings")
     async def test_wine_chat_tool_returns_wine_chat_intent(
@@ -182,7 +174,6 @@ class TestParseIntent:
         assert result.intent_type == "wine_chat"
         assert result.semantic_query == "tell me about Burgundy"
 
-    @pytest.mark.asyncio
     @patch("backend.services.intent.get_anthropic_client")
     @patch("backend.services.intent.backend_settings")
     async def test_off_topic_tool_returns_off_topic_intent(
@@ -198,7 +189,6 @@ class TestParseIntent:
 
         assert result.intent_type == "off_topic"
 
-    @pytest.mark.asyncio
     @patch("backend.services.intent.get_anthropic_client")
     @patch("backend.services.intent.backend_settings")
     async def test_no_tool_call_falls_back_to_wine_chat(
@@ -215,7 +205,6 @@ class TestParseIntent:
         assert result.intent_type == "wine_chat"
         assert result.semantic_query == "bonjour"
 
-    @pytest.mark.asyncio
     @patch("backend.services.intent.get_anthropic_client")
     @patch("backend.services.intent.backend_settings")
     async def test_conversation_history_included_in_messages(

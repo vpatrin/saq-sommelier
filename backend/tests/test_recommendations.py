@@ -53,7 +53,6 @@ def _fake_product(
 
 
 class TestRecommend:
-    @pytest.mark.asyncio
     @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
     @patch("backend.services.recommendations.explain_recommendations", new_callable=AsyncMock)
     @patch("backend.services.recommendations.find_similar", new_callable=AsyncMock)
@@ -93,7 +92,6 @@ class TestRecommend:
         assert "intent" in log_kwargs["latency_ms"]
         assert "total" in log_kwargs["latency_ms"]
 
-    @pytest.mark.asyncio
     @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
     @patch("backend.services.recommendations.explain_recommendations", new_callable=AsyncMock)
     @patch("backend.services.recommendations.find_similar", new_callable=AsyncMock)
@@ -120,7 +118,6 @@ class TestRecommend:
         assert result.summary == ""
         assert result.intent.semantic_query == "rare wine"
 
-    @pytest.mark.asyncio
     @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
     @patch("backend.services.recommendations.parse_intent", new_callable=AsyncMock)
     async def test_non_wine_returns_early_without_logging(
@@ -137,7 +134,6 @@ class TestRecommend:
         assert result.log_id is None
         mock_write_log.assert_not_called()
 
-    @pytest.mark.asyncio
     @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
     @patch("backend.services.recommendations.explain_recommendations", new_callable=AsyncMock)
     @patch("backend.services.recommendations.find_similar", new_callable=AsyncMock)
@@ -172,7 +168,6 @@ class TestRecommend:
             "User: bold red\nAssistant: Great picks."
         )
 
-    @pytest.mark.asyncio
     @patch("backend.services.recommendations.parse_intent", new_callable=AsyncMock)
     async def test_pipeline_failure_does_not_log(
         self,
@@ -190,7 +185,6 @@ def _fake_embedding() -> list[float]:
 
 
 class TestFindSimilar:
-    @pytest.mark.asyncio
     async def test_returns_product_list(self) -> None:
         mock_product = MagicMock()
         mock_result = MagicMock()
@@ -204,7 +198,6 @@ class TestFindSimilar:
 
         assert products == [mock_product]
 
-    @pytest.mark.asyncio
     async def test_returns_empty_list(self) -> None:
         mock_result = MagicMock()
         mock_result.scalars.return_value.all.return_value = []

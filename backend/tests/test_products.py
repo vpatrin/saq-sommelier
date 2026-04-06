@@ -4,9 +4,9 @@ from types import SimpleNamespace, UnionType
 from typing import get_origin
 from unittest.mock import AsyncMock, MagicMock
 
+import httpx
 import pytest
 from fastapi import status
-from fastapi.testclient import TestClient
 
 from backend.app import app
 from backend.config import MAX_FILTER_LENGTH, MAX_SEARCH_LENGTH, MAX_SKU_LENGTH
@@ -76,41 +76,44 @@ def _mock_db_for_detail(product):
 # ── Detail endpoint ──────────────────────────────────────────────
 
 
-def test_get_product_found():
+async def test_get_product_found():
     product = _fake_product(sku="ABC123", name="Château Test")
     session = _mock_db_for_detail(product)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products/ABC123")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/ABC123")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["sku"] == "ABC123"
     assert data["name"] == "Château Test"
 
 
-def test_get_product_not_found():
+async def test_get_product_not_found():
     session = _mock_db_for_detail(None)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products/NOPE")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/NOPE")
     assert resp.status_code == status.HTTP_404_NOT_FOUND
     assert "NOPE" in resp.json()["detail"]
 
 
-def test_get_product_response_shape():
+async def test_get_product_response_shape():
     """Detail endpoint returns the same fields as the list endpoint."""
     product = _fake_product()
     session = _mock_db_for_detail(product)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products/test")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/test")
     assert set(resp.json().keys()) == EXPECTED_FIELDS
 
 
-def test_get_product_excludes_sensitive_fields():
+async def test_get_product_excludes_sensitive_fields():
     """Verbatim SAQ content must not appear in detail responses either."""
     product = _fake_product(
         description="SAQ text", url="https://saq.com/x", image="https://saq.com/img.jpg"
@@ -118,8 +121,9 @@ def test_get_product_excludes_sensitive_fields():
     session = _mock_db_for_detail(product)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products/test")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/test")
     for field in ("description", "image"):
         assert field not in resp.json(), f"{field} should not be exposed in API"
 
@@ -127,13 +131,14 @@ def test_get_product_excludes_sensitive_fields():
 # ── List endpoint ────────────────────────────────────────────────
 
 
-def test_list_products_default_pagination():
+async def test_list_products_default_pagination():
     products = [_fake_product(sku=f"SKU{i}", name=f"Wine {i}") for i in range(3)]
     session = _mock_db_for_products(products, total=3)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 3
@@ -143,36 +148,39 @@ def test_list_products_default_pagination():
     assert data["products"][0]["sku"] == "SKU0"
 
 
-def test_list_products_response_shape():
+async def test_list_products_response_shape():
     """Verify exact fields returned — catches accidental additions/removals."""
     products = [_fake_product()]
     session = _mock_db_for_products(products, total=1)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products")
     product = resp.json()["products"][0]
     assert set(product.keys()) == EXPECTED_FIELDS
 
 
-def test_list_products_price_serialization():
+async def test_list_products_price_serialization():
     """Decimal price serializes as string to preserve precision."""
     products = [_fake_product(price=15.99)]
     session = _mock_db_for_products(products, total=1)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products")
     assert resp.json()["products"][0]["price"] == "15.99"
 
 
-def test_list_products_custom_pagination():
+async def test_list_products_custom_pagination():
     products = [_fake_product(sku="SKU5", name="Wine 5")]
     session = _mock_db_for_products(products, total=25)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?limit=10&offset=10")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?limit=10&offset=10")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 25
@@ -181,12 +189,13 @@ def test_list_products_custom_pagination():
     assert len(data["products"]) == 1
 
 
-def test_list_products_empty():
+async def test_list_products_empty():
     session = _mock_db_for_products([], total=0)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 0
@@ -202,12 +211,13 @@ def test_list_products_empty():
     ],
     ids=["limit_zero", "limit_too_large", "negative_offset"],
 )
-def test_pagination_validation_rejected(qs):
+async def test_pagination_validation_rejected(qs):
     """Invalid pagination params return 422."""
     session = _mock_db_for_products([], total=0)
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get(f"/api/products?{qs}")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(f"/api/products?{qs}")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -223,7 +233,7 @@ def test_product_response_fields_exist_on_model():
     assert not missing, f"ProductOut fields not in Product model: {missing}"
 
 
-def test_list_products_excludes_sensitive_fields():
+async def test_list_products_excludes_sensitive_fields():
     """Verbatim SAQ content must not appear in API responses."""
     products = [
         _fake_product(
@@ -233,8 +243,9 @@ def test_list_products_excludes_sensitive_fields():
     session = _mock_db_for_products(products, total=1)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products")
     product = resp.json()["products"][0]
     # ! We decided to exclude SAQ proprietary data
     for field in ("description", "image"):
@@ -244,50 +255,54 @@ def test_list_products_excludes_sensitive_fields():
 # ── Search & filter endpoint ────────────────────────────────────
 
 
-def test_search_by_name():
+async def test_search_by_name():
     """?q=margaux filters products — pagination reflects filtered total."""
     products = [_fake_product(sku="MATCH1", name="Château Margaux")]
     session = _mock_db_for_products(products, total=1)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?q=margaux")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?q=margaux")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 1
     assert len(data["products"]) == 1
 
 
-def test_filter_by_category():
+async def test_filter_by_category():
     products = [_fake_product(sku="RED1", category="Vin rouge")]
     session = _mock_db_for_products(products, total=1)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?category=Vin+rouge")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?category=Vin+rouge")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["total"] == 1
 
 
-def test_filter_by_price_range():
+async def test_filter_by_price_range():
     products = [_fake_product(sku="MID1", price=Decimal("25.00"))]
     session = _mock_db_for_products(products, total=1)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?min_price=15&max_price=30")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?min_price=15&max_price=30")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["total"] == 1
 
 
-def test_combined_filters_with_pagination():
+async def test_combined_filters_with_pagination():
     """Multiple filters + pagination work together."""
     products = [_fake_product(sku="FR1")]
     session = _mock_db_for_products(products, total=15)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?country=France&min_price=10&limit=10&offset=10")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?country=France&min_price=10&limit=10&offset=10")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["total"] == 15
@@ -295,13 +310,14 @@ def test_combined_filters_with_pagination():
     assert data["offset"] == 10
 
 
-def test_filter_no_results():
+async def test_filter_no_results():
     """Filters that match nothing return 200 with empty list, not 404."""
     session = _mock_db_for_products([], total=0)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?country=Atlantis")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?country=Atlantis")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["total"] == 0
     assert resp.json()["products"] == []
@@ -318,12 +334,13 @@ def test_filter_no_results():
     ],
     ids=["empty_q", "negative_price", "q_too_long", "category_too_long", "sku_too_long"],
 )
-def test_input_validation_rejected(path):
+async def test_input_validation_rejected(path):
     """Invalid filter/search inputs return 422."""
     session = _mock_db_for_products([], total=0)
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get(path)
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(path)
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -388,7 +405,7 @@ def _mock_session_factory_for_facets(
     return factory
 
 
-def test_facets_response_shape():
+async def test_facets_response_shape():
     """Facets endpoint returns all expected keys with sorted values."""
     factory = _mock_session_factory_for_facets(
         categories=["Vin blanc", "Vin rouge"],
@@ -399,8 +416,9 @@ def test_facets_response_shape():
     )
 
     app.dependency_overrides[get_session_factory] = lambda: factory
-    client = TestClient(app)
-    resp = client.get("/api/products/facets")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/facets")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["categories"] == ["Vin blanc", "Vin rouge"]
@@ -415,7 +433,7 @@ def test_facets_response_shape():
     assert isinstance(data["category_families"], list)
 
 
-def test_facets_empty_catalog():
+async def test_facets_empty_catalog():
     """Empty catalog returns empty lists and null price range."""
     factory = _mock_session_factory_for_facets(
         categories=[],
@@ -426,8 +444,9 @@ def test_facets_empty_catalog():
     )
 
     app.dependency_overrides[get_session_factory] = lambda: factory
-    client = TestClient(app)
-    resp = client.get("/api/products/facets")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/facets")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert data["categories"] == []
@@ -437,7 +456,7 @@ def test_facets_empty_catalog():
     assert data["price_range"] is None
 
 
-def test_facets_no_prices():
+async def test_facets_no_prices():
     """Products exist but none have prices — lists populated, price_range null."""
     factory = _mock_session_factory_for_facets(
         categories=["Vin rouge"],
@@ -448,8 +467,9 @@ def test_facets_no_prices():
     )
 
     app.dependency_overrides[get_session_factory] = lambda: factory
-    client = TestClient(app)
-    resp = client.get("/api/products/facets")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/facets")
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert len(data["categories"]) == 1
@@ -459,114 +479,124 @@ def test_facets_no_prices():
 # ── Sorting ───────────────────────────────────────────────────
 
 
-def test_sort_recent_returns_200():
+async def test_sort_recent_returns_200():
     """?sort=recent returns 200 with products."""
     products = [_fake_product(sku="NEW1")]
     session = _mock_db_for_products(products, total=1)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?sort=recent")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?sort=recent")
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["total"] == 1
 
 
-def test_sort_invalid_rejected():
+async def test_sort_invalid_rejected():
     """Invalid sort value returns 422."""
     session = _mock_db_for_products([], total=0)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products?sort=bogus")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?sort=bogus")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 @pytest.mark.parametrize("sort_value", ["price_asc", "price_desc"])
-def test_sort_by_price_returns_200(sort_value):
+async def test_sort_by_price_returns_200(sort_value):
     """Price sort options return 200."""
     products = [_fake_product(sku="S1")]
     session = _mock_db_for_products(products, total=1)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get(f"/api/products?sort={sort_value}")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get(f"/api/products?sort={sort_value}")
     assert resp.status_code == status.HTTP_200_OK
 
 
 # ── Random endpoint ───────────────────────────────────────────
 
 
-def test_random_product_found():
+async def test_random_product_found():
     """Random endpoint returns a single product."""
     product = _fake_product(sku="RAND1", name="Château Random")
     session = _mock_db_for_detail(product)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products/random")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/random")
     assert resp.status_code == status.HTTP_200_OK
     assert set(resp.json().keys()) == EXPECTED_FIELDS
 
 
-def test_random_product_not_found():
+async def test_random_product_not_found():
     """Random endpoint returns 404 when no products match."""
     session = _mock_db_for_detail(None)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products/random")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/random")
     assert resp.status_code == status.HTTP_404_NOT_FOUND
 
 
-def test_random_with_filters():
+async def test_random_with_filters():
     """Random endpoint accepts filter params."""
     product = _fake_product(sku="FILT1", category="Vin rouge")
     session = _mock_db_for_detail(product)
 
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
-    resp = client.get("/api/products/random?category=Vin+rouge&min_price=10")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/random?category=Vin+rouge&min_price=10")
     assert resp.status_code == status.HTTP_200_OK
 
 
-def test_scope_wine_is_default_on_list_endpoint():
+async def test_scope_wine_is_default_on_list_endpoint():
     """Default scope=wine means wine prefix filtering is active."""
     products = [_fake_product(sku="W1", category="Vin rouge")]
     session = _mock_db_for_products(products, total=1)
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
 
-    resp = client.get("/api/products")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products")
     assert resp.status_code == status.HTTP_200_OK
 
 
-def test_scope_all_disables_wine_filtering():
+async def test_scope_all_disables_wine_filtering():
     """scope=all returns products from all categories."""
     products = [_fake_product(sku="W1", category="Whisky")]
     session = _mock_db_for_products(products, total=1)
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
 
-    resp = client.get("/api/products?scope=all")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?scope=all")
     assert resp.status_code == status.HTTP_200_OK
 
 
-def test_scope_invalid_value_rejected():
+async def test_scope_invalid_value_rejected():
     """Invalid scope value is rejected by FastAPI validation."""
     session = _mock_db_for_products([], total=0)
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
 
-    resp = client.get("/api/products?scope=beer")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products?scope=beer")
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
-def test_random_endpoint_scope_default():
+async def test_random_endpoint_scope_default():
     """Random endpoint defaults to wine scope."""
     product = _fake_product(sku="R1", category="Vin rouge")
     session = _mock_db_for_detail(product)
     app.dependency_overrides[get_db] = lambda: session
-    client = TestClient(app)
 
-    resp = client.get("/api/products/random")
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/products/random")
     assert resp.status_code == status.HTTP_200_OK

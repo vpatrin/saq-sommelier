@@ -1,7 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
-from fastapi.testclient import TestClient
 
 from core.config.test_utils import configure_test_db_env
 from core.db.models import User
@@ -45,27 +45,37 @@ def _mock_regular_user() -> MagicMock:
     return user
 
 
+BASE_URL = "http://test"
+
+
+def make_test_client() -> httpx.AsyncClient:
+    transport = httpx.ASGITransport(app=app)
+    return httpx.AsyncClient(transport=transport, base_url=BASE_URL)
+
+
 @pytest.fixture()
-def admin_client():
+async def admin_client():
     """Client authenticated as admin."""
     admin = _mock_admin()
     app.dependency_overrides[verify_auth] = lambda: admin
     app.dependency_overrides[verify_admin] = lambda: admin
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session
-    yield TestClient(app)
+    async with make_test_client() as client:
+        yield client
     app.dependency_overrides.clear()
 
 
 @pytest.fixture()
-def user_client():
+async def user_client():
     """Client authenticated as regular user (non-admin)."""
     user = _mock_regular_user()
     app.dependency_overrides[verify_auth] = lambda: user
     # Don't override verify_admin — let it run and reject
     session = AsyncMock()
     app.dependency_overrides[get_db] = lambda: session
-    yield TestClient(app)
+    async with make_test_client() as client:
+        yield client
     app.dependency_overrides.clear()
 
 
