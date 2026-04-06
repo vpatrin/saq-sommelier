@@ -37,8 +37,8 @@ updates:
     schedule:
       interval: weekly
     ignore:
-      # @types/node major tracks Node major — bump manually with Node upgrades
-      - dependency-name: "@types/node"
+      # Major bumps are intentional — review and bump manually
+      - dependency-name: "*"
         update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:

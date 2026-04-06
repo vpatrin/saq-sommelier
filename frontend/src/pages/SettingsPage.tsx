@@ -326,7 +326,7 @@ function SettingsPage() {
 
         {/* Footer */}
         <p className="text-center font-mono text-[10px] text-muted-foreground/30 pb-8">
-          Coupette v1.6.0-beta · Montréal, QC
+          Coupette · Montréal, QC
         </p>
       </div>
 
