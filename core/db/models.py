@@ -27,6 +27,7 @@ class User(Base):
     """Registered user — identity linked via OAuth providers (oauth_accounts table)."""
 
     __tablename__ = "users"
+    __table_args__ = (CheckConstraint("locale IN ('fr', 'en')", name="ck_users_locale"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(
@@ -60,6 +61,11 @@ class User(Base):
         default=lambda: datetime.now(UTC),
         nullable=False,
         comment="When user first registered",
+    )
+    locale = Column(
+        String(5),
+        nullable=True,
+        comment="Preferred UI locale (fr, en) — NULL = use browser default",
     )
     last_login_at = Column(
         DateTime(timezone=True),
