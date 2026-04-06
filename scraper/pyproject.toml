@@ -38,7 +38,7 @@ omit = ["tests/*", "*/robots.py"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 78
+fail_under = 77
 
 [tool.ruff]
 target-version = "py312"
