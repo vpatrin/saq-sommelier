@@ -40,18 +40,18 @@ function WineCard({ product, reason, storeNames, watchSlot, userRating }: WineCa
     : null
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border bg-white/[0.025] transition-colors hover:border-primary/20 h-[160px]">
+    <div className="border-border hover:border-primary/20 relative h-[160px] overflow-hidden rounded-xl border bg-white/[0.025] transition-colors">
       {/* Warm gradient overlay */}
-      <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.02] to-transparent" />
+      <div className="from-primary/[0.02] pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br to-transparent" />
 
-      <div className="relative px-[18px] py-3 h-full flex flex-col justify-between">
+      <div className="relative flex h-full flex-col justify-between px-[18px] py-3">
         {/* Top: dot + name + price */}
         <div className="flex items-start gap-2.5">
           {dotColor && (
-            <span className={`mt-[5px] w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
+            <span className={`mt-[5px] h-2 w-2 flex-shrink-0 rounded-full ${dotColor}`} />
           )}
-          <div className="flex items-start justify-between gap-3 flex-1 min-w-0">
-            <p className="text-[14px] font-medium leading-snug min-w-0 flex-1 line-clamp-2">
+          <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+            <p className="line-clamp-2 min-w-0 flex-1 text-[14px] leading-snug font-medium">
               {product.url ? (
                 <a
                   href={product.url}
@@ -70,7 +70,7 @@ function WineCard({ product, reason, storeNames, watchSlot, userRating }: WineCa
               )}
             </p>
             {product.price && (
-              <p className="font-mono text-[18px] font-light text-primary/90 leading-none whitespace-nowrap flex-shrink-0">
+              <p className="text-primary/90 flex-shrink-0 font-mono text-[18px] leading-none font-light whitespace-nowrap">
                 {product.price} $
               </p>
             )}
@@ -78,10 +78,10 @@ function WineCard({ product, reason, storeNames, watchSlot, userRating }: WineCa
         </div>
 
         {/* Middle: region + grapes + user rating */}
-        <div className="ml-[18px] flex flex-col gap-1 min-w-0">
+        <div className="ml-[18px] flex min-w-0 flex-col gap-1">
           {origin && (
             <span
-              className="text-[10px] px-2 py-0.5 rounded border bg-white/[0.04] text-muted-foreground border-white/[0.06] truncate inline-block self-start max-w-full"
+              className="text-muted-foreground inline-block max-w-full self-start truncate rounded border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[10px]"
               title={origin}
             >
               {origin}
@@ -89,14 +89,14 @@ function WineCard({ product, reason, storeNames, watchSlot, userRating }: WineCa
           )}
           {product.grape && (
             <p
-              className="font-mono text-[10px] text-muted-foreground/50 truncate"
+              className="text-muted-foreground/50 truncate font-mono text-[10px]"
               title={product.grape}
             >
               {product.grape}
             </p>
           )}
           {userRating && (
-            <p className="font-mono text-[11px] text-primary/70">
+            <p className="text-primary/70 font-mono text-[11px]">
               {t('wineCard.yourRating', { rating: userRating.rating })}
             </p>
           )}
@@ -104,19 +104,19 @@ function WineCard({ product, reason, storeNames, watchSlot, userRating }: WineCa
 
         {/* Reason / tasting note */}
         {reason && (
-          <p className="text-[12px] font-light text-muted-foreground leading-snug line-clamp-2 border-t border-border pt-2">
+          <p className="text-muted-foreground border-border line-clamp-2 border-t pt-2 text-[12px] leading-snug font-light">
             {reason}
           </p>
         )}
 
         {/* Bottom row: availability left, user rating + watch right */}
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
             {hasOnline && (
               <span className="text-[10px] text-green-500">{t('availability.online')}</span>
             )}
             {hasOnline && storeNode && (
-              <span className="text-[10px] text-muted-foreground/50">·</span>
+              <span className="text-muted-foreground/50 text-[10px]">·</span>
             )}
             {storeNode}
           </div>

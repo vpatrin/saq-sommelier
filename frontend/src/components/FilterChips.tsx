@@ -19,7 +19,7 @@ function FilterChips({ options, value, onChange }: FilterChipsProps) {
             key={opt.value}
             type="button"
             onClick={() => onChange(isActive ? '' : opt.value)}
-            className={`border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+            className={`rounded-full border px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
               isActive
                 ? 'border-primary bg-primary/10 text-primary'
                 : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'

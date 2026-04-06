@@ -178,8 +178,8 @@ function StoresPage() {
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-6 flex items-center gap-3">
           <Link
             to="/stores"
             className="text-muted-foreground/50 hover:text-foreground transition-colors"
@@ -190,14 +190,14 @@ function StoresPage() {
           <h1 className="text-2xl font-light">{t('editStores.title')}</h1>
         </div>
 
-        {error && <p className="text-destructive text-[13px] mb-4">{error}</p>}
+        {error && <p className="text-destructive mb-4 text-[13px]">{error}</p>}
 
         {/* Geolocation states */}
         {(geo.status === 'idle' || geo.status === 'requesting') && (
-          <div className="flex items-start gap-3 rounded-xl border border-green-500/20 bg-green-500/[0.06] px-4 py-3.5 mb-6">
-            <MapPin size={16} weight="fill" className="text-green-500 mt-0.5 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-green-400/90 leading-snug">
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-green-500/20 bg-green-500/[0.06] px-4 py-3.5">
+            <MapPin size={16} weight="fill" className="mt-0.5 flex-shrink-0 text-green-500" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] leading-snug text-green-400/90">
                 {t('editStores.requestingLocation')}
               </p>
             </div>
@@ -205,10 +205,10 @@ function StoresPage() {
         )}
 
         {geo.status === 'denied' && (
-          <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/[0.06] px-4 py-3.5 mb-6">
+          <div className="border-destructive/20 bg-destructive/[0.06] mb-6 flex items-start gap-3 rounded-xl border px-4 py-3.5">
             <MapPin size={16} weight="fill" className="text-destructive mt-0.5 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-destructive/80 leading-snug mb-2.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-destructive/80 mb-2.5 text-[13px] leading-snug">
                 {t(GEO_ERROR_KEYS[geo.errorCode] ?? 'editStores.geoUnavailable')}
               </p>
               {geo.errorCode !== 'denied' && (
@@ -226,7 +226,7 @@ function StoresPage() {
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="h-[76px] rounded-xl bg-white/[0.025] border border-border animate-pulse"
+                className="border-border h-[76px] animate-pulse rounded-xl border bg-white/[0.025]"
               />
             ))}
           </div>
@@ -248,28 +248,28 @@ function StoresPage() {
               return (
                 <li
                   key={store.saq_store_id}
-                  className="relative overflow-hidden rounded-xl border border-border bg-white/[0.025] transition-colors hover:border-primary/20 px-[18px] py-3.5"
+                  className="border-border hover:border-primary/20 relative overflow-hidden rounded-xl border bg-white/[0.025] px-[18px] py-3.5 transition-colors"
                 >
                   {/* Warm gradient overlay */}
-                  <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.02] to-transparent" />
+                  <div className="from-primary/[0.02] pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br to-transparent" />
 
                   <div className="relative flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-medium leading-snug truncate">{store.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] leading-snug font-medium">{store.name}</p>
                       {addressLine && (
-                        <p className="text-[11px] text-muted-foreground/60 mt-0.5 leading-snug truncate">
+                        <p className="text-muted-foreground/60 mt-0.5 truncate text-[11px] leading-snug">
                           {addressLine}
                         </p>
                       )}
                       {store.temporarily_closed && (
-                        <p className="text-[10px] text-destructive/70 mt-0.5">
+                        <p className="text-destructive/70 mt-0.5 text-[10px]">
                           {t('editStores.temporarilyClosed')}
                         </p>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className="font-mono text-[11px] text-muted-foreground/50 whitespace-nowrap">
+                    <div className="flex flex-shrink-0 items-center gap-3">
+                      <span className="text-muted-foreground/50 font-mono text-[11px] whitespace-nowrap">
                         {t('editStores.km', { distance: store.distance_km.toFixed(1) })}
                       </span>
                       <Button

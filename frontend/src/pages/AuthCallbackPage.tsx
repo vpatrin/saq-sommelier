@@ -45,9 +45,9 @@ function AuthCallbackPage() {
 
   if (errorParam === 'not_approved') {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4">
-        <p className="text-sm text-muted-foreground">{t('authCallback.notApproved')}</p>
-        <a href="/" className="text-sm text-primary hover:underline">
+      <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center gap-4">
+        <p className="text-muted-foreground text-sm">{t('authCallback.notApproved')}</p>
+        <a href="/" className="text-primary text-sm hover:underline">
           {t('authCallback.requestAccess')}
         </a>
       </div>
@@ -56,9 +56,9 @@ function AuthCallbackPage() {
 
   if (error || !code) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4">
+      <div className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-destructive text-sm">{error ?? t('authCallback.failed')}</p>
-        <a href="/login" className="text-sm text-primary hover:underline">
+        <a href="/login" className="text-primary text-sm hover:underline">
           {t('authCallback.backToLogin')}
         </a>
       </div>
@@ -66,8 +66,8 @@ function AuthCallbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-      <p className="text-sm text-muted-foreground">{t('authCallback.loading')}</p>
+    <div className="bg-background text-foreground flex min-h-screen items-center justify-center">
+      <p className="text-muted-foreground text-sm">{t('authCallback.loading')}</p>
     </div>
   )
 }

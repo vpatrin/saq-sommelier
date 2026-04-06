@@ -128,13 +128,13 @@ function NoteViewModal({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg mx-4 rounded-xl bg-[#0e0e12] border border-border shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="border-border relative mx-4 flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl border bg-[#0e0e12] shadow-2xl">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border shrink-0">
+        <div className="border-border flex shrink-0 items-center justify-between border-b px-5 py-3.5">
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1.5 text-[12px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            className="text-muted-foreground/50 hover:text-muted-foreground flex items-center gap-1.5 text-[12px] transition-colors"
           >
             <ArrowLeft size={13} weight="bold" />
             {t('nav.journal')}
@@ -144,7 +144,7 @@ function NoteViewModal({
               <button
                 type="button"
                 onClick={() => setMode('edit')}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-white/[0.04] transition-all"
+                className="text-muted-foreground/40 hover:text-foreground flex h-7 w-7 items-center justify-center rounded-md transition-all hover:bg-white/[0.04]"
                 aria-label={t('noteView.edit')}
               >
                 <PencilSimple size={14} />
@@ -152,7 +152,7 @@ function NoteViewModal({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="w-7 h-7 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all"
+                className="text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 flex h-7 w-7 items-center justify-center rounded-md transition-all"
                 aria-label={t('noteView.delete')}
               >
                 <Trash size={14} />
@@ -163,45 +163,45 @@ function NoteViewModal({
         </div>
 
         {/* Scrollable content */}
-        <div className="overflow-y-auto p-5 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 overflow-y-auto p-5">
           {mode === 'view' ? (
             <>
               {/* Wine header — styled like WineCard but with rating instead of price */}
               <div
-                className="rounded-xl border border-border bg-white/[0.025] px-[18px] py-3 flex flex-col justify-between gap-3"
+                className="border-border flex flex-col justify-between gap-3 rounded-xl border bg-white/[0.025] px-[18px] py-3"
                 style={{ borderLeft: '3px solid rgba(200,146,72,0.35)' }}
               >
                 {/* Top: dot + name + rating */}
                 <div className="flex items-start gap-2.5">
                   {dotColor && (
-                    <span className={`mt-[5px] w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
+                    <span className={`mt-[5px] h-2 w-2 flex-shrink-0 rounded-full ${dotColor}`} />
                   )}
-                  <div className="flex items-start justify-between gap-3 flex-1 min-w-0">
+                  <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
                     <a
                       href={saqUrl(currentNote.sku)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[14px] font-medium leading-snug hover:text-primary transition-colors line-clamp-2"
+                      className="hover:text-primary line-clamp-2 text-[14px] leading-snug font-medium transition-colors"
                     >
                       {currentNote.product_name ?? currentNote.sku}
                     </a>
-                    <p className="font-mono text-[18px] font-light text-primary/90 leading-none whitespace-nowrap flex-shrink-0">
+                    <p className="text-primary/90 flex-shrink-0 font-mono text-[18px] leading-none font-light whitespace-nowrap">
                       {currentNote.rating}{' '}
-                      <span className="text-[12px] text-muted-foreground/40">/ 100</span>
+                      <span className="text-muted-foreground/40 text-[12px]">/ 100</span>
                     </p>
                   </div>
                 </div>
 
                 {/* Middle: region pill + grapes */}
                 {(origin || product?.grape) && (
-                  <div className="ml-[18px] flex flex-col gap-1 min-w-0">
+                  <div className="ml-[18px] flex min-w-0 flex-col gap-1">
                     {origin && (
-                      <span className="text-[10px] px-2 py-0.5 rounded border bg-white/[0.04] text-muted-foreground border-white/[0.06] truncate inline-block self-start max-w-full">
+                      <span className="text-muted-foreground inline-block max-w-full self-start truncate rounded border border-white/[0.06] bg-white/[0.04] px-2 py-0.5 text-[10px]">
                         {origin}
                       </span>
                     )}
                     {product?.grape && (
-                      <p className="font-mono text-[10px] text-muted-foreground/50 truncate">
+                      <p className="text-muted-foreground/50 truncate font-mono text-[10px]">
                         {product.grape}
                       </p>
                     )}
@@ -209,14 +209,14 @@ function NoteViewModal({
                 )}
 
                 {/* Bottom: availability + watch */}
-                <div className="flex items-center justify-between gap-3 ml-[18px]">
-                  <div className="flex items-center gap-2 min-w-0">
+                <div className="ml-[18px] flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
                     {product?.online_availability && (
                       <span className="text-[10px] text-green-500">{t('availability.online')}</span>
                     )}
                     {product?.online_availability &&
                       (product?.store_availability?.length ?? 0) > 0 && (
-                        <span className="text-[10px] text-muted-foreground/50">·</span>
+                        <span className="text-muted-foreground/50 text-[10px]">·</span>
                       )}
                     {(product?.store_availability?.length ?? 0) > 0 && (
                       <span className="text-[10px] text-green-500">
@@ -230,7 +230,7 @@ function NoteViewModal({
                     type="button"
                     onClick={handleWatch}
                     disabled={watchLoading || !userId}
-                    className={`text-[11px] px-3 py-1 rounded-lg border transition-colors disabled:opacity-40 ${
+                    className={`rounded-lg border px-3 py-1 text-[11px] transition-colors disabled:opacity-40 ${
                       watched
                         ? 'border-primary/30 bg-primary/[0.08] text-primary/80 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30'
                         : 'border-border text-muted-foreground/60 hover:border-primary/30 hover:text-primary/80 hover:bg-primary/[0.04]'
@@ -243,8 +243,8 @@ function NoteViewModal({
 
               {/* Score bar */}
               <div>
-                <div className="flex items-center gap-3 mb-1.5">
-                  <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="mb-1.5 flex items-center gap-3">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -254,16 +254,16 @@ function NoteViewModal({
                     />
                   </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground/50 italic">{bucket.description}</p>
+                <p className="text-muted-foreground/50 text-[11px] italic">{bucket.description}</p>
               </div>
 
               {/* Impressions */}
               {currentNote.notes && (
                 <div>
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-2">
+                  <p className="text-muted-foreground/40 mb-2 font-mono text-[10px] tracking-widest uppercase">
                     {t('tastingForm.notes')}
                   </p>
-                  <p className="text-[14px] font-light text-muted-foreground/80 leading-relaxed">
+                  <p className="text-muted-foreground/80 text-[14px] leading-relaxed font-light">
                     {currentNote.notes}
                   </p>
                 </div>
@@ -272,17 +272,17 @@ function NoteViewModal({
               {/* Pairing */}
               {currentNote.pairing && (
                 <div>
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-2">
+                  <p className="text-muted-foreground/40 mb-2 font-mono text-[10px] tracking-widest uppercase">
                     {t('tastingForm.pairing')}
                   </p>
-                  <p className="text-[14px] font-light text-muted-foreground/80 leading-relaxed">
+                  <p className="text-muted-foreground/80 text-[14px] leading-relaxed font-light">
                     {currentNote.pairing}
                   </p>
                 </div>
               )}
 
               {/* Date */}
-              <p className="font-mono text-[11px] text-muted-foreground/30 pt-2 border-t border-border">
+              <p className="text-muted-foreground/30 border-border border-t pt-2 font-mono text-[11px]">
                 {dateFmt.format(new Date(currentNote.tasted_at + 'T00:00:00'))}
               </p>
             </>
@@ -311,23 +311,23 @@ function NoteViewModal({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setConfirmDelete(false)}
           />
-          <div className="relative w-full max-w-sm mx-4 rounded-xl bg-[#0e0e12] border border-border shadow-2xl p-6">
-            <p className="text-[14px] font-medium mb-1">{t('noteView.deleteConfirmTitle')}</p>
-            <p className="text-[13px] text-muted-foreground/50 mb-6">
+          <div className="border-border relative mx-4 w-full max-w-sm rounded-xl border bg-[#0e0e12] p-6 shadow-2xl">
+            <p className="mb-1 text-[14px] font-medium">{t('noteView.deleteConfirmTitle')}</p>
+            <p className="text-muted-foreground/50 mb-6 text-[13px]">
               {t('noteView.deleteConfirmDesc')}
             </p>
             <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="text-[13px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                className="text-muted-foreground/50 hover:text-muted-foreground text-[13px] transition-colors"
               >
                 {t('noteView.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleDeleteConfirm}
-                className="px-4 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-[13px] font-medium hover:bg-destructive/90 transition-colors"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors"
               >
                 {t('noteView.delete')}
               </button>

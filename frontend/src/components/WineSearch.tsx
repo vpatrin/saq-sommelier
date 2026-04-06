@@ -81,7 +81,7 @@ function WineSearch({ onSelect, onCancel }: WineSearchProps) {
       <div className="relative mb-2">
         <MagnifyingGlass
           size={14}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+          className="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
         />
         <input
           ref={inputRef}
@@ -93,23 +93,23 @@ function WineSearch({ onSelect, onCancel }: WineSearchProps) {
             if (!e.target.value.trim()) setSearchState({ status: 'idle' })
           }}
           placeholder={t('wineSearch.placeholder')}
-          className="w-full h-9 pl-8 pr-3 rounded-lg bg-white/[0.04] border border-border text-[13px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
+          className="border-border placeholder:text-muted-foreground/40 focus:border-primary/30 h-9 w-full rounded-lg border bg-white/[0.04] pr-3 pl-8 text-[13px] transition-colors focus:outline-none"
         />
       </div>
 
       {searchState.status === 'loading' && (
-        <div className="flex flex-col gap-1 mt-1">
+        <div className="mt-1 flex flex-col gap-1">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="h-9 rounded-lg bg-white/[0.025] border border-border animate-pulse"
+              className="border-border h-9 animate-pulse rounded-lg border bg-white/[0.025]"
             />
           ))}
         </div>
       )}
 
       {searchState.status === 'results' && (
-        <ul className="flex flex-col gap-1 mt-1">
+        <ul className="mt-1 flex flex-col gap-1">
           {searchState.products.map((product) => {
             const meta = [
               product.vintage,
@@ -124,10 +124,10 @@ function WineSearch({ onSelect, onCancel }: WineSearchProps) {
                 <button
                   type="button"
                   onClick={() => onSelect(product)}
-                  className="w-full text-left px-3 py-2 rounded-lg border border-transparent hover:border-primary/20 hover:bg-primary/5 transition-colors"
+                  className="hover:border-primary/20 hover:bg-primary/5 w-full rounded-lg border border-transparent px-3 py-2 text-left transition-colors"
                 >
-                  <p className="text-[13px] font-medium truncate">{product.name ?? product.sku}</p>
-                  {meta && <p className="text-[11px] text-muted-foreground/50 truncate">{meta}</p>}
+                  <p className="truncate text-[13px] font-medium">{product.name ?? product.sku}</p>
+                  {meta && <p className="text-muted-foreground/50 truncate text-[11px]">{meta}</p>}
                 </button>
               </li>
             )
@@ -136,17 +136,17 @@ function WineSearch({ onSelect, onCancel }: WineSearchProps) {
       )}
 
       {searchState.status === 'empty' && (
-        <p className="text-[12px] text-muted-foreground/50 mt-2 px-1">
+        <p className="text-muted-foreground/50 mt-2 px-1 text-[12px]">
           {t('wineSearch.noResults')} « {searchState.query} »
         </p>
       )}
 
       {searchState.status === 'error' && (
-        <p className="text-[12px] text-muted-foreground/50 mt-2 px-1">
+        <p className="text-muted-foreground/50 mt-2 px-1 text-[12px]">
           {t('wineSearch.failedToSearch')}{' '}
           <button
             type="button"
-            className="underline hover:text-foreground transition-colors"
+            className="hover:text-foreground underline transition-colors"
             onClick={() => setRetryKey((k) => k + 1)}
           >
             {t('wineSearch.retry')}

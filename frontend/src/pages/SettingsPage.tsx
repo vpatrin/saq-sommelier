@@ -129,21 +129,21 @@ function SettingsPage() {
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
-      <div className="max-w-[520px] mx-auto">
-        <h1 className="text-[22px] font-light mb-7">
+      <div className="mx-auto max-w-[520px]">
+        <h1 className="mb-7 text-[22px] font-light">
           <strong className="font-semibold">{t('settings.title')}</strong>
         </h1>
 
         {/* Compte */}
         <div className="mb-8">
-          <p className="text-[10px] font-normal text-muted-foreground/40 uppercase tracking-wider mb-3.5 pl-0.5">
+          <p className="text-muted-foreground/40 mb-3.5 pl-0.5 text-[10px] font-normal tracking-wider uppercase">
             {t('settings.account')}
           </p>
-          <div className="rounded-xl border border-border bg-white/[0.025] overflow-hidden">
+          <div className="border-border overflow-hidden rounded-xl border bg-white/[0.025]">
             {/* Display name */}
             <div className="flex items-center justify-between px-4.5 py-3.5">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/[0.06] border border-primary/10 flex items-center justify-center">
+                <div className="bg-primary/[0.06] border-primary/10 flex h-8 w-8 items-center justify-center rounded-lg border">
                   <UserIcon size={16} className="text-primary" />
                 </div>
                 <span className="text-sm">{t('settings.displayName')}</span>
@@ -164,13 +164,13 @@ function SettingsPage() {
                   disabled={savingName}
                   autoFocus
                   maxLength={100}
-                  className="w-40 text-right text-sm bg-transparent border-b border-primary/20 text-foreground focus:outline-none"
+                  className="border-primary/20 text-foreground w-40 border-b bg-transparent text-right text-sm focus:outline-none"
                 />
               ) : (
                 <button
                   type="button"
                   onClick={() => setEditingName(true)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-muted-foreground hover:text-foreground text-sm transition-colors"
                 >
                   {user?.display_name ?? '—'}
                 </button>
@@ -183,30 +183,30 @@ function SettingsPage() {
               return (
                 <div
                   key={provider}
-                  className="flex items-center justify-between px-4.5 py-3.5 border-t border-white/[0.03] group"
+                  className="group flex items-center justify-between border-t border-white/[0.03] px-4.5 py-3.5"
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.04] flex items-center justify-center">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.04] bg-white/[0.03]">
                       {providerIcon(provider)}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm capitalize">{provider}</p>
                       {account && (
-                        <p className="text-xs text-muted-foreground/40 truncate">{account.email}</p>
+                        <p className="text-muted-foreground/40 truncate text-xs">{account.email}</p>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     {account ? (
                       <>
-                        <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-green-500/[0.08] border border-green-500/[0.12] text-green-400">
+                        <span className="rounded-md border border-green-500/[0.12] bg-green-500/[0.08] px-2.5 py-0.5 text-[11px] text-green-400">
                           {t('settings.connected')}
                         </span>
                         {canDisconnect && (
                           <button
                             type="button"
                             onClick={() => handleDisconnect(provider)}
-                            className="text-[11px] text-muted-foreground/30 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
+                            className="text-muted-foreground/30 hover:text-destructive text-[11px] opacity-0 transition-all group-hover:opacity-100"
                           >
                             {t('settings.disconnect')}
                           </button>
@@ -215,7 +215,7 @@ function SettingsPage() {
                     ) : (
                       <a
                         href={`/api/auth/${provider}/login`}
-                        className="text-[11px] px-2.5 py-0.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-primary/20 transition-colors"
+                        className="border-border text-muted-foreground hover:text-foreground hover:border-primary/20 rounded-md border px-2.5 py-0.5 text-[11px] transition-colors"
                       >
                         {t('settings.connect')}
                       </a>
@@ -229,18 +229,18 @@ function SettingsPage() {
 
         {/* Préférences */}
         <div className="mb-8">
-          <p className="text-[10px] font-normal text-muted-foreground/40 uppercase tracking-wider mb-3.5 pl-0.5">
+          <p className="text-muted-foreground/40 mb-3.5 pl-0.5 text-[10px] font-normal tracking-wider uppercase">
             {t('settings.preferences')}
           </p>
-          <div className="rounded-xl border border-border bg-white/[0.025] overflow-hidden">
+          <div className="border-border overflow-hidden rounded-xl border bg-white/[0.025]">
             <div className="flex items-center justify-between px-4.5 py-3.5">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.04] flex items-center justify-center">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.04] bg-white/[0.03]">
                   <GlobeIcon size={16} className="text-muted-foreground" />
                 </div>
                 <span className="text-sm">{t('settings.language')}</span>
               </div>
-              <div className="flex rounded-lg border border-border overflow-hidden">
+              <div className="border-border flex overflow-hidden rounded-lg border">
                 {(['fr', 'en'] as const).map((lang) => (
                   <button
                     key={lang}
@@ -257,7 +257,7 @@ function SettingsPage() {
                         // Best-effort — locale already applied locally
                       }
                     }}
-                    className={`px-3 py-1 text-xs font-mono uppercase transition-colors ${
+                    className={`px-3 py-1 font-mono text-xs uppercase transition-colors ${
                       i18n.resolvedLanguage === lang
                         ? 'bg-primary/10 text-primary border-primary/20'
                         : 'text-muted-foreground/40 hover:text-muted-foreground'
@@ -273,31 +273,31 @@ function SettingsPage() {
 
         {/* Notifications */}
         <div className="mb-8">
-          <p className="text-[10px] font-normal text-muted-foreground/40 uppercase tracking-wider mb-3.5 pl-0.5">
+          <p className="text-muted-foreground/40 mb-3.5 pl-0.5 text-[10px] font-normal tracking-wider uppercase">
             {t('settings.notifications')}
           </p>
-          <div className="rounded-xl border border-border bg-white/[0.025] overflow-hidden">
-            <div className="flex items-center justify-between px-4.5 py-3.5 group">
+          <div className="border-border overflow-hidden rounded-xl border bg-white/[0.025]">
+            <div className="group flex items-center justify-between px-4.5 py-3.5">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.04] flex items-center justify-center">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.04] bg-white/[0.03]">
                   <TelegramLogoIcon size={16} className="text-muted-foreground" />
                 </div>
                 <div>
                   <p className="text-sm">Telegram</p>
-                  <p className="text-xs text-muted-foreground/40">
+                  <p className="text-muted-foreground/40 text-xs">
                     {telegramLinked ? `@${BOT_USERNAME}` : t('settings.telegramDesc')}
                   </p>
                 </div>
               </div>
               {telegramLinked ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] px-2.5 py-0.5 rounded-md bg-green-500/[0.08] border border-green-500/[0.12] text-green-400">
+                  <span className="rounded-md border border-green-500/[0.12] bg-green-500/[0.08] px-2.5 py-0.5 text-[11px] text-green-400">
                     {t('settings.connected')}
                   </span>
                   <button
                     type="button"
                     onClick={handleUnlinkTelegram}
-                    className="text-[11px] text-muted-foreground/30 hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
+                    className="text-muted-foreground/30 hover:text-destructive text-[11px] opacity-0 transition-all group-hover:opacity-100"
                   >
                     {t('settings.disconnect')}
                   </button>
@@ -315,28 +315,28 @@ function SettingsPage() {
 
         {/* Zone dangereuse */}
         <div className="mb-8">
-          <p className="text-[10px] font-normal text-muted-foreground/40 uppercase tracking-wider mb-3.5 pl-0.5">
+          <p className="text-muted-foreground/40 mb-3.5 pl-0.5 text-[10px] font-normal tracking-wider uppercase">
             {t('settings.dangerZone')}
           </p>
-          <div className="rounded-xl border border-border bg-white/[0.025] overflow-hidden">
+          <div className="border-border overflow-hidden rounded-xl border bg-white/[0.025]">
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-3 px-4.5 py-3.5 w-full hover:bg-white/[0.01] transition-colors"
+              className="flex w-full items-center gap-3 px-4.5 py-3.5 transition-colors hover:bg-white/[0.01]"
             >
-              <div className="w-8 h-8 rounded-lg bg-destructive/[0.06] border border-destructive/10 flex items-center justify-center">
+              <div className="bg-destructive/[0.06] border-destructive/10 flex h-8 w-8 items-center justify-center rounded-lg border">
                 <TrashIcon size={16} className="text-destructive" />
               </div>
               <div className="text-left">
-                <p className="text-sm text-destructive">{t('settings.deleteAccount')}</p>
-                <p className="text-xs text-muted-foreground/30">{t('settings.deleteDesc')}</p>
+                <p className="text-destructive text-sm">{t('settings.deleteAccount')}</p>
+                <p className="text-muted-foreground/30 text-xs">{t('settings.deleteDesc')}</p>
               </div>
             </button>
           </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center font-mono text-[10px] text-muted-foreground/30 pb-8">
+        <p className="text-muted-foreground/30 pb-8 text-center font-mono text-[10px]">
           Coupette · Montréal, QC
         </p>
       </div>
@@ -348,12 +348,12 @@ function SettingsPage() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setConfirmDelete(false)}
           />
-          <div className="relative w-full max-w-sm mx-4 rounded-xl bg-[#0e0e12] border border-border shadow-2xl p-6">
-            <p className="text-[14px] font-medium mb-1">{t('settings.deleteConfirmTitle')}</p>
-            <p className="text-[13px] text-muted-foreground/50 mb-4">
+          <div className="border-border relative mx-4 w-full max-w-sm rounded-xl border bg-[#0e0e12] p-6 shadow-2xl">
+            <p className="mb-1 text-[14px] font-medium">{t('settings.deleteConfirmTitle')}</p>
+            <p className="text-muted-foreground/50 mb-4 text-[13px]">
               {t('settings.deleteConfirmDesc')}
             </p>
-            <p className="text-[12px] text-muted-foreground/40 mb-2">
+            <p className="text-muted-foreground/40 mb-2 text-[12px]">
               {t('settings.deleteConfirmPrompt', { word: t('settings.deleteWord') })}
             </p>
             <input
@@ -362,7 +362,7 @@ function SettingsPage() {
               onChange={(e) => setDeleteInput(e.target.value)}
               placeholder={t('settings.deleteWord')}
               autoFocus
-              className="w-full px-3 py-2 mb-4 rounded-lg border border-border bg-transparent text-sm text-foreground placeholder:text-muted-foreground/20 focus:border-destructive/30 focus:outline-none transition-colors"
+              className="border-border text-foreground placeholder:text-muted-foreground/20 focus:border-destructive/30 mb-4 w-full rounded-lg border bg-transparent px-3 py-2 text-sm transition-colors focus:outline-none"
             />
             <div className="flex justify-end gap-3">
               <button
@@ -371,7 +371,7 @@ function SettingsPage() {
                   setConfirmDelete(false)
                   setDeleteInput('')
                 }}
-                className="text-[13px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                className="text-muted-foreground/50 hover:text-muted-foreground text-[13px] transition-colors"
               >
                 {t('settings.cancel')}
               </button>
@@ -381,7 +381,7 @@ function SettingsPage() {
                   deleting || deleteInput.toLowerCase() !== t('settings.deleteWord').toLowerCase()
                 }
                 onClick={handleDeleteAccount}
-                className="px-4 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-[13px] font-medium hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors disabled:opacity-50"
               >
                 {t('settings.deleteButton')}
               </button>

@@ -198,39 +198,39 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
 
     content = (
       <>
-        <div className="px-5 pt-5 pb-4 border-b border-border/50">
-          <div className="flex items-center gap-2 mb-3">
-            {dotColor && <span className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />}
+        <div className="border-border/50 border-b px-5 pt-5 pb-4">
+          <div className="mb-3 flex items-center gap-2">
+            {dotColor && <span className={`h-2 w-2 shrink-0 rounded-full ${dotColor}`} />}
             {p.category && (
-              <span className="text-[11px] text-muted-foreground/60">{p.category}</span>
+              <span className="text-muted-foreground/60 text-[11px]">{p.category}</span>
             )}
           </div>
-          <h2 className="text-[15px] font-medium leading-snug line-clamp-3 mb-1">
+          <h2 className="mb-1 line-clamp-3 text-[15px] leading-snug font-medium">
             {p.name ?? p.sku}
           </h2>
           {(p.producer || p.vintage) && (
-            <p className="text-[12px] text-muted-foreground/60">
+            <p className="text-muted-foreground/60 text-[12px]">
               {[p.producer, p.vintage].filter(Boolean).join(' · ')}
             </p>
           )}
           {p.taste_tag && (
-            <span className="inline-block mt-2 text-[11px] px-2 py-0.5 rounded border bg-primary/[0.06] text-primary/60 border-primary/15">
+            <span className="bg-primary/[0.06] text-primary/60 border-primary/15 mt-2 inline-block rounded border px-2 py-0.5 text-[11px]">
               {p.taste_tag}
             </span>
           )}
         </div>
 
-        <div className="px-5 py-4 border-b border-border/50 flex items-center gap-3">
-          <span className="font-mono text-[18px] text-primary whitespace-nowrap">
+        <div className="border-border/50 flex items-center gap-3 border-b px-5 py-4">
+          <span className="text-primary font-mono text-[18px] whitespace-nowrap">
             {p.price ? `${p.price} $` : '—'}
           </span>
-          {p.size && <span className="text-[11px] text-muted-foreground/50">{p.size}</span>}
+          {p.size && <span className="text-muted-foreground/50 text-[11px]">{p.size}</span>}
           <div className="flex-1" />
           <button
             type="button"
             disabled={isBusy}
             onClick={() => sku && (isWatched ? handleUnwatch(sku) : handleWatch(sku))}
-            className={`w-28 justify-center flex items-center gap-1.5 border rounded-lg px-3 py-1.5 text-[12px] transition-colors shrink-0 ${
+            className={`flex w-28 shrink-0 items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] transition-colors ${
               isWatched
                 ? 'border-primary/40 bg-primary/10 text-primary'
                 : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
@@ -243,7 +243,7 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
             type="button"
             disabled
             title={t('userMenu.soon')}
-            className="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-muted-foreground/20 cursor-not-allowed"
+            className="border-border text-muted-foreground/20 flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border"
           >
             <ChartDonut size={13} />
           </button>
@@ -251,18 +251,18 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
             type="button"
             disabled
             title={t('userMenu.soon')}
-            className="w-7 h-7 flex items-center justify-center rounded-lg border border-border text-muted-foreground/20 cursor-not-allowed"
+            className="border-border text-muted-foreground/20 flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-lg border"
           >
             <NotePencil size={13} />
           </button>
         </div>
 
         {details.length > 0 && (
-          <div className="px-5 py-4 border-b border-border/50">
+          <div className="border-border/50 border-b px-5 py-4">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
               {details.map(({ label, value }) => (
                 <div key={label}>
-                  <dt className="text-[10px] text-muted-foreground/40 uppercase tracking-wider mb-0.5">
+                  <dt className="text-muted-foreground/40 mb-0.5 text-[10px] tracking-wider uppercase">
                     {label}
                   </dt>
                   <dd className="text-[13px]">{value}</dd>
@@ -273,30 +273,30 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
         )}
 
         {grapes && (
-          <div className="px-5 py-4 border-b border-border/50">
-            <p className="text-[10px] text-muted-foreground/40 uppercase tracking-wider mb-1.5">
+          <div className="border-border/50 border-b px-5 py-4">
+            <p className="text-muted-foreground/40 mb-1.5 text-[10px] tracking-wider uppercase">
               {t('wineDetail.grapes')}
             </p>
-            <p className="text-[13px] text-muted-foreground">{grapes}</p>
+            <p className="text-muted-foreground text-[13px]">{grapes}</p>
           </div>
         )}
 
-        <div className="px-5 py-4 border-b border-border/50">
-          <p className="text-[10px] text-muted-foreground/40 uppercase tracking-wider mb-3">
+        <div className="border-border/50 border-b px-5 py-4">
+          <p className="text-muted-foreground/40 mb-3 text-[10px] tracking-wider uppercase">
             {t('wineDetail.availability')}
           </p>
           {p.online_availability && (
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500/80 shrink-0" />
-              <span className="text-[13px] text-muted-foreground">{t('availability.online')}</span>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500/80" />
+              <span className="text-muted-foreground text-[13px]">{t('availability.online')}</span>
             </div>
           )}
           {storeIds.length === 0 ? (
-            <p className="text-[12px] text-muted-foreground/40">
+            <p className="text-muted-foreground/40 text-[12px]">
               {t('wineDetail.noStores')}{' '}
               <Link
                 to="/stores"
-                className="underline hover:text-muted-foreground transition-colors"
+                className="hover:text-muted-foreground underline transition-colors"
               >
                 {t('wineDetail.saveStores')}
               </Link>
@@ -309,12 +309,12 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
                 return (
                   <div key={id} className="flex items-center gap-2">
                     <span
-                      className={`w-2 h-2 rounded-full shrink-0 ${
+                      className={`h-2 w-2 shrink-0 rounded-full ${
                         available ? 'bg-emerald-500/80' : 'bg-red-500/40'
                       }`}
                     />
                     <span
-                      className={`text-[13px] truncate ${
+                      className={`truncate text-[13px] ${
                         available ? 'text-muted-foreground' : 'text-muted-foreground/40'
                       }`}
                     >
@@ -333,7 +333,7 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
               href={p.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-[12px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+              className="text-muted-foreground/50 hover:text-muted-foreground flex items-center gap-2 text-[12px] transition-colors"
             >
               <ArrowSquareOut size={13} />
               {t('wineDetail.viewOnSaq')}
@@ -346,15 +346,15 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
 
   return (
     <div
-      className={`absolute top-0 right-0 bottom-0 w-[360px] bg-sidebar border-l border-border flex flex-col z-10 transition-transform duration-300 ease-out ${
+      className={`bg-sidebar border-border absolute top-0 right-0 bottom-0 z-10 flex w-[360px] flex-col border-l transition-transform duration-300 ease-out ${
         sku ? 'translate-x-0' : 'translate-x-full'
       }`}
     >
-      <div className="flex items-center gap-2 px-5 py-4 border-b border-border shrink-0">
+      <div className="border-border flex shrink-0 items-center gap-2 border-b px-5 py-4">
         <button
           type="button"
           onClick={onClose}
-          className="flex items-center gap-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors text-[12px]"
+          className="text-muted-foreground/50 hover:text-muted-foreground flex items-center gap-1.5 text-[12px] transition-colors"
         >
           <ArrowLeft size={13} />
           {t('wineDetail.close')}
@@ -362,18 +362,18 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
         <div className="flex-1" />
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading && <PanelSkeleton />}
 
         {panelState.status === 'error' && !isLoading && (
           <div className="px-5 py-8 text-center">
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-muted-foreground text-[13px]">
               {panelState.message}
               {' — '}
               <button
                 type="button"
                 onClick={() => sku && fetchProduct(sku)}
-                className="underline hover:text-foreground transition-colors"
+                className="hover:text-foreground underline transition-colors"
               >
                 {t('wineDetail.retry')}
               </button>
@@ -389,31 +389,31 @@ function WineDetailPanel({ sku, onClose }: WineDetailPanelProps) {
 
 function PanelSkeleton() {
   return (
-    <div className="px-5 py-5 flex flex-col gap-4 animate-pulse">
-      <div className="flex flex-col gap-2 pb-4 border-b border-border/50">
-        <div className="h-3 w-16 bg-white/[0.06] rounded" />
-        <div className="h-5 w-full bg-white/[0.06] rounded" />
-        <div className="h-5 w-3/4 bg-white/[0.06] rounded" />
-        <div className="h-3 w-1/2 bg-white/[0.04] rounded mt-1" />
+    <div className="flex animate-pulse flex-col gap-4 px-5 py-5">
+      <div className="border-border/50 flex flex-col gap-2 border-b pb-4">
+        <div className="h-3 w-16 rounded bg-white/[0.06]" />
+        <div className="h-5 w-full rounded bg-white/[0.06]" />
+        <div className="h-5 w-3/4 rounded bg-white/[0.06]" />
+        <div className="mt-1 h-3 w-1/2 rounded bg-white/[0.04]" />
       </div>
-      <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-        <div className="h-6 w-20 bg-white/[0.06] rounded" />
+      <div className="border-border/50 flex items-center gap-3 border-b pb-4">
+        <div className="h-6 w-20 rounded bg-white/[0.06]" />
         <div className="flex-1" />
-        <div className="h-7 w-24 bg-white/[0.04] rounded-lg" />
+        <div className="h-7 w-24 rounded-lg bg-white/[0.04]" />
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3 pb-4 border-b border-border/50">
+      <div className="border-border/50 grid grid-cols-2 gap-x-4 gap-y-3 border-b pb-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="flex flex-col gap-1">
-            <div className="h-2 w-12 bg-white/[0.04] rounded" />
-            <div className="h-4 w-20 bg-white/[0.06] rounded" />
+            <div className="h-2 w-12 rounded bg-white/[0.04]" />
+            <div className="h-4 w-20 rounded bg-white/[0.06]" />
           </div>
         ))}
       </div>
       <div className="flex flex-col gap-2">
         {[...Array(2)].map((_, i) => (
           <div key={i} className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-white/[0.06]" />
-            <div className="h-3 w-32 bg-white/[0.04] rounded" />
+            <div className="h-2 w-2 rounded-full bg-white/[0.06]" />
+            <div className="h-3 w-32 rounded bg-white/[0.04]" />
           </div>
         ))}
       </div>

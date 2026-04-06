@@ -10,20 +10,20 @@ interface EmptyStateProps {
 
 function EmptyState({ icon, title, description, cta, secondaryCta }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-16 px-4 gap-4">
-      <div className="w-14 h-14 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-muted-foreground">
+    <div className="flex flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+      <div className="text-muted-foreground flex h-14 w-14 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.04]">
         {icon}
       </div>
-      <div className="flex flex-col gap-1.5 max-w-xs">
-        <p className="text-[15px] font-medium text-foreground">{title}</p>
+      <div className="flex max-w-xs flex-col gap-1.5">
+        <p className="text-foreground text-[15px] font-medium">{title}</p>
         {description && (
-          <p className="text-[13px] font-light text-muted-foreground leading-relaxed">
+          <p className="text-muted-foreground text-[13px] leading-relaxed font-light">
             {description}
           </p>
         )}
       </div>
       {(cta || secondaryCta) && (
-        <div className="flex gap-3 mt-1">
+        <div className="mt-1 flex gap-3">
           {cta && (
             <Button size="sm" onClick={cta.onClick}>
               {cta.label}

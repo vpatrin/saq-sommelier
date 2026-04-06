@@ -220,12 +220,12 @@ function LandingPage() {
   const mailtoHref = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(t('landing.mailto.subject'))}&body=${encodeURIComponent(t('landing.mailto.body'))}`
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="bg-background text-foreground min-h-screen">
       {/* Nav */}
-      <nav className="fixed top-0 inset-x-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border">
-        <div className="max-w-6xl mx-auto w-full px-8 flex items-center justify-between py-3.5">
+      <nav className="bg-background/60 border-border fixed inset-x-0 top-0 z-50 border-b backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-8 py-3.5">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-7.5 h-7.5 rounded-lg bg-gradient-to-br from-primary/35 to-primary/15 flex items-center justify-center text-sm font-semibold text-primary">
+            <div className="from-primary/35 to-primary/15 text-primary flex h-7.5 w-7.5 items-center justify-center rounded-lg bg-gradient-to-br text-sm font-semibold">
               C
             </div>
             <span className="text-base font-medium">{t('brand')}</span>
@@ -234,20 +234,20 @@ function LandingPage() {
             <button
               type="button"
               onClick={toggleLang}
-              className="w-8 text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground w-8 text-center text-xs transition-colors"
             >
               {i18n.resolvedLanguage === 'fr' ? 'EN' : 'FR'}
             </button>
             <Link
               to="/login"
-              className="min-w-24 text-center text-[length:var(--text-sidebar)] text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground min-w-24 text-center text-[length:var(--text-sidebar)] transition-colors"
             >
               {t('landing.nav.login')}
             </Link>
             <button
               type="button"
               onClick={openForm}
-              className="min-w-44 text-center px-4 py-2 rounded-xl bg-primary/15 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
+              className="bg-primary/15 border-primary/20 text-primary hover:bg-primary/25 min-w-44 rounded-xl border px-4 py-2 text-center text-sm font-medium transition-colors"
             >
               {t('landing.nav.requestAccess')}
             </button>
@@ -258,7 +258,7 @@ function LandingPage() {
       {/* Hero */}
       <section ref={heroRef} className="pt-44 pb-28">
         <div className={`${SECTION}`}>
-          <h1 className="text-5xl md:text-7xl font-extralight leading-[1.08] tracking-tight mb-6 max-w-3xl">
+          <h1 className="mb-6 max-w-3xl text-5xl leading-[1.08] font-extralight tracking-tight md:text-7xl">
             {t('landing.hero.title.before')}{' '}
             <span className="text-primary font-light">{t('landing.hero.title.accent')}</span>
             <br />
@@ -267,30 +267,30 @@ function LandingPage() {
             {t('landing.hero.title.afterEnd')}
           </h1>
 
-          <p className="text-base font-light text-foreground/80 max-w-lg leading-relaxed mb-10">
+          <p className="text-foreground/80 mb-10 max-w-lg text-base leading-relaxed font-light">
             {t('landing.hero.subtitle')}
           </p>
 
           {/* CTA */}
           {formState === null && (
-            <div className="flex items-center gap-6 mb-3">
+            <div className="mb-3 flex items-center gap-6">
               <button
                 type="button"
                 onClick={openForm}
-                className="px-6 py-3 rounded-xl bg-primary/15 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/25 transition-colors"
+                className="bg-primary/15 border-primary/20 text-primary hover:bg-primary/25 rounded-xl border px-6 py-3 text-sm font-medium transition-colors"
               >
                 {t('landing.hero.cta')}
               </button>
               <Link
                 to="/login"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground text-sm transition-colors"
               >
                 {t('landing.hero.signin')}
               </Link>
             </div>
           )}
           {formState !== null && formState !== 'success' && (
-            <form onSubmit={handleSubmit} className="flex items-center gap-3 mb-3">
+            <form onSubmit={handleSubmit} className="mb-3 flex items-center gap-3">
               <input
                 type="email"
                 required
@@ -300,56 +300,56 @@ function LandingPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('landing.hero.formPlaceholder')}
                 disabled={formState === 'loading'}
-                className="px-4 py-3 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 disabled:opacity-50 w-72"
+                className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary/50 w-72 rounded-xl border px-4 py-3 text-sm focus:outline-none disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={formState === 'loading'}
-                className="px-5 py-3 rounded-xl bg-primary/15 border border-primary/20 text-primary text-sm font-medium hover:bg-primary/25 transition-colors disabled:opacity-50"
+                className="bg-primary/15 border-primary/20 text-primary hover:bg-primary/25 rounded-xl border px-5 py-3 text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {formState === 'loading'
                   ? t('landing.hero.formSubmitting')
                   : t('landing.hero.formSubmit')}
               </button>
               {formState === 'error' && (
-                <span className="text-xs text-destructive">{t('landing.hero.formError')}</span>
+                <span className="text-destructive text-xs">{t('landing.hero.formError')}</span>
               )}
             </form>
           )}
           {formState === 'success' && (
-            <p className="text-sm text-primary mb-3">{t('landing.hero.formSuccess')}</p>
+            <p className="text-primary mb-3 text-sm">{t('landing.hero.formSuccess')}</p>
           )}
-          <p className="text-xs text-muted-foreground mb-12">
+          <p className="text-muted-foreground mb-12 text-xs">
             {formState !== 'success' && t('landing.hero.betaNote')}
           </p>
         </div>
 
         {/* Chat preview — flush with content, bottom fade */}
         <div className={`${SECTION} relative`}>
-          <div className="rounded-2xl border border-border/50 bg-card/30 overflow-hidden">
+          <div className="border-border/50 bg-card/30 overflow-hidden rounded-2xl border">
             {/* Browser chrome */}
-            <div className="h-9 flex items-center px-3.5 gap-1.5 bg-surface-hover border-b border-border/50">
-              <span className="w-2.5 h-2.5 rounded-full bg-[rgba(255,255,255,0.08)]" />
-              <span className="w-2.5 h-2.5 rounded-full bg-[rgba(255,255,255,0.08)]" />
-              <span className="w-2.5 h-2.5 rounded-full bg-[rgba(255,255,255,0.08)]" />
-              <span className="flex-1 text-center font-mono text-[length:var(--text-sidebar-xs)] text-muted-foreground">
+            <div className="bg-surface-hover border-border/50 flex h-9 items-center gap-1.5 border-b px-3.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-[rgba(255,255,255,0.08)]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[rgba(255,255,255,0.08)]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[rgba(255,255,255,0.08)]" />
+              <span className="text-muted-foreground flex-1 text-center font-mono text-[length:var(--text-sidebar-xs)]">
                 coupette.club
               </span>
             </div>
 
-            <div className="p-5 md:p-6 flex flex-col gap-3.5">
+            <div className="flex flex-col gap-3.5 p-5 md:p-6">
               {/* User message */}
               <div className="flex flex-col items-end">
-                <div className="max-w-[75%] px-4 py-2.5 rounded-2xl rounded-br-sm bg-primary/10 border border-primary/12 text-[length:var(--text-sidebar)] leading-relaxed">
+                <div className="bg-primary/10 border-primary/12 max-w-[75%] rounded-2xl rounded-br-sm border px-4 py-2.5 text-[length:var(--text-sidebar)] leading-relaxed">
                   {t('landing.preview.userMsg')}
                 </div>
               </div>
 
               {/* Bot response */}
               <div className="flex flex-col items-start">
-                <div className="max-w-[88%] px-4 py-3.5 rounded-2xl rounded-tl-sm bg-card/50 border border-border/50 text-[length:var(--text-sidebar)] font-light leading-relaxed text-muted-foreground">
+                <div className="bg-card/50 border-border/50 text-muted-foreground max-w-[88%] rounded-2xl rounded-tl-sm border px-4 py-3.5 text-[length:var(--text-sidebar)] leading-relaxed font-light">
                   {/* SSE pipeline trace */}
-                  <div className="font-mono text-[length:var(--text-sidebar-xs)] leading-relaxed mb-3 px-3 py-2.5 rounded-lg bg-[rgba(0,0,0,0.3)] border border-[rgba(255,255,255,0.03)]">
+                  <div className="mb-3 rounded-lg border border-[rgba(255,255,255,0.03)] bg-[rgba(0,0,0,0.3)] px-3 py-2.5 font-mono text-[length:var(--text-sidebar-xs)] leading-relaxed">
                     <div>
                       <span className="text-primary">›</span> query: rouge, ≤25$, pâtes, épicé
                     </div>
@@ -363,33 +363,33 @@ function LandingPage() {
                   <p className="mb-3">{t('landing.preview.botIntro')}</p>
 
                   {/* Wine card */}
-                  <div className="p-3.5 rounded-xl bg-[rgba(255,255,255,0.025)] border border-border/50 relative overflow-hidden">
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/4 to-transparent pointer-events-none" />
-                    <div className="flex justify-between gap-3 relative">
+                  <div className="border-border/50 relative overflow-hidden rounded-xl border bg-[rgba(255,255,255,0.025)] p-3.5">
+                    <div className="from-primary/4 pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br to-transparent" />
+                    <div className="relative flex justify-between gap-3">
                       <div>
-                        <div className="text-sm font-medium text-foreground mb-1.5">
+                        <div className="text-foreground mb-1.5 text-sm font-medium">
                           Château Pesquié Terrasses 2022
                         </div>
-                        <div className="flex gap-1 flex-wrap mb-1">
-                          <span className="text-[9px] px-2 py-0.5 rounded bg-primary/10 text-primary">
+                        <div className="mb-1 flex flex-wrap gap-1">
+                          <span className="bg-primary/10 text-primary rounded px-2 py-0.5 text-[9px]">
                             Rouge
                           </span>
-                          <span className="text-[9px] px-2 py-0.5 rounded bg-[rgba(255,255,255,0.04)] text-muted-foreground">
+                          <span className="text-muted-foreground rounded bg-[rgba(255,255,255,0.04)] px-2 py-0.5 text-[9px]">
                             Ventoux
                           </span>
-                          <span className="text-[9px] px-2 py-0.5 rounded bg-[rgba(255,255,255,0.04)] text-muted-foreground">
+                          <span className="text-muted-foreground rounded bg-[rgba(255,255,255,0.04)] px-2 py-0.5 text-[9px]">
                             Grenache · Syrah
                           </span>
                         </div>
-                        <span className="font-mono text-[9px] text-muted-foreground">
+                        <span className="text-muted-foreground font-mono text-[9px]">
                           SAQ 10264381
                         </span>
                       </div>
-                      <span className="text-lg font-light text-primary whitespace-nowrap">
+                      <span className="text-primary text-lg font-light whitespace-nowrap">
                         18,95 $
                       </span>
                     </div>
-                    <p className="text-xs font-light text-muted-foreground mt-2.5 pt-2.5 border-t border-border/50 leading-relaxed">
+                    <p className="text-muted-foreground border-border/50 mt-2.5 border-t pt-2.5 text-xs leading-relaxed font-light">
                       {t('landing.preview.tastingNote')}
                     </p>
                   </div>
@@ -397,11 +397,11 @@ function LandingPage() {
               </div>
 
               {/* Fake input */}
-              <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-border/50 bg-[rgba(255,255,255,0.02)]">
-                <span className="flex-1 text-[length:var(--text-sidebar)] font-light text-muted-foreground">
+              <div className="border-border/50 flex items-center gap-3 rounded-2xl border bg-[rgba(255,255,255,0.02)] px-4 py-2.5">
+                <span className="text-muted-foreground flex-1 text-[length:var(--text-sidebar)] font-light">
                   {t('landing.preview.placeholder')}
                 </span>
-                <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center text-primary text-xs">
+                <div className="bg-primary/20 text-primary flex h-7 w-7 items-center justify-center rounded-lg text-xs">
                   ↑
                 </div>
               </div>
@@ -411,12 +411,12 @@ function LandingPage() {
       </section>
 
       {/* Stats banner */}
-      <div className="w-full border-y border-border bg-[rgba(255,255,255,0.012)]">
+      <div className="border-border w-full border-y bg-[rgba(255,255,255,0.012)]">
         <div className="flex items-center justify-center gap-16 py-8">
           {STATS.map(({ value, labelKey }) => (
             <div key={labelKey} className="text-center">
               <div className="text-2xl font-semibold tabular-nums">{value}</div>
-              <div className="text-sm text-muted-foreground mt-0.5">{t(labelKey)}</div>
+              <div className="text-muted-foreground mt-0.5 text-sm">{t(labelKey)}</div>
             </div>
           ))}
         </div>
@@ -425,8 +425,8 @@ function LandingPage() {
       {/* Features */}
       <section className="pt-28 pb-28">
         <div className={`${SECTION}`}>
-          <div className="grid grid-cols-2 gap-16 mb-16">
-            <h2 className="text-4xl font-medium text-foreground leading-tight">
+          <div className="mb-16 grid grid-cols-2 gap-16">
+            <h2 className="text-foreground text-4xl leading-tight font-medium">
               {t('landing.features.title')
                 .split(' ')
                 .map((word, i) => (
@@ -436,24 +436,24 @@ function LandingPage() {
                   </Fragment>
                 ))}
             </h2>
-            <p className="text-lg font-light text-foreground leading-relaxed pt-2 whitespace-pre-line">
+            <p className="text-foreground pt-2 text-lg leading-relaxed font-light whitespace-pre-line">
               {t('landing.features.subtitle')}
             </p>
           </div>
-          <div className="grid grid-cols-4 w-full">
+          <div className="grid w-full grid-cols-4">
             {FEATURES.map(({ icon: Icon, titleKey, descKey }, i) => (
               <div
                 key={titleKey}
-                className={`py-2 ${i === 0 ? 'pr-8' : i === 3 ? 'pl-8 border-l border-border/50' : 'px-8 border-l border-border/50'}`}
+                className={`py-2 ${i === 0 ? 'pr-8' : i === 3 ? 'border-border/50 border-l pl-8' : 'border-border/50 border-l px-8'}`}
               >
-                <div className="font-mono text-xs text-muted-foreground tracking-widest mb-10">
+                <div className="text-muted-foreground mb-10 font-mono text-xs tracking-widest">
                   FIG 0.{i + 1}
                 </div>
-                <div className="flex items-center gap-3 mb-3">
+                <div className="mb-3 flex items-center gap-3">
                   <Icon size={22} weight="light" className="text-primary" />
                   <span className="text-base font-semibold">{t(titleKey)}</span>
                 </div>
-                <div className="text-sm font-light text-muted-foreground leading-relaxed">
+                <div className="text-muted-foreground text-sm leading-relaxed font-light">
                   {t(descKey)}
                 </div>
               </div>
@@ -466,12 +466,12 @@ function LandingPage() {
       <section className="pt-20 pb-28">
         <div className={`${SECTION}`}>
           {/* Split header: title left, subtitle right */}
-          <div className="grid grid-cols-2 gap-16 mb-16">
-            <h2 className="text-4xl font-light text-foreground">
+          <div className="mb-16 grid grid-cols-2 gap-16">
+            <h2 className="text-foreground text-4xl font-light">
               {t('landing.rag.title.before')}{' '}
               <strong className="font-semibold">{t('landing.rag.title.bold')}</strong>
             </h2>
-            <p className="text-lg font-light text-foreground leading-relaxed pt-2">
+            <p className="text-foreground pt-2 text-lg leading-relaxed font-light">
               {t('landing.rag.subtitle')}
             </p>
           </div>
@@ -480,20 +480,20 @@ function LandingPage() {
           <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-stretch">
             {RAG_STEPS.slice(0, 3).map((step, i) => (
               <Fragment key={step.num}>
-                <div className="rag-card p-6 min-h-[168px]">
-                  <span className="font-mono text-xs font-semibold text-primary drop-shadow-[0_0_8px_oklch(0.7_0.13_65_/_40%)]">
+                <div className="rag-card min-h-[168px] p-6">
+                  <span className="text-primary font-mono text-xs font-semibold drop-shadow-[0_0_8px_oklch(0.7_0.13_65_/_40%)]">
                     {step.num}
                   </span>
-                  <div className="text-[15px] font-semibold mt-4 mb-2">{t(step.titleKey)}</div>
-                  <div className="font-mono text-xs text-muted-foreground leading-relaxed">
+                  <div className="mt-4 mb-2 text-[15px] font-semibold">{t(step.titleKey)}</div>
+                  <div className="text-muted-foreground font-mono text-xs leading-relaxed">
                     {t(step.detailKey)}
                   </div>
                   {t(step.codeKey) && (
-                    <div className="font-mono text-xs text-primary/80 mt-2">{t(step.codeKey)}</div>
+                    <div className="text-primary/80 mt-2 font-mono text-xs">{t(step.codeKey)}</div>
                   )}
                 </div>
                 {i < 2 && (
-                  <div className="flex items-center justify-center w-10">
+                  <div className="flex w-10 items-center justify-center">
                     <svg width="32" height="16" viewBox="0 0 32 16" className="rag-arrow">
                       <line x1="0" y1="8" x2="24" y2="8" stroke="currentColor" strokeWidth="1" />
                       <polyline
@@ -528,23 +528,23 @@ function LandingPage() {
           <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-stretch">
             {[RAG_STEPS[5], RAG_STEPS[4], RAG_STEPS[3]].map((step, i) => (
               <Fragment key={step.num}>
-                <div className="rag-card p-6 min-h-[168px]">
-                  <span className="font-mono text-xs font-semibold text-primary drop-shadow-[0_0_8px_oklch(0.7_0.13_65_/_40%)]">
+                <div className="rag-card min-h-[168px] p-6">
+                  <span className="text-primary font-mono text-xs font-semibold drop-shadow-[0_0_8px_oklch(0.7_0.13_65_/_40%)]">
                     {step.num}
                   </span>
-                  <div className="text-[15px] font-semibold mt-4 mb-2">{t(step.titleKey)}</div>
-                  <div className="font-mono text-xs text-muted-foreground leading-relaxed">
+                  <div className="mt-4 mb-2 text-[15px] font-semibold">{t(step.titleKey)}</div>
+                  <div className="text-muted-foreground font-mono text-xs leading-relaxed">
                     {t(step.detailKey)}
                   </div>
                   {t(step.codeKey) && (
-                    <div className="font-mono text-xs text-primary/80 mt-2">{t(step.codeKey)}</div>
+                    <div className="text-primary/80 mt-2 font-mono text-xs">{t(step.codeKey)}</div>
                   )}
                   {'result' in step && step.result && (
-                    <div className="font-mono text-xs text-green-500 mt-2">{step.result}</div>
+                    <div className="mt-2 font-mono text-xs text-green-500">{step.result}</div>
                   )}
                 </div>
                 {i < 2 && (
-                  <div className="flex items-center justify-center w-10">
+                  <div className="flex w-10 items-center justify-center">
                     <svg width="32" height="16" viewBox="0 0 32 16" className="rag-arrow">
                       <line x1="8" y1="8" x2="32" y2="8" stroke="currentColor" strokeWidth="1" />
                       <polyline
@@ -563,15 +563,15 @@ function LandingPage() {
       </section>
 
       {/* Changelog */}
-      <section className="py-28 border-t border-border">
+      <section className="border-border border-t py-28">
         <div className={`${SECTION}`}>
           {/* Split header */}
-          <div className="grid grid-cols-2 gap-16 mb-16">
-            <h2 className="text-4xl font-light text-foreground">
+          <div className="mb-16 grid grid-cols-2 gap-16">
+            <h2 className="text-foreground text-4xl font-light">
               {t('landing.changelog.title.before')}{' '}
               <strong className="font-semibold">{t('landing.changelog.title.bold')}</strong>
             </h2>
-            <p className="text-lg font-light text-foreground leading-relaxed pt-2">
+            <p className="text-foreground pt-2 text-lg leading-relaxed font-light">
               {t('landing.changelog.subtitle')}
             </p>
           </div>
@@ -579,20 +579,20 @@ function LandingPage() {
           {/* Timeline */}
           <div className="relative">
             {/* Horizontal line */}
-            <div className="absolute top-3 left-0 right-0 h-px bg-border/50" />
+            <div className="bg-border/50 absolute top-3 right-0 left-0 h-px" />
 
             <div className="grid grid-cols-4 gap-6">
               {CHANGELOG.map(({ version, date, titleKey }, i) => (
                 <div key={version} className="relative pt-8">
                   {/* Dot on timeline */}
                   <div
-                    className={`absolute top-1.5 left-0 w-3 h-3 rounded-full border-2 ${i === 0 ? 'bg-primary border-primary shadow-[0_0_8px_oklch(0.7_0.13_65_/_40%)]' : 'bg-background border-border'}`}
+                    className={`absolute top-1.5 left-0 h-3 w-3 rounded-full border-2 ${i === 0 ? 'bg-primary border-primary shadow-[0_0_8px_oklch(0.7_0.13_65_/_40%)]' : 'bg-background border-border'}`}
                   />
-                  <div className="text-base font-semibold mb-1">{version}</div>
-                  <p className="text-sm font-light text-muted-foreground leading-relaxed mb-3">
+                  <div className="mb-1 text-base font-semibold">{version}</div>
+                  <p className="text-muted-foreground mb-3 text-sm leading-relaxed font-light">
                     {t(titleKey)}
                   </p>
-                  <span className="font-mono text-xs text-muted-foreground">{date}</span>
+                  <span className="text-muted-foreground font-mono text-xs">{date}</span>
                 </div>
               ))}
             </div>
@@ -602,7 +602,7 @@ function LandingPage() {
             href="https://github.com/vpatrin/coupette/blob/main/CHANGELOG.md"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 mt-8 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground mt-8 inline-flex items-center gap-2 text-sm transition-colors"
           >
             {t('landing.changelog.seeAll')} <span>→</span>
           </a>
@@ -613,21 +613,21 @@ function LandingPage() {
       <section className="pt-20 pb-28">
         <div className={`${SECTION}`}>
           {/* Split header: title left, subtitle right */}
-          <div className="grid grid-cols-2 gap-16 mb-16">
-            <h2 className="text-4xl font-light text-foreground">
+          <div className="mb-16 grid grid-cols-2 gap-16">
+            <h2 className="text-foreground text-4xl font-light">
               {t('landing.dev.title.before')}{' '}
               <strong className="font-semibold">{t('landing.dev.title.bold')}</strong>
             </h2>
-            <p className="text-lg font-light text-foreground leading-relaxed pt-2">
+            <p className="text-foreground pt-2 text-lg leading-relaxed font-light">
               {t('landing.dev.subtitle')}
             </p>
           </div>
 
           {/* Deploy banner */}
           {deploy && (
-            <div className="flex items-center justify-center gap-3 mb-5 px-5 py-2.5 rounded-lg bg-card border border-border w-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(80,200,120,0.4)]" />
-              <span className="font-mono text-xs text-muted-foreground">
+            <div className="bg-card border-border mb-5 flex w-full items-center justify-center gap-3 rounded-lg border px-5 py-2.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(80,200,120,0.4)]" />
+              <span className="text-muted-foreground font-mono text-xs">
                 {t('landing.dev.deployed')} ·{' '}
                 <span className="text-primary font-medium">{deploy.version}</span> ·{' '}
                 {deploy.timeAgo}
@@ -636,27 +636,27 @@ function LandingPage() {
           )}
 
           {/* Repo cards */}
-          <div className="grid grid-cols-2 gap-3.5 w-full">
+          <div className="grid w-full grid-cols-2 gap-3.5">
             {REPOS.map((repo) => {
               const key = `${repo.owner}/${repo.name}`
               const data = repos[key]
               return (
                 <div
                   key={key}
-                  className="p-5 bg-card border border-border rounded-xl text-left hover:border-border-warm transition-colors"
+                  className="bg-card border-border hover:border-border-warm rounded-xl border p-5 text-left transition-colors"
                 >
                   <a
                     href={`https://github.com/${repo.owner}/${repo.name}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 mb-3 hover:text-primary transition-colors"
+                    className="hover:text-primary mb-3 flex items-center gap-2 transition-colors"
                   >
                     <GithubLogoIcon size={18} className="text-muted-foreground" />
                     <div>
                       <div className="text-sm font-medium">
                         {repo.owner}/{repo.name}
                       </div>
-                      <div className="font-mono text-[length:var(--text-sidebar-xs)] text-muted-foreground">
+                      <div className="text-muted-foreground font-mono text-[length:var(--text-sidebar-xs)]">
                         {repo.desc}
                       </div>
                     </div>
@@ -668,7 +668,7 @@ function LandingPage() {
                         {[1, 2, 3].map((n) => (
                           <div
                             key={n}
-                            className="h-7 rounded-md bg-[rgba(255,255,255,0.015)] animate-pulse"
+                            className="h-7 animate-pulse rounded-md bg-[rgba(255,255,255,0.015)]"
                           />
                         ))}
                       </>
@@ -678,7 +678,7 @@ function LandingPage() {
                         href={`https://github.com/${repo.owner}/${repo.name}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                        className="text-muted-foreground hover:text-primary text-xs transition-colors"
                       >
                         {t('landing.dev.viewRepo')} →
                       </a>
@@ -686,13 +686,13 @@ function LandingPage() {
                     {data?.commits.map((commit, i) => (
                       <div
                         key={i}
-                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-[rgba(255,255,255,0.015)] border border-[rgba(255,255,255,0.03)]"
+                        className="flex items-center gap-2 rounded-md border border-[rgba(255,255,255,0.03)] bg-[rgba(255,255,255,0.015)] px-2.5 py-1.5"
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                        <span className="text-xs text-muted-foreground flex-1 truncate">
+                        <span className="bg-primary h-1.5 w-1.5 shrink-0 rounded-full" />
+                        <span className="text-muted-foreground flex-1 truncate text-xs">
                           {commit.message}
                         </span>
-                        <span className="font-mono text-[9px] text-muted-foreground shrink-0">
+                        <span className="text-muted-foreground shrink-0 font-mono text-[9px]">
                           {commit.timeAgo}
                         </span>
                       </div>
@@ -706,17 +706,17 @@ function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-14 border-t border-border">
+      <footer className="border-border border-t py-14">
         <div className={`${SECTION} flex flex-col items-center gap-1.5`}>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-4 text-xs">
             <span>© 2026 Coupette</span>
-            <span className="w-px h-3 bg-border" />
+            <span className="bg-border h-3 w-px" />
             <span>Montréal, QC</span>
-            <span className="w-px h-3 bg-border" />
+            <span className="bg-border h-3 w-px" />
             <a href={mailtoHref} className="hover:text-foreground transition-colors">
               Contact
             </a>
-            <span className="w-px h-3 bg-border" />
+            <span className="bg-border h-3 w-px" />
             <a
               href="https://www.educalcool.qc.ca/"
               target="_blank"
@@ -726,7 +726,7 @@ function LandingPage() {
               Éduc'alcool
             </a>
           </div>
-          <p className="text-[length:var(--text-sidebar-xs)] text-muted-foreground text-center">
+          <p className="text-muted-foreground text-center text-[length:var(--text-sidebar-xs)]">
             {t('landing.footer.legal')}
           </p>
         </div>

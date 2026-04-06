@@ -407,18 +407,18 @@ function SearchPage() {
   const hasSecondaryFilters = !!(country || onlineOnly || inStoresOnly || minPrice || maxPrice)
 
   return (
-    <div className="flex-1 relative overflow-hidden">
+    <div className="relative flex-1 overflow-hidden">
       <div
         className={`h-full overflow-y-auto p-8 transition-[padding-right] duration-300 ease-out ${selectedSku ? 'pr-[376px]' : ''}`}
       >
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-light mb-6">{t('search.title')}</h1>
+        <div className="mx-auto max-w-2xl">
+          <h1 className="mb-6 text-2xl font-light">{t('search.title')}</h1>
 
           {/* Search input */}
           <div className="relative mb-4">
             <MagnifyingGlass
               size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+              className="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2"
             />
             <input
               type="text"
@@ -426,13 +426,13 @@ function SearchPage() {
               onChange={(e) => handleInputChange(e.target.value)}
               placeholder={t('search.placeholder')}
               aria-label={t('search.placeholder')}
-              className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.04] border border-border text-[14px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
+              className="border-border placeholder:text-muted-foreground/40 focus:border-primary/30 h-10 w-full rounded-xl border bg-white/[0.04] pr-4 pl-9 text-[14px] transition-colors focus:outline-none"
             />
           </div>
 
           {/* Category chips */}
           {categoryChips.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
+            <div className="mb-3 flex flex-wrap gap-1.5">
               {categoryChips.map((chip) => (
                 <button
                   key={chip.value}
@@ -440,13 +440,13 @@ function SearchPage() {
                   onClick={() =>
                     setFilter('category', activeCategoryChip === chip.value ? '' : chip.value)
                   }
-                  className={`flex items-center gap-1.5 border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
                     activeCategoryChip === chip.value
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${chip.dotColor}`} />
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${chip.dotColor}`} />
                   {chip.label}
                 </button>
               ))}
@@ -455,11 +455,11 @@ function SearchPage() {
 
           {/* Sub-category chips */}
           {activeSubGroup && activeSubGroup.categories.length >= 2 && (
-            <div className="flex flex-wrap gap-1.5 mb-4">
+            <div className="mb-4 flex flex-wrap gap-1.5">
               <button
                 type="button"
                 onClick={() => setFilter('category', `${GROUP_PREFIX}${activeSubGroup.key}`)}
-                className={`border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+                className={`rounded-full border px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
                   category === `${GROUP_PREFIX}${activeSubGroup.key}`
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
@@ -472,7 +472,7 @@ function SearchPage() {
                   key={cat}
                   type="button"
                   onClick={() => setFilter('category', cat)}
-                  className={`border rounded-full px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
+                  className={`rounded-full border px-3 py-1 text-[12px] whitespace-nowrap transition-colors ${
                     category === cat
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border text-muted-foreground hover:text-foreground hover:border-border/80'
@@ -486,13 +486,13 @@ function SearchPage() {
 
           {/* Error */}
           {error && (
-            <p className="text-destructive text-[13px] mb-4">
+            <p className="text-destructive mb-4 text-[13px]">
               {error}
               {' — '}
               <button
                 type="button"
                 onClick={() => setRetryCount((c) => c + 1)}
-                className="underline hover:text-destructive/80"
+                className="hover:text-destructive/80 underline"
               >
                 {t('search.retry')}
               </button>
@@ -500,11 +500,11 @@ function SearchPage() {
           )}
 
           {/* Inline filter bar */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="mb-4 flex items-center gap-2">
             <select
               value={country}
               onChange={(e) => setFilter('country', e.target.value)}
-              className={`w-44 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] focus:outline-none focus:border-primary/30 transition-colors ${
+              className={`focus:border-primary/30 w-44 rounded-lg border bg-white/[0.04] px-2.5 py-1.5 text-[12px] transition-colors focus:outline-none ${
                 country ? 'border-primary/40 text-primary' : 'border-border text-muted-foreground'
               }`}
             >
@@ -527,11 +527,11 @@ function SearchPage() {
                 if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
               }}
               aria-label={t('search.minPrice')}
-              className={`w-20 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors ${
+              className={`placeholder:text-muted-foreground/40 focus:border-primary/30 w-20 rounded-lg border bg-white/[0.04] px-2.5 py-1.5 text-[12px] transition-colors focus:outline-none ${
                 minPrice ? 'border-primary/40' : 'border-border'
               }`}
             />
-            <span className="text-[11px] text-muted-foreground/50">–</span>
+            <span className="text-muted-foreground/50 text-[11px]">–</span>
             <input
               type="number"
               min="0"
@@ -543,7 +543,7 @@ function SearchPage() {
                 if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
               }}
               aria-label={t('search.maxPrice')}
-              className={`w-20 bg-white/[0.04] border rounded-lg px-2.5 py-1.5 text-[12px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors ${
+              className={`placeholder:text-muted-foreground/40 focus:border-primary/30 w-20 rounded-lg border bg-white/[0.04] px-2.5 py-1.5 text-[12px] transition-colors focus:outline-none ${
                 maxPrice ? 'border-primary/40' : 'border-border'
               }`}
             />
@@ -551,7 +551,7 @@ function SearchPage() {
             <button
               type="button"
               onClick={() => setFilter('online', onlineOnly ? '' : '1')}
-              className={`border rounded-lg px-2.5 py-1.5 text-[12px] transition-colors ${
+              className={`rounded-lg border px-2.5 py-1.5 text-[12px] transition-colors ${
                 onlineOnly
                   ? 'border-primary/40 bg-primary/10 text-primary'
                   : 'border-border text-muted-foreground hover:text-foreground'
@@ -564,7 +564,7 @@ function SearchPage() {
               <button
                 type="button"
                 onClick={() => setFilter('in_stores', inStoresOnly ? '' : '1')}
-                className={`border rounded-lg px-2.5 py-1.5 text-[12px] transition-colors ${
+                className={`rounded-lg border px-2.5 py-1.5 text-[12px] transition-colors ${
                   inStoresOnly
                     ? 'border-primary/40 bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:text-foreground'
@@ -578,7 +578,7 @@ function SearchPage() {
               type="button"
               onClick={resetFilters}
               disabled={!hasSecondaryFilters && !category}
-              className="border rounded-lg px-2.5 py-1.5 text-[12px] border-border text-muted-foreground/40 disabled:opacity-30 hover:text-foreground hover:border-border/80 transition-colors"
+              className="border-border text-muted-foreground/40 hover:text-foreground hover:border-border/80 rounded-lg border px-2.5 py-1.5 text-[12px] transition-colors disabled:opacity-30"
             >
               {t('search.reset')}
             </button>
@@ -589,21 +589,21 @@ function SearchPage() {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="h-[88px] rounded-xl bg-white/[0.025] border border-border animate-pulse"
+                  className="border-border h-[88px] animate-pulse rounded-xl border bg-white/[0.025]"
                 />
               ))}
             </div>
           ) : results && displayProducts.length > 0 ? (
             <>
               {/* Count + sort */}
-              <div className="flex items-center justify-between mb-3">
-                <p className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-muted-foreground/60 font-mono text-[11px] tabular-nums">
                   {t('search.result', { count: results.total })}
                 </p>
                 <select
                   value={sort}
                   onChange={(e) => setFilter('sort', e.target.value)}
-                  className="bg-white/[0.04] border border-border rounded-lg px-2 py-1.5 text-[12px] focus:outline-none focus:border-primary/30 transition-colors"
+                  className="border-border focus:border-primary/30 rounded-lg border bg-white/[0.04] px-2 py-1.5 text-[12px] transition-colors focus:outline-none"
                 >
                   <option value="recent">{t('search.sortRecent')}</option>
                   <option value="price_asc">{t('search.sortPriceAsc')}</option>
@@ -624,7 +624,7 @@ function SearchPage() {
                         if (isWatched) handleUnwatch(product.sku)
                         else handleWatch(product.sku)
                       }}
-                      className={`w-24 border rounded-lg py-1.5 text-[12px] text-center transition-colors ${
+                      className={`w-24 rounded-lg border py-1.5 text-center text-[12px] transition-colors ${
                         isWatched
                           ? 'border-primary/40 bg-primary/10 text-primary'
                           : 'border-border text-muted-foreground hover:text-foreground'
@@ -644,7 +644,7 @@ function SearchPage() {
                           if (e.key === 'Enter' || e.key === ' ')
                             setSelectedSku(isSelected ? null : product.sku)
                         }}
-                        className={`cursor-pointer rounded-xl transition-colors ${isSelected ? 'ring-1 ring-primary/60' : ''}`}
+                        className={`cursor-pointer rounded-xl transition-colors ${isSelected ? 'ring-primary/60 ring-1' : ''}`}
                       >
                         <WineCard
                           product={product}
@@ -660,7 +660,7 @@ function SearchPage() {
 
               {/* Pagination */}
               {pages > 1 && (
-                <div className="flex items-center gap-1.5 mt-6 font-mono text-[12px]">
+                <div className="mt-6 flex items-center gap-1.5 font-mono text-[12px]">
                   <Button
                     variant="outline"
                     size="xs"
@@ -688,9 +688,9 @@ function SearchPage() {
                         key={p}
                         type="button"
                         onClick={() => setPage(p)}
-                        className={`w-7 h-7 rounded-lg text-[11px] transition-colors ${
+                        className={`h-7 w-7 rounded-lg text-[11px] transition-colors ${
                           p === page
-                            ? 'bg-primary/10 text-primary border border-primary/30'
+                            ? 'bg-primary/10 text-primary border-primary/30 border'
                             : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
                         }`}
                       >

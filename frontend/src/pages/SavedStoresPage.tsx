@@ -44,11 +44,11 @@ function SavedStoresPage() {
   if (loading) {
     return (
       <div className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-2xl mx-auto flex flex-col gap-3">
+        <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="h-[72px] rounded-xl bg-white/[0.025] border border-border animate-pulse"
+              className="border-border h-[72px] animate-pulse rounded-xl border bg-white/[0.025]"
             />
           ))}
         </div>
@@ -58,12 +58,12 @@ function SavedStoresPage() {
 
   return (
     <div className="p-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-baseline justify-between mb-6">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-6 flex items-baseline justify-between">
           <div className="flex items-baseline gap-2.5">
             <h1 className="text-2xl font-light">{t('stores.title')}</h1>
             {preferences.length > 0 && (
-              <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+              <span className="text-muted-foreground/60 font-mono text-[11px] tabular-nums">
                 {preferences.length}
               </span>
             )}
@@ -75,7 +75,7 @@ function SavedStoresPage() {
           </Link>
         </div>
 
-        {error && <p className="text-destructive text-[13px] mb-4">{error}</p>}
+        {error && <p className="text-destructive mb-4 text-[13px]">{error}</p>}
 
         {preferences.length === 0 ? (
           <EmptyState
@@ -94,10 +94,10 @@ function SavedStoresPage() {
               return (
                 <li
                   key={saq_store_id}
-                  className="relative overflow-hidden rounded-xl border border-border bg-white/[0.025] transition-colors hover:border-primary/20 px-[18px] py-3.5"
+                  className="border-border hover:border-primary/20 relative overflow-hidden rounded-xl border bg-white/[0.025] px-[18px] py-3.5 transition-colors"
                 >
                   {/* Warm gradient overlay */}
-                  <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.02] to-transparent" />
+                  <div className="from-primary/[0.02] pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br to-transparent" />
 
                   <div className="relative flex items-center gap-3">
                     <MapPin
@@ -106,9 +106,9 @@ function SavedStoresPage() {
                       className="text-muted-foreground/30 flex-shrink-0"
                     />
                     <div className="min-w-0">
-                      <p className="text-[14px] font-medium leading-snug truncate">{store.name}</p>
+                      <p className="truncate text-[14px] leading-snug font-medium">{store.name}</p>
                       {addressLine && (
-                        <p className="text-[11px] text-muted-foreground/60 mt-0.5 leading-snug truncate">
+                        <p className="text-muted-foreground/60 mt-0.5 truncate text-[11px] leading-snug">
                           {addressLine}
                         </p>
                       )}

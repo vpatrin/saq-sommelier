@@ -42,7 +42,7 @@ function AvailabilityStatus({
       canExpand ? (
         <button
           type="button"
-          className="text-[10px] text-green-500 hover:underline underline-offset-4 cursor-pointer"
+          className="cursor-pointer text-[10px] text-green-500 underline-offset-4 hover:underline"
           onClick={() => onToggleExpand(sku)}
         >
           {storeText}
@@ -59,10 +59,10 @@ function AvailabilityStatus({
   const unavailable = !isOnline && !inStore
 
   return (
-    <div className="flex flex-col gap-1 mt-1.5">
+    <div className="mt-1.5 flex flex-col gap-1">
       <div className="flex flex-wrap gap-x-1 gap-y-1">
         {unavailable && hasSavedStores ? (
-          <span className="text-[10px] text-muted-foreground/60">
+          <span className="text-muted-foreground/60 text-[10px]">
             {t('availability.unavailable')}
           </span>
         ) : (
@@ -71,14 +71,14 @@ function AvailabilityStatus({
               <span className="text-[10px] text-green-500">{t('availability.online')}</span>
             )}
             {isOnline && storeNode && (
-              <span className="text-[10px] text-muted-foreground/50">·</span>
+              <span className="text-muted-foreground/50 text-[10px]">·</span>
             )}
             {storeNode}
           </>
         )}
       </div>
       {isExpanded && canExpand && (
-        <ul className="text-muted-foreground text-[10px] ml-1 mt-0.5 flex flex-col gap-0.5">
+        <ul className="text-muted-foreground mt-0.5 ml-1 flex flex-col gap-0.5 text-[10px]">
           {matchingIds.map((id) => (
             <li key={id}>{storeNames.get(id)}</li>
           ))}
@@ -194,12 +194,12 @@ function WatchesPage() {
   if (loading) {
     return (
       <div className="p-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="mx-auto max-w-2xl">
           <div className="flex flex-col gap-3">
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="h-[72px] rounded-xl bg-white/[0.025] border border-border animate-pulse"
+                className="border-border h-[72px] animate-pulse rounded-xl border bg-white/[0.025]"
               />
             ))}
           </div>
@@ -209,27 +209,27 @@ function WatchesPage() {
   }
 
   return (
-    <div className="flex-1 relative overflow-hidden">
+    <div className="relative flex-1 overflow-hidden">
       <div
         className={`h-full overflow-y-auto p-8 transition-[padding-right] duration-300 ease-out ${selectedSku ? 'pr-[376px]' : ''}`}
       >
-        <div className="max-w-2xl mx-auto">
+        <div className="mx-auto max-w-2xl">
           {/* Header */}
-          <div className="flex items-baseline gap-2.5 mb-6">
+          <div className="mb-6 flex items-baseline gap-2.5">
             <h1 className="text-2xl font-light">{t('watches.title')}</h1>
             {watches.length > 0 && (
-              <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+              <span className="text-muted-foreground/60 font-mono text-[11px] tabular-nums">
                 {watches.length}
               </span>
             )}
           </div>
 
           {error && (
-            <p className="text-destructive text-[13px] mb-4">
+            <p className="text-destructive mb-4 text-[13px]">
               {error}{' '}
               <button
                 type="button"
-                className="underline underline-offset-4 hover:text-destructive/80"
+                className="hover:text-destructive/80 underline underline-offset-4"
                 onClick={() => setError(null)}
               >
                 {t('watches.failedToRemove')}
@@ -250,14 +250,14 @@ function WatchesPage() {
               <div className="relative mb-5">
                 <MagnifyingGlass
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+                  className="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
                 />
                 <input
                   type="text"
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                   placeholder={t('watches.filterPlaceholder')}
-                  className="w-full h-9 pl-8 pr-3 rounded-lg bg-white/[0.04] border border-border text-[13px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
+                  className="border-border placeholder:text-muted-foreground/40 focus:border-primary/30 h-9 w-full rounded-lg border bg-white/[0.04] pr-3 pl-8 text-[13px] transition-colors focus:outline-none"
                 />
               </div>
 
@@ -280,23 +280,23 @@ function WatchesPage() {
                         onClick={() =>
                           product && setSelectedSku(selectedSku === watch.sku ? null : watch.sku)
                         }
-                        className={`group relative overflow-hidden rounded-xl border border-border bg-white/[0.025] transition-colors hover:border-primary/20 px-[18px] py-3.5 ${product ? 'cursor-pointer' : ''}`}
+                        className={`group border-border hover:border-primary/20 relative overflow-hidden rounded-xl border bg-white/[0.025] px-[18px] py-3.5 transition-colors ${product ? 'cursor-pointer' : ''}`}
                       >
                         {/* Warm gradient overlay */}
-                        <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-primary/[0.02] to-transparent" />
+                        <div className="from-primary/[0.02] pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br to-transparent" />
 
                         <div className="relative flex items-start gap-2.5">
                           {/* Availability dot */}
                           <span
-                            className={`mt-[5px] w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`}
+                            className={`mt-[5px] h-2 w-2 flex-shrink-0 rounded-full ${dotColor}`}
                           />
 
-                          <div className="flex-1 min-w-0">
+                          <div className="min-w-0 flex-1">
                             {product ? (
                               <>
                                 {/* Name + price row */}
                                 <div className="flex items-start justify-between gap-3">
-                                  <p className="text-[14px] font-medium leading-snug min-w-0 flex-1 truncate">
+                                  <p className="min-w-0 flex-1 truncate text-[14px] leading-snug font-medium">
                                     {product.url ? (
                                       <a
                                         href={product.url}
@@ -311,7 +311,7 @@ function WatchesPage() {
                                     )}
                                   </p>
                                   {product.price && (
-                                    <p className="font-mono text-[14px] font-light text-primary/90 whitespace-nowrap flex-shrink-0">
+                                    <p className="text-primary/90 flex-shrink-0 font-mono text-[14px] font-light whitespace-nowrap">
                                       {product.price} $
                                     </p>
                                   )}
@@ -319,7 +319,7 @@ function WatchesPage() {
 
                                 {/* Meta */}
                                 {meta && (
-                                  <p className="text-[11px] text-muted-foreground/60 mt-0.5 leading-snug">
+                                  <p className="text-muted-foreground/60 mt-0.5 text-[11px] leading-snug">
                                     {meta}
                                   </p>
                                 )}
@@ -333,7 +333,7 @@ function WatchesPage() {
                                 />
                               </>
                             ) : (
-                              <p className="text-[13px] text-muted-foreground">
+                              <p className="text-muted-foreground text-[13px]">
                                 {t('watches.delisted', { sku: watch.sku })}
                               </p>
                             )}
@@ -347,7 +347,7 @@ function WatchesPage() {
                               handleRemove(watch.sku)
                             }}
                             disabled={removing === watch.sku}
-                            className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
+                            className="text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md transition-colors disabled:opacity-40"
                             aria-label={t('watches.remove')}
                           >
                             <X size={13} weight="bold" />

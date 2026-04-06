@@ -20,18 +20,18 @@ export default function AdminPage() {
   if (user?.role !== 'admin') return <Navigate to="/chat" replace />
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="shrink-0 px-8 pt-8 pb-0 border-b border-border">
-        <h1 className="text-xl font-semibold mb-4">{t('admin.title')}</h1>
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="border-border shrink-0 border-b px-8 pt-8 pb-0">
+        <h1 className="mb-4 text-xl font-semibold">{t('admin.title')}</h1>
         <div className="flex gap-1">
           {(['waitlist', 'users'] as Tab[]).map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`px-4 py-2 text-sm rounded-t-lg transition-colors ${
+              className={`rounded-t-lg px-4 py-2 text-sm transition-colors ${
                 tab === id
-                  ? 'bg-accent-glow text-primary border border-b-background border-border'
+                  ? 'bg-accent-glow text-primary border-b-background border-border border'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -113,7 +113,7 @@ function WaitlistTab() {
         <button
           type="button"
           onClick={() => setRetry((n) => n + 1)}
-          className="underline text-muted-foreground"
+          className="text-muted-foreground underline"
         >
           {t('admin.waitlist.retry')}
         </button>
@@ -129,28 +129,28 @@ function WaitlistTab() {
         return (
           <div
             key={entry.id}
-            className="flex items-center gap-4 px-4 py-3 rounded-lg border border-border bg-card"
+            className="border-border bg-card flex items-center gap-4 rounded-lg border px-4 py-3"
           >
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{entry.email}</p>
-              <p className="text-xs text-muted-foreground font-mono">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{entry.email}</p>
+              <p className="text-muted-foreground font-mono text-xs">
                 {new Date(entry.created_at).toLocaleDateString()}
                 {entry.email_sent_at && (
-                  <span className="ml-2 text-primary/60">{t('admin.waitlist.emailSent')}</span>
+                  <span className="text-primary/60 ml-2">{t('admin.waitlist.emailSent')}</span>
                 )}
                 {entry.status === 'approved' && !entry.email_sent_at && (
                   <span className="ml-2 text-amber-500/60">{t('admin.waitlist.emailPending')}</span>
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               {entry.status === 'pending' && (
                 <>
                   <button
                     type="button"
                     disabled={busy}
                     onClick={() => handleAction(entry.id, 'approve')}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {t('admin.waitlist.approve')}
                   </button>
@@ -158,7 +158,7 @@ function WaitlistTab() {
                     type="button"
                     disabled={busy}
                     onClick={() => handleAction(entry.id, 'reject')}
-                    className="px-3 py-1.5 text-xs rounded-lg text-muted-foreground border border-border hover:text-destructive hover:border-destructive/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="text-muted-foreground border-border hover:text-destructive hover:border-destructive/30 rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {t('admin.waitlist.reject')}
                   </button>
@@ -169,7 +169,7 @@ function WaitlistTab() {
                   type="button"
                   disabled={busy}
                   onClick={() => handleAction(entry.id, 'resend')}
-                  className="px-3 py-1.5 text-xs rounded-lg text-muted-foreground border border-border hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="text-muted-foreground border-border hover:text-foreground rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {t('admin.waitlist.resend')}
                 </button>
@@ -283,7 +283,7 @@ function UsersTab() {
         <button
           type="button"
           onClick={() => setRetry((n) => n + 1)}
-          className="underline text-muted-foreground"
+          className="text-muted-foreground underline"
         >
           {t('admin.users.retry')}
         </button>
@@ -298,29 +298,29 @@ function UsersTab() {
         {users.map((u) => (
           <div
             key={u.id}
-            className="flex items-center gap-4 px-4 py-3 rounded-lg border border-border bg-card"
+            className="border-border bg-card flex items-center gap-4 rounded-lg border px-4 py-3"
           >
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium truncate">{u.display_name ?? u.email}</p>
+                <p className="truncate text-sm font-medium">{u.display_name ?? u.email}</p>
                 {u.role === 'admin' && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded border border-primary/20 bg-primary/10 text-primary font-mono">
+                  <span className="border-primary/20 bg-primary/10 text-primary rounded border px-1.5 py-0.5 font-mono text-[10px]">
                     {t('admin.users.admin')}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <p className="text-xs text-muted-foreground font-mono">
+                <p className="text-muted-foreground font-mono text-xs">
                   {u.last_login_at
                     ? new Date(u.last_login_at).toLocaleDateString()
                     : new Date(u.created_at).toLocaleDateString()}
                 </p>
-                {rowErrors[u.id] && <p className="text-xs text-destructive">{rowErrors[u.id]}</p>}
+                {rowErrors[u.id] && <p className="text-destructive text-xs">{rowErrors[u.id]}</p>}
               </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex shrink-0 items-center gap-3">
               <span
-                className={`text-xs font-mono ${u.is_active ? 'text-primary/60' : 'text-muted-foreground/40'}`}
+                className={`font-mono text-xs ${u.is_active ? 'text-primary/60' : 'text-muted-foreground/40'}`}
               >
                 {u.is_active ? t('admin.users.active') : t('admin.users.inactive')}
               </span>
@@ -330,7 +330,7 @@ function UsersTab() {
                     type="button"
                     disabled={rowLoading[u.id]}
                     onClick={() => toggleActive(u)}
-                    className={`px-3 py-1.5 text-xs rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    className={`rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                       u.is_active
                         ? 'text-muted-foreground border-border hover:text-destructive hover:border-destructive/30'
                         : 'text-primary border-primary/20 bg-primary/10 hover:bg-primary/20'
@@ -342,7 +342,7 @@ function UsersTab() {
                     type="button"
                     disabled={rowLoading[u.id]}
                     onClick={() => setConfirmDelete(u.id)}
-                    className="px-3 py-1.5 text-xs rounded-lg text-muted-foreground border border-border hover:text-destructive hover:border-destructive/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="text-muted-foreground border-border hover:text-destructive hover:border-destructive/30 rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {t('admin.users.delete')}
                   </button>
@@ -359,16 +359,16 @@ function UsersTab() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setConfirmDelete(null)}
           />
-          <div className="relative w-full max-w-sm mx-4 rounded-xl bg-[#0e0e12] border border-border shadow-2xl p-6">
-            <p className="text-[14px] font-medium mb-1">{t('admin.users.confirmDeleteTitle')}</p>
-            <p className="text-[13px] text-muted-foreground/50 mb-6">
+          <div className="border-border relative mx-4 w-full max-w-sm rounded-xl border bg-[#0e0e12] p-6 shadow-2xl">
+            <p className="mb-1 text-[14px] font-medium">{t('admin.users.confirmDeleteTitle')}</p>
+            <p className="text-muted-foreground/50 mb-6 text-[13px]">
               {t('admin.users.confirmDeleteDesc')}
             </p>
             <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setConfirmDelete(null)}
-                className="text-[13px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                className="text-muted-foreground/50 hover:text-muted-foreground text-[13px] transition-colors"
               >
                 {t('admin.users.cancel')}
               </button>
@@ -376,7 +376,7 @@ function UsersTab() {
                 type="button"
                 disabled={rowLoading[confirmDelete]}
                 onClick={() => handleDelete(confirmDelete)}
-                className="px-4 py-1.5 rounded-lg bg-destructive text-destructive-foreground text-[13px] font-medium hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors disabled:opacity-50"
               >
                 {t('admin.users.delete')}
               </button>

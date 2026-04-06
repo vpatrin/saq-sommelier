@@ -13,12 +13,12 @@ interface ChatSearchModalProps {
 
 function KbdHint({ keys, label }: { keys: string[]; label: string }) {
   return (
-    <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground/40">
+    <span className="text-muted-foreground/40 flex items-center gap-1.5 text-[11px]">
       <span className="flex items-center gap-0.5">
         {keys.map((k) => (
           <kbd
             key={k}
-            className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded border border-border/60 bg-white/[0.04] font-mono text-[10px] text-muted-foreground/50"
+            className="border-border/60 text-muted-foreground/50 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded border bg-white/[0.04] px-1 font-mono text-[10px]"
           >
             {k}
           </kbd>
@@ -68,14 +68,14 @@ function ChatSearchModal({ sessions, activeSessionId, onNavigate, onClose }: Cha
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/75 flex items-start justify-center pt-[20vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/75 pt-[20vh]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="w-[560px] bg-popover border border-border rounded-2xl shadow-2xl overflow-hidden">
+      <div className="bg-popover border-border w-[560px] overflow-hidden rounded-2xl border shadow-2xl">
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 border-b border-border">
+        <div className="border-border flex items-center gap-3 border-b px-4">
           <MagnifyingGlass size={15} className="text-muted-foreground/40 shrink-0" />
           <input
             autoFocus
@@ -84,12 +84,12 @@ function ChatSearchModal({ sessions, activeSessionId, onNavigate, onClose }: Cha
             onChange={(e) => updateQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('nav.searchHistory')}
-            className="flex-1 h-12 bg-transparent text-sm font-light placeholder:text-muted-foreground/40 focus:outline-none"
+            className="placeholder:text-muted-foreground/40 h-12 flex-1 bg-transparent text-sm font-light focus:outline-none"
           />
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-muted-foreground hover:bg-white/[0.06] transition-colors"
+            className="text-muted-foreground/40 hover:text-muted-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors hover:bg-white/[0.06]"
           >
             <X size={13} />
           </button>
@@ -98,7 +98,7 @@ function ChatSearchModal({ sessions, activeSessionId, onNavigate, onClose }: Cha
         {/* Results */}
         <ul ref={listRef} className="max-h-[400px] overflow-y-auto py-1">
           {filtered.length === 0 ? (
-            <li className="px-4 py-8 text-center text-[13px] text-muted-foreground/40">
+            <li className="text-muted-foreground/40 px-4 py-8 text-center text-[13px]">
               {t('nav.noMatch')}
             </li>
           ) : (
@@ -111,7 +111,7 @@ function ChatSearchModal({ sessions, activeSessionId, onNavigate, onClose }: Cha
                     type="button"
                     onMouseEnter={() => setHighlightedIndex(i)}
                     onClick={() => onNavigate(session.id)}
-                    className={`flex items-center justify-between w-full px-4 py-2.5 text-left transition-colors ${
+                    className={`flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors ${
                       isHighlighted
                         ? 'bg-white/[0.06]'
                         : isActive
@@ -120,11 +120,11 @@ function ChatSearchModal({ sessions, activeSessionId, onNavigate, onClose }: Cha
                     }`}
                   >
                     <span
-                      className={`text-[13px] truncate min-w-0 flex-1 ${isActive ? 'text-primary' : 'text-foreground/80'}`}
+                      className={`min-w-0 flex-1 truncate text-[13px] ${isActive ? 'text-primary' : 'text-foreground/80'}`}
                     >
                       {session.title ?? t('nav.untitled')}
                     </span>
-                    <span className="font-mono text-[11px] text-muted-foreground/40 shrink-0 ml-3">
+                    <span className="text-muted-foreground/40 ml-3 shrink-0 font-mono text-[11px]">
                       {timeAgo(session.updated_at, t)}
                     </span>
                   </button>
@@ -135,7 +135,7 @@ function ChatSearchModal({ sessions, activeSessionId, onNavigate, onClose }: Cha
         </ul>
 
         {/* Keyboard hints footer */}
-        <div className="flex items-center gap-4 px-4 py-2.5 border-t border-border">
+        <div className="border-border flex items-center gap-4 border-t px-4 py-2.5">
           <KbdHint keys={['↑', '↓']} label={t('nav.kbdSelect')} />
           <KbdHint keys={['↵']} label={t('nav.kbdOpen')} />
           <KbdHint keys={[isMac ? '⌘' : 'Ctrl', 'K']} label={t('nav.kbdClose')} />

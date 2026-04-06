@@ -91,18 +91,18 @@ function TastingForm({
     <div className="pt-1">
       {/* Wine picker — search when no product selected, chip when one is */}
       <div className="mb-4">
-        <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-1.5">
+        <p className="text-muted-foreground/40 mb-1.5 font-mono text-[10px] tracking-widest uppercase">
           {t('tastingForm.wine')}
         </p>
         {product ? (
-          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-white/[0.04] border border-border">
-            <p className="text-[13px] font-medium truncate">{product.name ?? product.sku}</p>
+          <div className="border-border flex items-center justify-between gap-2 rounded-lg border bg-white/[0.04] px-3 py-2">
+            <p className="truncate text-[13px] font-medium">{product.name ?? product.sku}</p>
             {/* In edit mode (noteId set) the wine is immutable — no X */}
             {!noteId && (
               <button
                 type="button"
                 onClick={() => setProduct(null)}
-                className="shrink-0 w-5 h-5 flex items-center justify-center rounded text-muted-foreground/50 hover:text-foreground transition-colors"
+                className="text-muted-foreground/50 hover:text-foreground flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors"
                 aria-label={t('tastingForm.changeWine')}
               >
                 <X size={12} weight="bold" />
@@ -117,11 +117,11 @@ function TastingForm({
       {product && (
         <>
           <div className="mb-4">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-2">
+            <p className="text-muted-foreground/40 mb-2 font-mono text-[10px] tracking-widest uppercase">
               {t('tastingForm.rating')}
             </p>
             <div className="flex items-center gap-3">
-              <span className={`font-mono text-[18px] font-medium w-8 shrink-0 ${bucket.color}`}>
+              <span className={`w-8 shrink-0 font-mono text-[18px] font-medium ${bucket.color}`}>
                 {rating}
               </span>
               <input
@@ -131,17 +131,17 @@ function TastingForm({
                 step={1}
                 value={rating}
                 onChange={(e) => setRating(Number(e.target.value))}
-                className="flex-1 accent-primary h-1 cursor-pointer"
+                className="accent-primary h-1 flex-1 cursor-pointer"
               />
-              <span className="font-mono text-[11px] text-muted-foreground/40 shrink-0">100</span>
+              <span className="text-muted-foreground/40 shrink-0 font-mono text-[11px]">100</span>
             </div>
-            <p className="text-[11px] text-muted-foreground/50 italic mt-1.5">
+            <p className="text-muted-foreground/50 mt-1.5 text-[11px] italic">
               {bucket.stars} · {bucket.description}
             </p>
           </div>
 
           <div className="mb-3">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-1.5">
+            <p className="text-muted-foreground/40 mb-1.5 font-mono text-[10px] tracking-widest uppercase">
               {t('tastingForm.notes')}
             </p>
             <textarea
@@ -150,12 +150,12 @@ function TastingForm({
               placeholder={t('tastingForm.notesPlaceholder')}
               maxLength={5000}
               rows={3}
-              className="w-full rounded-lg bg-white/[0.04] border border-border px-3 py-2 text-[13px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors resize-none"
+              className="border-border placeholder:text-muted-foreground/40 focus:border-primary/30 w-full resize-none rounded-lg border bg-white/[0.04] px-3 py-2 text-[13px] transition-colors focus:outline-none"
             />
           </div>
 
           <div className="mb-3">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-1.5">
+            <p className="text-muted-foreground/40 mb-1.5 font-mono text-[10px] tracking-widest uppercase">
               {t('tastingForm.pairing')}
             </p>
             <textarea
@@ -164,25 +164,25 @@ function TastingForm({
               placeholder={t('tastingForm.pairingPlaceholder')}
               maxLength={1000}
               rows={2}
-              className="w-full rounded-lg bg-white/[0.04] border border-border px-3 py-2 text-[13px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors resize-none"
+              className="border-border placeholder:text-muted-foreground/40 focus:border-primary/30 w-full resize-none rounded-lg border bg-white/[0.04] px-3 py-2 text-[13px] transition-colors focus:outline-none"
             />
           </div>
 
           <div className="mb-4">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-1.5">
+            <p className="text-muted-foreground/40 mb-1.5 font-mono text-[10px] tracking-widest uppercase">
               {t('tastingForm.date')}
             </p>
             <input
               type="date"
               value={tastedAt}
               onChange={(e) => setTastedAt(e.target.value)}
-              className="rounded-lg bg-white/[0.04] border border-border px-3 py-1.5 text-[13px] focus:outline-none focus:border-primary/30 transition-colors"
+              className="border-border focus:border-primary/30 rounded-lg border bg-white/[0.04] px-3 py-1.5 text-[13px] transition-colors focus:outline-none"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-4 mt-2">
+          <div className="mt-2 flex items-center justify-end gap-4">
             {saveError && (
-              <p className="text-[11px] text-destructive mr-auto">
+              <p className="text-destructive mr-auto text-[11px]">
                 {t('tastingForm.failedToSave')}{' '}
                 <button type="button" className="underline" onClick={handleSubmit}>
                   {t('tastingForm.retry')}
@@ -193,7 +193,7 @@ function TastingForm({
               type="button"
               onClick={onCancel}
               disabled={saving}
-              className="text-[13px] text-muted-foreground/50 hover:text-muted-foreground transition-colors disabled:opacity-40"
+              className="text-muted-foreground/50 hover:text-muted-foreground text-[13px] transition-colors disabled:opacity-40"
             >
               {t('tastingForm.cancel')}
             </button>
@@ -206,11 +206,11 @@ function TastingForm({
 
       {/* Cancel-only footer shown while searching for a wine */}
       {!product && (
-        <div className="flex justify-end mt-2">
+        <div className="mt-2 flex justify-end">
           <button
             type="button"
             onClick={onCancel}
-            className="text-[13px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            className="text-muted-foreground/50 hover:text-muted-foreground text-[13px] transition-colors"
           >
             {t('tastingForm.cancel')}
           </button>

@@ -64,17 +64,17 @@ function ThinkingIndicator() {
 
   return (
     <div className="flex items-center gap-2 px-4 py-3">
-      <span className="flex gap-1 items-center shrink-0">
+      <span className="flex shrink-0 items-center gap-1">
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-typing-dot"
+            className="bg-primary/40 animate-typing-dot h-1.5 w-1.5 rounded-full"
             style={{ animationDelay: `${i * 0.2}s` }}
           />
         ))}
       </span>
       <span
-        className="font-mono text-[10.5px] text-muted-foreground/60 transition-opacity duration-200"
+        className="text-muted-foreground/60 font-mono text-[10.5px] transition-opacity duration-200"
         style={{ opacity: visible ? 1 : 0 }}
       >
         {THINKING_STEPS[step]}
@@ -101,7 +101,7 @@ function ActionBtn({
       type="button"
       onClick={onClick}
       title={title}
-      className={`p-1.5 rounded-md transition-colors hover:bg-white/[0.05] ${active ? (activeClass ?? 'text-primary/80') : 'text-muted-foreground/35 hover:text-muted-foreground/70'}`}
+      className={`rounded-md p-1.5 transition-colors hover:bg-white/[0.05] ${active ? (activeClass ?? 'text-primary/80') : 'text-muted-foreground/35 hover:text-muted-foreground/70'}`}
     >
       {children}
     </button>
@@ -138,7 +138,7 @@ function AssistantMessageActions({
 
   return (
     <div
-      className={`flex items-center gap-0.5 mt-1.5 ml-0.5 transition-opacity ${alwaysVisible ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100'}`}
+      className={`mt-1.5 ml-0.5 flex items-center gap-0.5 transition-opacity ${alwaysVisible ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100'}`}
     >
       <ActionBtn onClick={handleCopy} title="Copy">
         {copied ? <Check size={13} /> : <Copy size={13} />}
@@ -192,8 +192,8 @@ function UserMessageActions({
   )
 
   return (
-    <div className="flex items-center gap-0.5 opacity-0 group-hover/msg:opacity-100 transition-opacity mt-1 self-end">
-      <span className="font-mono text-[10px] text-muted-foreground/30 mr-1">{time}</span>
+    <div className="mt-1 flex items-center gap-0.5 self-end opacity-0 transition-opacity group-hover/msg:opacity-100">
+      <span className="text-muted-foreground/30 mr-1 font-mono text-[10px]">{time}</span>
       {onRegenerate && (
         <ActionBtn onClick={onRegenerate} title="Regenerate from here">
           <ArrowClockwise size={13} />
@@ -247,7 +247,7 @@ function AssistantMessage({
               key={product.sku}
               type="button"
               onClick={() => setSelectedSku(selectedSku === product.sku ? null : product.sku)}
-              className={`text-left w-full rounded-xl ${selectedSku === product.sku ? 'ring-1 ring-primary/60' : ''}`}
+              className={`w-full rounded-xl text-left ${selectedSku === product.sku ? 'ring-primary/60 ring-1' : ''}`}
             >
               <WineCard product={product} reason={reason} storeNames={storeNames} />
             </button>
@@ -306,13 +306,13 @@ function SessionTitleBar({
             if (e.key === 'Escape') setRenaming(false)
           }}
           onBlur={submitRename}
-          className="h-8 px-3 rounded-lg bg-secondary border border-border text-sm text-foreground focus:outline-none focus:border-primary/40 w-64 text-center"
+          className="bg-secondary border-border text-foreground focus:border-primary/40 h-8 w-64 rounded-lg border px-3 text-center text-sm focus:outline-none"
         />
       ) : (
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-secondary/60 hover:bg-secondary border border-transparent hover:border-border text-sm text-foreground/70 hover:text-foreground transition-colors max-w-80"
+          className="bg-secondary/60 hover:bg-secondary hover:border-border text-foreground/70 hover:text-foreground flex h-8 max-w-80 items-center gap-1.5 rounded-lg border border-transparent px-3 text-sm transition-colors"
         >
           <span className="truncate">{title}</span>
           <CaretDown size={13} className="shrink-0 opacity-50" />
@@ -320,19 +320,19 @@ function SessionTitleBar({
       )}
 
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 w-44 rounded-xl bg-popover border border-border shadow-lg py-1 z-20">
+        <div className="bg-popover border-border absolute top-full left-0 z-20 mt-1.5 w-44 rounded-xl border py-1 shadow-lg">
           <button
             type="button"
-            className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-foreground hover:bg-white/[0.04] transition-colors"
+            className="text-foreground flex w-full items-center gap-2.5 px-3.5 py-2 text-sm transition-colors hover:bg-white/[0.04]"
             onClick={startRenaming}
           >
             <PencilSimple size={13} className="opacity-50" />
             {t('nav.rename')}
           </button>
-          <div className="mx-3 my-1 border-t border-border" />
+          <div className="border-border mx-3 my-1 border-t" />
           <button
             type="button"
-            className="flex items-center gap-2.5 w-full px-3.5 py-2 text-sm text-destructive hover:bg-white/[0.04] transition-colors"
+            className="text-destructive flex w-full items-center gap-2.5 px-3.5 py-2 text-sm transition-colors hover:bg-white/[0.04]"
             onClick={() => {
               setOpen(false)
               onDelete()
@@ -555,14 +555,14 @@ function ChatPage() {
 
   if (isEmpty) {
     return (
-      <div className="relative flex flex-col h-full items-center justify-center px-8">
-        <div className="w-full max-w-[680px] flex flex-col items-center gap-6">
+      <div className="relative flex h-full flex-col items-center justify-center px-8">
+        <div className="flex w-full max-w-[680px] flex-col items-center gap-6">
           {/* Greeting */}
-          <div className="flex flex-col items-center gap-3 mb-2">
-            <div className="w-14 h-14 rounded-2xl bg-primary/[0.12] border border-primary/[0.22] flex items-center justify-center text-primary/70">
+          <div className="mb-2 flex flex-col items-center gap-3">
+            <div className="bg-primary/[0.12] border-primary/[0.22] text-primary/70 flex h-14 w-14 items-center justify-center rounded-2xl border">
               <Wine size={28} />
             </div>
-            <p className="text-[17px] font-light text-foreground/75">
+            <p className="text-foreground/75 text-[17px] font-light">
               {t('chat.welcome', { name: user?.display_name })}
             </p>
           </div>
@@ -570,7 +570,7 @@ function ChatPage() {
           {/* Composer */}
           <form
             onSubmit={handleSubmit}
-            className="w-full flex flex-col rounded-xl bg-white/[0.05] border border-border transition-colors"
+            className="border-border flex w-full flex-col rounded-xl border bg-white/[0.05] transition-colors"
           >
             <textarea
               ref={inputRef}
@@ -585,13 +585,13 @@ function ChatPage() {
               maxLength={MAX_MESSAGE_LENGTH}
               rows={1}
               disabled={sending}
-              className="bg-transparent text-sm font-light resize-none overflow-y-auto focus:outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 px-4 pt-3 pb-1.5 max-h-32"
+              className="placeholder:text-muted-foreground/40 max-h-32 resize-none overflow-y-auto bg-transparent px-4 pt-3 pb-1.5 text-sm font-light focus:outline-none disabled:opacity-50"
             />
             <div className="flex items-center justify-end px-2.5 pb-2.5">
               <button
                 type="submit"
                 disabled={sending || !input.trim()}
-                className="w-7 h-7 rounded-full bg-primary/80 text-background flex items-center justify-center hover:bg-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                className="bg-primary/80 text-background hover:bg-primary flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-20"
                 aria-label={t('chat.send')}
               >
                 <ArrowUp size={14} weight="bold" />
@@ -606,7 +606,7 @@ function ChatPage() {
                 key={starter}
                 type="button"
                 onClick={() => submitMessage(starter)}
-                className="px-3.5 py-1.5 rounded-full border border-border/70 bg-white/[0.03] text-[12px] text-foreground/60 hover:border-primary/40 hover:text-foreground hover:bg-accent-glow transition-colors"
+                className="border-border/70 text-foreground/60 hover:border-primary/40 hover:text-foreground hover:bg-accent-glow rounded-full border bg-white/[0.03] px-3.5 py-1.5 text-[12px] transition-colors"
               >
                 {starter}
               </button>
@@ -618,7 +618,7 @@ function ChatPage() {
   }
 
   return (
-    <div className="relative flex flex-col h-full">
+    <div className="relative flex h-full flex-col">
       {/* Sticky title bar */}
       {sessionTitle && sessionId && (
         <div className="px-8 pt-5 pb-1">
@@ -635,10 +635,10 @@ function ChatPage() {
         ref={scrollAreaRef}
         className={`flex-1 overflow-y-auto py-10 transition-[padding-right] duration-300 ease-out ${selectedSku ? 'pr-[376px]' : ''}`}
       >
-        <div className="max-w-[680px] mx-auto px-8 flex flex-col gap-7">
+        <div className="mx-auto flex max-w-[680px] flex-col gap-7 px-8">
           {loading && (
-            <div className="flex items-center justify-center min-h-[20vh]">
-              <p className="text-sm text-muted-foreground">{t('chat.loading')}</p>
+            <div className="flex min-h-[20vh] items-center justify-center">
+              <p className="text-muted-foreground text-sm">{t('chat.loading')}</p>
             </div>
           )}
 
@@ -649,7 +649,7 @@ function ChatPage() {
             >
               {msg.role === 'user' ? (
                 <>
-                  <div className="max-w-[72%] bg-primary/[0.08] border border-primary/[0.1] rounded-2xl px-4 py-3">
+                  <div className="bg-primary/[0.08] border-primary/[0.1] max-w-[72%] rounded-2xl border px-4 py-3">
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
                       {msg.content as string}
                     </p>
@@ -666,7 +666,7 @@ function ChatPage() {
                 </>
               ) : (
                 <>
-                  <div className="w-full bg-white/[0.025] border border-border rounded-2xl px-5 py-[18px]">
+                  <div className="border-border w-full rounded-2xl border bg-white/[0.025] px-5 py-[18px]">
                     <AssistantMessage
                       content={msg.content}
                       storeNames={storeNames}
@@ -690,7 +690,7 @@ function ChatPage() {
 
           {sending && (
             <div className="flex items-start">
-              <div className="w-full bg-white/[0.025] border border-border rounded-2xl">
+              <div className="border-border w-full rounded-2xl border bg-white/[0.025]">
                 <ThinkingIndicator />
               </div>
             </div>
@@ -698,13 +698,13 @@ function ChatPage() {
 
           {error && (
             <div className="flex items-start">
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {error} —{' '}
                 {lastFailedInput && (
                   <>
                     <button
                       type="button"
-                      className="underline underline-offset-4 hover:text-foreground"
+                      className="hover:text-foreground underline underline-offset-4"
                       onClick={() => {
                         setInput(lastFailedInput)
                         setError(null)
@@ -719,7 +719,7 @@ function ChatPage() {
                 )}
                 <button
                   type="button"
-                  className="underline underline-offset-4 hover:text-foreground"
+                  className="hover:text-foreground underline underline-offset-4"
                   onClick={() => {
                     setError(null)
                     setLastFailedInput(null)
@@ -737,11 +737,11 @@ function ChatPage() {
 
       {/* Scroll-to-bottom button */}
       {!atBottom && (
-        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-10">
+        <div className="absolute bottom-32 left-1/2 z-10 -translate-x-1/2">
           <button
             type="button"
             onClick={() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' })}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-secondary border border-border text-foreground/50 hover:text-foreground shadow-lg transition-colors"
+            className="bg-secondary border-border text-foreground/50 hover:text-foreground flex h-9 w-9 items-center justify-center rounded-full border shadow-lg transition-colors"
           >
             <ArrowDown size={16} />
           </button>
@@ -750,9 +750,9 @@ function ChatPage() {
 
       {/* Input area — bg-background covers scrolled content beneath */}
       <div
-        className={`flex-shrink-0 w-full pb-6 pt-2 bg-background relative before:absolute before:inset-x-0 before:-top-8 before:h-8 before:bg-gradient-to-t before:from-background before:to-transparent before:pointer-events-none transition-[padding-right] duration-300 ease-out ${selectedSku ? 'pr-[376px]' : ''}`}
+        className={`bg-background before:from-background relative w-full flex-shrink-0 pt-2 pb-6 transition-[padding-right] duration-300 ease-out before:pointer-events-none before:absolute before:inset-x-0 before:-top-8 before:h-8 before:bg-gradient-to-t before:to-transparent ${selectedSku ? 'pr-[376px]' : ''}`}
       >
-        <div className="max-w-[680px] w-full mx-auto px-8">
+        <div className="mx-auto w-full max-w-[680px] px-8">
           <form
             onSubmit={handleSubmit}
             className="flex flex-col rounded-xl bg-white/[0.04] transition-colors"
@@ -770,13 +770,13 @@ function ChatPage() {
               maxLength={MAX_MESSAGE_LENGTH}
               rows={1}
               disabled={sending}
-              className="bg-transparent text-sm font-light resize-none overflow-y-auto focus:outline-none placeholder:text-muted-foreground/40 disabled:opacity-50 px-4 pt-3 pb-1.5 max-h-32"
+              className="placeholder:text-muted-foreground/40 max-h-32 resize-none overflow-y-auto bg-transparent px-4 pt-3 pb-1.5 text-sm font-light focus:outline-none disabled:opacity-50"
             />
             <div className="flex items-center justify-end px-2.5 pb-2.5">
               <button
                 type="submit"
                 disabled={sending || !input.trim()}
-                className="w-7 h-7 rounded-full bg-primary/80 text-background flex items-center justify-center hover:bg-primary transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                className="bg-primary/80 text-background hover:bg-primary flex h-7 w-7 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-20"
                 aria-label={t('chat.send')}
               >
                 <ArrowUp size={14} weight="bold" />

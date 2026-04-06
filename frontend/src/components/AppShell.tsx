@@ -222,18 +222,18 @@ function AppShell() {
   )
 
   return (
-    <div className="h-screen bg-background text-foreground flex">
+    <div className="bg-background text-foreground flex h-screen">
       {/* Sidebar */}
       <aside
-        className={`shrink-0 border-r border-border bg-sidebar text-sidebar-foreground flex flex-col h-full transition-[width] duration-300 ease-out ${
+        className={`border-border bg-sidebar text-sidebar-foreground flex h-full shrink-0 flex-col border-r transition-[width] duration-300 ease-out ${
           collapsed ? 'w-[60px] overflow-visible' : 'w-65 overflow-hidden'
         }`}
       >
         {collapsed ? (
-          <div className="flex flex-col items-center py-4 gap-1 h-full">
+          <div className="flex h-full flex-col items-center gap-1 py-4">
             <Link
               to="/chat"
-              className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/35 to-primary/15 border border-primary/20 flex items-center justify-center text-primary shrink-0 mb-2"
+              className="from-primary/35 to-primary/15 border-primary/20 text-primary mb-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-gradient-to-br"
             >
               <WineIcon size={15} weight="regular" />
             </Link>
@@ -242,19 +242,19 @@ function AppShell() {
               type="button"
               onClick={toggleCollapsed}
               title={t('nav.expandSidebar')}
-              className="w-[38px] h-[38px] rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground hover:bg-surface-hover transition-colors mb-1"
+              className="text-muted-foreground/60 hover:text-muted-foreground hover:bg-surface-hover mb-1 flex h-[38px] w-[38px] items-center justify-center rounded-lg transition-colors"
             >
               <SidebarSimpleIcon size={17} />
             </button>
 
-            <div className="w-6 h-px bg-border my-1" />
+            <div className="bg-border my-1 h-px w-6" />
 
             <button
               type="button"
               onClick={() => navigate('/chat')}
               disabled={isSending}
               title={t('nav.newChat')}
-              className="w-[38px] h-[38px] rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
+              className="text-muted-foreground/60 hover:text-muted-foreground hover:bg-surface-hover flex h-[38px] w-[38px] items-center justify-center rounded-lg transition-colors disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-30"
             >
               <Plus size={18} />
             </button>
@@ -263,12 +263,12 @@ function AppShell() {
               type="button"
               onClick={() => setSearchOpen(true)}
               title={t('nav.searchHistory')}
-              className="w-[38px] h-[38px] rounded-lg flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground hover:bg-surface-hover transition-colors"
+              className="text-muted-foreground/60 hover:text-muted-foreground hover:bg-surface-hover flex h-[38px] w-[38px] items-center justify-center rounded-lg transition-colors"
             >
               <MagnifyingGlass size={17} />
             </button>
 
-            <div className="w-6 h-px bg-border my-1" />
+            <div className="bg-border my-1 h-px w-6" />
 
             {NAV_ITEMS.map(({ to, labelKey, icon: Icon }) => {
               const active = isNavActive(to)
@@ -277,10 +277,10 @@ function AppShell() {
                   key={to}
                   to={to}
                   title={t(labelKey)}
-                  className={`w-[38px] h-[38px] rounded-lg flex items-center justify-center transition-colors ${
+                  className={`flex h-[38px] w-[38px] items-center justify-center rounded-lg transition-colors ${
                     active
                       ? 'bg-accent-glow text-primary'
-                      : 'text-muted-foreground/40 hover:text-muted-foreground hover:bg-surface-hover'
+                      : 'text-muted-foreground/60 hover:text-muted-foreground hover:bg-surface-hover'
                   }`}
                 >
                   <Icon size={17} weight={active ? 'fill' : 'regular'} />
@@ -292,17 +292,17 @@ function AppShell() {
               <div
                 key={labelKey}
                 title={`${t(labelKey)} — ${t('userMenu.soon')}`}
-                className="w-[38px] h-[38px] rounded-lg flex items-center justify-center text-muted-foreground/20 cursor-not-allowed"
+                className="text-muted-foreground/35 flex h-[38px] w-[38px] cursor-not-allowed items-center justify-center rounded-lg"
               >
                 <Icon size={17} />
               </div>
             ))}
 
-            <div ref={userMenuRef} className="mt-auto relative overflow-visible">
+            <div ref={userMenuRef} className="relative mt-auto overflow-visible">
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((v) => !v)}
-                className="w-8 h-8 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-[13px] font-medium text-primary hover:opacity-80 transition-opacity"
+                className="bg-primary/15 border-primary/20 text-primary flex h-8 w-8 items-center justify-center rounded-full border text-[13px] font-medium transition-opacity hover:opacity-80"
               >
                 {user?.display_name?.charAt(0) ?? '?'}
               </button>
@@ -322,19 +322,19 @@ function AppShell() {
           </div>
         ) : (
           <>
-            <div className="px-[var(--spacing-sidebar-x)] pt-5 pb-3 shrink-0">
-              <div className="flex items-center justify-between mb-4">
+            <div className="shrink-0 px-[var(--spacing-sidebar-x)] pt-5 pb-3">
+              <div className="mb-4 flex items-center justify-between">
                 <Link to="/chat" className="flex items-center gap-2.5">
-                  <div className="w-7.5 h-7.5 rounded-lg bg-gradient-to-br from-primary/35 to-primary/15 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                  <div className="from-primary/35 to-primary/15 border-primary/20 text-primary flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg border bg-gradient-to-br">
                     <WineIcon size={15} weight="regular" />
                   </div>
-                  <span className="text-base font-medium text-foreground">{t('brand')}</span>
+                  <span className="text-foreground text-base font-medium">{t('brand')}</span>
                 </Link>
                 <button
                   type="button"
                   onClick={toggleCollapsed}
                   title={t('nav.collapseSidebar')}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/30 hover:text-muted-foreground hover:bg-surface-hover transition-colors"
+                  className="text-muted-foreground/30 hover:text-muted-foreground hover:bg-surface-hover flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
                 >
                   <SidebarSimpleIcon size={15} />
                 </button>
@@ -344,7 +344,7 @@ function AppShell() {
                 type="button"
                 onClick={() => navigate('/chat')}
                 disabled={isSending}
-                className="flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground hover:border-border-warm hover:text-sidebar-foreground hover:bg-accent-glow transition-colors mb-2 disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none"
+                className="border-border text-muted-foreground hover:border-border-warm hover:text-sidebar-foreground hover:bg-accent-glow mb-2 flex w-full items-center gap-2 rounded-lg border bg-transparent px-3.5 py-2 text-[length:var(--text-sidebar)] font-light transition-colors disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-30"
               >
                 <Plus size={16} weight="regular" className="text-muted-foreground" />
                 {t('nav.newChat')}
@@ -353,23 +353,23 @@ function AppShell() {
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className="flex items-center gap-2 w-full px-3.5 py-2 rounded-lg border border-border bg-transparent text-[length:var(--text-sidebar)] font-light text-muted-foreground/40 hover:text-muted-foreground hover:border-primary/20 transition-colors"
+                className="border-border text-muted-foreground/60 hover:text-muted-foreground hover:border-primary/20 flex w-full items-center gap-2 rounded-lg border bg-transparent px-3.5 py-2 text-[length:var(--text-sidebar)] font-light transition-colors"
               >
                 <MagnifyingGlass size={12} className="shrink-0" />
                 {t('nav.searchHistory')}
               </button>
             </div>
 
-            <div className="border-t border-sidebar-border mx-[var(--spacing-sidebar-x)]" />
+            <div className="border-sidebar-border mx-[var(--spacing-sidebar-x)] border-t" />
 
-            <nav className="shrink-0 px-2 py-2 flex flex-col gap-0.5 border-b border-sidebar-border">
+            <nav className="border-sidebar-border flex shrink-0 flex-col gap-0.5 border-b px-2 py-2">
               {NAV_ITEMS.map(({ to, labelKey, icon: Icon }) => {
                 const active = isNavActive(to)
                 return (
                   <Link
                     key={to}
                     to={to}
-                    className={`relative flex items-center gap-2.5 px-3 py-2 text-[length:var(--text-sidebar)] rounded-lg transition-colors ${
+                    className={`relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[length:var(--text-sidebar)] transition-colors ${
                       active
                         ? 'bg-accent-glow text-primary'
                         : 'text-sidebar-foreground hover:bg-surface-hover'
@@ -383,33 +383,33 @@ function AppShell() {
               {SOON_ITEMS.map(({ labelKey, icon: Icon }) => (
                 <div
                   key={labelKey}
-                  className="flex items-center gap-2.5 px-3 py-2 text-[length:var(--text-sidebar)] rounded-lg text-muted-foreground/25 cursor-not-allowed"
+                  className="text-muted-foreground/40 flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2 text-[length:var(--text-sidebar)]"
                 >
                   <Icon size={16} className="opacity-70" />
                   {t(labelKey)}
-                  <span className="ml-auto font-mono text-[9px] px-1.5 py-0.5 rounded border border-primary/15 bg-primary/[0.06] text-primary/40">
+                  <span className="border-primary/25 bg-primary/10 text-primary/60 ml-auto rounded border px-1.5 py-0.5 font-mono text-[9px]">
                     {t('userMenu.soon')}
                   </span>
                 </div>
               ))}
             </nav>
 
-            <div className="flex-1 overflow-y-auto min-h-0 flex flex-col scrollbar-none">
-              <div className="group/recents flex items-center justify-between px-[var(--spacing-sidebar-x)] pt-2 pb-1 shrink-0">
-                <span className="text-[length:var(--text-sidebar-xs)] font-medium text-muted-foreground/40 uppercase tracking-wider">
+            <div className="scrollbar-none flex min-h-0 flex-1 flex-col overflow-y-auto">
+              <div className="group/recents flex shrink-0 items-center justify-between px-[var(--spacing-sidebar-x)] pt-2 pb-1">
+                <span className="text-muted-foreground/60 text-[length:var(--text-sidebar-xs)] font-medium tracking-wider uppercase">
                   {t('nav.recents')}
                 </span>
                 <button
                   type="button"
                   onClick={() => setHistoryHidden((v) => !v)}
-                  className="text-[length:var(--text-sidebar-xs)] text-muted-foreground/40 hover:text-muted-foreground opacity-0 group-hover/recents:opacity-100 transition-opacity"
+                  className="text-muted-foreground/60 hover:text-muted-foreground text-[length:var(--text-sidebar-xs)] opacity-0 transition-opacity group-hover/recents:opacity-100"
                 >
                   {historyHidden ? t('nav.show') : t('nav.hide')}
                 </button>
               </div>
 
               {!historyHidden && visibleSessions.length === 0 && (
-                <p className="px-[var(--spacing-sidebar-x)] py-2 text-[length:var(--text-sidebar-xs)] text-muted-foreground/40">
+                <p className="text-muted-foreground/60 px-[var(--spacing-sidebar-x)] py-2 text-[length:var(--text-sidebar-xs)]">
                   {t('nav.noConversations')}
                 </p>
               )}
@@ -426,7 +426,7 @@ function AppShell() {
                       }`}
                     >
                       {isActive && (
-                        <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-r bg-primary" />
+                        <div className="bg-primary absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-r" />
                       )}
                       {editingId === session.id ? (
                         <input
@@ -439,13 +439,13 @@ function AppShell() {
                           }}
                           onBlur={() => handleRename(session.id)}
                           maxLength={50}
-                          className="flex-1 min-w-0 bg-transparent border-b border-primary text-sm outline-none"
+                          className="border-primary min-w-0 flex-1 border-b bg-transparent text-sm outline-none"
                         />
                       ) : (
                         <>
                           <Link
                             to={`/chat/${session.id}`}
-                            className={`flex-1 min-w-0 truncate ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+                            className={`min-w-0 flex-1 truncate ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
                             title={session.title ?? t('nav.untitled')}
                             onDoubleClick={(e) => {
                               e.preventDefault()
@@ -465,13 +465,13 @@ function AppShell() {
                                   openMenu(session.id, e.currentTarget)
                                 }
                               }}
-                              className={`flex items-center justify-center w-6 h-6 rounded text-muted-foreground/50 hover:text-foreground hover:bg-white/[0.06] transition-colors ${menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                              className={`text-muted-foreground/50 hover:text-foreground flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-white/[0.06] ${menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                             >
                               <DotsThree size={16} weight="bold" />
                             </button>
                             {menuOpen && (
                               <div
-                                className={`absolute right-0 w-40 rounded-xl bg-popover border border-border shadow-lg py-1 z-50 ${menuAbove ? 'bottom-full mb-1' : 'top-full mt-1'}`}
+                                className={`bg-popover border-border absolute right-0 z-50 w-40 rounded-xl border py-1 shadow-lg ${menuAbove ? 'bottom-full mb-1' : 'top-full mt-1'}`}
                               >
                                 <button
                                   type="button"
@@ -480,16 +480,16 @@ function AppShell() {
                                     setEditingId(session.id)
                                     setOpenMenuId(null)
                                   }}
-                                  className="flex items-center gap-2.5 w-full px-3 py-1.5 text-[length:var(--text-sidebar)] text-foreground hover:bg-white/[0.04] transition-colors"
+                                  className="text-foreground flex w-full items-center gap-2.5 px-3 py-1.5 text-[length:var(--text-sidebar)] transition-colors hover:bg-white/[0.04]"
                                 >
                                   <PencilSimple size={12} className="opacity-50" />
                                   {t('nav.rename')}
                                 </button>
-                                <div className="mx-3 my-1 border-t border-border" />
+                                <div className="border-border mx-3 my-1 border-t" />
                                 <button
                                   type="button"
                                   onClick={() => handleDelete(session.id)}
-                                  className="flex items-center gap-2.5 w-full px-3 py-1.5 text-[length:var(--text-sidebar)] text-destructive hover:bg-white/[0.04] transition-colors whitespace-nowrap"
+                                  className="text-destructive flex w-full items-center gap-2.5 px-3 py-1.5 text-[length:var(--text-sidebar)] whitespace-nowrap transition-colors hover:bg-white/[0.04]"
                                 >
                                   <Trash size={12} />
                                   {t('nav.delete')}
@@ -506,7 +506,7 @@ function AppShell() {
               {!historyHidden && allSessions.length > 0 && (
                 <Link
                   to="/chats"
-                  className="flex items-center gap-2 px-[var(--spacing-sidebar-x)] py-2 mt-0.5 text-[length:var(--text-sidebar-xs)] text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                  className="text-muted-foreground/60 hover:text-muted-foreground mt-0.5 flex items-center gap-2 px-[var(--spacing-sidebar-x)] py-2 text-[length:var(--text-sidebar-xs)] transition-colors"
                 >
                   <ChatCircle size={12} className="opacity-60" />
                   {t('nav.allChats')}
@@ -516,7 +516,7 @@ function AppShell() {
 
             <div
               ref={userMenuRef}
-              className="shrink-0 border-t border-sidebar-border px-3 py-3 relative"
+              className="border-sidebar-border relative shrink-0 border-t px-3 py-3"
             >
               {userMenuOpen && (
                 <UserMenu
@@ -532,17 +532,17 @@ function AppShell() {
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((v) => !v)}
-                className="flex items-center gap-2.5 w-full rounded-lg px-2 py-2 hover:bg-surface-hover transition-colors"
+                className="hover:bg-surface-hover flex w-full items-center gap-2.5 rounded-lg px-2 py-2 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-[length:var(--text-sidebar)] font-medium text-primary shrink-0">
+                <div className="bg-primary/15 border-primary/20 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[length:var(--text-sidebar)] font-medium">
                   {user?.display_name?.charAt(0) ?? '?'}
                 </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-[13px] font-medium truncate">{user?.display_name}</p>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="truncate text-[13px] font-medium">{user?.display_name}</p>
                 </div>
                 <CaretUp
                   size={12}
-                  className={`text-muted-foreground/40 transition-transform ${userMenuOpen ? '' : 'rotate-180'}`}
+                  className={`text-muted-foreground/60 transition-transform ${userMenuOpen ? '' : 'rotate-180'}`}
                 />
               </button>
             </div>
@@ -577,7 +577,7 @@ function MainArea({ outletContext }: { outletContext: ChatOutletContext }) {
   }, [location.pathname, setSelectedSku])
 
   return (
-    <main className="flex-1 min-w-0 flex flex-col overflow-hidden relative">
+    <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
       <Outlet context={outletContext} />
       <WineDetailPanel sku={selectedSku} onClose={handleClosePanel} />
     </main>

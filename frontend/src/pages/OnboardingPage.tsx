@@ -37,32 +37,32 @@ function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-8 relative overflow-hidden">
+    <div className="bg-background text-foreground relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-8">
       {/* Lang toggle */}
       <button
         type="button"
         onClick={() => i18n.changeLanguage(i18n.resolvedLanguage === 'fr' ? 'en' : 'fr')}
-        className="absolute top-4 right-6 w-8 text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+        className="text-muted-foreground hover:text-foreground absolute top-4 right-6 w-8 text-center text-xs transition-colors"
       >
         {i18n.resolvedLanguage === 'fr' ? 'EN' : 'FR'}
       </button>
 
       {/* Ambient orbs */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-primary/[0.06] blur-[120px]" />
-        <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-primary/[0.03] blur-[100px]" />
+        <div className="bg-primary/[0.06] absolute -top-32 -right-32 h-[500px] w-[500px] rounded-full blur-[120px]" />
+        <div className="bg-primary/[0.03] absolute -bottom-32 -left-32 h-[400px] w-[400px] rounded-full blur-[100px]" />
       </div>
 
-      <div className="relative flex flex-col items-center gap-6 w-full max-w-sm">
+      <div className="relative flex w-full max-w-sm flex-col items-center gap-6">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/35 to-primary/15 flex items-center justify-center text-primary shadow-[0_8px_32px_oklch(0.7_0.13_65_/_10%)]">
+          <div className="from-primary/35 to-primary/15 text-primary flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br shadow-[0_8px_32px_oklch(0.7_0.13_65_/_10%)]">
             <WineIcon size={32} />
           </div>
         </div>
 
         <div className="flex flex-col items-center gap-2">
           <h1 className="text-[22px] font-light">{t('onboarding.nameTitle')}</h1>
-          <p className="text-[13px] font-light text-muted-foreground/40">
+          <p className="text-muted-foreground/40 text-[13px] font-light">
             {t('onboarding.nameSub')}
           </p>
         </div>
@@ -77,14 +77,14 @@ function OnboardingPage() {
           placeholder={t('onboarding.namePlaceholder')}
           maxLength={100}
           autoFocus
-          className="w-full max-w-[300px] px-5 py-3.5 rounded-xl border border-border bg-white/[0.02] text-center text-base text-foreground placeholder:text-muted-foreground/30 placeholder:text-sm placeholder:font-light focus:border-primary/20 focus:outline-none transition-colors"
+          className="border-border text-foreground placeholder:text-muted-foreground/30 focus:border-primary/20 w-full max-w-[300px] rounded-xl border bg-white/[0.02] px-5 py-3.5 text-center text-base transition-colors placeholder:text-sm placeholder:font-light focus:outline-none"
         />
 
         <button
           type="button"
           disabled={!name.trim() || saving}
           onClick={handleSubmit}
-          className="px-9 py-3 rounded-xl bg-gradient-to-br from-primary/25 to-primary/15 border border-primary/20 text-[15px] font-medium text-primary hover:from-primary/35 hover:to-primary/25 hover:shadow-[0_0_24px_rgba(200,146,72,0.1)] disabled:opacity-30 disabled:cursor-default disabled:hover:shadow-none transition-all"
+          className="from-primary/25 to-primary/15 border-primary/20 text-primary hover:from-primary/35 hover:to-primary/25 rounded-xl border bg-gradient-to-br px-9 py-3 text-[15px] font-medium transition-all hover:shadow-[0_0_24px_rgba(200,146,72,0.1)] disabled:cursor-default disabled:opacity-30 disabled:hover:shadow-none"
         >
           {t('onboarding.continue')}
         </button>

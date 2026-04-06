@@ -180,11 +180,11 @@ function TastingsPage() {
   if (loading) {
     return (
       <div className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-2xl mx-auto flex flex-col gap-3">
+        <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
-              className="h-[72px] rounded-xl bg-white/[0.025] border border-border animate-pulse"
+              className="border-border h-[72px] animate-pulse rounded-xl border bg-white/[0.025]"
             />
           ))}
         </div>
@@ -195,12 +195,12 @@ function TastingsPage() {
   if (loadError) {
     return (
       <div className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-2xl mx-auto">
-          <p className="text-[13px] text-muted-foreground/60">
+        <div className="mx-auto max-w-2xl">
+          <p className="text-muted-foreground/60 text-[13px]">
             {t('journal.failedToLoad')} —{' '}
             <button
               type="button"
-              className="underline hover:text-foreground transition-colors"
+              className="hover:text-foreground underline transition-colors"
               onClick={() => setFetchKey((k) => k + 1)}
             >
               {t('journal.retry')}
@@ -213,17 +213,17 @@ function TastingsPage() {
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="mx-auto max-w-2xl">
         {/* Header */}
-        <div className="flex items-center gap-2.5 mb-1">
+        <div className="mb-1 flex items-center gap-2.5">
           <h1 className="text-2xl font-light">{t('journal.title')}</h1>
           {notes.length > 0 && (
-            <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+            <span className="text-muted-foreground/60 font-mono text-[11px] tabular-nums">
               {notes.length}
             </span>
           )}
         </div>
-        <p className="text-[13px] font-light text-muted-foreground/50 mb-5">
+        <p className="text-muted-foreground/50 mb-5 text-[13px] font-light">
           {t('journal.subtitle')}
         </p>
 
@@ -241,36 +241,36 @@ function TastingsPage() {
             <button
               type="button"
               onClick={openModal}
-              className="w-full flex items-center gap-3 px-4 py-3.5 mb-6 rounded-xl border border-dashed border-border hover:border-primary/30 hover:bg-primary/[0.03] transition-colors group"
+              className="border-border hover:border-primary/30 hover:bg-primary/[0.03] group mb-6 flex w-full items-center gap-3 rounded-xl border border-dashed px-4 py-3.5 transition-colors"
             >
-              <div className="w-8 h-8 rounded-lg bg-primary/[0.08] border border-primary/10 flex items-center justify-center shrink-0 text-primary/60 group-hover:text-primary/80 transition-colors">
+              <div className="bg-primary/[0.08] border-primary/10 text-primary/60 group-hover:text-primary/80 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors">
                 <Plus size={15} weight="bold" />
               </div>
-              <p className="text-[13px] font-medium text-muted-foreground/70 group-hover:text-foreground transition-colors">
+              <p className="text-muted-foreground/70 group-hover:text-foreground text-[13px] font-medium transition-colors">
                 {t('journal.addNote')}
               </p>
             </button>
 
             {/* Filter + sort */}
-            <div className="flex items-center gap-3 mb-6">
+            <div className="mb-6 flex items-center gap-3">
               <div className="relative flex-1">
                 <MagnifyingGlass
                   size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+                  className="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
                 />
                 <input
                   type="text"
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                   placeholder={t('journal.searchPlaceholder')}
-                  className="w-full h-9 pl-8 pr-3 rounded-lg bg-white/[0.04] border border-border text-[13px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
+                  className="border-border placeholder:text-muted-foreground/40 focus:border-primary/30 h-9 w-full rounded-lg border bg-white/[0.04] pr-3 pl-8 text-[13px] transition-colors focus:outline-none"
                 />
               </div>
               <div className="relative shrink-0">
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as typeof sort)}
-                  className="h-9 pl-3 pr-8 rounded-lg bg-white/[0.04] border border-border text-[13px] text-muted-foreground focus:outline-none focus:border-primary/30 transition-colors appearance-none cursor-pointer"
+                  className="border-border text-muted-foreground focus:border-primary/30 h-9 cursor-pointer appearance-none rounded-lg border bg-white/[0.04] pr-8 pl-3 text-[13px] transition-colors focus:outline-none"
                 >
                   <option value="date-desc">{t('journal.sortNewest')}</option>
                   <option value="date-asc">{t('journal.sortOldest')}</option>
@@ -280,7 +280,7 @@ function TastingsPage() {
                 <CaretDown
                   size={11}
                   weight="bold"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+                  className="text-muted-foreground/50 pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2"
                 />
               </div>
             </div>
@@ -292,7 +292,7 @@ function TastingsPage() {
                 {grouped.map(([label, group]) => (
                   <div key={label} className="mb-6">
                     {label && (
-                      <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/40 mb-2">
+                      <p className="text-muted-foreground/40 mb-2 font-mono text-[10px] tracking-widest uppercase">
                         {label}
                       </p>
                     )}
@@ -314,20 +314,20 @@ function TastingsPage() {
                               if (e.key === 'Enter' || e.key === ' ')
                                 setViewNote({ note, mode: 'view' })
                             }}
-                            className="group relative rounded-xl border border-border bg-white/[0.025] px-[18px] pt-3 pb-3 transition-colors hover:border-primary/20 cursor-pointer"
+                            className="group border-border hover:border-primary/20 relative cursor-pointer rounded-xl border bg-white/[0.025] px-[18px] pt-3 pb-3 transition-colors"
                           >
                             {/* Top: name + score + edit */}
-                            <div className="flex items-start justify-between gap-3 mb-1.5">
-                              <p className="text-[15px] font-semibold leading-snug line-clamp-2 flex-1 min-w-0">
+                            <div className="mb-1.5 flex items-start justify-between gap-3">
+                              <p className="line-clamp-2 min-w-0 flex-1 text-[15px] leading-snug font-semibold">
                                 {name}
                               </p>
-                              <div className="flex items-center gap-2 shrink-0">
+                              <div className="flex shrink-0 items-center gap-2">
                                 <span
-                                  className={`font-mono text-[22px] font-bold leading-none ${bucket.color}`}
+                                  className={`font-mono text-[22px] leading-none font-bold ${bucket.color}`}
                                 >
                                   {note.rating}
                                 </span>
-                                <div className="w-16 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                                <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/[0.06]">
                                   <div
                                     className="h-full rounded-full"
                                     style={{
@@ -342,7 +342,7 @@ function TastingsPage() {
                                     e.stopPropagation()
                                     setViewNote({ note, mode: 'edit' })
                                   }}
-                                  className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-white/[0.06] transition-all"
+                                  className="text-muted-foreground/40 hover:text-foreground flex h-6 w-6 items-center justify-center rounded-md opacity-0 transition-all group-hover:opacity-100 hover:bg-white/[0.06]"
                                   aria-label={t('journal.editNote')}
                                 >
                                   <PencilSimple size={13} weight="bold" />
@@ -352,10 +352,10 @@ function TastingsPage() {
 
                             {/* Category pill + region · grapes — same line */}
                             {(note.product_category || note.product_region) && (
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="mb-2 flex items-center gap-2">
                                 {note.product_category && (
                                   <span
-                                    className="text-[11px] px-1.5 py-0.5 rounded border"
+                                    className="rounded border px-1.5 py-0.5 text-[11px]"
                                     style={
                                       isKnownCategory
                                         ? {
@@ -374,7 +374,7 @@ function TastingsPage() {
                                   </span>
                                 )}
                                 {note.product_region && (
-                                  <span className="font-mono text-[11px] text-white/60 truncate">
+                                  <span className="truncate font-mono text-[11px] text-white/60">
                                     {note.product_region}
                                   </span>
                                 )}
@@ -383,14 +383,14 @@ function TastingsPage() {
 
                             {/* Grape(s) — own line below category + region */}
                             {note.product_grape && (
-                              <p className="font-mono text-[11px] text-white/40 mb-2 truncate">
+                              <p className="mb-2 truncate font-mono text-[11px] text-white/40">
                                 {note.product_grape}
                               </p>
                             )}
 
                             {/* Impressions — 2 lines max, or pairing if no impressions */}
                             {(note.notes || note.pairing) && (
-                              <p className="text-[13px] text-white/70 leading-relaxed line-clamp-2 mb-2">
+                              <p className="mb-2 line-clamp-2 text-[13px] leading-relaxed text-white/70">
                                 {note.notes ?? note.pairing}
                               </p>
                             )}
@@ -401,7 +401,7 @@ function TastingsPage() {
                                 {noteDateFmt.format(new Date(note.tasted_at + 'T00:00:00'))}
                               </span>
                               {note.product_price && (
-                                <span className="font-mono text-[13px] font-light text-primary/70">
+                                <span className="text-primary/70 font-mono text-[13px] font-light">
                                   {note.product_price} $
                                 </span>
                               )}
@@ -418,7 +418,7 @@ function TastingsPage() {
                     type="button"
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="w-full mt-2 py-2.5 rounded-lg border border-border text-[13px] text-muted-foreground/60 hover:text-foreground hover:border-border/80 hover:bg-white/[0.02] transition-colors disabled:opacity-40"
+                    className="border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80 mt-2 w-full rounded-lg border py-2.5 text-[13px] transition-colors hover:bg-white/[0.02] disabled:opacity-40"
                   >
                     {loadingMore ? t('journal.loading') : t('journal.loadMore')}
                   </button>
@@ -434,8 +434,8 @@ function TastingsPage() {
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
-            <div className="relative w-full max-w-lg mx-4 rounded-xl bg-[#0e0e12] border border-border shadow-2xl p-6">
-              <p className="text-[14px] font-medium mb-4">{t('tastingForm.addTitle')}</p>
+            <div className="border-border relative mx-4 w-full max-w-lg rounded-xl border bg-[#0e0e12] p-6 shadow-2xl">
+              <p className="mb-4 text-[14px] font-medium">{t('tastingForm.addTitle')}</p>
               <TastingForm onSave={handleNoteSaved} onCancel={closeModal} />
             </div>
           </div>,

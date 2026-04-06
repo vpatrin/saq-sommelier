@@ -99,13 +99,13 @@ function ChatsPage() {
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="mx-auto max-w-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div className="flex items-baseline gap-2.5">
             <h1 className="text-2xl font-light">{t('nav.chat')}</h1>
             {allSessions.length > 0 && (
-              <span className="font-mono text-[11px] text-muted-foreground/60 tabular-nums">
+              <span className="text-muted-foreground/60 font-mono text-[11px] tabular-nums">
                 {allSessions.length}
               </span>
             )}
@@ -113,7 +113,7 @@ function ChatsPage() {
           <button
             type="button"
             onClick={() => navigate('/chat')}
-            className="w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-white/[0.04] text-muted-foreground hover:text-foreground hover:bg-white/[0.08] hover:border-border/80 transition-colors"
+            className="border-border text-muted-foreground hover:text-foreground hover:border-border/80 flex h-9 w-9 items-center justify-center rounded-xl border bg-white/[0.04] transition-colors hover:bg-white/[0.08]"
             aria-label={t('nav.newChat')}
           >
             <Plus size={16} />
@@ -121,7 +121,7 @@ function ChatsPage() {
         </div>
 
         {loadError ? (
-          <p className="text-[13px] text-muted-foreground/60">
+          <p className="text-muted-foreground/60 text-[13px]">
             {t('chat.failedToLoad')} —{' '}
             <button
               type="button"
@@ -129,7 +129,7 @@ function ChatsPage() {
                 setLoadError(false)
                 loadAll().catch(() => setLoadError(true))
               }}
-              className="underline hover:text-foreground transition-colors"
+              className="hover:text-foreground underline transition-colors"
             >
               {t('chat.retry')}
             </button>
@@ -147,25 +147,25 @@ function ChatsPage() {
             <div className="relative mb-4">
               <MagnifyingGlass
                 size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+                className="text-muted-foreground/50 pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
               />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t('nav.searchHistory')}
-                className="w-full h-9 pl-8 pr-3 rounded-lg bg-white/[0.04] border border-border text-[13px] placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary/30 transition-colors"
+                className="border-border placeholder:text-muted-foreground/40 focus:border-primary/30 h-9 w-full rounded-lg border bg-white/[0.04] pr-3 pl-8 text-[13px] transition-colors focus:outline-none"
               />
             </div>
 
             {/* Subheader row */}
             {!selecting && (
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[12px] text-muted-foreground/40">{t('chats.yourChats')}</span>
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-muted-foreground/40 text-[12px]">{t('chats.yourChats')}</span>
                 <button
                   type="button"
                   onClick={() => setSelecting(true)}
-                  className="text-[12px] text-primary/70 hover:text-primary transition-colors"
+                  className="text-primary/70 hover:text-primary text-[12px] transition-colors"
                 >
                   {t('chats.select')}
                 </button>
@@ -174,14 +174,14 @@ function ChatsPage() {
 
             {/* Select toolbar — shown when selecting */}
             {selecting && (
-              <div className="flex items-center gap-3 mb-3 px-2 py-2 rounded-lg bg-white/[0.03] border border-border">
+              <div className="border-border mb-3 flex items-center gap-3 rounded-lg border bg-white/[0.03] px-2 py-2">
                 <input
                   type="checkbox"
                   checked={allSelected}
                   onChange={toggleAll}
                   className="accent-primary shrink-0"
                 />
-                <span className="flex-1 text-[13px] text-muted-foreground/70">
+                <span className="text-muted-foreground/70 flex-1 text-[13px]">
                   {selectedCount > 0
                     ? t('chats.selectedCount', { count: selectedCount })
                     : t('chats.selectAll')}
@@ -190,7 +190,7 @@ function ChatsPage() {
                   <button
                     type="button"
                     onClick={() => setConfirmBulk(true)}
-                    className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    className="text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 flex h-7 w-7 items-center justify-center rounded-md transition-colors"
                     aria-label={t('chats.deleteSelected', { count: selectedCount })}
                   >
                     <Trash size={14} />
@@ -205,7 +205,7 @@ function ChatsPage() {
                       type="button"
                       onClick={handleBulkDelete}
                       disabled={deleting}
-                      className="text-destructive hover:text-destructive/80 disabled:opacity-50 transition-colors"
+                      className="text-destructive hover:text-destructive/80 transition-colors disabled:opacity-50"
                     >
                       {deleting ? t('chats.deleting') : t('nav.yes')}
                     </button>
@@ -221,7 +221,7 @@ function ChatsPage() {
                 <button
                   type="button"
                   onClick={exitSelectMode}
-                  className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-white/[0.06] transition-colors"
+                  className="text-muted-foreground/40 hover:text-foreground flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-white/[0.06]"
                   aria-label={t('chats.cancel')}
                 >
                   <X size={14} />
@@ -236,7 +236,7 @@ function ChatsPage() {
                 {filtered.map((session) => (
                   <li
                     key={session.id}
-                    className="group flex items-center gap-2.5 py-3 border-b border-border hover:bg-surface-hover -mx-2 px-2 rounded-lg transition-colors"
+                    className="group border-border hover:bg-surface-hover -mx-2 flex items-center gap-2.5 rounded-lg border-b px-2 py-3 transition-colors"
                   >
                     {selecting && (
                       <input
@@ -244,7 +244,7 @@ function ChatsPage() {
                         checked={selected.has(session.id)}
                         onChange={() => toggle(session.id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="accent-primary cursor-pointer shrink-0"
+                        className="accent-primary shrink-0 cursor-pointer"
                       />
                     )}
 
@@ -253,12 +253,12 @@ function ChatsPage() {
                       onClick={() =>
                         selecting ? toggle(session.id) : navigate(`/chat/${session.id}`)
                       }
-                      className="flex-1 min-w-0 text-left"
+                      className="min-w-0 flex-1 text-left"
                     >
-                      <p className="text-[14px] font-medium leading-snug truncate">
+                      <p className="truncate text-[14px] leading-snug font-medium">
                         {session.title ?? t('nav.untitled')}
                       </p>
-                      <p className="text-[11px] text-muted-foreground/60 font-light mt-0.5">
+                      <p className="text-muted-foreground/60 mt-0.5 text-[11px] font-light">
                         {timeAgoPrecise(session.updated_at, t)}
                       </p>
                     </button>
@@ -270,7 +270,7 @@ function ChatsPage() {
                           await deleteSession(session.id)
                           setAllSessions((prev) => prev.filter((s) => s.id !== session.id))
                         }}
-                        className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                        className="text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 flex h-6 w-6 shrink-0 items-center justify-center rounded-md opacity-0 transition-colors group-hover:opacity-100"
                         aria-label={t('nav.deleteSession')}
                       >
                         <X size={13} weight="bold" />
