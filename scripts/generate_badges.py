@@ -80,6 +80,7 @@ def main() -> None:
         "backend": ROOT / "backend" / "coverage.xml",
         "scraper": ROOT / "scraper" / "coverage.xml",
         "bot": ROOT / "bot" / "coverage.xml",
+        "frontend": ROOT / "frontend" / "coverage.xml",
     }
 
     results: dict[str, int] = {}

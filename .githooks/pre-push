@@ -60,8 +60,9 @@ fi
 
 if $frontend_changed; then
   echo ""
-  echo "🔍 Linting + typechecking frontend/"
+  echo "🔍 Linting + testing frontend/"
   make lint-frontend
+  make test-frontend
 fi
 
 if [ ${#to_test[@]} -eq 0 ] && ! $frontend_changed; then

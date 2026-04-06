@@ -5,8 +5,8 @@
 	migrate revision \
 	lint lint-backend lint-scraper lint-core lint-bot lint-frontend \
 	format format-backend format-scraper format-core format-bot format-frontend \
-	test test-backend test-scraper test-bot \
-	coverage coverage-backend coverage-scraper coverage-bot \
+	test test-backend test-scraper test-bot test-frontend \
+	coverage coverage-backend coverage-scraper coverage-bot coverage-frontend \
 	audit audit-core audit-backend audit-scraper audit-bot audit-frontend \
 	build build-backend build-scraper build-bot build-frontend \
 	scan scan-backend scan-scraper scan-bot \
@@ -29,8 +29,8 @@ help:
 	@echo "Database:  migrate  revision"
 	@echo "Lint:      lint  lint-{backend,scraper,core,bot,frontend}"
 	@echo "Format:    format  format-{backend,scraper,core,bot,frontend}"
-	@echo "Test:      test  test-{backend,scraper,bot}"
-	@echo "Coverage:  coverage  coverage-{backend,scraper,bot}"
+	@echo "Test:      test  test-{backend,scraper,bot,frontend}"
+	@echo "Coverage:  coverage  coverage-{backend,scraper,bot,frontend}"
 	@echo "Audit:     audit  audit-{core,backend,scraper,bot,frontend}"
 	@echo "Build:     build  build-{backend,scraper,bot,frontend}"
 	@echo "Scan:      scan  scan-{backend,scraper,bot}"
@@ -191,7 +191,11 @@ test-bot:
 	@echo "\n▶ Testing bot/"
 	cd bot && poetry run pytest -v
 
-test: test-backend test-scraper test-bot
+test-frontend:
+	@echo "\n▶ Testing frontend/"
+	cd frontend && yarn test
+
+test: test-backend test-scraper test-bot test-frontend
 
 # --- Coverage ---
 
@@ -207,7 +211,12 @@ coverage-bot:
 	@echo "\n▶ Coverage bot/"
 	cd bot && poetry run pytest --cov --cov-branch --cov-report=xml --cov-report=term -v
 
-coverage: coverage-backend coverage-scraper coverage-bot
+coverage-frontend:
+	@echo "\n▶ Coverage frontend/"
+	cd frontend && yarn test:coverage
+	cp frontend/coverage/cobertura-coverage.xml frontend/coverage.xml
+
+coverage: coverage-backend coverage-scraper coverage-bot coverage-frontend
 	@echo "\n▶ Generating badges"
 	python scripts/generate_badges.py
 

@@ -206,6 +206,26 @@ jobs:
           flags: bot
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  test-frontend:
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+      - run: cd frontend && yarn --frozen-lockfile
+      - run: make coverage-frontend
+      - uses: codecov/codecov-action@v6
+        with:
+          files: frontend/coverage.xml
+          flags: frontend
+          token: ${{ secrets.CODECOV_TOKEN }}
+
   # ── Security ──────────────────────────────────────────────────
 
   audit-core:
@@ -388,7 +408,7 @@ jobs:
           done
 
   test:
-    needs: [test-backend, test-scraper, test-bot]
+    needs: [test-backend, test-scraper, test-bot, test-frontend]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: {}
@@ -398,7 +418,8 @@ jobs:
           for result in \
             "${{ needs.test-backend.result }}" \
             "${{ needs.test-scraper.result }}" \
-            "${{ needs.test-bot.result }}"; do
+            "${{ needs.test-bot.result }}" \
+            "${{ needs.test-frontend.result }}"; do
             if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
               exit 1
             fi
