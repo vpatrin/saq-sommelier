@@ -15,6 +15,7 @@ services:
     container_name: coupette-backend
     tmpfs:
       - /tmp:noexec,nosuid,size=64m
+      - /tmp/prometheus_multiproc:noexec,nosuid,size=16m
     networks:
       - internal
     healthcheck:

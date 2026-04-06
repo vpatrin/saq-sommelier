@@ -43,9 +43,7 @@ COPY core/alembic/ core/alembic/
 ENV PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 
 # Run as non-root user
-RUN useradd --no-create-home --uid 1000 appuser \
-    && mkdir -p /tmp/prometheus_multiproc \
-    && chown -R 1000:1000 /tmp
+RUN useradd --no-create-home --uid 1000 appuser
 USER appuser
 
 EXPOSE 8001
