@@ -86,6 +86,16 @@ def _disable_bot_secret():
 
 
 @pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """Clear SlowAPI in-memory state before each test so counters don't leak."""
+    from backend.rate_limit import limiter
+
+    if limiter._in_memory_fallback_enabled and limiter._fallback_storage:
+        limiter._fallback_storage.reset()
+    yield
+
+
+@pytest.fixture(autouse=True)
 def _bypass_auth():
     """Bypass auth by default — tests that need real auth override this."""
     app.dependency_overrides[verify_auth] = _mock_authenticated_user
