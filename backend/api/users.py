@@ -28,7 +28,7 @@ async def update_me(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """Update the authenticated user's profile (partial — only sent fields are updated)."""
-    if "display_name" in body.model_fields_set:
+    if "display_name" in body.model_fields_set and body.display_name is not None:
         user.display_name = body.display_name
     if "locale" in body.model_fields_set:
         user.locale = body.locale
