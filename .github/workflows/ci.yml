@@ -31,6 +31,7 @@ jobs:
       bot: ${{ steps.filter.outputs.bot }}
       frontend: ${{ steps.filter.outputs.frontend }}
       workflows: ${{ steps.filter.outputs.workflows }}
+      migrations: ${{ steps.filter.outputs.migrations }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v4
@@ -49,6 +50,9 @@ jobs:
               - 'frontend/**'
             workflows:
               - '.github/workflows/**'
+            migrations:
+              - 'core/db/models*.py'
+              - 'core/alembic/**'
 
   # ── Lint ──────────────────────────────────────────────────────
 
@@ -225,6 +229,43 @@ jobs:
           files: frontend/coverage.xml
           flags: frontend
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ── Migrations ────────────────────────────────────────────────
+
+  migrate:
+    needs: [changes]
+    if: needs.changes.outputs.migrations == 'true' || needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: ci
+      DB_PASSWORD: ci
+      DB_NAME: ci
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-python-service
+        with:
+          service: core
+          python-version: ${{ env.PYTHON_VERSION }}
+          poetry-version: ${{ env.POETRY_VERSION }}
+      - name: Run migrations from scratch
+        run: cd core && poetry run alembic upgrade head
 
   # ── Security ──────────────────────────────────────────────────
 
@@ -408,7 +449,7 @@ jobs:
           done
 
   test:
-    needs: [test-backend, test-scraper, test-bot, test-frontend]
+    needs: [test-backend, test-scraper, test-bot, test-frontend, migrate]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: {}
@@ -419,7 +460,8 @@ jobs:
             "${{ needs.test-backend.result }}" \
             "${{ needs.test-scraper.result }}" \
             "${{ needs.test-bot.result }}" \
-            "${{ needs.test-frontend.result }}"; do
+            "${{ needs.test-frontend.result }}" \
+            "${{ needs.migrate.result }}"; do
             if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then
               exit 1
             fi
