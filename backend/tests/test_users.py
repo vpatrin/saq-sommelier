@@ -113,6 +113,18 @@ def test_update_me_invalid_locale():
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
+def test_update_me_null_locale_ignored():
+    """204 — sending locale: null does not wipe existing locale."""
+    user = _mock_user()
+    user.locale = "en"
+    client = _authed_client(user)
+    resp = client.patch("/api/users/me", json={"locale": None})
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+    assert user.locale == "en"
+
+
 def test_update_me_null_display_name_ignored():
     """204 — sending display_name: null does not wipe existing name."""
     user = _mock_user()
