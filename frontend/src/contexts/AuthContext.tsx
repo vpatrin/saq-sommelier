@@ -1,19 +1,11 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import type { UserRole } from '@/lib/types'
+import type { UserRole, UserMeOut } from '@/lib/types'
 import { api } from '@/lib/api'
 import i18n from '@/i18n'
 
 interface User {
   id: number
-  display_name: string | null
-  locale: string | null
-  role: UserRole
-}
-
-interface ProfileResponse {
-  id: number
-  email: string
   display_name: string | null
   locale: string | null
   role: UserRole
@@ -76,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!token) return
     const controller = new AbortController()
-    api<ProfileResponse>('/users/me', { token, signal: controller.signal })
+    api<UserMeOut>('/users/me', { token, signal: controller.signal })
       .then((profile) => {
         setUser((prev) =>
           prev ? { ...prev, display_name: profile.display_name, locale: profile.locale } : prev,

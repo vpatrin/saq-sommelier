@@ -246,7 +246,7 @@ function SettingsPage() {
                     key={lang}
                     type="button"
                     onClick={async () => {
-                      i18n.changeLanguage(lang)
+                      if (lang === user?.locale) return
                       updateUser({ locale: lang })
                       try {
                         await apiClient('/users/me', {
@@ -254,7 +254,7 @@ function SettingsPage() {
                           body: JSON.stringify({ locale: lang }),
                         })
                       } catch {
-                        // Locale already applied locally — server sync is best-effort
+                        // Best-effort — locale already applied locally
                       }
                     }}
                     className={`px-3 py-1 text-xs font-mono uppercase transition-colors ${

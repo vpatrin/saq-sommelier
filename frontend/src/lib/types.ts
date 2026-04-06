@@ -174,6 +174,14 @@ export interface FacetsOut {
 
 export type UserRole = 'user' | 'admin'
 
+export interface UserMeOut {
+  id: number
+  email: string
+  display_name: string | null
+  locale: string | null
+  role: UserRole
+}
+
 // --- Admin ---
 
 export interface WaitlistRequestOut {
