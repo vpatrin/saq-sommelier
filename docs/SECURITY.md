@@ -79,8 +79,6 @@ Bot secret takes priority — if the header is present and valid, JWT validation
 2. `POST /users/me/telegram` — verify HMAC, check for conflicts, set `telegram_id` on user
 3. Unlinking: `DELETE /users/me/telegram` — clears `telegram_id`
 
-Legacy `POST /api/auth/telegram` endpoint still exists for bot middleware compatibility.
-
 ### Authenticated API request
 
 ```text

@@ -175,3 +175,117 @@ def test_delete_me_success():
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
     mock_delete.assert_called_once()
+
+
+# ── GET /api/users/me/telegram ──────────────────
+
+
+def test_telegram_status_linked():
+    """200 — returns linked=true when telegram_id is set."""
+    user = _mock_user()
+    user.telegram_id = 12345
+    client = _authed_client(user)
+    resp = client.get("/api/users/me/telegram")
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json() == {"linked": True}
+
+
+def test_telegram_status_unlinked():
+    """200 — returns linked=false when telegram_id is None."""
+    user = _mock_user()
+    user.telegram_id = None
+    client = _authed_client(user)
+    resp = client.get("/api/users/me/telegram")
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_200_OK
+    assert resp.json() == {"linked": False}
+
+
+# ── POST /api/users/me/telegram ──────────────────
+
+_TELEGRAM_PAYLOAD = {
+    "id": 12345,
+    "first_name": "Victor",
+    "auth_date": 1700000000,
+    "hash": "fakehash",
+}
+
+
+def test_link_telegram_success():
+    """204 — links Telegram account when HMAC is valid and no conflict."""
+    user = _mock_user()
+    user.telegram_id = None
+    client = _authed_client(user)
+    with (
+        patch("backend.api.users.verify_telegram_data"),
+        patch(
+            "backend.repositories.users.find_by_telegram_id",
+            new_callable=AsyncMock,
+            return_value=None,
+        ),
+        patch("backend.repositories.users.link_telegram", new_callable=AsyncMock) as mock_link,
+    ):
+        resp = client.post("/api/users/me/telegram", json=_TELEGRAM_PAYLOAD)
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+    mock_link.assert_called_once()
+
+
+def test_link_telegram_conflict():
+    """409 — telegram_id already belongs to another user."""
+    user = _mock_user()
+    other_user = MagicMock(spec=User)
+    other_user.id = 99
+    client = _authed_client(user)
+    with (
+        patch("backend.api.users.verify_telegram_data"),
+        patch(
+            "backend.repositories.users.find_by_telegram_id",
+            new_callable=AsyncMock,
+            return_value=other_user,
+        ),
+    ):
+        resp = client.post("/api/users/me/telegram", json=_TELEGRAM_PAYLOAD)
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_409_CONFLICT
+
+
+def test_link_telegram_already_linked_to_self():
+    """204 — re-linking the same telegram_id to the same user is idempotent."""
+    user = _mock_user()
+    user.telegram_id = 12345
+    client = _authed_client(user)
+    with (
+        patch("backend.api.users.verify_telegram_data"),
+        patch(
+            "backend.repositories.users.find_by_telegram_id",
+            new_callable=AsyncMock,
+            return_value=user,
+        ),
+        patch("backend.repositories.users.link_telegram", new_callable=AsyncMock),
+    ):
+        resp = client.post("/api/users/me/telegram", json=_TELEGRAM_PAYLOAD)
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+
+
+# ── DELETE /api/users/me/telegram ──────────────────
+
+
+def test_unlink_telegram_success():
+    """204 — unlinks Telegram account."""
+    user = _mock_user()
+    user.telegram_id = 12345
+    client = _authed_client(user)
+    with patch("backend.repositories.users.unlink_telegram", new_callable=AsyncMock) as mock_unlink:
+        resp = client.delete("/api/users/me/telegram")
+    app.dependency_overrides.clear()
+
+    assert resp.status_code == status.HTTP_204_NO_CONTENT
+    mock_unlink.assert_called_once()
