@@ -16,7 +16,7 @@ function renderApp(route = '/') {
 }
 
 describe('App', () => {
-  it('renders without crashing on /', () => {
+  it('renders the root route', () => {
     const { container } = renderApp('/')
     expect(container.firstChild).toBeTruthy()
   })

@@ -15,12 +15,12 @@ describe('EmptyState', () => {
     expect(screen.getByText('Try adding one')).toBeInTheDocument()
   })
 
-  it('does not render description when omitted', () => {
+  it('omits description when prop is not provided', () => {
     render(<EmptyState icon={<span>X</span>} title="Empty" />)
     expect(screen.queryByText('Try adding one')).not.toBeInTheDocument()
   })
 
-  it('calls cta onClick when clicked', async () => {
+  it('calls cta.onClick when the CTA button is clicked', async () => {
     const user = userEvent.setup()
     const onClick = vi.fn()
     render(<EmptyState icon={<span>X</span>} title="Empty" cta={{ label: 'Add', onClick }} />)

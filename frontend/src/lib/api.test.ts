@@ -98,7 +98,7 @@ describe('api', () => {
     expect(onUnauthorized).toHaveBeenCalledOnce()
   })
 
-  it('does not call onUnauthorized on non-401 errors', async () => {
+  it('skips onUnauthorized callback for non-401 errors', async () => {
     const onUnauthorized = vi.fn()
     fetchMock.mockResolvedValueOnce(jsonResponse({ detail: 'Forbidden' }, 403))
 

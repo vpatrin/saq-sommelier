@@ -1,18 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="370.0" height="20">
+<svg xmlns="http://www.w3.org/2000/svg" width="376.5" height="20">
   <linearGradient id="b" x2="0" y2="100%">
     <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
     <stop offset="1" stop-opacity=".1"/>
   </linearGradient>
   <mask id="a">
-    <rect width="370.0" height="20" rx="3" fill="#fff"/>
+    <rect width="376.5" height="20" rx="3" fill="#fff"/>
   </mask>
   <g mask="url(#a)">
     <rect width="62.0" height="20" fill="#555"/>
     <rect x="62.0" width="83.5" height="20" fill="#a3c51c"/>
     <rect x="145.5" width="83.5" height="20" fill="#dfb317"/>
     <rect x="229.0" width="57.5" height="20" fill="#4c1"/>
-    <rect x="286.5" width="83.5" height="20" fill="#e05d44"/>
-    <rect width="370.0" height="20" fill="url(#b)"/>
+    <rect x="286.5" width="90.0" height="20" fill="#e05d44"/>
+    <rect width="376.5" height="20" fill="url(#b)"/>
   </g>
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
     <text x="31.0" y="15" fill="#010101" fill-opacity=".3">coverage</text>
@@ -23,7 +23,7 @@
     <text x="187.25" y="14">scraper 77%</text>
     <text x="257.75" y="15" fill="#010101" fill-opacity=".3">bot 88%</text>
     <text x="257.75" y="14">bot 88%</text>
-    <text x="328.25" y="15" fill="#010101" fill-opacity=".3">frontend 5%</text>
-    <text x="328.25" y="14">frontend 5%</text>
+    <text x="331.5" y="15" fill="#010101" fill-opacity=".3">frontend 13%</text>
+    <text x="331.5" y="14">frontend 13%</text>
   </g>
 </svg>

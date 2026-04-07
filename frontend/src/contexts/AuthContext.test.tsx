@@ -154,7 +154,7 @@ describe('updateUser', () => {
     expect(result.current.user?.display_name).toBe('After')
   })
 
-  it('is a no-op when not logged in', () => {
+  it('leaves state unchanged when called while logged out', () => {
     const { result } = renderHook(() => useAuth(), { wrapper })
 
     act(() => result.current.updateUser({ display_name: 'Ghost' }))

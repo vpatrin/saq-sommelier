@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import type { TFunction } from 'i18next'
 import type { ProductOut } from '@/lib/types'
 import { formatOrigin, CATEGORY_DOT, timeAgoPrecise, timeAgo } from './utils'
 
@@ -52,10 +53,11 @@ describe('CATEGORY_DOT', () => {
 
 describe('timeAgoPrecise', () => {
   const NOW = new Date('2026-01-15T12:00:00Z').getTime()
-  const t = vi.fn((key: string, opts?: { count: number }) => `${key}:${opts?.count}`)
+  const tMock = vi.fn((key: string, opts?: { count: number }) => `${key}:${opts?.count}`)
+  const t = tMock as unknown as TFunction
 
   beforeEach(() => {
-    t.mockClear()
+    tMock.mockClear()
     vi.useFakeTimers()
     vi.setSystemTime(NOW)
   })
@@ -63,41 +65,42 @@ describe('timeAgoPrecise', () => {
 
   it('returns minutes for < 60 min', () => {
     timeAgoPrecise('2026-01-15T11:30:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.minutesAgoPrecise', { count: 30 })
+    expect(tMock).toHaveBeenCalledWith('time.minutesAgoPrecise', { count: 30 })
   })
 
   it('clamps to 1 minute minimum', () => {
     timeAgoPrecise('2026-01-15T11:59:50Z', t)
-    expect(t).toHaveBeenCalledWith('time.minutesAgoPrecise', { count: 1 })
+    expect(tMock).toHaveBeenCalledWith('time.minutesAgoPrecise', { count: 1 })
   })
 
   it('returns hours for < 24h', () => {
     timeAgoPrecise('2026-01-15T06:00:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.hoursAgoPrecise', { count: 6 })
+    expect(tMock).toHaveBeenCalledWith('time.hoursAgoPrecise', { count: 6 })
   })
 
   it('returns days for < 30d', () => {
     timeAgoPrecise('2026-01-10T12:00:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.daysAgoPrecise', { count: 5 })
+    expect(tMock).toHaveBeenCalledWith('time.daysAgoPrecise', { count: 5 })
   })
 
   it('returns months for < 12mo', () => {
     timeAgoPrecise('2025-10-15T12:00:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.monthsAgoPrecise', { count: 3 })
+    expect(tMock).toHaveBeenCalledWith('time.monthsAgoPrecise', { count: 3 })
   })
 
   it('returns years for >= 12mo', () => {
     timeAgoPrecise('2024-01-15T12:00:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.yearsAgoPrecise', { count: 2 })
+    expect(tMock).toHaveBeenCalledWith('time.yearsAgoPrecise', { count: 2 })
   })
 })
 
 describe('timeAgo', () => {
   const NOW = new Date('2026-01-15T12:00:00Z').getTime()
-  const t = vi.fn((key: string) => key)
+  const tMock = vi.fn((key: string) => key)
+  const t = tMock as unknown as TFunction
 
   beforeEach(() => {
-    t.mockClear()
+    tMock.mockClear()
     vi.useFakeTimers()
     vi.setSystemTime(NOW)
   })
@@ -105,37 +108,37 @@ describe('timeAgo', () => {
 
   it('returns justNow for < 2 min', () => {
     timeAgo('2026-01-15T11:59:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.justNow')
+    expect(tMock).toHaveBeenCalledWith('time.justNow')
   })
 
   it('returns today for < 24h', () => {
     timeAgo('2026-01-15T06:00:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.today')
+    expect(tMock).toHaveBeenCalledWith('time.today')
   })
 
   it('returns yesterday for < 48h', () => {
     timeAgo('2026-01-14T06:00:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.yesterday')
+    expect(tMock).toHaveBeenCalledWith('time.yesterday')
   })
 
   it('returns pastWeek for < 7d', () => {
     timeAgo('2026-01-10T12:00:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.pastWeek')
+    expect(tMock).toHaveBeenCalledWith('time.pastWeek')
   })
 
   it('returns pastMonth for < 30d', () => {
     timeAgo('2026-01-01T12:00:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.pastMonth')
+    expect(tMock).toHaveBeenCalledWith('time.pastMonth')
   })
 
   it('returns pastYear for < 365d', () => {
     timeAgo('2025-06-15T12:00:00Z', t)
-    expect(t).toHaveBeenCalledWith('time.pastYear')
+    expect(tMock).toHaveBeenCalledWith('time.pastYear')
   })
 
   it('returns formatted date for >= 1 year', () => {
     const result = timeAgo('2024-01-15T12:00:00Z', t)
-    // Falls through to toLocaleDateString — t is not called with a time key
+    // Falls through to toLocaleDateString — tMock is not called with a time key
     expect(result).toContain('2024')
   })
 })
