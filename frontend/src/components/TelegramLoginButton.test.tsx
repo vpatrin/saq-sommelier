@@ -12,7 +12,7 @@ describe('TelegramLoginButton', () => {
     expect(script?.getAttribute('data-size')).toBe('large')
   })
 
-  it('sets lang attribute when provided', () => {
+  it('sets data-lang on the script when lang prop is provided', () => {
     const { container } = render(
       <TelegramLoginButton botUsername="CoupetteBot" onAuth={vi.fn()} lang="fr" />,
     )
@@ -20,14 +20,14 @@ describe('TelegramLoginButton', () => {
     expect(script?.getAttribute('data-lang')).toBe('fr')
   })
 
-  it('registers global callback', () => {
+  it('registers __telegram_login_callback on window', () => {
     render(<TelegramLoginButton botUsername="CoupetteBot" onAuth={vi.fn()} />)
     expect(
       (window as unknown as Record<string, unknown>)['__telegram_login_callback'],
     ).toBeDefined()
   })
 
-  it('cleans up on unmount', () => {
+  it('removes __telegram_login_callback from window on unmount', () => {
     const { unmount } = render(<TelegramLoginButton botUsername="CoupetteBot" onAuth={vi.fn()} />)
     unmount()
     expect(

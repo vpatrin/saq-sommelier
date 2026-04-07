@@ -236,9 +236,11 @@ Five actionables identified from a full frontend audit (2026-04-02). In priority
 **Testing — Frontend:**
 
 - [x] Test infrastructure setup — add Vitest + React Testing Library + jsdom, wire `yarn test` script, configure CI step (#639)
-- [ ] Shared components — `WineCard`, `EmptyState`, `FilterChips` (render + props variants)
-- [ ] Auth components — `ProtectedRoute` (redirects unauthenticated), `TelegramLoginButton` (renders in Settings, calls link callback)
-- [ ] `UserMenu` — open/close, logout action
+- [x] Shared components — `WineCard`, `FilterChips` (render + props variants)
+- [x] Auth components — `ProtectedRoute` (redirects unauthenticated), `TelegramLoginButton` (widget mount + cleanup)
+- [x] `UserMenu` — logout action, settings nav, admin visibility
+- [ ] `EmptyState` — render + props variants
+- [ ] `WineDetailPanel` — renders wine data, open/close state
 - [ ] `WineDetailPanel` — renders wine data, open/close state
 - [ ] `AppShell` — sidebar collapsed/expanded state
 - [ ] Pages (API-mocked) — `SearchPage`, `WatchesPage`, `SavedStoresPage` (loading state, empty state, populated state)

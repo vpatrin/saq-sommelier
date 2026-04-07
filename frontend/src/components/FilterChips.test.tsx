@@ -34,7 +34,7 @@ describe('FilterChips', () => {
     expect(onChange).toHaveBeenCalledWith('')
   })
 
-  it('renders empty when no options', () => {
+  it('renders no buttons when options array is empty', () => {
     const { container } = render(<FilterChips options={[]} value="" onChange={vi.fn()} />)
     expect(container.querySelectorAll('button')).toHaveLength(0)
   })

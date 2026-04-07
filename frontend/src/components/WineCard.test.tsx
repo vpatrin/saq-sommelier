@@ -66,7 +66,7 @@ describe('WineCard', () => {
     expect(screen.queryByText('Merlot')).not.toBeInTheDocument()
   })
 
-  it('renders category dot for known category', () => {
+  it('renders colored dot for Vin rouge category', () => {
     const { container } = render(<WineCard product={product({ category: 'Vin rouge' })} />)
     const dot = container.querySelector('.bg-red-500\\/80')
     expect(dot).toBeInTheDocument()
