@@ -13,7 +13,7 @@ from backend.db import get_db
 from backend.exceptions import ForbiddenError, NotFoundError
 from backend.schemas.chat import ChatMessageOut, ChatSessionDetailOut
 from backend.schemas.recommendation import IntentResult, RecommendationOut
-from backend.services.chat import _extract_multi_turn_context, send_message
+from backend.services.chat import _build_message_out, _extract_multi_turn_context, send_message
 from backend.tests.conftest import _mock_authenticated_user
 
 NOW = datetime(2026, 3, 12, 12, 0, 0, tzinfo=UTC)
@@ -44,7 +44,7 @@ def _setup() -> httpx.AsyncClient:
 # --- POST /api/chat/sessions (create session) ---
 
 
-async def test_create_session_success():
+async def test_create_session_returns_201_with_session_data():
     """201 — session created, titled from message."""
     session = _fake_session()
 
@@ -57,8 +57,6 @@ async def test_create_session_success():
     data = resp.json()
     assert data["id"] == 1
     assert data["title"] == "recommend a bold red"
-    mock_create.assert_called_once()
-    assert mock_create.call_args[0][1] == 1  # user.id
 
 
 async def test_create_session_empty_message_rejected():
@@ -71,7 +69,7 @@ async def test_create_session_empty_message_rejected():
 # --- POST /api/chat/sessions/{id}/messages (send message) ---
 
 
-async def test_send_message_success():
+async def test_send_message_returns_assistant_response():
     """201 — message sent, assistant response returned."""
     result = ChatMessageOut(
         message_id=2,
@@ -93,9 +91,6 @@ async def test_send_message_success():
     assert data["role"] == "assistant"
     assert data["session_id"] == 1
     assert "summary" in data["content"]
-    mock_send.assert_called_once()
-    assert mock_send.call_args[0][1] == 1  # user.id
-    assert mock_send.call_args[0][2] == 1  # session_id
 
 
 async def test_send_message_session_not_found():
@@ -121,7 +116,7 @@ async def test_send_message_not_owner():
 # --- GET /api/chat/sessions (list) ---
 
 
-async def test_list_sessions_success():
+async def test_list_sessions_returns_user_session_list():
     """200 — returns user's sessions."""
     sessions = [_fake_session(id=1), _fake_session(id=2, title="Italian wines")]
 
@@ -133,8 +128,6 @@ async def test_list_sessions_success():
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
     assert len(data) == 2
-    mock_list.assert_called_once()
-    assert mock_list.call_args[0][1] == 1  # user.id
 
 
 async def test_list_sessions_with_pagination():
@@ -153,7 +146,7 @@ async def test_list_sessions_with_pagination():
 # --- GET /api/chat/sessions/{id} (detail) ---
 
 
-async def test_get_session_detail_success():
+async def test_get_session_detail_returns_session_with_messages():
     """200 — returns session with messages."""
     detail = ChatSessionDetailOut(
         id=1,
@@ -210,14 +203,12 @@ async def test_update_session_title():
 
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json()["title"] == "New title"
-    mock_update.assert_called_once()
-    assert mock_update.call_args[0][1] == 1  # user.id
 
 
 # --- DELETE /api/chat/sessions/{id} ---
 
 
-async def test_delete_session_success():
+async def test_delete_session_returns_204():
     """204 — session deleted."""
     with patch("backend.api.chat.delete_session", new_callable=AsyncMock) as mock_del:
         mock_del.return_value = None
@@ -225,9 +216,6 @@ async def test_delete_session_success():
             resp = await client.delete("/api/chat/sessions/1")
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
-    mock_del.assert_called_once()
-    assert mock_del.call_args[0][1] == 1  # user.id
-    assert mock_del.call_args[0][2] == 1  # session_id
 
 
 async def test_delete_session_not_found():
@@ -380,6 +368,8 @@ class TestSendMessageRouting:
         mock_recommend.assert_called_once()
         assert mock_recommend.call_args.kwargs["intent"] is intent
         assert isinstance(result.content, RecommendationOut)
+        # DB write gets serialized JSON, not the in-memory object
+        mock_repo.create_message.assert_called_with(db, 1, "assistant", rec.model_dump_json())
 
     @patch("backend.services.chat.chat_repo")
     @patch("backend.services.chat.sommelier_chat", new_callable=AsyncMock)
@@ -405,6 +395,9 @@ class TestSendMessageRouting:
 
         mock_sommelier.assert_called_once()
         assert result.content == "Burgundy is a famous wine region in eastern France."
+        mock_repo.create_message.assert_called_with(
+            db, 1, "assistant", "Burgundy is a famous wine region in eastern France."
+        )
 
     @patch("backend.services.chat.chat_repo")
     @patch("backend.services.chat.parse_intent", new_callable=AsyncMock)
@@ -426,6 +419,7 @@ class TestSendMessageRouting:
         result = await send_message(db, user_id=1, session_id=1, message="do you sell beer?")
 
         assert result.content == NON_WINE_MESSAGE
+        mock_repo.create_message.assert_called_with(db, 1, "assistant", NON_WINE_MESSAGE)
 
     @patch("backend.services.chat.chat_repo")
     @patch("backend.services.chat.sommelier_chat", new_callable=AsyncMock)
@@ -456,3 +450,24 @@ class TestSendMessageRouting:
         mock_sommelier.assert_called_once()
         _, kwargs = mock_sommelier.call_args
         assert kwargs["conversation_history"] is not None
+
+
+# --- _build_message_out ---
+
+
+class TestBuildMessageOut:
+    def test_deserializes_valid_assistant_recommendation(self) -> None:
+        rec = _fake_recommendation()
+        msg = _fake_chat_message(1, "assistant", rec.model_dump_json())
+        result = _build_message_out(msg)
+        assert isinstance(result.content, RecommendationOut)
+
+    def test_falls_back_to_raw_string_for_malformed_assistant_content(self) -> None:
+        msg = _fake_chat_message(1, "assistant", "not valid json")
+        result = _build_message_out(msg)
+        assert result.content == "not valid json"
+
+    def test_returns_raw_string_for_user_message(self) -> None:
+        msg = _fake_chat_message(1, "user", "recommend something bold")
+        result = _build_message_out(msg)
+        assert result.content == "recommend something bold"

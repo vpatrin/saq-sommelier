@@ -76,7 +76,7 @@ def _mock_db_for_detail(product):
 # ── Detail endpoint ──────────────────────────────────────────────
 
 
-async def test_get_product_found():
+async def test_get_product_returns_200_with_sku_and_name():
     product = _fake_product(sku="ABC123", name="Château Test")
     session = _mock_db_for_detail(product)
 
@@ -90,7 +90,7 @@ async def test_get_product_found():
     assert data["name"] == "Château Test"
 
 
-async def test_get_product_not_found():
+async def test_get_product_returns_404_when_sku_absent():
     session = _mock_db_for_detail(None)
 
     app.dependency_overrides[get_db] = lambda: session
@@ -255,7 +255,7 @@ async def test_list_products_excludes_sensitive_fields():
 # ── Search & filter endpoint ────────────────────────────────────
 
 
-async def test_search_by_name():
+async def test_search_query_returns_matching_products():
     """?q=margaux filters products — pagination reflects filtered total."""
     products = [_fake_product(sku="MATCH1", name="Château Margaux")]
     session = _mock_db_for_products(products, total=1)
@@ -270,7 +270,7 @@ async def test_search_by_name():
     assert len(data["products"]) == 1
 
 
-async def test_filter_by_category():
+async def test_filter_by_category_returns_matching_products():
     products = [_fake_product(sku="RED1", category="Vin rouge")]
     session = _mock_db_for_products(products, total=1)
 
@@ -282,7 +282,7 @@ async def test_filter_by_category():
     assert resp.json()["total"] == 1
 
 
-async def test_filter_by_price_range():
+async def test_filter_by_price_range_returns_matching_products():
     products = [_fake_product(sku="MID1", price=Decimal("25.00"))]
     session = _mock_db_for_products(products, total=1)
 
@@ -504,8 +504,8 @@ async def test_sort_invalid_rejected():
 
 
 @pytest.mark.parametrize("sort_value", ["price_asc", "price_desc"])
-async def test_sort_by_price_returns_200(sort_value):
-    """Price sort options return 200."""
+async def test_sort_by_price_returns_products(sort_value):
+    """Price sort options return products."""
     products = [_fake_product(sku="S1")]
     session = _mock_db_for_products(products, total=1)
 
@@ -514,6 +514,7 @@ async def test_sort_by_price_returns_200(sort_value):
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get(f"/api/products?sort={sort_value}")
     assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["total"] == 1
 
 
 # ── Random endpoint ───────────────────────────────────────────
@@ -553,6 +554,7 @@ async def test_random_with_filters():
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/api/products/random?category=Vin+rouge&min_price=10")
     assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["sku"] == "FILT1"
 
 
 async def test_scope_wine_is_default_on_list_endpoint():
@@ -565,6 +567,7 @@ async def test_scope_wine_is_default_on_list_endpoint():
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/api/products")
     assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["total"] == 1
 
 
 async def test_scope_all_disables_wine_filtering():
@@ -577,6 +580,7 @@ async def test_scope_all_disables_wine_filtering():
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/api/products?scope=all")
     assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["total"] == 1
 
 
 async def test_scope_invalid_value_rejected():
@@ -600,3 +604,4 @@ async def test_random_endpoint_scope_default():
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get("/api/products/random")
     assert resp.status_code == status.HTTP_200_OK
+    assert resp.json()["sku"] == "R1"

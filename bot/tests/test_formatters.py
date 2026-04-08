@@ -10,7 +10,7 @@ from bot.formatters import (
 
 
 class TestFormatProductLine:
-    def test_full_product(self):
+    def test_formats_name_price_link_and_availability_indicator(self):
         product = {
             "name": "Mouton Cadet 2022",
             "price": "16.95",
@@ -107,7 +107,7 @@ class TestFormatRecommendations:
         result = format_recommendations(data)
         assert "Italy" in result
 
-    def test_no_details_line_when_all_none(self):
+    def test_omits_details_line_when_all_optional_fields_are_none(self):
         data = {
             "products": [
                 _rec_item(
@@ -334,12 +334,12 @@ class TestFormatStockNotification:
         assert "Out of stock" in result
         assert "Still available online" in result
 
-    def test_store_events_online_not_available(self):
+    def test_omits_online_availability_line_when_not_available_online(self):
         notifs = [_notif(saq_store_id="23009", store_name="Du Parc", online_available=False)]
         result = format_stock_notification(notifs)
         assert "available online" not in result.lower()
 
-    def test_store_events_online_unknown(self):
+    def test_omits_online_availability_line_when_online_status_unknown(self):
         notifs = [_notif(saq_store_id="23009", store_name="Du Parc", online_available=None)]
         result = format_stock_notification(notifs)
         assert "available online" not in result.lower()

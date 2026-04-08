@@ -29,6 +29,8 @@ WORKDIR /app
 
 # Copy only the virtualenv — no pip/setuptools/poetry leak
 COPY --from=builder /opt/venv /opt/venv
+# Patch OS packages (picks up openssl fixes not yet in the pinned base image digest)
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 # Strip pip from venv and base image (not needed at runtime, avoids Trivy CVEs)
 RUN pip uninstall pip -y && rm -rf /usr/local/lib/python*/site-packages/pip*
 

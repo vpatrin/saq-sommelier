@@ -216,7 +216,7 @@ class TestDetectTransitions:
         mock_emit.assert_called_once_with("111", available=False, saq_store_id="23066")
 
     @pytest.mark.asyncio
-    async def test_no_watched_products(self) -> None:
+    async def test_returns_zero_stats_when_no_watched_products(self) -> None:
         data = _AvailabilityData()
 
         with patch(
@@ -287,7 +287,7 @@ class TestAvailabilityCheck:
         assert result == EXIT_FATAL
 
     @pytest.mark.asyncio
-    async def test_happy_path(self) -> None:
+    async def test_updates_availability_and_runs_cleanup(self) -> None:
         products_1a = [_make_product("111", in_stock=True, store_ids=["23101"])]
         products_1b = [_make_product("222", in_stock=False, store_ids=["23101"])]
 

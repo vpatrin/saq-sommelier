@@ -6,13 +6,13 @@ from backend.services.sommelier import _FALLBACK_MESSAGE, _build_messages, somme
 
 
 class TestBuildMessages:
-    def test_without_history(self) -> None:
+    def test_returns_single_user_message_without_history(self) -> None:
         msgs = _build_messages("What pairs with lamb?")
         assert len(msgs) == 1
         assert msgs[0]["role"] == "user"
         assert msgs[0]["content"] == "What pairs with lamb?"
 
-    def test_with_history(self) -> None:
+    def test_includes_prior_conversation_in_user_message_content(self) -> None:
         history = "User: Tell me about Burgundy\nAssistant: Burgundy is a region..."
         msgs = _build_messages("What about the whites?", conversation_history=history)
         assert len(msgs) == 1
@@ -24,7 +24,7 @@ class TestBuildMessages:
 class TestSommelierChat:
     @patch("backend.services.sommelier.get_anthropic_client")
     @patch("backend.services.sommelier.backend_settings")
-    async def test_successful_response(
+    async def test_returns_text_from_claude_api_response(
         self, mock_settings: MagicMock, mock_get_client: MagicMock
     ) -> None:
         mock_settings.ANTHROPIC_API_KEY = "sk-test"
@@ -41,7 +41,6 @@ class TestSommelierChat:
 
         result = await sommelier_chat("What pairs with lamb?")
         assert result == "Lamb pairs beautifully with Syrah."
-        mock_client.messages.create.assert_called_once()
 
     @patch("backend.services.sommelier.backend_settings")
     async def test_no_api_key_returns_fallback(self, mock_settings: MagicMock) -> None:

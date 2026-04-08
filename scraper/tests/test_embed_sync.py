@@ -32,7 +32,7 @@ def _make_product(**overrides: object) -> dict:
 @pytest.mark.asyncio
 class TestEmbedSync:
     @patch("scraper.commands.embed.settings")
-    async def test_no_api_key(self, mock_settings: MagicMock) -> None:
+    async def test_returns_fatal_when_api_key_missing(self, mock_settings: MagicMock) -> None:
         mock_settings.OPENAI_API_KEY = ""
         result = await embed_sync()
         assert result == EXIT_FATAL
@@ -49,7 +49,7 @@ class TestEmbedSync:
     @patch("scraper.commands.embed.get_products_needing_embedding", new_callable=AsyncMock)
     @patch("scraper.commands.embed.create_embeddings")
     @patch("scraper.commands.embed.bulk_update_embeddings", new_callable=AsyncMock)
-    async def test_full_sync(
+    async def test_embeds_all_products_and_persists_vectors(
         self,
         mock_bulk: AsyncMock,
         mock_embed: MagicMock,

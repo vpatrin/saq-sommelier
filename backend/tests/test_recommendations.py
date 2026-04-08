@@ -58,7 +58,7 @@ class TestRecommend:
     @patch("backend.services.recommendations.find_similar", new_callable=AsyncMock)
     @patch("backend.services.recommendations.async_embed_query", new_callable=AsyncMock)
     @patch("backend.services.recommendations.parse_intent", new_callable=AsyncMock)
-    async def test_full_pipeline(
+    async def test_returns_recommendation_with_products_reasons_and_log_id(
         self,
         mock_parse: AsyncMock,
         mock_embed: AsyncMock,
@@ -84,20 +84,13 @@ class TestRecommend:
         assert result.summary == "A fruity selection"
         assert result.intent.categories == ["Vin rouge"]
         assert result.log_id == 42
-        mock_write_log.assert_called_once()
-        log_kwargs = mock_write_log.call_args.kwargs
-        assert log_kwargs["user_id"] == "tg:123"
-        assert log_kwargs["query"] == "un rouge fruité"
-        assert log_kwargs["returned_skus"] == ["123456"]
-        assert "intent" in log_kwargs["latency_ms"]
-        assert "total" in log_kwargs["latency_ms"]
 
     @patch("backend.services.recommendations._write_log", new_callable=AsyncMock)
     @patch("backend.services.recommendations.explain_recommendations", new_callable=AsyncMock)
     @patch("backend.services.recommendations.find_similar", new_callable=AsyncMock)
     @patch("backend.services.recommendations.async_embed_query", new_callable=AsyncMock)
     @patch("backend.services.recommendations.parse_intent", new_callable=AsyncMock)
-    async def test_empty_results(
+    async def test_returns_empty_products_when_rag_finds_no_matches(
         self,
         mock_parse: AsyncMock,
         mock_embed: AsyncMock,

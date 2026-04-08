@@ -102,7 +102,7 @@ def confirm_update(confirm_query):
     return mock
 
 
-async def test_watch_confirm_success(confirm_update, context, api):
+async def test_watch_confirm_creates_watch_and_edits_message(confirm_update, context, api):
     api.create_watch.return_value = {}
     await watch_confirm_callback(confirm_update, context)
     api.create_watch.assert_called_once_with(_USER_ID_STR, "12345678")
