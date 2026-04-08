@@ -88,9 +88,9 @@ Assert what a user or caller observes. Never assert internal state, intermediate
 
 | Service  | Line threshold   | Tool       |
 | -------- | ---------------- | ---------- |
-| Backend  | ≥ 83%            | pytest-cov |
+| Backend  | ≥ 80%            | pytest-cov |
 | Bot      | ≥ 85%            | pytest-cov |
-| Scraper  | ≥ 78%            | pytest-cov |
+| Scraper  | ≥ 80%            | pytest-cov |
 | Core     | none             | pytest-cov |
 | Frontend | no threshold yet | Vitest     |
 
