@@ -119,7 +119,7 @@ async def test_backend_500_fails_open():
     update.message.reply_text.assert_not_called()
 
 
-async def test_no_user_passes_through():
+async def test_passes_through_when_update_has_no_user():
     update = _update_no_user()
     ctx = _context()
 
@@ -167,7 +167,7 @@ async def test_rate_limit_per_user():
     update_b.message.reply_text.assert_not_called()
 
 
-async def test_rate_limit_no_user_passes_through():
+async def test_skips_rate_limiting_when_update_has_no_user():
     update = _update_no_user()
     context = AsyncMock()
 
@@ -177,7 +177,7 @@ async def test_rate_limit_no_user_passes_through():
 # ── RateLimiter unit tests ──────────────────────────────────
 
 
-def test_rate_limiter_basic():
+def test_rate_limiter_blocks_after_max_calls_reached():
     rl = RateLimiter(max_calls=1, window=0.5)
     assert not rl.is_limited(TEST_USER_ID)  # first call OK
     assert rl.is_limited(TEST_USER_ID)  # second call blocked (limit=1)

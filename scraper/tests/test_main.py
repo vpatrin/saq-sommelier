@@ -41,7 +41,7 @@ class TestDetectDelists:
         mock_emit.assert_called_once_with("10327701", available=False)
 
     @pytest.mark.asyncio
-    async def test_no_event_when_delisted_sku_not_watched(self) -> None:
+    async def test_skips_event_when_delisted_sku_not_watched(self) -> None:
         from scraper.commands.scrape import _detect_delists
 
         with (
@@ -56,7 +56,7 @@ class TestDetectDelists:
         mock_emit.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_no_event_when_nothing_delisted(self) -> None:
+    async def test_skips_event_emission_when_nothing_delisted(self) -> None:
         from scraper.commands.scrape import _detect_delists
 
         with (

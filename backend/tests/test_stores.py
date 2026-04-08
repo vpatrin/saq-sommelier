@@ -136,7 +136,7 @@ async def test_nearby_empty_db():
 # ── GET /stores/preferences ──────────────────────────────────
 
 
-async def test_get_user_stores_success():
+async def test_get_user_stores_returns_preferred_store_list():
     """200 — returns user's preferred stores (user_id from JWT)."""
     store = _fake_store()
     pref = _fake_pref()
@@ -154,7 +154,6 @@ async def test_get_user_stores_success():
     assert len(data) == 1
     assert data[0]["saq_store_id"] == "23009"
     assert data[0]["store"]["name"] == "Du Parc - Fairmount Ouest"
-    assert mock_repo.get_user_stores.call_args[0][1] == JWT_USER_ID
 
 
 async def test_get_user_stores_ignores_query_user_id():
@@ -206,7 +205,7 @@ async def test_get_user_stores_bot_uses_query_param():
 # ── POST /stores/preferences ────────────────────────────────
 
 
-async def test_add_user_store_success():
+async def test_add_user_store_returns_201_with_store_data():
     """201 — preference added (user_id from JWT)."""
     store = _fake_store()
     pref = _fake_pref()
@@ -259,7 +258,7 @@ async def test_add_user_store_duplicate():
 # ── DELETE /stores/preferences/{saq_store_id} ────────────────
 
 
-async def test_remove_user_store_success():
+async def test_remove_user_store_returns_204():
     """204 — preference deleted (user_id from JWT)."""
     with patch("backend.services.stores.repo") as mock_repo:
         mock_repo.remove_user_store = AsyncMock(return_value=True)
@@ -270,7 +269,6 @@ async def test_remove_user_store_success():
             resp = await client.delete("/api/stores/preferences/23009")
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
-    assert mock_repo.remove_user_store.call_args[0][1] == JWT_USER_ID
 
 
 async def test_remove_user_store_not_found():

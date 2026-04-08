@@ -145,8 +145,8 @@ async def test_delete_old_stock_events_swallows_error(mock_db_session) -> None:
 
 class TestUpsertProduct:
     @pytest.mark.asyncio
-    async def test_commits_on_successful_upsert(self, mock_db_session) -> None:
-        """Happy path: execute succeeds → commit called, no rollback."""
+    async def test_commits_and_returns_true_on_upsert(self, mock_db_session) -> None:
+        """execute succeeds → commit called, no rollback, returns True."""
         mock_session, mock_factory = mock_db_session
         product = ProductData(sku="12345678", name="Test Wine")
 

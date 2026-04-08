@@ -2,7 +2,7 @@ from scraper.embed import build_embedding_text, compute_embedding_hash
 
 
 class TestBuildEmbeddingText:
-    def test_full_product(self) -> None:
+    def test_formats_all_fields_into_structured_text_lines(self) -> None:
         text = build_embedding_text(
             category="Vin rouge",
             taste_tag="Aromatique et souple",

@@ -58,7 +58,7 @@ async def test_wrong_secret_returns_403(_real_auth_client):
     assert resp.status_code == status.HTTP_403_FORBIDDEN
 
 
-async def test_correct_secret_passes(_real_auth_client):
+async def test_correct_bot_secret_returns_200_with_empty_notifications(_real_auth_client):
     """200 — correct X-Bot-Secret header is accepted."""
     with (
         patch("backend.auth.backend_settings") as mock_settings,
@@ -72,6 +72,7 @@ async def test_correct_secret_passes(_real_auth_client):
         )
 
     assert resp.status_code == status.HTTP_200_OK
+    assert resp.json() == []
 
 
 async def test_unconfigured_secret_falls_through_to_jwt(_real_auth_client):

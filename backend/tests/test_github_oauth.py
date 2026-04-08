@@ -106,7 +106,7 @@ async def test_github_callback_github_error(client):
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
-async def test_exchange_token_success(client):
+async def test_exchange_token_returns_jwt(client):
     """Valid exchange code returns JWT."""
     redis = AsyncMock()
     redis.getdel = AsyncMock(return_value=_JWT)
@@ -134,7 +134,7 @@ async def test_exchange_token_expired(client):
 # ── Service unit tests ────────────────────────────────────────────────────────
 
 
-async def test_fetch_github_access_token_success():
+async def test_fetch_github_access_token_returns_token_string():
     mock_resp = MagicMock()
     mock_resp.raise_for_status = MagicMock()
     mock_resp.json.return_value = {"access_token": "gha_token123"}
@@ -178,7 +178,7 @@ async def test_fetch_github_access_token_http_error():
     assert exc_info.value.status_code == status.HTTP_502_BAD_GATEWAY
 
 
-async def test_fetch_github_user_success():
+async def test_fetch_github_user_returns_provider_id_email_and_display_name():
     user_resp = MagicMock()
     user_resp.raise_for_status = MagicMock()
     user_resp.json.return_value = {"id": 42, "name": "Victor", "login": "vpatrin"}
@@ -236,7 +236,7 @@ async def test_fetch_github_user_github_api_error():
     assert exc_info.value.status_code == status.HTTP_502_BAD_GATEWAY
 
 
-async def test_fetch_github_user_no_verified_email():
+async def test_fetch_github_user_raises_on_unverified_email():
     user_resp = MagicMock()
     user_resp.raise_for_status = MagicMock()
     user_resp.json.return_value = {"id": 42, "name": "Victor", "login": "vpatrin"}
@@ -348,7 +348,7 @@ async def test_create_oauth_session_new_user_pending_waitlist():
         )
 
 
-async def test_create_oauth_session_deactivated_user():
+async def test_create_oauth_session_raises_forbidden_for_deactivated_user():
     db = AsyncMock()
     redis = AsyncMock()
     account = SimpleNamespace(user_id=1)

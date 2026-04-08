@@ -168,7 +168,7 @@ class TestEnrichWines:
         assert result == EXIT_FATAL
 
     @pytest.mark.asyncio
-    async def test_happy_path(self) -> None:
+    async def test_updates_matched_products_and_skips_unknown_skus(self) -> None:
         products = [
             _make_product(
                 "111",
