@@ -48,7 +48,7 @@ async def test_google_login_redirects_to_google(client):
     assert "scope=openid+email+profile" in location
 
 
-async def test_google_callback_success(client):
+async def test_google_callback_redirects_with_exchange_code(client):
     """Valid state + approved waitlist — redirects with exchange code."""
     with (
         patch("backend.api.auth.consume_oauth_state", new=AsyncMock(return_value=True)),
@@ -96,7 +96,7 @@ async def test_google_callback_missing_state(client):
 # ── Service unit tests ────────────────────────────────────────────────────────
 
 
-async def test_fetch_google_access_token_success():
+async def test_fetch_google_access_token_returns_access_token_string():
     mock_resp = MagicMock()
     mock_resp.raise_for_status = MagicMock()
     mock_resp.json.return_value = {"access_token": "ya29.token123"}
@@ -109,7 +109,7 @@ async def test_fetch_google_access_token_success():
     assert result == "ya29.token123"
 
 
-async def test_fetch_google_access_token_no_token():
+async def test_fetch_google_access_token_raises_on_error_body():
     """Google returns 200 with error body — 400."""
     mock_resp = MagicMock()
     mock_resp.raise_for_status = MagicMock()
@@ -140,7 +140,7 @@ async def test_fetch_google_access_token_http_error():
     assert exc_info.value.status_code == status.HTTP_502_BAD_GATEWAY
 
 
-async def test_fetch_google_user_success():
+async def test_fetch_google_user_returns_provider_id_email_and_display_name():
     mock_resp = MagicMock()
     mock_resp.raise_for_status = MagicMock()
     mock_resp.json.return_value = {
@@ -160,7 +160,7 @@ async def test_fetch_google_user_success():
     assert display_name == "Victor"
 
 
-async def test_fetch_google_user_unverified_email():
+async def test_fetch_google_user_raises_on_unverified_email():
     """Unverified email — 400."""
     mock_resp = MagicMock()
     mock_resp.raise_for_status = MagicMock()
@@ -180,7 +180,7 @@ async def test_fetch_google_user_unverified_email():
     assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
 
 
-async def test_fetch_google_user_api_error():
+async def test_fetch_google_user_raises_502_on_api_error():
     """Google API returns error — 502."""
     mock_resp = MagicMock()
     mock_resp.raise_for_status = MagicMock(

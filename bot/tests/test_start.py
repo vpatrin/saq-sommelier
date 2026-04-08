@@ -37,6 +37,7 @@ async def test_start_deeplink_watch_triggers_watch_flow(update, context, api):
     api.list_watches.return_value = []
     await start(update, context)
     api.create_watch.assert_called_once_with("tg:42", "12345678")
+    update.message.reply_text.assert_called_once()
 
 
 async def test_start_deeplink_unknown_payload_shows_help(update, context):

@@ -10,7 +10,7 @@ from backend.db import get_db
 from .conftest import BASE_URL
 
 
-async def test_health():
+async def test_returns_ok_when_db_responds():
     """Health endpoint returns ok when DB is reachable."""
     mock_session = AsyncMock(spec_set=["execute", "__aenter__", "__aexit__"])
     mock_session.execute = AsyncMock(return_value=MagicMock())
@@ -25,7 +25,7 @@ async def test_health():
     mock_session.execute.assert_called_once()
 
 
-async def test_health_db_failure():
+async def test_returns_500_when_db_fails():
     """Health endpoint returns 500 when DB is unreachable."""
     mock_session = AsyncMock(spec_set=["execute", "__aenter__", "__aexit__"])
     mock_session.execute.side_effect = SQLAlchemyError("connection refused")

@@ -82,6 +82,7 @@ Assert what a user or caller observes. Never assert internal state, intermediate
 - Arrange → Act → Assert, top to bottom, no interleaving
 - Use factory helpers for fixtures (`product()`, `make_red()`) — never repeat raw object literals across tests
 - Mock at the boundary: external APIs, DB, context providers — not internal helpers
+- Tests must be order-independent — no shared mutable state between tests; reset in `beforeEach` / `setUp`, not once at module level
 
 ### 4. Coverage targets
 
@@ -94,6 +95,20 @@ Assert what a user or caller observes. Never assert internal state, intermediate
 | Frontend | no threshold yet | Vitest     |
 
 Frontend threshold will be set at ~60% once component extraction is complete (tracked in `docs/ENGINEERING.md`).
+
+### 5. Tests must be falsifiable
+
+A test that can't fail is not a test — it's a comment with overhead.
+
+**The delete test:** mentally delete the function under test. Would the test fail? If not, the assertion is wrong — you're testing nothing.
+
+- Assert the *outcome*, not just that something ran: `assert result == expected_wine` not `assert result is not None`
+- After an HTTP call, assert the body, not just `status_code == 200` — a 200 can return garbage
+- After a DB write, query the DB and assert the row — don't just assert the mock was called
+
+**Hard to arrange = design smell.** If the `Arrange` block needs 10+ lines or 3+ mocks, the code under test is too coupled. Fix the code, not the test.
+
+**Don't test what the type system covers.** mypy/TypeScript verifies fields exist with the right type. Tests verify runtime behavior — what the function *does* with those values.
 
 ## Definition of Done
 

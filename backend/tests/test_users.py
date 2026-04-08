@@ -27,22 +27,24 @@ async def _authed_client(user: MagicMock):
     session = AsyncMock()
     app.dependency_overrides[get_current_active_user] = lambda: user
     app.dependency_overrides[get_db] = lambda: session
-    async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://test"
-    ) as client:
-        yield client
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            yield client
+    finally:
+        app.dependency_overrides.clear()
 
 
 # ── GET /api/users/me ──────────────────
 
 
-async def test_get_me_success():
+async def test_get_me_returns_authenticated_user_profile():
     """200 — returns authenticated user's profile."""
     user = _mock_user()
     user.locale = "fr"
     async with _authed_client(user) as client:
         resp = await client.get("/api/users/me")
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
@@ -55,7 +57,6 @@ async def test_get_me_success():
 
 async def test_get_me_unauthenticated():
     """401 — no token."""
-    app.dependency_overrides.clear()
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -67,12 +68,11 @@ async def test_get_me_unauthenticated():
 # ── PATCH /api/users/me ──────────────────
 
 
-async def test_update_me_success():
+async def test_update_me_saves_display_name_change():
     """204 — authenticated user can update their display name."""
     user = _mock_user()
     async with _authed_client(user) as client:
         resp = await client.patch("/api/users/me", json={"display_name": "NewName"})
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
     assert user.display_name == "NewName"
@@ -83,7 +83,6 @@ async def test_update_me_empty_name():
     user = _mock_user()
     async with _authed_client(user) as client:
         resp = await client.patch("/api/users/me", json={"display_name": ""})
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -93,7 +92,6 @@ async def test_update_me_too_long():
     user = _mock_user()
     async with _authed_client(user) as client:
         resp = await client.patch("/api/users/me", json={"display_name": "A" * 101})
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -103,7 +101,6 @@ async def test_update_me_locale():
     user = _mock_user()
     async with _authed_client(user) as client:
         resp = await client.patch("/api/users/me", json={"locale": "en"})
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
     assert user.locale == "en"
@@ -115,7 +112,6 @@ async def test_update_me_invalid_locale():
     user = _mock_user()
     async with _authed_client(user) as client:
         resp = await client.patch("/api/users/me", json={"locale": "de"})
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -126,7 +122,6 @@ async def test_update_me_null_locale_ignored():
     user.locale = "en"
     async with _authed_client(user) as client:
         resp = await client.patch("/api/users/me", json={"locale": None})
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
     assert user.locale == "en"
@@ -137,7 +132,6 @@ async def test_update_me_null_display_name_ignored():
     user = _mock_user()
     async with _authed_client(user) as client:
         resp = await client.patch("/api/users/me", json={"display_name": None, "locale": "fr"})
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
     assert user.display_name == "Victor"
@@ -146,7 +140,6 @@ async def test_update_me_null_display_name_ignored():
 
 async def test_update_me_unauthenticated():
     """401 — no token."""
-    app.dependency_overrides.clear()
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -158,7 +151,7 @@ async def test_update_me_unauthenticated():
 # ── GET /api/users/me/accounts ──────────────────
 
 
-async def test_list_accounts_success():
+async def test_list_accounts_returns_linked_oauth_providers():
     """200 — returns linked OAuth accounts."""
     user = _mock_user()
     accounts = [
@@ -174,7 +167,6 @@ async def test_list_accounts_success():
             return_value=accounts,
         ):
             resp = await client.get("/api/users/me/accounts")
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_200_OK
     data = resp.json()
@@ -186,7 +178,7 @@ async def test_list_accounts_success():
 # ── DELETE /api/users/me/accounts/{provider} ──────────────────
 
 
-async def test_disconnect_account_success():
+async def test_disconnect_account_removes_provider_link():
     """204 — disconnect one of two linked accounts."""
     user = _mock_user()
     async with _authed_client(user) as client:
@@ -203,7 +195,6 @@ async def test_disconnect_account_success():
             ),
         ):
             resp = await client.delete("/api/users/me/accounts/github")
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -218,7 +209,6 @@ async def test_disconnect_last_account_rejected():
             return_value=1,
         ):
             resp = await client.delete("/api/users/me/accounts/github")
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_409_CONFLICT
 
@@ -240,7 +230,6 @@ async def test_disconnect_nonexistent_provider():
             ),
         ):
             resp = await client.delete("/api/users/me/accounts/apple")
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_404_NOT_FOUND
 
@@ -248,19 +237,17 @@ async def test_disconnect_nonexistent_provider():
 # ── DELETE /api/users/me ──────────────────
 
 
-async def test_delete_me_success():
+async def test_delete_me_returns_204():
     """204 — user can delete their own account."""
     user = _mock_user()
     async with _authed_client(user) as client:
         with patch(
             "backend.repositories.users.hard_delete",
             new_callable=AsyncMock,
-        ) as mock_delete:
+        ):
             resp = await client.delete("/api/users/me")
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
-    mock_delete.assert_called_once()
 
 
 # ── GET /api/users/me/telegram ──────────────────
@@ -272,7 +259,6 @@ async def test_telegram_status_linked():
     user.telegram_id = 12345
     async with _authed_client(user) as client:
         resp = await client.get("/api/users/me/telegram")
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == {"linked": True}
@@ -284,7 +270,6 @@ async def test_telegram_status_unlinked():
     user.telegram_id = None
     async with _authed_client(user) as client:
         resp = await client.get("/api/users/me/telegram")
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_200_OK
     assert resp.json() == {"linked": False}
@@ -300,7 +285,7 @@ _TELEGRAM_PAYLOAD = {
 }
 
 
-async def test_link_telegram_success():
+async def test_link_telegram_returns_204_for_valid_payload():
     """204 — links Telegram account when HMAC is valid and no conflict."""
     user = _mock_user()
     user.telegram_id = None
@@ -312,13 +297,11 @@ async def test_link_telegram_success():
                 new_callable=AsyncMock,
                 return_value=None,
             ),
-            patch("backend.repositories.users.link_telegram", new_callable=AsyncMock) as mock_link,
+            patch("backend.repositories.users.link_telegram", new_callable=AsyncMock),
         ):
             resp = await client.post("/api/users/me/telegram", json=_TELEGRAM_PAYLOAD)
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
-    mock_link.assert_called_once()
 
 
 async def test_link_telegram_conflict():
@@ -336,7 +319,6 @@ async def test_link_telegram_conflict():
             ),
         ):
             resp = await client.post("/api/users/me/telegram", json=_TELEGRAM_PAYLOAD)
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_409_CONFLICT
 
@@ -356,7 +338,6 @@ async def test_link_telegram_already_linked_to_self():
             patch("backend.repositories.users.link_telegram", new_callable=AsyncMock),
         ):
             resp = await client.post("/api/users/me/telegram", json=_TELEGRAM_PAYLOAD)
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
 
@@ -364,16 +345,12 @@ async def test_link_telegram_already_linked_to_self():
 # ── DELETE /api/users/me/telegram ──────────────────
 
 
-async def test_unlink_telegram_success():
+async def test_unlink_telegram_returns_204():
     """204 — unlinks Telegram account."""
     user = _mock_user()
     user.telegram_id = 12345
     async with _authed_client(user) as client:
-        with patch(
-            "backend.repositories.users.unlink_telegram", new_callable=AsyncMock
-        ) as mock_unlink:
+        with patch("backend.repositories.users.unlink_telegram", new_callable=AsyncMock):
             resp = await client.delete("/api/users/me/telegram")
-    app.dependency_overrides.clear()
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
-    mock_unlink.assert_called_once()

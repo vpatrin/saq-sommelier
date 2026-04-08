@@ -84,10 +84,10 @@ class TestSkuValidation:
 
 
 class TestExitCode:
-    def test_clean_run(self) -> None:
+    def test_returns_ok_when_saved_without_errors(self) -> None:
         assert _exit_code(saved=10, errors=0) == EXIT_OK
 
-    def test_no_work_is_clean(self) -> None:
+    def test_returns_ok_when_nothing_saved_and_no_errors(self) -> None:
         assert _exit_code(saved=0, errors=0) == EXIT_OK
 
     def test_partial_failure(self) -> None:

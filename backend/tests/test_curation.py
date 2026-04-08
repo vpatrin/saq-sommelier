@@ -30,7 +30,7 @@ def _fake_product(
 
 
 class TestFormatWine:
-    def test_full_attributes(self) -> None:
+    def test_formats_name_grape_region_country_price_and_taste_tag(self) -> None:
         p = _fake_product()
         result = _format_wine(0, p)
         assert "1. Test Wine" in result
@@ -40,7 +40,7 @@ class TestFormatWine:
         assert "25.0$" in result
         assert "Fruité" in result
 
-    def test_missing_attributes(self) -> None:
+    def test_omits_grape_and_region_lines_when_fields_are_none(self) -> None:
         p = _fake_product(grape=None, region=None, taste_tag=None)
         p.grape = None
         p.region = None
@@ -75,7 +75,7 @@ class TestBuildUserMessage:
 
 
 class TestParseToolInput:
-    def test_valid_input(self) -> None:
+    def test_returns_reasons_and_summary_from_tool_input(self) -> None:
         tool_input = {
             "reasons": ["Good match", "Nice diversity"],
             "summary": "Two great picks",
@@ -87,9 +87,7 @@ class TestParseToolInput:
     def test_pads_short_reasons(self) -> None:
         tool_input = {"reasons": ["Only one"], "summary": "Summary"}
         result = _parse_tool_input(tool_input, 3)
-        assert len(result.reasons) == 3
-        assert result.reasons[0] == "Only one"
-        assert result.reasons[1] == ""
+        assert result.reasons == ["Only one", "", ""]
 
     def test_truncates_long_reasons(self) -> None:
         tool_input = {"reasons": ["A", "B", "C"], "summary": "Summary"}
@@ -122,7 +120,7 @@ class TestExplainRecommendations:
 
     @patch("backend.services.curation.get_anthropic_client")
     @patch("backend.services.curation.backend_settings")
-    async def test_successful_call(
+    async def test_returns_reasons_and_summary_from_claude_tool_response(
         self, mock_settings: MagicMock, mock_get_client: MagicMock
     ) -> None:
         mock_settings.ANTHROPIC_API_KEY = "sk-test"

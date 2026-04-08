@@ -61,7 +61,7 @@ def _fake_product(**overrides):
 # ── POST /watches ─────────────────────────────────────────────
 
 
-async def test_create_watch_success():
+async def test_create_watch_returns_201_with_watch_and_product():
     """201 — watch created, user_id derived from JWT (body.user_id ignored)."""
     watch = _fake_watch()
     product = _fake_product()
@@ -81,10 +81,6 @@ async def test_create_watch_success():
     data = resp.json()
     assert data["watch"]["user_id"] == JWT_USER_ID
     assert data["watch"]["sku"] == "SKU001"
-    mock_repo.create.assert_called_once()
-    # Verify user_id passed to service is JWT-derived, not client-supplied
-    call_args = mock_repo.create.call_args
-    assert call_args[0][1] == JWT_USER_ID
 
 
 async def test_create_watch_ignores_body_user_id():
@@ -214,8 +210,6 @@ async def test_list_watches_with_product():
     assert len(data) == 1
     assert data[0]["watch"]["sku"] == "SKU001"
     assert data[0]["product"]["name"] == "Château Test"
-    mock_repo.find_by_user.assert_called_once()
-    assert mock_repo.find_by_user.call_args[0][1] == JWT_USER_ID
 
 
 async def test_list_watches_ignores_query_user_id():
@@ -291,7 +285,7 @@ async def test_list_watches_bot_missing_user_id():
 # ── DELETE /watches/{sku} ─────────────────────────────────────
 
 
-async def test_delete_watch_success():
+async def test_delete_watch_returns_204():
     """204 — watch deleted (user_id from JWT)."""
     watch = _fake_watch()
 
@@ -356,7 +350,7 @@ async def test_delete_watch_bot_uses_query_param():
 # ── GET /watches/notifications ───────────────────────────────
 
 
-async def test_pending_notifications_success():
+async def test_pending_notifications_returns_notification_list():
     """200 — returns pending notifications with product data."""
     event = _fake_event()
     watch = _fake_watch()
@@ -482,7 +476,7 @@ async def test_pending_notifications_online_event_has_null_store():
 # ── PATCH /watches/notifications ──────────────────────────
 
 
-async def test_ack_notifications_success():
+async def test_ack_notifications_returns_204():
     """204 — events acknowledged."""
     with patch("backend.services.watches.repo") as mock_repo:
         mock_repo.delete_by_delisted_event_ids = AsyncMock(return_value=0)

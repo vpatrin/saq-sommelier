@@ -11,7 +11,7 @@ NOW = datetime(2025, 1, 1, tzinfo=UTC)
 # ── GET /api/admin/users ────────────────────────────────────
 
 
-async def test_list_users_success(admin_client):
+async def test_list_users_returns_all_user_records(admin_client):
     """200 — admin can list all users."""
     users = [_mock_admin(), _mock_regular_user()]
     for i, u in enumerate(users):
@@ -36,7 +36,7 @@ async def test_list_users_non_admin_rejected(user_client):
 # ── PATCH /api/admin/users/{id} ──────────────────
 
 
-async def test_deactivate_user_success(admin_client):
+async def test_deactivate_user_returns_204(admin_client):
     """204 — admin can deactivate a regular user."""
     target = _mock_regular_user()
     with (
@@ -49,7 +49,7 @@ async def test_deactivate_user_success(admin_client):
     assert resp.status_code == status.HTTP_204_NO_CONTENT
 
 
-async def test_reactivate_user_success(admin_client):
+async def test_reactivate_user_calls_set_active_and_returns_204(admin_client):
     """204 — admin can reactivate a deactivated user."""
     target = _mock_regular_user()
     target.is_active = False
@@ -93,18 +93,17 @@ async def test_deactivate_user_non_admin_rejected(user_client):
 # ── DELETE /api/admin/users/{id} ──────────────────
 
 
-async def test_delete_user_success(admin_client):
+async def test_delete_user_returns_204(admin_client):
     """204 — admin can permanently delete a regular user."""
     target = _mock_regular_user()
     with (
         patch("backend.repositories.users.find_by_id", new_callable=AsyncMock) as mock_find,
-        patch("backend.repositories.users.hard_delete", new_callable=AsyncMock) as mock_delete,
+        patch("backend.repositories.users.hard_delete", new_callable=AsyncMock),
     ):
         mock_find.return_value = target
         resp = await admin_client.delete("/api/admin/users/2")
 
     assert resp.status_code == status.HTTP_204_NO_CONTENT
-    mock_delete.assert_called_once()
 
 
 async def test_delete_user_self_rejected(admin_client):

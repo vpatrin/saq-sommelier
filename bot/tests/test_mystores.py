@@ -176,6 +176,31 @@ async def test_toggle_store_not_found(callback_update, context, api):
     callback_update.callback_query.answer.assert_any_call("Store not found.", show_alert=True)
 
 
+async def test_toggle_conflict_treats_store_as_saved(callback_update, context, api):
+    callback_update.callback_query.data = "s:toggle:23010"
+    api.list_user_stores.return_value = []  # B not in saved list
+    api.add_user_store.side_effect = BackendAPIError(HTTPStatus.CONFLICT, "Conflict")
+    context.user_data["nearby_stores"] = [_STORE_B]
+
+    await store_toggle_callback(callback_update, context)
+
+    # Conflict = already saved by race condition — only the unconditional ACK, no error alert
+    assert callback_update.callback_query.answer.call_count == 1
+    callback_update.callback_query.edit_message_reply_markup.assert_called_once()
+
+
+async def test_toggle_server_error_shows_something_went_wrong(callback_update, context, api):
+    callback_update.callback_query.data = "s:toggle:23010"
+    api.list_user_stores.return_value = []
+    api.add_user_store.side_effect = BackendAPIError(
+        HTTPStatus.INTERNAL_SERVER_ERROR, "Internal Server Error"
+    )
+
+    await store_toggle_callback(callback_update, context)
+
+    callback_update.callback_query.answer.assert_any_call("Something went wrong.", show_alert=True)
+
+
 # ── Store remove callback ────────────────────────────────────
 
 
@@ -190,16 +215,6 @@ async def test_remove_deletes_store(callback_update, context, api):
     assert "0 saved" in text
 
 
-async def test_remove_updates_list(callback_update, context, api):
-    callback_update.callback_query.data = "s:rm:23009"
-    # After removing A, return empty
-    api.list_user_stores.return_value = []
-
-    await store_remove_callback(callback_update, context)
-
-    callback_update.callback_query.edit_message_text.assert_called_once()
-
-
 async def test_remove_backend_unavailable(callback_update, context, api):
     callback_update.callback_query.data = "s:rm:23009"
     api.remove_user_store.side_effect = BackendUnavailableError("down")
@@ -207,6 +222,18 @@ async def test_remove_backend_unavailable(callback_update, context, api):
     await store_remove_callback(callback_update, context)
 
     callback_update.callback_query.answer.assert_any_call("Backend unavailable.", show_alert=True)
+
+
+async def test_remove_shows_empty_state_when_list_refresh_fails(callback_update, context, api):
+    callback_update.callback_query.data = "s:rm:23009"
+    api.list_user_stores.side_effect = BackendUnavailableError("down")
+
+    await store_remove_callback(callback_update, context)
+
+    # Falls back to empty list — still renders rather than erroring
+    callback_update.callback_query.edit_message_text.assert_called_once()
+    text = callback_update.callback_query.edit_message_text.call_args[0][0]
+    assert "0 saved" in text
 
 
 # ── Back handler ─────────────────────────────────────────────

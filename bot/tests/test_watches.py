@@ -228,7 +228,9 @@ async def test_alerts_backend_unavailable(update, context, api):
 # ── watch_remove_callback (#240) ─────────────────────────────
 
 
-async def test_watch_remove_success(callback_update, callback_query, context, api):
+async def test_watch_remove_deletes_watch_and_shows_empty_state(
+    callback_update, callback_query, context, api
+):
     api.list_watches.return_value = []
 
     await watch_remove_callback(callback_update, context)
@@ -239,7 +241,7 @@ async def test_watch_remove_success(callback_update, callback_query, context, ap
     assert "not watching" in text.lower()
 
 
-async def test_watch_remove_already_gone_treated_as_success(
+async def test_watch_remove_treats_404_as_success_and_refreshes_list(
     callback_update, callback_query, context, api
 ):
     api.delete_watch.side_effect = BackendAPIError(HTTPStatus.NOT_FOUND, "Not Found")
@@ -282,3 +284,27 @@ async def test_watch_remove_backend_unavailable(callback_update, callback_query,
 
     callback_query.answer.assert_called_with("Backend unavailable.", show_alert=True)
     callback_query.edit_message_text.assert_not_called()
+
+
+async def test_watch_remove_shows_empty_state_when_list_refresh_fails(
+    callback_update, callback_query, context, api
+):
+    api.list_watches.side_effect = BackendUnavailableError("down")
+
+    await watch_remove_callback(callback_update, context)
+
+    # Still renders — falls back to empty list
+    callback_query.edit_message_text.assert_called_once()
+    text = callback_query.edit_message_text.call_args[0][0]
+    assert "not watching" in text.lower()
+
+
+async def test_alerts_backend_error_shows_unavailable_message(update, context, api):
+    api.list_watches.side_effect = BackendAPIError(
+        HTTPStatus.INTERNAL_SERVER_ERROR, "Internal Server Error"
+    )
+
+    await alerts_command(update, context)
+
+    text = update.message.reply_text.call_args[0][0]
+    assert "unavailable" in text.lower()

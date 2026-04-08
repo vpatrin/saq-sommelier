@@ -229,7 +229,7 @@ class TestParseProduct:
 
 class TestSearchProducts:
     @pytest.mark.asyncio
-    async def test_single_page(self) -> None:
+    async def test_yields_all_products_on_single_page_response(self) -> None:
         items = [_product_view(sku=f"SKU{i}") for i in range(3)]
         response = _search_response(items, total_count=3, total_pages=1)
 
@@ -279,7 +279,7 @@ class TestSearchProducts:
         mock_sleep.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_no_sleep_on_single_page(self) -> None:
+    async def test_skips_sleep_on_single_page_response(self) -> None:
         items = [_product_view(sku="SKU1")]
         response = _search_response(items, total_count=1, total_pages=1)
 
@@ -305,7 +305,7 @@ class TestSearchProducts:
         assert exc_info.value.max_allowed == 10000
 
     @pytest.mark.asyncio
-    async def test_401_raises_with_warning(self) -> None:
+    async def test_raises_on_unauthorized_response(self) -> None:
         client = AsyncMock(spec=httpx.AsyncClient)
         client.post.return_value = _make_response({}, status_code=HTTPStatus.UNAUTHORIZED)
 
