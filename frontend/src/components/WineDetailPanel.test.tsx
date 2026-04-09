@@ -4,8 +4,8 @@ import { MemoryRouter } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
 import '../i18n'
+import { product } from '@/tests/factories'
 import WineDetailPanel from './WineDetailPanel'
-import type { ProductOut } from '@/lib/types'
 
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: vi.fn() }))
 vi.mock('@/lib/api', () => ({
@@ -23,36 +23,6 @@ vi.mock('@/lib/api', () => ({
 
 const mockApiClient = vi.fn()
 
-function product(overrides: Partial<ProductOut> = {}): ProductOut {
-  return {
-    sku: 'SKU001',
-    name: 'Château Test',
-    category: 'Vin rouge',
-    country: 'France',
-    region: 'Bordeaux',
-    size: '750 ml',
-    price: '24.95',
-    url: 'https://saq.com/SKU001',
-    online_availability: false,
-    store_availability: [],
-    rating: null,
-    review_count: null,
-    appellation: null,
-    designation: null,
-    classification: null,
-    grape: 'Merlot',
-    grape_blend: null,
-    alcohol: '13.5%',
-    sugar: null,
-    producer: null,
-    vintage: '2021',
-    taste_tag: null,
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-    ...overrides,
-  } as ProductOut
-}
-
 function renderPanel(sku: string | null, onClose = vi.fn()) {
   return render(
     <MemoryRouter>
@@ -61,7 +31,7 @@ function renderPanel(sku: string | null, onClose = vi.fn()) {
   )
 }
 
-function apiReturning(p: ProductOut) {
+function apiReturning(p: ReturnType<typeof product>) {
   mockApiClient.mockImplementation((url: string) => {
     if (url.startsWith('/products/')) return Promise.resolve(p)
     if (url.includes('/watches')) return Promise.resolve([])
@@ -72,13 +42,7 @@ function apiReturning(p: ProductOut) {
 
 beforeEach(() => {
   mockApiClient.mockReset()
-  vi.mocked(useAuth).mockReturnValue({
-    user: { id: 1, display_name: 'Victor', role: 'user', locale: 'en' },
-    login: vi.fn(),
-    logout: vi.fn(),
-    updateUser: vi.fn(),
-    isLoading: false,
-  } as ReturnType<typeof useAuth>)
+  vi.mocked(useAuth).mockReturnValue({ user: { id: 1 } } as ReturnType<typeof useAuth>)
   vi.mocked(useApiClient).mockReturnValue(mockApiClient)
 })
 
@@ -92,20 +56,19 @@ describe('WineDetailPanel', () => {
   it('renders price with currency symbol', async () => {
     apiReturning(product())
     renderPanel('SKU001')
-    await screen.findByRole('heading', { level: 2 })
-    expect(screen.getByText('24.95 $')).toBeInTheDocument()
+    expect(await screen.findByText('24.95 $')).toBeInTheDocument()
   })
 
   it('renders grape variety when present', async () => {
-    apiReturning(product({ grape: 'Merlot' }))
+    apiReturning(product())
     renderPanel('SKU001')
-    await screen.findByRole('heading', { level: 2 })
-    expect(screen.getByText('Merlot')).toBeInTheDocument()
+    expect(await screen.findByText('Merlot')).toBeInTheDocument()
   })
 
   it('omits grape section when grape is null', async () => {
     apiReturning(product({ grape: null }))
     renderPanel('SKU001')
+    // Wait for loaded state (h2 present), then assert absence
     await screen.findByRole('heading', { level: 2 })
     expect(screen.queryByText('Grapes')).not.toBeInTheDocument()
   })
@@ -126,5 +89,37 @@ describe('WineDetailPanel', () => {
     renderPanel('SKU001')
     await waitFor(() => expect(screen.getByText(/Server error/)).toBeInTheDocument())
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+  })
+
+  it('optimistically switches to Watching on watch click', async () => {
+    mockApiClient.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url.startsWith('/products/')) return Promise.resolve(product())
+      if (url.includes('/watches') && opts?.method === 'POST') return Promise.resolve({})
+      if (url.includes('/watches')) return Promise.resolve([])
+      if (url.includes('/stores/preferences')) return Promise.resolve([])
+      return Promise.reject(new Error(`unexpected: ${url}`))
+    })
+    renderPanel('SKU001')
+    await screen.findByRole('heading', { level: 2 })
+    fireEvent.click(screen.getByRole('button', { name: /watch$/i }))
+    expect(await screen.findByRole('button', { name: /watching/i })).toBeInTheDocument()
+  })
+
+  it('rolls back to Watch when watch API call fails', async () => {
+    mockApiClient.mockImplementation((url: string, opts?: RequestInit) => {
+      if (url.startsWith('/products/')) return Promise.resolve(product())
+      if (url.includes('/watches') && opts?.method === 'POST')
+        return Promise.reject(new Error('network'))
+      if (url.includes('/watches')) return Promise.resolve([])
+      if (url.includes('/stores/preferences')) return Promise.resolve([])
+      return Promise.reject(new Error(`unexpected: ${url}`))
+    })
+    renderPanel('SKU001')
+    await screen.findByRole('heading', { level: 2 })
+    fireEvent.click(screen.getByRole('button', { name: /watch$/i }))
+    // During the request, button shows "..." (busy state masks the optimistic text)
+    expect(screen.getByRole('button', { name: '...' })).toBeDisabled()
+    // After rejection settles: rolls back to Watch
+    await waitFor(() => expect(screen.getByRole('button', { name: /watch$/i })).toBeInTheDocument())
   })
 })

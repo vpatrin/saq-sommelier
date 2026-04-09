@@ -14,7 +14,7 @@ export default mergeConfig(
         reporter: ['text', 'cobertura'],
         reportsDirectory: './coverage',
         include: ['src/**/*.{ts,tsx}'],
-        exclude: ['src/**/*.test.{ts,tsx}', 'src/setupTests.ts', 'src/components/ui/**'],
+        exclude: ['src/**/*.test.{ts,tsx}', 'src/setupTests.ts', 'src/components/ui/**', 'src/tests/**'],
         thresholds: { lines: 0, branches: 0, functions: 0, statements: 0 },
       },
     },

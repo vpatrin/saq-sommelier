@@ -2,8 +2,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useApiClient, ApiError } from '@/lib/api'
 import '../i18n'
+import { product, fakeNote } from '@/tests/factories'
 import TastingForm from './TastingForm'
-import type { ProductOut, TastingNoteOut } from '@/lib/types'
+import type { TastingNoteOut } from '@/lib/types'
 
 vi.mock('@/lib/api', () => ({
   useApiClient: vi.fn(),
@@ -29,55 +30,6 @@ vi.mock('@/components/WineSearch', () => ({
 
 const mockApiClient = vi.fn()
 
-function product(overrides: Partial<ProductOut> = {}): ProductOut {
-  return {
-    sku: 'SKU001',
-    name: 'Château Test',
-    category: 'Vin rouge',
-    country: 'France',
-    region: 'Bordeaux',
-    size: '750 ml',
-    price: '24.95',
-    url: 'https://saq.com/SKU001',
-    online_availability: false,
-    store_availability: [],
-    rating: null,
-    review_count: null,
-    appellation: null,
-    designation: null,
-    classification: null,
-    grape: 'Merlot',
-    grape_blend: null,
-    alcohol: '13.5%',
-    sugar: null,
-    producer: null,
-    vintage: '2021',
-    taste_tag: null,
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-    ...overrides,
-  } as ProductOut
-}
-
-function fakeNote(overrides: Partial<TastingNoteOut> = {}): TastingNoteOut {
-  return {
-    id: 1,
-    sku: 'SKU001',
-    rating: 87,
-    notes: null,
-    pairing: null,
-    tasted_at: '2026-01-01',
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
-    product_name: 'Château Test',
-    product_category: 'Vin rouge',
-    product_region: 'Bordeaux',
-    product_grape: 'Merlot',
-    product_price: '24.95',
-    ...overrides,
-  }
-}
-
 beforeEach(() => {
   mockApiClient.mockReset()
   vi.mocked(useApiClient).mockReturnValue(mockApiClient)
@@ -100,8 +52,7 @@ describe('TastingForm', () => {
         onCancel={vi.fn()}
       />,
     )
-    // Rating value is rendered in a span next to the slider
-    expect(screen.getByText('92')).toBeInTheDocument()
+    expect(screen.getByRole('slider')).toHaveValue('92')
     expect(screen.getByDisplayValue('Lovely finish')).toBeInTheDocument()
   })
 
@@ -124,6 +75,8 @@ describe('TastingForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     expect(await screen.findByRole('button', { name: /saving/i })).toBeDisabled()
     resolve!(fakeNote())
+    // Drain the resolved promise so setSaving(false) runs inside act()
+    await waitFor(() => expect(screen.getByRole('button', { name: /save/i })).toBeEnabled())
   })
 
   it('shows error message with retry when save fails', async () => {
@@ -145,5 +98,35 @@ describe('TastingForm', () => {
     render(<TastingForm onSave={vi.fn()} onCancel={vi.fn()} />)
     expect(screen.queryByRole('slider')).not.toBeInTheDocument()
     expect(screen.queryByText('Impressions')).not.toBeInTheDocument()
+  })
+
+  it('PATCHes existing note when noteId is provided', async () => {
+    mockApiClient.mockResolvedValue(fakeNote({ id: 42, rating: 90 }))
+    const onSave = vi.fn()
+    render(
+      <TastingForm
+        noteId={42}
+        initialProduct={product()}
+        initialRating={90}
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => expect(onSave).toHaveBeenCalledOnce())
+    expect(mockApiClient).toHaveBeenCalledWith(
+      '/tastings/42',
+      expect.objectContaining({ method: 'PATCH' }),
+    )
+    // PATCH body omits sku (only POST includes it)
+    const body = JSON.parse(mockApiClient.mock.calls[0][1].body)
+    expect(body).not.toHaveProperty('sku')
+  })
+
+  it('hides change-wine button in edit mode', () => {
+    render(
+      <TastingForm noteId={42} initialProduct={product()} onSave={vi.fn()} onCancel={vi.fn()} />,
+    )
+    expect(screen.queryByRole('button', { name: /change wine/i })).not.toBeInTheDocument()
   })
 })
