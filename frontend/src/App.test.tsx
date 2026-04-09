@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, it, expect } from 'vitest'
 import { AuthProvider } from '@/contexts/AuthContext'
-import './i18n'
 import App from './App'
 
 function renderApp(route = '/') {

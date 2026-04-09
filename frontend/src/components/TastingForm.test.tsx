@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useApiClient, ApiError } from '@/lib/api'
-import '../i18n'
 import { product, fakeNote } from '@/tests/factories'
 import TastingForm from './TastingForm'
 import type { TastingNoteOut } from '@/lib/types'

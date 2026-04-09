@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApiClient, ApiError } from '@/lib/api'
-import '../i18n'
 import { product } from '@/tests/factories'
 import WineDetailPanel from './WineDetailPanel'
 
@@ -31,9 +30,14 @@ function renderPanel(sku: string | null, onClose = vi.fn()) {
   )
 }
 
-function apiReturning(p: ReturnType<typeof product>) {
-  mockApiClient.mockImplementation((url: string) => {
+function apiReturning(
+  p: ReturnType<typeof product>,
+  overrides?: { watchPost?: () => Promise<unknown> },
+) {
+  mockApiClient.mockImplementation((url: string, opts?: RequestInit) => {
     if (url.startsWith('/products/')) return Promise.resolve(p)
+    if (url.includes('/watches') && opts?.method === 'POST')
+      return overrides?.watchPost?.() ?? Promise.resolve({})
     if (url.includes('/watches')) return Promise.resolve([])
     if (url.includes('/stores/preferences')) return Promise.resolve([])
     return Promise.reject(new Error(`unexpected api call: ${url}`))
@@ -92,13 +96,7 @@ describe('WineDetailPanel', () => {
   })
 
   it('optimistically switches to Watching on watch click', async () => {
-    mockApiClient.mockImplementation((url: string, opts?: RequestInit) => {
-      if (url.startsWith('/products/')) return Promise.resolve(product())
-      if (url.includes('/watches') && opts?.method === 'POST') return Promise.resolve({})
-      if (url.includes('/watches')) return Promise.resolve([])
-      if (url.includes('/stores/preferences')) return Promise.resolve([])
-      return Promise.reject(new Error(`unexpected: ${url}`))
-    })
+    apiReturning(product())
     renderPanel('SKU001')
     await screen.findByRole('heading', { level: 2 })
     fireEvent.click(screen.getByRole('button', { name: /watch$/i }))
@@ -106,13 +104,8 @@ describe('WineDetailPanel', () => {
   })
 
   it('rolls back to Watch when watch API call fails', async () => {
-    mockApiClient.mockImplementation((url: string, opts?: RequestInit) => {
-      if (url.startsWith('/products/')) return Promise.resolve(product())
-      if (url.includes('/watches') && opts?.method === 'POST')
-        return Promise.reject(new Error('network'))
-      if (url.includes('/watches')) return Promise.resolve([])
-      if (url.includes('/stores/preferences')) return Promise.resolve([])
-      return Promise.reject(new Error(`unexpected: ${url}`))
+    apiReturning(product(), {
+      watchPost: () => Promise.reject(new Error('network')),
     })
     renderPanel('SKU001')
     await screen.findByRole('heading', { level: 2 })
