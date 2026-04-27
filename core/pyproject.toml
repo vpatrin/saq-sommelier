@@ -14,14 +14,14 @@ alembic = "^1.13"
 psycopg2-binary = "^2.9"
 pgvector = ">=0.3"
 loguru = ">=0.7"
-pydantic-settings = "^2.13"
+pydantic-settings = "^2.14"
 
 [project.optional-dependencies]
-embeddings = ["openai>=1.0"]
+embeddings = ["openai>=2.32.0"]
 
 [tool.poetry.group.dev.dependencies]
 pip-audit = ">=2.7"
-ruff = "^0.15.9"
+ruff = "^0.15.11"
 
 [tool.ruff]
 target-version = "py312"
