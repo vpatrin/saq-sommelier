@@ -48,14 +48,6 @@ function NoteViewModal({
   // Delete confirm
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  // Sync mode and note if a different note is passed without unmounting the modal
-  useEffect(() => {
-    setMode(initialMode)
-    setCurrentNote(note)
-    setProduct(null)
-    setConfirmDelete(false)
-  }, [note.id]) // eslint-disable-line react-hooks/exhaustive-deps -- intentionally only reset when a different note is opened, not on every prop change
-
   useEffect(() => {
     let cancelled = false
 

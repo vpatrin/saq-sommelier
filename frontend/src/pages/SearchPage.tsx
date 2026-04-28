@@ -58,14 +58,16 @@ function SearchPage() {
   const maxPrice = searchParams.get('max_price') ?? ''
   const page = Number(searchParams.get('page') ?? '1')
 
-  // Local input for debounced search
+  // Local input for debounced search — kept in sync with URL query when it
+  // changes externally (browser back/forward) using React's "previous prop"
+  // reset pattern: setState during render is fine when guarded.
   const [inputValue, setInputValue] = useState(query)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Sync input when URL query changes externally (browser back/forward)
-  useEffect(() => {
+  const [prevQuery, setPrevQuery] = useState(query)
+  if (query !== prevQuery) {
+    setPrevQuery(query)
     setInputValue(query)
-  }, [query])
+  }
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Clean up pending debounce on unmount
   useEffect(() => {
@@ -236,10 +238,9 @@ function SearchPage() {
   ])
 
   useEffect(() => {
-    if (!results || results.products.length === 0) {
-      setUserRatings({})
-      return
-    }
+    // Skip when results are empty — stale ratings linger in state but are
+    // keyed by SKU and only read for current results, so they're never displayed.
+    if (!results || results.products.length === 0) return
     let cancelled = false
     const params = new URLSearchParams()
     for (const item of results.products) {
