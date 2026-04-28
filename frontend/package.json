@@ -41,10 +41,11 @@
     "react-router": "^7.14.0",
     "tailwind-merge": "^3.5.0"
   },
-  "_resolutions_comment": "Pinned until shadcn bumps @modelcontextprotocol/sdk to pull patched hono — remove when yarn audit passes without these",
+  "_resolutions_comment": "Pinned until upstreams (shadcn, vitest) bump their transitive deps — remove each entry when yarn audit passes without it",
   "resolutions": {
     "hono": ">=4.12.14",
-    "@hono/node-server": ">=1.19.13"
+    "@hono/node-server": ">=1.19.13",
+    "postcss": ">=8.5.10"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
