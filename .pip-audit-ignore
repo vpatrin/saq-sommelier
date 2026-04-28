@@ -1,3 +1,7 @@
 # Known vulnerabilities with no fix available yet.
 # Remove entries once a patched version is released.
 # Format: one CVE ID per line, comments start with #.
+
+# pip 26.0.1 — no fix version available as of 2026-04-27 (HIGH severity)
+# Tracks: https://nvd.nist.gov/vuln/detail/CVE-2026-3219
+CVE-2026-3219
