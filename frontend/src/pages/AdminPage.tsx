@@ -63,12 +63,11 @@ function WaitlistTab() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
     apiClient<WaitlistRequestOut[]>('/admin/waitlist')
       .then((data) => {
         if (!cancelled) {
           setEntries(data)
+          setError(null)
           setLoading(false)
         }
       })
@@ -206,12 +205,11 @@ function UsersTab() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
     apiClient<UserOut[]>('/admin/users')
       .then((data) => {
         if (!cancelled) {
           setUsers(data)
+          setError(null)
           setLoading(false)
         }
       })
