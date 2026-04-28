@@ -71,7 +71,6 @@ function TastingsPage() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     fetchPage(0)
       .then((data) => {
         if (!cancelled) {
@@ -444,6 +443,7 @@ function TastingsPage() {
 
       {viewNote !== null && (
         <NoteViewModal
+          key={viewNote.note.id}
           note={viewNote.note}
           initialMode={viewNote.mode}
           onClose={() => setViewNote(null)}

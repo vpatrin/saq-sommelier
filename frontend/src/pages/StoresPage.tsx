@@ -65,14 +65,17 @@ function StoresPage() {
   const apiClient = useApiClient()
   const { geo, request: requestLocation } = useGeolocation()
 
-  const [stores, setStores] = useState<StoreWithDistance[]>([])
-  const [loading, setLoading] = useState(false)
+  // stores=null means "haven't fetched yet" (vs [] which is "fetched, no nearby stores").
+  const [stores, setStores] = useState<StoreWithDistance[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [toggling, setToggling] = useState<string | null>(null)
 
   const lat = geo.status === 'granted' ? geo.lat : null
   const lng = geo.status === 'granted' ? geo.lng : null
+
+  // loading is derived: we have coordinates and haven't yet received a result or error.
+  const loading = lat !== null && lng !== null && stores === null && error === null
 
   useEffect(() => {
     requestLocation()
@@ -105,7 +108,6 @@ function StoresPage() {
     if (lat === null || lng === null) return
 
     let cancelled = false
-    setLoading(true)
 
     async function fetchStores() {
       try {
@@ -120,8 +122,6 @@ function StoresPage() {
         if (!cancelled) {
           setError(err instanceof ApiError ? err.detail : t('editStores.failedToLoad'))
         }
-      } finally {
-        if (!cancelled) setLoading(false)
       }
     }
 
@@ -233,11 +233,11 @@ function StoresPage() {
         )}
 
         {/* Empty: location granted but no stores */}
-        {geo.status === 'granted' && !loading && stores.length === 0 && !error && (
+        {geo.status === 'granted' && !loading && stores?.length === 0 && !error && (
           <EmptyState icon={<Buildings size={28} />} title={t('editStores.noStores')} />
         )}
 
-        {stores.length > 0 && (
+        {stores && stores.length > 0 && (
           <ul className="flex flex-col gap-2">
             {stores.map((store) => {
               const isSaved = savedIds.has(store.saq_store_id)
