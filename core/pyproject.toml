@@ -17,7 +17,7 @@ loguru = ">=0.7"
 pydantic-settings = "^2.14"
 
 [project.optional-dependencies]
-embeddings = ["openai>=2.32.0"]
+embeddings = ["openai>=2.34.0"]
 
 [tool.poetry.group.dev.dependencies]
 pip-audit = ">=2.7"
