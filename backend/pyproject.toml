@@ -10,19 +10,19 @@ package-mode = false
 
 [tool.poetry.dependencies]
 fastapi = ">=0.136.1"
-uvicorn = { version = ">=0.46.0", extras = ["standard"] }
+uvicorn = { version = ">=0.47.0", extras = ["standard"] }
 sqlalchemy = "^2.0"
 asyncpg = "^0.31"
 # greenlet: Required by SQLAlchemy for async operations (manages coroutine context switching)
 greenlet = "^3.5.0"
-anthropic = ">=0.97.0"
+anthropic = ">=0.102.0"
 loguru = ">=0.7"
 coupette-core = {path = "../core", develop = true, extras = ["embeddings"]}
 pyjwt = "^2.12.0"
 prometheus-client = "^0.25.0"
 prometheus-fastapi-instrumentator = "^7.1.0"
 email-validator = "^2.3.0"
-resend = "^2.29.0"
+resend = "^2.30.1"
 redis = {version = ">=5.0", extras = ["asyncio"]}
 slowapi = "^0.1.9"
 gunicorn = ">=23.0"
@@ -33,7 +33,7 @@ pip-audit = ">=2.7"
 pytest = ">=9.0.3"
 pytest-asyncio = ">=0.25"
 pytest-cov = ">=6.0"
-ruff = "^0.15.12"
+ruff = "^0.15.13"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
