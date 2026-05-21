@@ -21,13 +21,11 @@ from bot.config import (
     CMD_ALERTS,
     CMD_HELP,
     CMD_MYSTORES,
-    CMD_RECOMMEND,
     CMD_START,
     CMD_UNWATCH,
     CMD_WATCH,
     MENU_ALERTS,
     MENU_HELP,
-    MENU_RECOMMEND,
     MENU_STORES,
     settings,
 )
@@ -40,7 +38,6 @@ from bot.handlers.mystores import (
     store_toggle_callback,
 )
 from bot.handlers.notifications import poll_notifications
-from bot.handlers.recommend import recommend_command
 from bot.handlers.start import help_command, start
 from bot.handlers.url_paste import url_paste_handler, watch_confirm_callback, watch_skip_callback
 from bot.handlers.watch import alerts_command, unwatch_command, watch_command, watch_remove_callback
@@ -62,6 +59,16 @@ async def _error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> 
         user_id = update.effective_user.id if update.effective_user else None
     logger.opt(exception=context.error).error(
         "Unhandled exception in bot handler (update={}, user={})", update_type, user_id
+    )
+
+
+async def recommend_deprecated(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Deprecation stub — /recommend moved to the web app at coupette.club/chat."""
+    await update.message.reply_text(
+        "Heads up — /recommend has moved to the web app for a smoother chat experience. "
+        "Open *Coupette* at https://coupette.club/chat to keep getting recommendations.",
+        parse_mode="Markdown",
+        disable_web_page_preview=True,
     )
 
 
@@ -92,11 +99,10 @@ def create_app() -> Application:
     app.add_handler(CommandHandler(CMD_UNWATCH, unwatch_command))
     app.add_handler(CommandHandler(CMD_ALERTS, alerts_command))
     app.add_handler(CommandHandler(CMD_MYSTORES, mystores_command))
-    app.add_handler(CommandHandler(CMD_RECOMMEND, recommend_command))
+    app.add_handler(CommandHandler("recommend", recommend_deprecated))
     # Location messages — triggers nearby store lookup
     app.add_handler(MessageHandler(filters.LOCATION, location_handler))
     # Reply keyboard menu — text messages from persistent bottom buttons
-    app.add_handler(MessageHandler(filters.Text([MENU_RECOMMEND]), recommend_command))
     app.add_handler(MessageHandler(filters.Text([MENU_ALERTS]), alerts_command))
     app.add_handler(MessageHandler(filters.Text([MENU_STORES]), mystores_command))
     app.add_handler(MessageHandler(filters.Text([MENU_HELP]), help_command))

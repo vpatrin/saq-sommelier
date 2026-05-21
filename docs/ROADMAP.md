@@ -158,7 +158,7 @@ Dev tooling project — expose Coupette data to Claude Code / Claude Desktop via
 - [ ] OG share card — branded 1200×630 image for social preview cards (#640)
 - [ ] Bilingual bot — per-user language preference, static translation tables, bilingual bot responses (#134, #151–#153)
 - [ ] Wine tech sheets — external data enrichment beyond SAQ catalog (fiches techniques, critic notes)
-- [ ] Bot `/recommend` deprecation — remove command, bot is alerts-only (cross-cutting chore, not a product idea)
+- [x] Bot `/recommend` deprecation — remove command, bot is alerts-only (cross-cutting chore, not a product idea)
 - [ ] Data retention policy — define TTL for chat sessions, user data lifecycle, and compliance posture (GDPR-adjacent)
 - [ ] Settings page — language, notifications, data export, account management (most items need backend work)
 - [x] Sidebar collapse/expand — icon-only 60px sidebar with tooltips (#556)

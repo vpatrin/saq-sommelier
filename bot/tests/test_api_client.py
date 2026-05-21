@@ -168,33 +168,6 @@ async def test_ack_notifications_sends_patch_with_event_ids(client: BackendClien
     )
 
 
-# ── Recommendations ────────────────────────────────────────────
-
-
-async def test_recommend_returns_data_and_posts_to_api(client: BackendClient) -> None:
-    data = {"wines": [{"sku": "ABC", "name": "Bordeaux"}], "explanation": "Great pick."}
-    client._client.request.return_value = _response(json_data=data)
-
-    result = await client.recommend("a nice red wine", user_id="tg:42")
-
-    assert result == data
-    client._client.request.assert_called_once_with(
-        "POST",
-        "/recommendations",
-        json={"query": "a nice red wine", "available_online": True, "user_id": "tg:42"},
-    )
-
-
-async def test_recommend_with_store_filter(client: BackendClient) -> None:
-    client._client.request.return_value = _response(json_data={"wines": []})
-
-    await client.recommend("red wine", in_store="23009", available_online=False)
-
-    call_kwargs = client._client.request.call_args
-    assert call_kwargs[1]["json"]["in_store"] == "23009"
-    assert call_kwargs[1]["json"]["available_online"] is False
-
-
 # ── Auth ────────────────────────────────────────────────────────
 
 

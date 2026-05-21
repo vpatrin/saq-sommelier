@@ -1,6 +1,7 @@
 from telegram import ReplyKeyboardMarkup
 
 from bot.handlers.start import HELP_TEXT, help_command, start
+from bot.keyboards import MAIN_MENU
 
 
 async def test_start_sends_help_text(update, context):
@@ -23,9 +24,18 @@ async def test_help_sends_help_text_with_keyboard(update, context):
 
 
 async def test_help_text_lists_all_commands(update, context):
-    commands = ["/recommend", "/watch", "/unwatch", "/alerts", "/mystores", "/help"]
+    commands = ["/watch", "/unwatch", "/alerts", "/mystores", "/help"]
     for cmd in commands:
         assert cmd in HELP_TEXT
+
+
+async def test_help_text_omits_deprecated_recommend_command():
+    assert "/recommend" not in HELP_TEXT
+
+
+async def test_main_menu_omits_recommend_button():
+    labels = [button.text for row in MAIN_MENU.keyboard for button in row]
+    assert not any("ecommend" in label for label in labels)
 
 
 # ── deeplink ─────────────────────────────────────────────────
