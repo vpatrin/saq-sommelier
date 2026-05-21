@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Language persistence — locale preference saved to user profile; synced on login via `GET /users/me`
 - SEO: meta description, robots.txt, sitemap.xml, Open Graph tags for social sharing
 
+### Deprecated
+
+- Bot `/recommend` command — now returns a short message linking to `https://coupette.club/chat`; `🤖 Recommend` button removed from the bot menu
+
 ### Fixed
 
 - Sidebar contrast — bumped low-opacity text from `/40` to `/60`

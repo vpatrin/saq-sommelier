@@ -7,8 +7,6 @@ from bot.keyboards import MAIN_MENU
 HELP_TEXT = (
     "🍷 *Coupette*\n"
     "Never miss a good bottle again.\n\n"
-    "🤖 *Recommend*\n"
-    "/recommend `<query>` — Ask the sommelier\n\n"
     "🔔 *Watch*\n"
     "/watch `<url>` — Stalk a bottle\n"
     "/unwatch `<url>` — Let it go\n"

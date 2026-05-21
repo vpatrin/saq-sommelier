@@ -11,14 +11,13 @@ from bot.config import (
     CALLBACK_WATCH_SKIP,
     MENU_ALERTS,
     MENU_HELP,
-    MENU_RECOMMEND,
     MENU_STORES,
 )
 
 MAIN_MENU = ReplyKeyboardMarkup(
     [
-        [KeyboardButton(MENU_RECOMMEND), KeyboardButton(MENU_ALERTS)],
-        [KeyboardButton(MENU_STORES), KeyboardButton(MENU_HELP)],
+        [KeyboardButton(MENU_ALERTS), KeyboardButton(MENU_STORES)],
+        [KeyboardButton(MENU_HELP)],
     ],
     resize_keyboard=True,
 )

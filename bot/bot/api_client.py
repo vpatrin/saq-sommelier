@@ -52,24 +52,6 @@ class BackendClient:
         """GET /api/products/{sku}. Returns None if 404."""
         return await self._get_or_none(f"/products/{sku}")
 
-    # ── Recommendations ──────────────────────────────────────────
-
-    async def recommend(
-        self,
-        query: str,
-        *,
-        user_id: str | None = None,
-        available_online: bool = True,
-        in_store: str | None = None,
-    ) -> dict[str, Any]:
-        """POST /api/recommendations — natural language wine recommendations."""
-        payload: dict[str, Any] = {"query": query, "available_online": available_online}
-        if user_id is not None:
-            payload["user_id"] = user_id
-        if in_store is not None:
-            payload["in_store"] = in_store
-        return await self._post("/recommendations", json=payload)
-
     # ── Watches ─────────────────────────────────────────────────
 
     async def create_watch(self, user_id: str, sku: str) -> dict[str, Any]:
